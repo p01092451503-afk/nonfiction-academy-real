@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Video, FileText, BarChart3,
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
-  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown,
+  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw,
 } from "lucide-react";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
