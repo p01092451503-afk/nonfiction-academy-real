@@ -35,6 +35,16 @@ type VideoProvider = Database["public"]["Enums"]["video_provider"];
 
 type ContentSource = "video" | "mangoboard" | "card" | "package";
 
+// 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
+export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
+export type LessonLang = typeof LESSON_LANGS[number];
+export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
+  ko: "한국어",
+  en: "English",
+  "zh-CN": "简体中文",
+  ja: "日本語",
+};
+
 export interface PackageItemDraft {
   tempId: string;
   item_type: "image" | "video";
@@ -58,7 +68,27 @@ interface ContentItem {
   card_image_url?: string;
   card_urls?: string[];
   package_items?: PackageItemDraft[];
+  language_code: LessonLang;
 }
+
+// Helper: build the 4 default empty lesson slots
+const buildDefaultLessonSlots = (): ContentItem[] =>
+  LESSON_LANGS.map((lang) => ({
+    tempId: crypto.randomUUID(),
+    title: "",
+    description: "",
+    content_type: "document" as ContentType,
+    video_url: "",
+    video_provider: "custom" as VideoProvider,
+    duration_minutes: null,
+    is_preview: false,
+    is_published: true,
+    source: "mangoboard" as ContentSource,
+    enTitle: "",
+    enDescription: "",
+    package_items: [],
+    language_code: lang,
+  }));
 
 const CreateCourse = () => {
   const navigate = useNavigate();
@@ -195,7 +225,37 @@ const CreateCourse = () => {
       }
 
       if (courseContents?.length) {
-        setContents(courseContents.map((c: any) => {
+        // Map existing contents into 4 language slots (KO/EN/ZH-CN/JA).
+        // Priority: existing language_code → fall back to order_index → fill missing slots empty.
+        const byLang = new Map<LessonLang, any>();
+        courseContents.forEach((c: any, idx: number) => {
+          const lang: LessonLang =
+            (LESSON_LANGS as readonly string[]).includes(c.language_code)
+              ? (c.language_code as LessonLang)
+              : (LESSON_LANGS[idx] || "ko");
+          if (!byLang.has(lang)) byLang.set(lang, c);
+        });
+
+        const slots: ContentItem[] = LESSON_LANGS.map((lang) => {
+          const c = byLang.get(lang);
+          if (!c) {
+            return {
+              tempId: crypto.randomUUID(),
+              title: "",
+              description: "",
+              content_type: "document" as ContentType,
+              video_url: "",
+              video_provider: "custom" as VideoProvider,
+              duration_minutes: null,
+              is_preview: false,
+              is_published: true,
+              source: "mangoboard" as ContentSource,
+              enTitle: "",
+              enDescription: "",
+              package_items: [],
+              language_code: lang,
+            };
+          }
           const en = i18nMap.get(c.id);
           const isCard = c.description?.startsWith("[card-content]");
           const isPackage = c.content_type === "media_package";
@@ -213,23 +273,32 @@ const CreateCourse = () => {
           } else {
             cleanDesc = c.description || "";
           }
+          // Force source into mangoboard or package only
+          const inferredSource: ContentSource = isPackage
+            ? "package"
+            : "mangoboard";
           return {
             tempId: c.id,
             title: c.title || "",
             description: cleanDesc,
-            content_type: c.content_type || "video",
+            content_type: (isPackage ? "media_package" : "document") as ContentType,
             video_url: c.video_url || "",
-            video_provider: c.video_provider || "",
+            video_provider: (c.video_provider || "custom") as VideoProvider,
             duration_minutes: c.duration_minutes,
             is_preview: c.is_preview || false,
-            is_published: c.is_published || false,
-            source: isPackage ? "package" as ContentSource : (isCard ? "card" as ContentSource : (c.video_url?.includes("mangoboard") ? "mangoboard" as ContentSource : "video" as ContentSource)),
+            is_published: c.is_published ?? true,
+            source: inferredSource,
             enTitle: en?.title || "",
             enDescription: en?.description || "",
-            card_urls: cardUrls.length > 0 ? cardUrls : (isCard && c.video_url ? [c.video_url] : []),
-            package_items: isPackage ? (packageItemsMap.get(c.id) || []) : undefined,
+            card_urls: cardUrls,
+            package_items: isPackage ? (packageItemsMap.get(c.id) || []) : [],
+            language_code: lang,
           };
-        }));
+        });
+        setContents(slots);
+      } else {
+        // No existing contents → seed 4 empty language slots
+        setContents(buildDefaultLessonSlots());
       }
       setEditDataLoaded(true);
       setDraftLoaded(true);
@@ -296,8 +365,39 @@ const CreateCourse = () => {
         if (d.isMandatory != null) setIsMandatory(d.isMandatory);
         if (d.deadline) setDeadline(d.deadline);
         if (d.status) setStatus(d.status);
-        if (d.contents?.length) setContents(d.contents.map((c: any) => ({ ...c, source: c.source || (c.video_url?.includes("mangoboard") ? "mangoboard" : "video") })));
+        if (d.contents?.length) {
+          // Normalize draft contents into the 4 fixed language slots
+          const byLang = new Map<LessonLang, any>();
+          d.contents.forEach((c: any, idx: number) => {
+            const lang: LessonLang =
+              (LESSON_LANGS as readonly string[]).includes(c.language_code)
+                ? (c.language_code as LessonLang)
+                : (LESSON_LANGS[idx] || "ko");
+            if (!byLang.has(lang)) byLang.set(lang, c);
+          });
+          const slots = LESSON_LANGS.map((lang) => {
+            const existing = byLang.get(lang);
+            const base = buildDefaultLessonSlots().find((s) => s.language_code === lang)!;
+            if (!existing) return base;
+            const src: ContentSource =
+              existing.source === "package" || existing.content_type === "media_package"
+                ? "package"
+                : "mangoboard";
+            return {
+              ...base,
+              ...existing,
+              source: src,
+              content_type: src === "package" ? ("media_package" as ContentType) : ("document" as ContentType),
+              language_code: lang,
+            } as ContentItem;
+          });
+          setContents(slots);
+        } else {
+          setContents(buildDefaultLessonSlots());
+        }
         toast({ title: t("createCourse.draftRestored"), description: t("createCourse.draftRestoredDesc") });
+      } else if (!isEditMode) {
+        setContents(buildDefaultLessonSlots());
       }
       setDraftLoaded(true);
     })();
@@ -308,24 +408,9 @@ const CreateCourse = () => {
     await (supabase.from("course_drafts" as any) as any).delete().eq("user_id", user.id);
   }, [user]);
 
+  // 4-language fixed structure: addContent is disabled (always 4 slots).
   const addContent = () => {
-    setContents((prev) => [
-      ...prev,
-      {
-        tempId: crypto.randomUUID(),
-        title: "",
-        description: "",
-        content_type: "video",
-        video_url: "",
-        video_provider: "",
-        duration_minutes: null,
-        is_preview: false,
-        is_published: true,
-        source: "video",
-        enTitle: "",
-        enDescription: "",
-      },
-    ]);
+    /* no-op: 1 강의 = 4 차시 고정 (KO/EN/ZH-CN/JA) */
   };
 
   const updateContent = (tempId: string, field: keyof ContentItem, value: any) => {
@@ -469,7 +554,7 @@ const CreateCourse = () => {
       if (contents.length > 0) {
         const contentRows = contents.map((c, idx) => ({
           course_id: editCourseId!,
-          title: c.title,
+          title: c.title || `Lesson ${idx + 1}`,
           description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
           content_type: c.content_type,
           video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
@@ -478,6 +563,7 @@ const CreateCourse = () => {
           order_index: idx,
           is_preview: c.is_preview,
           is_published: c.is_published,
+          language_code: c.language_code,
         }));
         const { data: insertedContents, error: contentError } = await supabase
           .from("course_contents")
@@ -575,7 +661,7 @@ const CreateCourse = () => {
       if (contents.length > 0) {
         const contentRows = contents.map((c, idx) => ({
           course_id: course.id,
-          title: c.title,
+          title: c.title || `Lesson ${idx + 1}`,
           description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
           content_type: c.content_type,
           video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
@@ -584,6 +670,7 @@ const CreateCourse = () => {
           order_index: idx,
           is_preview: c.is_preview,
           is_published: c.is_published,
+          language_code: c.language_code,
         }));
         const { data: insertedContents, error: contentError } = await supabase
           .from("course_contents")
@@ -645,16 +732,8 @@ const CreateCourse = () => {
       toast({ title: t("common.error"), description: t("createCourse.titleRequired2"), variant: "destructive" });
       return;
     }
-    const invalidContent = contents.find((c) => !c.title.trim());
-    if (invalidContent) {
-      toast({ title: t("common.error"), description: t("createCourse.contentTitleRequired"), variant: "destructive" });
-      return;
-    }
-    const noUrlMango = contents.find((c) => c.source === "mangoboard" && !c.video_url.trim());
-    if (noUrlMango) {
-      toast({ title: t("common.error"), description: t("createCourse.flipUrlRequired"), variant: "destructive" });
-      return;
-    }
+    // 차시 title은 비어 있으면 자동으로 "Lesson N"으로 저장되므로 강제하지 않음.
+    // 망고보드 슬롯이 URL 없이 비어 있어도 OK — 빈 슬롯은 학생 화면에서 "준비 중" 처리됨.
     if (isEditMode) {
       updateMutation.mutate();
     } else {
@@ -816,44 +895,34 @@ const CreateCourse = () => {
           </div>
         </div>
 
-        {/* Contents */}
+        {/* Contents — 1 강의 = 4 차시 (KO/EN/ZH-CN/JA) 고정 */}
         <div className="bg-accent/50 border border-accent rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">{t("createCourse.contentSectionTitle")}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t("createCourse.contentSectionHint")}</p>
-            </div>
-            <Button type="button" variant="outline" size="sm" className="rounded-xl gap-2" onClick={addContent}>
-              <Plus className="h-3.5 w-3.5" /> {t("createCourse.addContentBtn")}
-            </Button>
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              {t("createCourse.lessonSectionTitle", "차시 (4개 언어 고정)")}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t(
+                "createCourse.lessonSectionHint",
+                "1차시 한국어 · 2차시 영어 · 3차시 중국어 간체 · 4차시 일본어로 자동 구성됩니다. 각 언어별로 망고보드 또는 미디어 패키지 콘텐츠를 등록하세요."
+              )}
+            </p>
           </div>
 
-          {contents.length === 0 ? (
-            <div className="stat-card text-center py-10 border-dashed">
-              <div className="h-12 w-12 rounded-xl bg-accent mx-auto flex items-center justify-center mb-3">
-                <MonitorPlay className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">{t("createCourse.emptyContentHint")}</p>
-              <Button type="button" variant="outline" size="sm" className="rounded-xl gap-2" onClick={addContent}>
-                <Plus className="h-3.5 w-3.5" /> {t("createCourse.addFirstContent")}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {contents.map((content, idx) => (
-                <UnifiedContentEditor
-                  key={content.tempId}
-                  content={content}
-                  index={idx}
-                  onChange={(field, value) => updateContent(content.tempId, field, value)}
-                  onRemove={() => removeContent(content.tempId)}
-                  contentTypeOptions={contentTypeOptions}
-                  videoProviderOptions={videoProviderOptions}
-                  t={t}
-                />
-              ))}
-            </div>
-          )}
+          <div className="space-y-3">
+            {contents.map((content, idx) => (
+              <UnifiedContentEditor
+                key={content.tempId}
+                content={content}
+                index={idx}
+                onChange={(field, value) => updateContent(content.tempId, field, value)}
+                onRemove={() => { /* fixed 4 slots — removal disabled */ }}
+                contentTypeOptions={contentTypeOptions}
+                videoProviderOptions={videoProviderOptions}
+                t={t}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Submit */}
@@ -934,40 +1003,35 @@ const UnifiedContentEditor = ({
     setShowPreview(true);
   };
 
+  const lessonLang = (content.language_code || LESSON_LANGS[index] || "ko") as LessonLang;
+  const langLabel = LESSON_LANG_LABELS[lessonLang];
+
   return (
     <div className="stat-card !p-4 space-y-4">
-      {/* Header row */}
+      {/* Header row — language slot is fixed; deletion disabled */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <GripVertical className="h-4 w-4" />
           <span className="text-xs font-medium">{String(index + 1).padStart(2, "0")}</span>
         </div>
-        <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isMango || isCard || isPackage ? "bg-primary/10" : "bg-accent"}`}>
-          <Icon className={`h-4 w-4 ${isMango || isCard || isPackage ? "text-primary" : "text-accent-foreground"}`} />
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isPackage ? "bg-primary/10" : "bg-accent"}`}>
+          <Icon className={`h-4 w-4 ${isPackage ? "text-primary" : "text-accent-foreground"}`} />
         </div>
-        <Input value={content.title} onChange={(e) => onChange("title", e.target.value)} placeholder={t("createCourse.contentTitlePlaceholder")} className="flex-1 h-9 rounded-lg border-border text-sm" required />
-        <button type="button" onClick={onRemove} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <Badge variant="secondary" className="rounded-md text-[10px] font-medium shrink-0 whitespace-nowrap">
+          {langLabel}
+        </Badge>
+        <Input
+          value={content.title}
+          onChange={(e) => onChange("title", e.target.value)}
+          placeholder={`${langLabel} 차시 제목`}
+          className="flex-1 h-9 rounded-lg border-border text-sm"
+        />
       </div>
 
       <div className="pl-14 space-y-3">
-        {/* Source selector: 동영상 vs 망고보드 vs 카드 */}
+        {/* Source selector: 망고보드 / 미디어 패키지 only */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.contentSourceLabel")}</label>
           <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => onChange("source", "video")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
-                content.source === "video"
-                  ? "bg-accent text-foreground border-border"
-                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
-              }`}
-            >
-              <Video className="h-3.5 w-3.5" />
-              {t("createCourse.sourceVideo")}
-            </button>
             <button
               type="button"
               onClick={() => onChange("source", "mangoboard")}
@@ -979,18 +1043,6 @@ const UnifiedContentEditor = ({
             >
               <BookOpen className="h-3.5 w-3.5" />
               {t("createCourse.sourceMangoboard")}
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange("source", "card")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
-                isCard
-                  ? "bg-accent text-foreground border-border"
-                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
-              }`}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              {t("createCourse.sourceCard", "카드")}
             </button>
             <button
               type="button"
