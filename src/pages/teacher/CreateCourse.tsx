@@ -1003,40 +1003,35 @@ const UnifiedContentEditor = ({
     setShowPreview(true);
   };
 
+  const lessonLang = (content.language_code || LESSON_LANGS[index] || "ko") as LessonLang;
+  const langLabel = LESSON_LANG_LABELS[lessonLang];
+
   return (
     <div className="stat-card !p-4 space-y-4">
-      {/* Header row */}
+      {/* Header row — language slot is fixed; deletion disabled */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <GripVertical className="h-4 w-4" />
           <span className="text-xs font-medium">{String(index + 1).padStart(2, "0")}</span>
         </div>
-        <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isMango || isCard || isPackage ? "bg-primary/10" : "bg-accent"}`}>
-          <Icon className={`h-4 w-4 ${isMango || isCard || isPackage ? "text-primary" : "text-accent-foreground"}`} />
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${isPackage ? "bg-primary/10" : "bg-accent"}`}>
+          <Icon className={`h-4 w-4 ${isPackage ? "text-primary" : "text-accent-foreground"}`} />
         </div>
-        <Input value={content.title} onChange={(e) => onChange("title", e.target.value)} placeholder={t("createCourse.contentTitlePlaceholder")} className="flex-1 h-9 rounded-lg border-border text-sm" required />
-        <button type="button" onClick={onRemove} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <Badge variant="secondary" className="rounded-md text-[10px] font-medium shrink-0 whitespace-nowrap">
+          {langLabel}
+        </Badge>
+        <Input
+          value={content.title}
+          onChange={(e) => onChange("title", e.target.value)}
+          placeholder={`${langLabel} 차시 제목`}
+          className="flex-1 h-9 rounded-lg border-border text-sm"
+        />
       </div>
 
       <div className="pl-14 space-y-3">
-        {/* Source selector: 동영상 vs 망고보드 vs 카드 */}
+        {/* Source selector: 망고보드 / 미디어 패키지 only */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.contentSourceLabel")}</label>
           <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => onChange("source", "video")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
-                content.source === "video"
-                  ? "bg-accent text-foreground border-border"
-                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
-              }`}
-            >
-              <Video className="h-3.5 w-3.5" />
-              {t("createCourse.sourceVideo")}
-            </button>
             <button
               type="button"
               onClick={() => onChange("source", "mangoboard")}
@@ -1048,18 +1043,6 @@ const UnifiedContentEditor = ({
             >
               <BookOpen className="h-3.5 w-3.5" />
               {t("createCourse.sourceMangoboard")}
-            </button>
-            <button
-              type="button"
-              onClick={() => onChange("source", "card")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
-                isCard
-                  ? "bg-accent text-foreground border-border"
-                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
-              }`}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              {t("createCourse.sourceCard", "카드")}
             </button>
             <button
               type="button"
