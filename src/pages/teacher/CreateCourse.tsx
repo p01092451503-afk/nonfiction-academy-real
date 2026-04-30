@@ -1386,34 +1386,56 @@ const UnifiedContentEditor = ({
           </>
         )}
 
-        {/* Common fields - KO slot only (다른 언어 차시는 KO 값을 자동 동기화) */}
-        {isKo && (
-          <>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
-              <Textarea
-                value={content.description}
-                onChange={(e) => onChange("description", e.target.value)}
-                placeholder={t("createCourse.contentDescPlaceholder")}
-                className="min-h-[60px] rounded-lg border-border text-xs resize-none"
-              />
-            </div>
+        {/* Description: KO 입력 → 자동번역. 비-KO는 잠금/수정 가능 */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
+            {!isKo && (
+              content.manual_translation_override ? (
+                <Badge variant="outline" className="rounded-md text-[10px] gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
+                  <Pencil className="h-2.5 w-2.5" /> 직접 수정됨
+                </Badge>
+              ) : isAutoTranslating ? (
+                <Badge variant="outline" className="rounded-md text-[10px] gap-1">
+                  <Languages className="h-2.5 w-2.5 animate-pulse" /> 자동 번역 중…
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="rounded-md text-[10px] gap-1 text-muted-foreground">
+                  <Lock className="h-2.5 w-2.5" /> 자동 번역됨
+                </Badge>
+              )
+            )}
+          </div>
+          <Textarea
+            value={content.description}
+            onChange={(e) => {
+              if (isKo || content.manual_translation_override) onChange("description", e.target.value);
+            }}
+            readOnly={!isKo && !content.manual_translation_override}
+            placeholder={
+              isKo
+                ? t("createCourse.contentDescPlaceholder")
+                : (isAutoTranslating ? "번역 중..." : "한국어 설명 입력 시 자동 번역됩니다")
+            }
+            className={`min-h-[60px] rounded-lg border-border text-xs resize-none ${!isKo && !content.manual_translation_override ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          />
+        </div>
 
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
-                {t("createCourse.allowPreview")}
-              </label>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
-                {t("createCourse.publishToggle")}
-              </label>
-              <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
-                <Languages className="h-3 w-3" />
-                {showEn ? t("course.koTab", "한국어") : "English"}
-              </button>
-            </div>
-          </>
+        {isKo && (
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
+              {t("createCourse.allowPreview")}
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
+              {t("createCourse.publishToggle")}
+            </label>
+            <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
+              <Languages className="h-3 w-3" />
+              {showEn ? t("course.koTab", "한국어") : "English"}
+            </button>
+          </div>
         )}
 
         {isKo && showEn && (
