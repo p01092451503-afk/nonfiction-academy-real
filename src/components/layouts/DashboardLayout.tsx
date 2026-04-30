@@ -147,6 +147,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
       label: "콘텐츠",
       items: [
         { label: t("nav.courseManagement"), href: "/admin/courses", icon: BookOpen, tourId: "nav-course-mgmt" },
+        { label: t("nav.trackManagement", "학습 트랙 관리"), href: "/admin/tracks", icon: Layers },
         { label: t("nav.videoManagement", "동영상 관리"), href: "/admin/videos", icon: Video },
         { label: t("nav.i18nManagement", "다국어 관리"), href: "/admin/i18n", icon: Languages },
       ],
