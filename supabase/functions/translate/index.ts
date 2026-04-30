@@ -5,11 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const LANG_LABEL: Record<string, string> = {
+  en: "English",
+  "zh-CN": "Simplified Chinese (简体中文)",
+  ja: "Japanese (日本語)",
+  ko: "Korean (한국어)",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { texts } = await req.json();
+    const { texts, targetLang = "en" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -20,9 +27,11 @@ serve(async (req) => {
       });
     }
 
+    const targetLabel = LANG_LABEL[targetLang] || "English";
+
     const prompt = filtered.length === 1
-      ? `Translate the following Korean text to English. Return ONLY the translated text, nothing else.\n\n${filtered[0]}`
-      : `Translate each of the following Korean texts to English. Return a JSON array of translated strings in the same order. Return ONLY the JSON array, nothing else.\n\n${JSON.stringify(filtered)}`;
+      ? `Translate the following Korean text to ${targetLabel}. Return ONLY the translated text, nothing else.\n\n${filtered[0]}`
+      : `Translate each of the following Korean texts to ${targetLabel}. Return a JSON array of translated strings in the same order. Return ONLY the JSON array, nothing else.\n\n${JSON.stringify(filtered)}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -35,7 +44,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a professional Korean to English translator for an LMS (Learning Management System). Translate accurately and naturally. For course/content titles, keep them concise. For descriptions, maintain the original tone and meaning.",
+            content: `You are a professional Korean to ${targetLabel} translator for an LMS (Learning Management System). Translate accurately and naturally. For course/content titles, keep them concise. For descriptions, maintain the original tone and meaning.`,
           },
           { role: "user", content: prompt },
         ],
