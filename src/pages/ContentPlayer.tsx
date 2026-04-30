@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaPackagePlayer from "@/components/MediaPackagePlayer";
+import CourseComments from "@/components/CourseComments";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
@@ -595,6 +596,9 @@ const ContentPlayer = () => {
                   ) : null}
                 </div>
               </div>
+
+              {/* Comments (Instagram-style, course-level, shared across 4 languages) */}
+              {courseId && <CourseComments courseId={courseId} />}
 
               {/* Navigation */}
               <div className="flex items-center justify-between pt-4 border-t border-border">
