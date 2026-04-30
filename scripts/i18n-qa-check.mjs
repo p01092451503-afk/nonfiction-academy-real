@@ -214,6 +214,17 @@ function check(locale, key, src, tgt) {
     }
   }
 
+  // 7. Glossary consistency — flag aliases that should be the canonical term
+  for (const r of GLOSSARY_RULES[locale] || []) {
+    if (r.re.test(tgt)) {
+      issues.push({
+        severity: "medium",
+        code: "glossary-violation",
+        msg: `Use canonical "${r.canonical}" instead of "${r.alias}" (${r.koTerm})`,
+      });
+    }
+  }
+
   return issues;
 }
 
