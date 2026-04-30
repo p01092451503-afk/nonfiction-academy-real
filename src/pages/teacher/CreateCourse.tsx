@@ -1269,10 +1269,12 @@ const UnifiedContentEditor = ({
               </button>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
-              <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
-            </div>
+            {isKo && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
+                <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
+              </div>
+            )}
 
             {/* Card previews */}
             {(content.card_urls || []).filter(u => u).length > 0 && (
