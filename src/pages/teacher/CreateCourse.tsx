@@ -487,6 +487,7 @@ const CreateCourse = () => {
         setContents((prev) =>
           prev.map((c) => {
             if (c.language_code === "ko") return c;
+            if (c.manual_translation_override) return c; // 수동 편집 슬롯은 보존
             const r = results.find((x) => x.lang === c.language_code);
             if (!r) return c;
             return {
