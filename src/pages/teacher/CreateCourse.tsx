@@ -503,7 +503,7 @@ const CreateCourse = () => {
     }, 1200);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [koTitle, koDesc]);
+  }, [koTitle, koDesc, contents.filter((c) => c.language_code !== "ko").map((c) => c.manual_translation_override ? "1" : "0").join(",")]);
 
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
