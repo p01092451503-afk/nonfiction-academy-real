@@ -37,25 +37,36 @@ const localeFilter = (() => {
 
 const glossary = JSON.parse(fs.readFileSync(GLOSSARY_PATH, "utf8"));
 
-// Build per-locale rule list: [{ alias, canonical, term, caseSensitive }]
+// Build per-locale rule list. Aliases are { from, forbidContext: { before, after } }
+// or plain strings (legacy form).
 function buildRules(locale) {
   const rules = [];
   for (const [koTerm, entry] of Object.entries(glossary.terms)) {
     const canonical = entry[locale];
     if (!canonical) continue;
     const aliases = (entry.aliases && entry.aliases[locale]) || [];
-    for (const alias of aliases) {
-      if (alias === canonical) continue;
-      rules.push({ koTerm, alias, canonical });
+    for (const a of aliases) {
+      const obj = typeof a === "string" ? { from: a } : a;
+      if (!obj.from || obj.from === canonical) continue;
+      rules.push({
+        koTerm,
+        alias: obj.from,
+        canonical,
+        forbidBefore: obj.forbidContext?.before || "",
+        forbidAfter: obj.forbidContext?.after || "",
+      });
     }
   }
-  // Sort by alias length DESC so longer aliases are replaced first (avoid partial replacements)
   rules.sort((a, b) => b.alias.length - a.alias.length);
   return rules;
 }
 
 function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isLatin(s) {
+  return /^[\x20-\x7E]+$/.test(s);
 }
 
 function flatten(obj, prefix = "", out = {}) {
@@ -74,20 +85,36 @@ function setByPath(obj, key, val) {
   cur[parts[parts.length - 1]] = val;
 }
 
+// Sentinel-based replacement: each match is swapped with a placeholder that no
+// later rule can match, then placeholders are restored. Prevents cascade
+// rewrites like 「サインアップ→新規登録」then「登録→受講」.
 function applyRulesToString(str, rules) {
-  let out = str;
+  const placeholders = [];
+  let work = str;
   const hits = [];
+
   for (const r of rules) {
-    const re = new RegExp(escapeRegex(r.alias), "g");
-    if (re.test(out)) {
-      const before = out;
-      out = out.replace(re, r.canonical);
-      if (before !== out) {
-        hits.push({ alias: r.alias, canonical: r.canonical, koTerm: r.koTerm });
-      }
+    let pattern = escapeRegex(r.alias);
+    if (isLatin(r.alias)) pattern = `\\b${pattern}\\b`;
+    if (r.forbidBefore) pattern = `(?<!${escapeRegex(r.forbidBefore)})` + pattern;
+    if (r.forbidAfter) pattern = pattern + `(?!${escapeRegex(r.forbidAfter)})`;
+
+    let re;
+    try {
+      re = new RegExp(pattern, "g");
+    } catch {
+      continue;
     }
+
+    work = work.replace(re, () => {
+      placeholders.push(r.canonical);
+      hits.push({ alias: r.alias, canonical: r.canonical, koTerm: r.koTerm });
+      return `\u0000G${placeholders.length - 1}\u0000`;
+    });
   }
-  return { result: out, hits };
+
+  const result = work.replace(/\u0000G(\d+)\u0000/g, (_, i) => placeholders[Number(i)]);
+  return { result, hits };
 }
 
 const report = {};
