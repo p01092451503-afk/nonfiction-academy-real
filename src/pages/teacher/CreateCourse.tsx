@@ -69,6 +69,7 @@ interface ContentItem {
   card_urls?: string[];
   package_items?: PackageItemDraft[];
   language_code: LessonLang;
+  manual_translation_override?: boolean; // true: 관리자가 직접 수정한 번역 (자동번역 덮어쓰기 방지)
 }
 
 // Helper: build the 4 default empty lesson slots
