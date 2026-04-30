@@ -35,6 +35,16 @@ type VideoProvider = Database["public"]["Enums"]["video_provider"];
 
 type ContentSource = "video" | "mangoboard" | "card" | "package";
 
+// 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
+export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
+export type LessonLang = typeof LESSON_LANGS[number];
+export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
+  ko: "한국어",
+  en: "English",
+  "zh-CN": "简体中文",
+  ja: "日本語",
+};
+
 export interface PackageItemDraft {
   tempId: string;
   item_type: "image" | "video";
@@ -58,7 +68,27 @@ interface ContentItem {
   card_image_url?: string;
   card_urls?: string[];
   package_items?: PackageItemDraft[];
+  language_code: LessonLang;
 }
+
+// Helper: build the 4 default empty lesson slots
+const buildDefaultLessonSlots = (): ContentItem[] =>
+  LESSON_LANGS.map((lang) => ({
+    tempId: crypto.randomUUID(),
+    title: "",
+    description: "",
+    content_type: "document" as ContentType,
+    video_url: "",
+    video_provider: "custom" as VideoProvider,
+    duration_minutes: null,
+    is_preview: false,
+    is_published: true,
+    source: "mangoboard" as ContentSource,
+    enTitle: "",
+    enDescription: "",
+    package_items: [],
+    language_code: lang,
+  }));
 
 const CreateCourse = () => {
   const navigate = useNavigate();
