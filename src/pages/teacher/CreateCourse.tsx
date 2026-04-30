@@ -6,7 +6,7 @@ import {
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
   Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown,
 } from "lucide-react";
-import { translateKoToEn } from "@/lib/translate";
+import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -458,6 +458,50 @@ const CreateCourse = () => {
   const removeContent = (tempId: string) => {
     setContents((prev) => prev.filter((c) => c.tempId !== tempId));
   };
+
+  /* ── Auto-translate KO lesson title/description into EN/ZH-CN/JA slots ──
+     Triggered with debounce whenever the KO slot's title or description changes. */
+  const koSlot = contents.find((c) => c.language_code === "ko");
+  const koTitle = koSlot?.title || "";
+  const koDesc = koSlot?.description || "";
+  const [autoTranslating, setAutoTranslating] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!koTitle && !koDesc) return;
+    const handle = setTimeout(async () => {
+      const targets: TargetLang[] = ["en", "zh-CN", "ja"];
+      // Mark all targets as translating
+      setAutoTranslating((s) => ({ ...s, en: true, "zh-CN": true, ja: true }));
+      try {
+        const results = await Promise.all(
+          targets.map(async (lang) => {
+            try {
+              const out = await translateKoTo(lang, [koTitle || "", koDesc || ""]);
+              return { lang, title: out[0] || "", description: out[1] || "" };
+            } catch {
+              return { lang, title: "", description: "" };
+            }
+          })
+        );
+        setContents((prev) =>
+          prev.map((c) => {
+            if (c.language_code === "ko") return c;
+            const r = results.find((x) => x.lang === c.language_code);
+            if (!r) return c;
+            return {
+              ...c,
+              title: r.title || c.title,
+              description: r.description || c.description,
+            };
+          })
+        );
+      } finally {
+        setAutoTranslating({});
+      }
+    }, 1200);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [koTitle, koDesc]);
 
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
@@ -920,6 +964,7 @@ const CreateCourse = () => {
                 contentTypeOptions={contentTypeOptions}
                 videoProviderOptions={videoProviderOptions}
                 t={t}
+                isAutoTranslating={!!autoTranslating[content.language_code]}
               />
             ))}
           </div>
@@ -956,7 +1001,7 @@ const CreateCourse = () => {
 /* ───── Unified Content Editor ───── */
 
 const UnifiedContentEditor = ({
-  content, index, onChange, onRemove, contentTypeOptions, videoProviderOptions, t,
+  content, index, onChange, onRemove, contentTypeOptions, videoProviderOptions, t, isAutoTranslating,
 }: {
   content: ContentItem;
   index: number;
@@ -965,6 +1010,7 @@ const UnifiedContentEditor = ({
   contentTypeOptions: { value: ContentType; label: string; icon: React.ElementType }[];
   videoProviderOptions: { value: VideoProvider; label: string }[];
   t: any;
+  isAutoTranslating?: boolean;
 }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -1005,6 +1051,7 @@ const UnifiedContentEditor = ({
 
   const lessonLang = (content.language_code || LESSON_LANGS[index] || "ko") as LessonLang;
   const langLabel = LESSON_LANG_LABELS[lessonLang];
+  const isKo = lessonLang === "ko";
 
   return (
     <div className="stat-card !p-4 space-y-4">
@@ -1021,11 +1068,27 @@ const UnifiedContentEditor = ({
         </Badge>
         <Input
           value={content.title}
-          onChange={(e) => onChange("title", e.target.value)}
-          placeholder={`${langLabel} 차시 제목`}
-          className="flex-1 h-9 rounded-lg border-border text-sm"
+          onChange={(e) => isKo && onChange("title", e.target.value)}
+          readOnly={!isKo}
+          placeholder={isKo ? `${langLabel} 차시 제목` : (isAutoTranslating ? "번역 중..." : "한국어 제목 입력 시 자동 번역")}
+          className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          title={!isKo ? "한국어(1차시) 제목을 입력하면 자동으로 번역됩니다" : undefined}
         />
+        {!isKo && isAutoTranslating && (
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 inline-flex items-center gap-1">
+            <Languages className="h-3 w-3 animate-pulse" /> 번역 중
+          </span>
+        )}
       </div>
+
+      {!isKo && (
+        <div className="pl-14 -mt-2">
+          <p className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+            <Languages className="h-3 w-3" />
+            제목·설명은 한국어 차시(1차시)에서 자동 번역됩니다. 망고보드 링크 또는 미디어 패키지만 입력하세요.
+          </p>
+        </div>
+      )}
 
       <div className="pl-14 space-y-3">
         {/* Source selector: 망고보드 / 미디어 패키지 only */}
@@ -1275,7 +1338,13 @@ const UnifiedContentEditor = ({
         {/* Common fields */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
-          <Textarea value={content.description} onChange={(e) => onChange("description", e.target.value)} placeholder={t("createCourse.contentDescPlaceholder")} className="min-h-[60px] rounded-lg border-border text-xs resize-none" />
+          <Textarea
+            value={content.description}
+            onChange={(e) => isKo && onChange("description", e.target.value)}
+            readOnly={!isKo}
+            placeholder={isKo ? t("createCourse.contentDescPlaceholder") : (isAutoTranslating ? "번역 중..." : "한국어 설명 입력 시 자동 번역됩니다")}
+            className={`min-h-[60px] rounded-lg border-border text-xs resize-none ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          />
         </div>
 
         <div className="flex items-center gap-6">
@@ -1287,13 +1356,15 @@ const UnifiedContentEditor = ({
             <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
             {t("createCourse.publishToggle")}
           </label>
-          <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
-            <Languages className="h-3 w-3" />
-            {showEn ? t("course.koTab", "한국어") : "English"}
-          </button>
+          {isKo && (
+            <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
+              <Languages className="h-3 w-3" />
+              {showEn ? t("course.koTab", "한국어") : "English"}
+            </button>
+          )}
         </div>
 
-        {showEn && (
+        {isKo && showEn && (
           <div className="space-y-3 p-3 rounded-lg bg-accent/50 border border-border">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-medium text-muted-foreground uppercase">English</span>
