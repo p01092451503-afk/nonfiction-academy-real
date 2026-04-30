@@ -377,24 +377,9 @@ const CreateCourse = () => {
     await (supabase.from("course_drafts" as any) as any).delete().eq("user_id", user.id);
   }, [user]);
 
+  // 4-language fixed structure: addContent is disabled (always 4 slots).
   const addContent = () => {
-    setContents((prev) => [
-      ...prev,
-      {
-        tempId: crypto.randomUUID(),
-        title: "",
-        description: "",
-        content_type: "video",
-        video_url: "",
-        video_provider: "",
-        duration_minutes: null,
-        is_preview: false,
-        is_published: true,
-        source: "video",
-        enTitle: "",
-        enDescription: "",
-      },
-    ]);
+    /* no-op: 1 강의 = 4 차시 고정 (KO/EN/ZH-CN/JA) */
   };
 
   const updateContent = (tempId: string, field: keyof ContentItem, value: any) => {
