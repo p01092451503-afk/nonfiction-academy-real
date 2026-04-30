@@ -709,19 +709,25 @@ const CreateCourse = () => {
       }
 
       if (contents.length > 0) {
-        const contentRows = contents.map((c, idx) => ({
-          course_id: course.id,
-          title: c.title || `Lesson ${idx + 1}`,
-          description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-          content_type: c.content_type,
-          video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
-          video_provider: c.video_provider || null,
-          duration_minutes: c.duration_minutes,
-          order_index: idx,
-          is_preview: c.is_preview,
-          is_published: c.is_published,
-          language_code: c.language_code,
-        }));
+        // KO 차시의 공통 옵션을 다른 언어 차시로 복사
+        const koContent = contents.find((c) => c.language_code === "ko");
+        const contentRows = contents.map((c, idx) => {
+          const isKoRow = c.language_code === "ko";
+          const sharedDesc = isKoRow ? c.description : (koContent?.description ?? c.description);
+          return {
+            course_id: course.id,
+            title: c.title || `Lesson ${idx + 1}`,
+            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: sharedDesc || "" })}` : (sharedDesc || null),
+            content_type: c.content_type,
+            video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
+            video_provider: c.video_provider || null,
+            duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
+            order_index: idx,
+            is_preview: isKoRow ? c.is_preview : (koContent?.is_preview ?? c.is_preview),
+            is_published: isKoRow ? c.is_published : (koContent?.is_published ?? c.is_published),
+            language_code: c.language_code,
+          };
+        });
         const { data: insertedContents, error: contentError } = await supabase
           .from("course_contents")
           .insert(contentRows)
