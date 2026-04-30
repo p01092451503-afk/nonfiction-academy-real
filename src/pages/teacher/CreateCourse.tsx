@@ -602,7 +602,7 @@ const CreateCourse = () => {
         const koContent = contents.find((c) => c.language_code === "ko");
         const contentRows = contents.map((c, idx) => {
           const isKoRow = c.language_code === "ko";
-          const sharedDesc = isKoRow ? c.description : (koContent?.description ?? c.description);
+          // description: 비-KO 슬롯은 자체 값(자동번역 또는 수동수정) 사용
           return {
             course_id: editCourseId!,
             title: c.title || `Lesson ${idx + 1}`,
