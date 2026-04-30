@@ -901,44 +901,34 @@ const CreateCourse = () => {
           </div>
         </div>
 
-        {/* Contents */}
+        {/* Contents — 1 강의 = 4 차시 (KO/EN/ZH-CN/JA) 고정 */}
         <div className="bg-accent/50 border border-accent rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">{t("createCourse.contentSectionTitle")}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t("createCourse.contentSectionHint")}</p>
-            </div>
-            <Button type="button" variant="outline" size="sm" className="rounded-xl gap-2" onClick={addContent}>
-              <Plus className="h-3.5 w-3.5" /> {t("createCourse.addContentBtn")}
-            </Button>
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              {t("createCourse.lessonSectionTitle", "차시 (4개 언어 고정)")}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {t(
+                "createCourse.lessonSectionHint",
+                "1차시 한국어 · 2차시 영어 · 3차시 중국어 간체 · 4차시 일본어로 자동 구성됩니다. 각 언어별로 망고보드 또는 미디어 패키지 콘텐츠를 등록하세요."
+              )}
+            </p>
           </div>
 
-          {contents.length === 0 ? (
-            <div className="stat-card text-center py-10 border-dashed">
-              <div className="h-12 w-12 rounded-xl bg-accent mx-auto flex items-center justify-center mb-3">
-                <MonitorPlay className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">{t("createCourse.emptyContentHint")}</p>
-              <Button type="button" variant="outline" size="sm" className="rounded-xl gap-2" onClick={addContent}>
-                <Plus className="h-3.5 w-3.5" /> {t("createCourse.addFirstContent")}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {contents.map((content, idx) => (
-                <UnifiedContentEditor
-                  key={content.tempId}
-                  content={content}
-                  index={idx}
-                  onChange={(field, value) => updateContent(content.tempId, field, value)}
-                  onRemove={() => removeContent(content.tempId)}
-                  contentTypeOptions={contentTypeOptions}
-                  videoProviderOptions={videoProviderOptions}
-                  t={t}
-                />
-              ))}
-            </div>
-          )}
+          <div className="space-y-3">
+            {contents.map((content, idx) => (
+              <UnifiedContentEditor
+                key={content.tempId}
+                content={content}
+                index={idx}
+                onChange={(field, value) => updateContent(content.tempId, field, value)}
+                onRemove={() => { /* fixed 4 slots — removal disabled */ }}
+                contentTypeOptions={contentTypeOptions}
+                videoProviderOptions={videoProviderOptions}
+                t={t}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Submit */}
