@@ -661,7 +661,7 @@ const CreateCourse = () => {
       if (contents.length > 0) {
         const contentRows = contents.map((c, idx) => ({
           course_id: course.id,
-          title: c.title,
+          title: c.title || `Lesson ${idx + 1}`,
           description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
           content_type: c.content_type,
           video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
@@ -670,6 +670,7 @@ const CreateCourse = () => {
           order_index: idx,
           is_preview: c.is_preview,
           is_published: c.is_published,
+          language_code: c.language_code,
         }));
         const { data: insertedContents, error: contentError } = await supabase
           .from("course_contents")
