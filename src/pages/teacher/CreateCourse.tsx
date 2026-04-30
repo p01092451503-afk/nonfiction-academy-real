@@ -1051,6 +1051,7 @@ const UnifiedContentEditor = ({
 
   const lessonLang = (content.language_code || LESSON_LANGS[index] || "ko") as LessonLang;
   const langLabel = LESSON_LANG_LABELS[lessonLang];
+  const isKo = lessonLang === "ko";
 
   return (
     <div className="stat-card !p-4 space-y-4">
@@ -1067,11 +1068,27 @@ const UnifiedContentEditor = ({
         </Badge>
         <Input
           value={content.title}
-          onChange={(e) => onChange("title", e.target.value)}
-          placeholder={`${langLabel} 차시 제목`}
-          className="flex-1 h-9 rounded-lg border-border text-sm"
+          onChange={(e) => isKo && onChange("title", e.target.value)}
+          readOnly={!isKo}
+          placeholder={isKo ? `${langLabel} 차시 제목` : (isAutoTranslating ? "번역 중..." : "한국어 제목 입력 시 자동 번역")}
+          className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          title={!isKo ? "한국어(1차시) 제목을 입력하면 자동으로 번역됩니다" : undefined}
         />
+        {!isKo && isAutoTranslating && (
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 inline-flex items-center gap-1">
+            <Languages className="h-3 w-3 animate-pulse" /> 번역 중
+          </span>
+        )}
       </div>
+
+      {!isKo && (
+        <div className="pl-14 -mt-2">
+          <p className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+            <Languages className="h-3 w-3" />
+            제목·설명은 한국어 차시(1차시)에서 자동 번역됩니다. 망고보드 링크 또는 미디어 패키지만 입력하세요.
+          </p>
+        </div>
+      )}
 
       <div className="pl-14 space-y-3">
         {/* Source selector: 망고보드 / 미디어 패키지 only */}
