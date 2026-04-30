@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Video, FileText, BarChart3,
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
-  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown,
+  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw,
 } from "lucide-react";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,7 @@ interface ContentItem {
   card_urls?: string[];
   package_items?: PackageItemDraft[];
   language_code: LessonLang;
+  manual_translation_override?: boolean; // true: 관리자가 직접 수정한 번역 (자동번역 덮어쓰기 방지)
 }
 
 // Helper: build the 4 default empty lesson slots
@@ -486,6 +487,7 @@ const CreateCourse = () => {
         setContents((prev) =>
           prev.map((c) => {
             if (c.language_code === "ko") return c;
+            if (c.manual_translation_override) return c; // 수동 편집 슬롯은 보존
             const r = results.find((x) => x.lang === c.language_code);
             if (!r) return c;
             return {
@@ -501,7 +503,7 @@ const CreateCourse = () => {
     }, 1200);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [koTitle, koDesc]);
+  }, [koTitle, koDesc, contents.filter((c) => c.language_code !== "ko").map((c) => c.manual_translation_override ? "1" : "0").join(",")]);
 
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
@@ -600,11 +602,11 @@ const CreateCourse = () => {
         const koContent = contents.find((c) => c.language_code === "ko");
         const contentRows = contents.map((c, idx) => {
           const isKoRow = c.language_code === "ko";
-          const sharedDesc = isKoRow ? c.description : (koContent?.description ?? c.description);
+          // description: 비-KO 슬롯은 자체 값(자동번역 또는 수동수정) 사용
           return {
             course_id: editCourseId!,
             title: c.title || `Lesson ${idx + 1}`,
-            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: sharedDesc || "" })}` : (sharedDesc || null),
+            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
             content_type: c.content_type,
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
@@ -713,11 +715,11 @@ const CreateCourse = () => {
         const koContent = contents.find((c) => c.language_code === "ko");
         const contentRows = contents.map((c, idx) => {
           const isKoRow = c.language_code === "ko";
-          const sharedDesc = isKoRow ? c.description : (koContent?.description ?? c.description);
+          // description: 비-KO 슬롯은 자체 값(자동번역 또는 수동수정) 사용
           return {
             course_id: course.id,
             title: c.title || `Lesson ${idx + 1}`,
-            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: sharedDesc || "" })}` : (sharedDesc || null),
+            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
             content_type: c.content_type,
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
@@ -1080,11 +1082,17 @@ const UnifiedContentEditor = ({
         </Badge>
         <Input
           value={content.title}
-          onChange={(e) => isKo && onChange("title", e.target.value)}
-          readOnly={!isKo}
+          onChange={(e) => {
+            if (isKo) {
+              onChange("title", e.target.value);
+            } else if (content.manual_translation_override) {
+              onChange("title", e.target.value);
+            }
+          }}
+          readOnly={!isKo && !content.manual_translation_override}
           placeholder={isKo ? `${langLabel} 차시 제목` : (isAutoTranslating ? "번역 중..." : "한국어 제목 입력 시 자동 번역")}
-          className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
-          title={!isKo ? "한국어(1차시) 제목을 입력하면 자동으로 번역됩니다" : undefined}
+          className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo && !content.manual_translation_override ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          title={!isKo && !content.manual_translation_override ? "자동 번역됨 — 수정하려면 잠금을 해제하세요" : undefined}
         />
         {!isKo && isAutoTranslating && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 inline-flex items-center gap-1">
@@ -1094,11 +1102,36 @@ const UnifiedContentEditor = ({
       </div>
 
       {!isKo && (
-        <div className="pl-14 -mt-2">
-          <p className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
-            <Languages className="h-3 w-3" />
-            제목·설명은 한국어 차시(1차시)에서 자동 번역됩니다. 망고보드 링크 또는 미디어 패키지만 입력하세요.
-          </p>
+        <div className="pl-14 -mt-2 flex items-center justify-between gap-2 flex-wrap">
+          <div className="inline-flex items-center gap-1.5">
+            {content.manual_translation_override ? (
+              <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
+                <Pencil className="h-2.5 w-2.5" /> 직접 수정됨
+              </Badge>
+            ) : isAutoTranslating ? (
+              <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-border bg-muted/40">
+                <Languages className="h-2.5 w-2.5 animate-pulse" /> 자동 번역 중…
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-border bg-muted/40 text-muted-foreground">
+                <Lock className="h-2.5 w-2.5" /> 자동 번역됨 (읽기 전용)
+              </Badge>
+            )}
+            <span className="text-[10px] text-muted-foreground">
+              한국어(1차시) 제목·설명을 자동 번역합니다.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange("manual_translation_override", !content.manual_translation_override)}
+            className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+          >
+            {content.manual_translation_override ? (
+              <><RotateCcw className="h-3 w-3" /> 자동번역으로 되돌리기</>
+            ) : (
+              <><Pencil className="h-3 w-3" /> 직접 수정</>
+            )}
+          </button>
         </div>
       )}
 
@@ -1353,34 +1386,56 @@ const UnifiedContentEditor = ({
           </>
         )}
 
-        {/* Common fields - KO slot only (다른 언어 차시는 KO 값을 자동 동기화) */}
-        {isKo && (
-          <>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
-              <Textarea
-                value={content.description}
-                onChange={(e) => onChange("description", e.target.value)}
-                placeholder={t("createCourse.contentDescPlaceholder")}
-                className="min-h-[60px] rounded-lg border-border text-xs resize-none"
-              />
-            </div>
+        {/* Description: KO 입력 → 자동번역. 비-KO는 잠금/수정 가능 */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
+            {!isKo && (
+              content.manual_translation_override ? (
+                <Badge variant="outline" className="rounded-md text-[10px] gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
+                  <Pencil className="h-2.5 w-2.5" /> 직접 수정됨
+                </Badge>
+              ) : isAutoTranslating ? (
+                <Badge variant="outline" className="rounded-md text-[10px] gap-1">
+                  <Languages className="h-2.5 w-2.5 animate-pulse" /> 자동 번역 중…
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="rounded-md text-[10px] gap-1 text-muted-foreground">
+                  <Lock className="h-2.5 w-2.5" /> 자동 번역됨
+                </Badge>
+              )
+            )}
+          </div>
+          <Textarea
+            value={content.description}
+            onChange={(e) => {
+              if (isKo || content.manual_translation_override) onChange("description", e.target.value);
+            }}
+            readOnly={!isKo && !content.manual_translation_override}
+            placeholder={
+              isKo
+                ? t("createCourse.contentDescPlaceholder")
+                : (isAutoTranslating ? "번역 중..." : "한국어 설명 입력 시 자동 번역됩니다")
+            }
+            className={`min-h-[60px] rounded-lg border-border text-xs resize-none ${!isKo && !content.manual_translation_override ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          />
+        </div>
 
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
-                {t("createCourse.allowPreview")}
-              </label>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
-                {t("createCourse.publishToggle")}
-              </label>
-              <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
-                <Languages className="h-3 w-3" />
-                {showEn ? t("course.koTab", "한국어") : "English"}
-              </button>
-            </div>
-          </>
+        {isKo && (
+          <div className="flex items-center gap-6">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
+              {t("createCourse.allowPreview")}
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
+              {t("createCourse.publishToggle")}
+            </label>
+            <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
+              <Languages className="h-3 w-3" />
+              {showEn ? t("course.koTab", "한국어") : "English"}
+            </button>
+          </div>
         )}
 
         {isKo && showEn && (
