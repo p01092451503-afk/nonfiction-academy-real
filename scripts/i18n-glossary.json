@@ -1,0 +1,177 @@
+{
+  "$schema": "Glossary of canonical company/product terms per locale.",
+  "$notes": [
+    "Conservative aliases only — must be unambiguous.",
+    "`forbidContext` patterns prevent replacement when those substrings appear adjacent (before/after).",
+    "`wordBoundary: true` enforces \\b boundaries (use only for Latin-script aliases).",
+    "Brands stay identical across locales — never translate."
+  ],
+  "brands": {
+    "NONFICTION": { "ko": "NONFICTION", "en": "NONFICTION", "ja": "NONFICTION", "zh-CN": "NONFICTION" },
+    "Lovable": { "ko": "Lovable", "en": "Lovable", "ja": "Lovable", "zh-CN": "Lovable" },
+    "YouTube": { "ko": "YouTube", "en": "YouTube", "ja": "YouTube", "zh-CN": "YouTube" },
+    "Vimeo": { "ko": "Vimeo", "en": "Vimeo", "ja": "Vimeo", "zh-CN": "Vimeo" },
+    "Kollus": { "ko": "Kollus", "en": "Kollus", "ja": "Kollus", "zh-CN": "Kollus" },
+    "Bunny CDN": { "ko": "Bunny CDN", "en": "Bunny CDN", "ja": "Bunny CDN", "zh-CN": "Bunny CDN" },
+    "Cloudflare Stream": { "ko": "Cloudflare Stream", "en": "Cloudflare Stream", "ja": "Cloudflare Stream", "zh-CN": "Cloudflare Stream" }
+  },
+  "terms": {
+    "강의": {
+      "en": "Course", "ja": "コース", "zh-CN": "课程",
+      "aliases": {
+        "ja": [{ "from": "講義" }, { "from": "レクチャー" }],
+        "zh-CN": [{ "from": "讲座" }, { "from": "讲义" }]
+      }
+    },
+    "차시": {
+      "en": "Lesson", "ja": "レッスン", "zh-CN": "课时",
+      "aliases": {
+        "ja": [{ "from": "授業回" }],
+        "zh-CN": [{ "from": "讲次" }, { "from": "课节" }]
+      }
+    },
+    "수강생": {
+      "en": "Student", "ja": "受講生", "zh-CN": "学员",
+      "aliases": {
+        "ja": [{ "from": "受講者" }, { "from": "生徒" }],
+        "zh-CN": [
+          { "from": "学习者" },
+          { "from": "学生", "forbidContext": { "before": "", "after": "" } }
+        ]
+      }
+    },
+    "교사": {
+      "en": "Teacher", "ja": "講師", "zh-CN": "讲师",
+      "aliases": {
+        "ja": [{ "from": "教師" }, { "from": "ティーチャー" }],
+        "zh-CN": [{ "from": "老师" }]
+      }
+    },
+    "관리자": {
+      "en": "Admin", "ja": "管理者", "zh-CN": "管理员",
+      "aliases": {
+        "ja": [{ "from": "アドミニストレーター" }, { "from": "アドミン" }],
+        "zh-CN": [{ "from": "管理人" }]
+      }
+    },
+    "수료": {
+      "en": "Completion", "ja": "修了", "zh-CN": "结业",
+      "aliases": {
+        "ja": [],
+        "zh-CN": [{ "from": "毕业" }]
+      }
+    },
+    "과제": {
+      "en": "Assignment", "ja": "課題", "zh-CN": "作业",
+      "aliases": {
+        "ja": [{ "from": "宿題" }, { "from": "アサインメント" }],
+        "zh-CN": [{ "from": "习题" }]
+      }
+    },
+    "평가": {
+      "en": "Assessment", "ja": "評価", "zh-CN": "评估",
+      "aliases": {
+        "ja": [{ "from": "アセスメント" }],
+        "zh-CN": [{ "from": "评价" }, { "from": "考核" }]
+      }
+    },
+    "출석": {
+      "en": "Attendance", "ja": "出席", "zh-CN": "出勤",
+      "aliases": {
+        "ja": [{ "from": "出欠" }],
+        "zh-CN": [{ "from": "考勤" }]
+      }
+    },
+    "진도": {
+      "en": "Progress", "ja": "進捗", "zh-CN": "进度",
+      "aliases": {
+        "ja": [{ "from": "プログレス" }],
+        "zh-CN": [{ "from": "进展" }]
+      }
+    },
+    "대시보드": {
+      "en": "Dashboard", "ja": "ダッシュボード", "zh-CN": "仪表板",
+      "aliases": {
+        "ja": [{ "from": "管理画面" }],
+        "zh-CN": [{ "from": "仪表盘" }, { "from": "控制台" }]
+      }
+    },
+    "지점": {
+      "en": "Branch", "ja": "支店", "zh-CN": "分公司",
+      "aliases": {
+        "ja": [{ "from": "ブランチ" }, { "from": "支社" }],
+        "zh-CN": [{ "from": "分支" }, { "from": "分部" }]
+      }
+    },
+    "부서": {
+      "en": "Team", "ja": "部署", "zh-CN": "部门",
+      "aliases": {
+        "ja": [{ "from": "部門" }, { "from": "チーム", "forbidContext": { "before": "", "after": "" } }],
+        "zh-CN": [{ "from": "小组" }]
+      }
+    },
+    "공지": {
+      "en": "Announcement", "ja": "お知らせ", "zh-CN": "公告",
+      "aliases": {
+        "ja": [{ "from": "告知" }, { "from": "アナウンス" }],
+        "zh-CN": [{ "from": "通告" }]
+      }
+    },
+    "게시판": {
+      "en": "Board", "ja": "掲示板", "zh-CN": "公告栏",
+      "aliases": {
+        "ja": [{ "from": "ボード", "forbidContext": { "before": "ダッシュ", "after": "" } }],
+        "zh-CN": [{ "from": "留言板" }, { "from": "看板" }]
+      }
+    },
+    "자료실": {
+      "en": "Resources", "ja": "資料室", "zh-CN": "资料库",
+      "aliases": {
+        "ja": [{ "from": "ライブラリー" }],
+        "zh-CN": [{ "from": "资源中心" }, { "from": "资源库" }]
+      }
+    },
+    "로그인": {
+      "en": "Sign in", "ja": "ログイン", "zh-CN": "登录",
+      "aliases": {
+        "ja": [{ "from": "サインイン" }],
+        "zh-CN": [{ "from": "登入" }, { "from": "登陆" }]
+      }
+    },
+    "로그아웃": {
+      "en": "Sign out", "ja": "ログアウト", "zh-CN": "退出登录",
+      "aliases": {
+        "ja": [{ "from": "サインアウト" }],
+        "zh-CN": [{ "from": "登出" }]
+      }
+    },
+    "회원가입": {
+      "en": "Sign up", "ja": "新規登録", "zh-CN": "注册",
+      "aliases": {
+        "ja": [{ "from": "サインアップ" }, { "from": "会員登録" }],
+        "zh-CN": []
+      }
+    },
+    "필수": {
+      "en": "Required", "ja": "必須", "zh-CN": "必修",
+      "aliases": {
+        "ja": [],
+        "zh-CN": []
+      }
+    },
+    "선택": {
+      "en": "Optional", "ja": "選択", "zh-CN": "选修",
+      "aliases": {
+        "ja": [{ "from": "オプション", "forbidContext": { "before": "", "after": "" } }],
+        "zh-CN": []
+      }
+    },
+    "임시저장": {
+      "en": "Save draft", "ja": "下書き保存", "zh-CN": "保存草稿",
+      "aliases": {
+        "ja": [{ "from": "一時保存" }],
+        "zh-CN": [{ "from": "临时保存" }, { "from": "暂存" }]
+      }
+    }
+  }
+}

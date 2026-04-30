@@ -26,6 +26,36 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = path.resolve(__dirname, "../src/i18n/locales");
 const SOURCE_LOCALE = "ko";
 const TARGET_LOCALES = ["en", "ja", "zh-CN"];
+const GLOSSARY_PATH = path.resolve(__dirname, "i18n-glossary.json");
+
+// --- Glossary rules ({alias, canonical, koTerm, re}) per locale ---
+const GLOSSARY_RULES = (() => {
+  const out = {};
+  if (!fs.existsSync(GLOSSARY_PATH)) return out;
+  const gloss = JSON.parse(fs.readFileSync(GLOSSARY_PATH, "utf8"));
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const isLatin = (s) => /^[\x20-\x7E]+$/.test(s);
+  for (const locale of TARGET_LOCALES) {
+    const rules = [];
+    for (const [koTerm, entry] of Object.entries(gloss.terms || {})) {
+      const canonical = entry[locale];
+      if (!canonical) continue;
+      for (const a of (entry.aliases && entry.aliases[locale]) || []) {
+        const obj = typeof a === "string" ? { from: a } : a;
+        if (!obj.from || obj.from === canonical) continue;
+        let pattern = esc(obj.from);
+        if (isLatin(obj.from)) pattern = `\\b${pattern}\\b`;
+        if (obj.forbidContext?.before) pattern = `(?<!${esc(obj.forbidContext.before)})` + pattern;
+        if (obj.forbidContext?.after) pattern = pattern + `(?!${esc(obj.forbidContext.after)})`;
+        try {
+          rules.push({ alias: obj.from, canonical, koTerm, re: new RegExp(pattern) });
+        } catch { /* skip invalid */ }
+      }
+    }
+    out[locale] = rules;
+  }
+  return out;
+})();
 
 // --- CLI args ---
 const args = process.argv.slice(2);
@@ -211,6 +241,17 @@ function check(locale, key, src, tgt) {
     if (re.test(tgt)) {
       issues.push({ severity: "medium", code: "mt-tell", msg: `Suspicious pattern: ${re}` });
       break;
+    }
+  }
+
+  // 7. Glossary consistency — flag aliases that should be the canonical term
+  for (const r of GLOSSARY_RULES[locale] || []) {
+    if (r.re.test(tgt)) {
+      issues.push({
+        severity: "medium",
+        code: "glossary-violation",
+        msg: `Use canonical "${r.canonical}" instead of "${r.alias}" (${r.koTerm})`,
+      });
     }
   }
 
