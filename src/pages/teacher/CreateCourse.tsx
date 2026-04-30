@@ -596,19 +596,25 @@ const CreateCourse = () => {
       }
 
       if (contents.length > 0) {
-        const contentRows = contents.map((c, idx) => ({
-          course_id: editCourseId!,
-          title: c.title || `Lesson ${idx + 1}`,
-          description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-          content_type: c.content_type,
-          video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
-          video_provider: c.video_provider || null,
-          duration_minutes: c.duration_minutes,
-          order_index: idx,
-          is_preview: c.is_preview,
-          is_published: c.is_published,
-          language_code: c.language_code,
-        }));
+        // KO 차시의 공통 옵션을 다른 언어 차시로 복사
+        const koContent = contents.find((c) => c.language_code === "ko");
+        const contentRows = contents.map((c, idx) => {
+          const isKoRow = c.language_code === "ko";
+          const sharedDesc = isKoRow ? c.description : (koContent?.description ?? c.description);
+          return {
+            course_id: editCourseId!,
+            title: c.title || `Lesson ${idx + 1}`,
+            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: sharedDesc || "" })}` : (sharedDesc || null),
+            content_type: c.content_type,
+            video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
+            video_provider: c.video_provider || null,
+            duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
+            order_index: idx,
+            is_preview: isKoRow ? c.is_preview : (koContent?.is_preview ?? c.is_preview),
+            is_published: isKoRow ? c.is_published : (koContent?.is_published ?? c.is_published),
+            language_code: c.language_code,
+          };
+        });
         const { data: insertedContents, error: contentError } = await supabase
           .from("course_contents")
           .insert(contentRows)
@@ -703,19 +709,25 @@ const CreateCourse = () => {
       }
 
       if (contents.length > 0) {
-        const contentRows = contents.map((c, idx) => ({
-          course_id: course.id,
-          title: c.title || `Lesson ${idx + 1}`,
-          description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-          content_type: c.content_type,
-          video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
-          video_provider: c.video_provider || null,
-          duration_minutes: c.duration_minutes,
-          order_index: idx,
-          is_preview: c.is_preview,
-          is_published: c.is_published,
-          language_code: c.language_code,
-        }));
+        // KO 차시의 공통 옵션을 다른 언어 차시로 복사
+        const koContent = contents.find((c) => c.language_code === "ko");
+        const contentRows = contents.map((c, idx) => {
+          const isKoRow = c.language_code === "ko";
+          const sharedDesc = isKoRow ? c.description : (koContent?.description ?? c.description);
+          return {
+            course_id: course.id,
+            title: c.title || `Lesson ${idx + 1}`,
+            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: sharedDesc || "" })}` : (sharedDesc || null),
+            content_type: c.content_type,
+            video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
+            video_provider: c.video_provider || null,
+            duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
+            order_index: idx,
+            is_preview: isKoRow ? c.is_preview : (koContent?.is_preview ?? c.is_preview),
+            is_published: isKoRow ? c.is_published : (koContent?.is_published ?? c.is_published),
+            language_code: c.language_code,
+          };
+        });
         const { data: insertedContents, error: contentError } = await supabase
           .from("course_contents")
           .insert(contentRows)
@@ -1157,10 +1169,12 @@ const UnifiedContentEditor = ({
               <p className="text-[10px] text-muted-foreground">{t("createCourse.mangoHint")}</p>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
-              <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
-            </div>
+            {isKo && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
+                <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
+              </div>
+            )}
 
             {showPreview && isValidMangoboard && (
               <div className="rounded-xl border border-border overflow-hidden bg-muted/30">
@@ -1267,10 +1281,12 @@ const UnifiedContentEditor = ({
               </button>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
-              <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
-            </div>
+            {isKo && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
+                <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
+              </div>
+            )}
 
             {/* Card previews */}
             {(content.card_urls || []).filter(u => u).length > 0 && (
@@ -1293,7 +1309,7 @@ const UnifiedContentEditor = ({
         ) : (
           /* ── Video fields ── */
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className={isKo ? "grid grid-cols-2 gap-3" : ""}>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.typeLabel")}</label>
                 <Select value={content.content_type} onValueChange={(v) => onChange("content_type", v as ContentType)}>
@@ -1305,10 +1321,12 @@ const UnifiedContentEditor = ({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
-                <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
-              </div>
+              {isKo && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.durationLabel")}</label>
+                  <Input type="number" value={content.duration_minutes ?? ""} onChange={(e) => onChange("duration_minutes", e.target.value ? parseInt(e.target.value) : null)} placeholder={t("createCourse.durationPlaceholder")} className="h-9 rounded-lg border-border text-xs" min="0" />
+                </div>
+              )}
             </div>
 
             {(content.content_type === "video" || content.content_type === "live") && (
@@ -1335,34 +1353,35 @@ const UnifiedContentEditor = ({
           </>
         )}
 
-        {/* Common fields */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
-          <Textarea
-            value={content.description}
-            onChange={(e) => isKo && onChange("description", e.target.value)}
-            readOnly={!isKo}
-            placeholder={isKo ? t("createCourse.contentDescPlaceholder") : (isAutoTranslating ? "번역 중..." : "한국어 설명 입력 시 자동 번역됩니다")}
-            className={`min-h-[60px] rounded-lg border-border text-xs resize-none ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
-          />
-        </div>
+        {/* Common fields - KO slot only (다른 언어 차시는 KO 값을 자동 동기화) */}
+        {isKo && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
+              <Textarea
+                value={content.description}
+                onChange={(e) => onChange("description", e.target.value)}
+                placeholder={t("createCourse.contentDescPlaceholder")}
+                className="min-h-[60px] rounded-lg border-border text-xs resize-none"
+              />
+            </div>
 
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
-            {t("createCourse.allowPreview")}
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
-            {t("createCourse.publishToggle")}
-          </label>
-          {isKo && (
-            <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
-              <Languages className="h-3 w-3" />
-              {showEn ? t("course.koTab", "한국어") : "English"}
-            </button>
-          )}
-        </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
+                {t("createCourse.allowPreview")}
+              </label>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
+                {t("createCourse.publishToggle")}
+              </label>
+              <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
+                <Languages className="h-3 w-3" />
+                {showEn ? t("course.koTab", "한국어") : "English"}
+              </button>
+            </div>
+          </>
+        )}
 
         {isKo && showEn && (
           <div className="space-y-3 p-3 rounded-lg bg-accent/50 border border-border">
