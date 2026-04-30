@@ -225,7 +225,37 @@ const CreateCourse = () => {
       }
 
       if (courseContents?.length) {
-        setContents(courseContents.map((c: any) => {
+        // Map existing contents into 4 language slots (KO/EN/ZH-CN/JA).
+        // Priority: existing language_code → fall back to order_index → fill missing slots empty.
+        const byLang = new Map<LessonLang, any>();
+        courseContents.forEach((c: any, idx: number) => {
+          const lang: LessonLang =
+            (LESSON_LANGS as readonly string[]).includes(c.language_code)
+              ? (c.language_code as LessonLang)
+              : (LESSON_LANGS[idx] || "ko");
+          if (!byLang.has(lang)) byLang.set(lang, c);
+        });
+
+        const slots: ContentItem[] = LESSON_LANGS.map((lang) => {
+          const c = byLang.get(lang);
+          if (!c) {
+            return {
+              tempId: crypto.randomUUID(),
+              title: "",
+              description: "",
+              content_type: "document" as ContentType,
+              video_url: "",
+              video_provider: "custom" as VideoProvider,
+              duration_minutes: null,
+              is_preview: false,
+              is_published: true,
+              source: "mangoboard" as ContentSource,
+              enTitle: "",
+              enDescription: "",
+              package_items: [],
+              language_code: lang,
+            };
+          }
           const en = i18nMap.get(c.id);
           const isCard = c.description?.startsWith("[card-content]");
           const isPackage = c.content_type === "media_package";
@@ -243,23 +273,32 @@ const CreateCourse = () => {
           } else {
             cleanDesc = c.description || "";
           }
+          // Force source into mangoboard or package only
+          const inferredSource: ContentSource = isPackage
+            ? "package"
+            : "mangoboard";
           return {
             tempId: c.id,
             title: c.title || "",
             description: cleanDesc,
-            content_type: c.content_type || "video",
+            content_type: (isPackage ? "media_package" : "document") as ContentType,
             video_url: c.video_url || "",
-            video_provider: c.video_provider || "",
+            video_provider: (c.video_provider || "custom") as VideoProvider,
             duration_minutes: c.duration_minutes,
             is_preview: c.is_preview || false,
-            is_published: c.is_published || false,
-            source: isPackage ? "package" as ContentSource : (isCard ? "card" as ContentSource : (c.video_url?.includes("mangoboard") ? "mangoboard" as ContentSource : "video" as ContentSource)),
+            is_published: c.is_published ?? true,
+            source: inferredSource,
             enTitle: en?.title || "",
             enDescription: en?.description || "",
-            card_urls: cardUrls.length > 0 ? cardUrls : (isCard && c.video_url ? [c.video_url] : []),
-            package_items: isPackage ? (packageItemsMap.get(c.id) || []) : undefined,
+            card_urls: cardUrls,
+            package_items: isPackage ? (packageItemsMap.get(c.id) || []) : [],
+            language_code: lang,
           };
-        }));
+        });
+        setContents(slots);
+      } else {
+        // No existing contents → seed 4 empty language slots
+        setContents(buildDefaultLessonSlots());
       }
       setEditDataLoaded(true);
       setDraftLoaded(true);
