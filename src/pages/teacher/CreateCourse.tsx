@@ -459,6 +459,50 @@ const CreateCourse = () => {
     setContents((prev) => prev.filter((c) => c.tempId !== tempId));
   };
 
+  /* ── Auto-translate KO lesson title/description into EN/ZH-CN/JA slots ──
+     Triggered with debounce whenever the KO slot's title or description changes. */
+  const koSlot = contents.find((c) => c.language_code === "ko");
+  const koTitle = koSlot?.title || "";
+  const koDesc = koSlot?.description || "";
+  const [autoTranslating, setAutoTranslating] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!koTitle && !koDesc) return;
+    const handle = setTimeout(async () => {
+      const targets: TargetLang[] = ["en", "zh-CN", "ja"];
+      // Mark all targets as translating
+      setAutoTranslating((s) => ({ ...s, en: true, "zh-CN": true, ja: true }));
+      try {
+        const results = await Promise.all(
+          targets.map(async (lang) => {
+            try {
+              const out = await translateKoTo(lang, [koTitle || "", koDesc || ""]);
+              return { lang, title: out[0] || "", description: out[1] || "" };
+            } catch {
+              return { lang, title: "", description: "" };
+            }
+          })
+        );
+        setContents((prev) =>
+          prev.map((c) => {
+            if (c.language_code === "ko") return c;
+            const r = results.find((x) => x.lang === c.language_code);
+            if (!r) return c;
+            return {
+              ...c,
+              title: r.title || c.title,
+              description: r.description || c.description,
+            };
+          })
+        );
+      } finally {
+        setAutoTranslating({});
+      }
+    }, 1200);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [koTitle, koDesc]);
+
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
     const ext = thumbnailFile.name.split(".").pop();
