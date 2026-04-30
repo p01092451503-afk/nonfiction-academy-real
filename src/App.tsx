@@ -63,6 +63,7 @@ const AdminI18n = lazyWithRetry(() => import("./pages/admin/AdminI18n"));
 const AdminSystemInfo = lazyWithRetry(() => import("./pages/admin/AdminSystemInfo"));
 const AdminTracks = lazyWithRetry(() => import("./pages/admin/AdminTracks"));
 const StudentBoard = lazyWithRetry(() => import("./pages/student/StudentBoard"));
+const StudentTracks = lazyWithRetry(() => import("./pages/student/StudentTracks"));
 const DeptAdminDashboard = lazyWithRetry(() => import("./pages/DeptAdminDashboard"));
 const CourseDetail = lazyWithRetry(() => import("./pages/CourseDetail"));
 const AdminEnrollments = lazyWithRetry(() => import("./pages/admin/AdminEnrollments"));
@@ -104,6 +105,7 @@ const AppRoutes = () => {
           <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
           <Route path="/student/announcements" element={<ProtectedRoute><StudentAnnouncements /></ProtectedRoute>} />
           <Route path="/student/board" element={<ProtectedRoute><StudentBoard /></ProtectedRoute>} />
+          <Route path="/student/tracks" element={<ProtectedRoute><StudentTracks /></ProtectedRoute>} />
 
           {/* Teacher */}
           <Route path="/teacher" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
