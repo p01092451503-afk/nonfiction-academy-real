@@ -167,8 +167,18 @@ function check(locale, key, src, tgt) {
   }
 
   if (locale === "ja") {
-    if (!RE_KANA.test(tgt) && tgt.length > 4 && /[A-Za-z\uAC00-\uD7AF\u4E00-\u9FFF]/.test(src)) {
-      issues.push({ severity: "medium", code: "ja-no-kana", msg: "JA translation has no kana (likely untranslated/Han-only)" });
+    // Only flag when source is long enough that natural Japanese would require kana.
+    // Short Han-only labels (e.g. 受講生管理) are valid Japanese.
+    if (
+      !RE_KANA.test(tgt) &&
+      RE_HAN.test(tgt) === false && // pure Han is acceptable for short labels
+      tgt.length > 4 &&
+      /[\uAC00-\uD7AF]/.test(src)
+    ) {
+      issues.push({ severity: "medium", code: "ja-no-kana", msg: "JA translation has no Japanese script" });
+    } else if (!RE_KANA.test(tgt) && RE_HAN.test(tgt) && src.length > 10) {
+      // Long source but translation is Han-only → suspicious (likely Chinese-style output)
+      issues.push({ severity: "low", code: "ja-han-only", msg: "Long JA translation is Han-only (verify it's not Chinese)" });
     }
     // English leakage in JA when source has none
     if (!RE_LATIN_WORD.test(src) && RE_LATIN_WORD.test(tgt)) {
