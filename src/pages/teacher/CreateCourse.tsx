@@ -365,8 +365,39 @@ const CreateCourse = () => {
         if (d.isMandatory != null) setIsMandatory(d.isMandatory);
         if (d.deadline) setDeadline(d.deadline);
         if (d.status) setStatus(d.status);
-        if (d.contents?.length) setContents(d.contents.map((c: any) => ({ ...c, source: c.source || (c.video_url?.includes("mangoboard") ? "mangoboard" : "video") })));
+        if (d.contents?.length) {
+          // Normalize draft contents into the 4 fixed language slots
+          const byLang = new Map<LessonLang, any>();
+          d.contents.forEach((c: any, idx: number) => {
+            const lang: LessonLang =
+              (LESSON_LANGS as readonly string[]).includes(c.language_code)
+                ? (c.language_code as LessonLang)
+                : (LESSON_LANGS[idx] || "ko");
+            if (!byLang.has(lang)) byLang.set(lang, c);
+          });
+          const slots = LESSON_LANGS.map((lang) => {
+            const existing = byLang.get(lang);
+            const base = buildDefaultLessonSlots().find((s) => s.language_code === lang)!;
+            if (!existing) return base;
+            const src: ContentSource =
+              existing.source === "package" || existing.content_type === "media_package"
+                ? "package"
+                : "mangoboard";
+            return {
+              ...base,
+              ...existing,
+              source: src,
+              content_type: src === "package" ? ("media_package" as ContentType) : ("document" as ContentType),
+              language_code: lang,
+            } as ContentItem;
+          });
+          setContents(slots);
+        } else {
+          setContents(buildDefaultLessonSlots());
+        }
         toast({ title: t("createCourse.draftRestored"), description: t("createCourse.draftRestoredDesc") });
+      } else if (!isEditMode) {
+        setContents(buildDefaultLessonSlots());
       }
       setDraftLoaded(true);
     })();
