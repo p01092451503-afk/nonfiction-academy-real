@@ -606,7 +606,7 @@ const CreateCourse = () => {
           return {
             course_id: editCourseId!,
             title: c.title || `Lesson ${idx + 1}`,
-            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: sharedDesc || "" })}` : (sharedDesc || null),
+            description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
             content_type: c.content_type,
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
