@@ -1082,11 +1082,17 @@ const UnifiedContentEditor = ({
         </Badge>
         <Input
           value={content.title}
-          onChange={(e) => isKo && onChange("title", e.target.value)}
-          readOnly={!isKo}
+          onChange={(e) => {
+            if (isKo) {
+              onChange("title", e.target.value);
+            } else if (content.manual_translation_override) {
+              onChange("title", e.target.value);
+            }
+          }}
+          readOnly={!isKo && !content.manual_translation_override}
           placeholder={isKo ? `${langLabel} 차시 제목` : (isAutoTranslating ? "번역 중..." : "한국어 제목 입력 시 자동 번역")}
-          className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
-          title={!isKo ? "한국어(1차시) 제목을 입력하면 자동으로 번역됩니다" : undefined}
+          className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo && !content.manual_translation_override ? "bg-muted/40 cursor-not-allowed" : ""}`}
+          title={!isKo && !content.manual_translation_override ? "자동 번역됨 — 수정하려면 잠금을 해제하세요" : undefined}
         />
         {!isKo && isAutoTranslating && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 inline-flex items-center gap-1">
@@ -1096,11 +1102,36 @@ const UnifiedContentEditor = ({
       </div>
 
       {!isKo && (
-        <div className="pl-14 -mt-2">
-          <p className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
-            <Languages className="h-3 w-3" />
-            제목·설명은 한국어 차시(1차시)에서 자동 번역됩니다. 망고보드 링크 또는 미디어 패키지만 입력하세요.
-          </p>
+        <div className="pl-14 -mt-2 flex items-center justify-between gap-2 flex-wrap">
+          <div className="inline-flex items-center gap-1.5">
+            {content.manual_translation_override ? (
+              <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
+                <Pencil className="h-2.5 w-2.5" /> 직접 수정됨
+              </Badge>
+            ) : isAutoTranslating ? (
+              <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-border bg-muted/40">
+                <Languages className="h-2.5 w-2.5 animate-pulse" /> 자동 번역 중…
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-border bg-muted/40 text-muted-foreground">
+                <Lock className="h-2.5 w-2.5" /> 자동 번역됨 (읽기 전용)
+              </Badge>
+            )}
+            <span className="text-[10px] text-muted-foreground">
+              한국어(1차시) 제목·설명을 자동 번역합니다.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange("manual_translation_override", !content.manual_translation_override)}
+            className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+          >
+            {content.manual_translation_override ? (
+              <><RotateCcw className="h-3 w-3" /> 자동번역으로 되돌리기</>
+            ) : (
+              <><Pencil className="h-3 w-3" /> 직접 수정</>
+            )}
+          </button>
         </div>
       )}
 
