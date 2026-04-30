@@ -904,6 +904,57 @@ export type Database = {
           },
         ]
       }
+      course_comments: {
+        Row: {
+          content: string
+          course_id: string
+          created_at: string
+          id: string
+          is_deleted: boolean
+          language_code: string | null
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          course_id: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          language_code?: string | null
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          language_code?: string | null
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_comments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "course_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_content_i18n: {
         Row: {
           content_id: string
