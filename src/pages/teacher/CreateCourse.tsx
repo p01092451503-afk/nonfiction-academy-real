@@ -964,6 +964,7 @@ const CreateCourse = () => {
                 contentTypeOptions={contentTypeOptions}
                 videoProviderOptions={videoProviderOptions}
                 t={t}
+                isAutoTranslating={!!autoTranslating[content.language_code]}
               />
             ))}
           </div>
@@ -1000,7 +1001,7 @@ const CreateCourse = () => {
 /* ───── Unified Content Editor ───── */
 
 const UnifiedContentEditor = ({
-  content, index, onChange, onRemove, contentTypeOptions, videoProviderOptions, t,
+  content, index, onChange, onRemove, contentTypeOptions, videoProviderOptions, t, isAutoTranslating,
 }: {
   content: ContentItem;
   index: number;
@@ -1009,6 +1010,7 @@ const UnifiedContentEditor = ({
   contentTypeOptions: { value: ContentType; label: string; icon: React.ElementType }[];
   videoProviderOptions: { value: VideoProvider; label: string }[];
   t: any;
+  isAutoTranslating?: boolean;
 }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
