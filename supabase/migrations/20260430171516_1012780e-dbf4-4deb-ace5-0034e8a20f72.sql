@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.uq_course_contents_course_lang;
