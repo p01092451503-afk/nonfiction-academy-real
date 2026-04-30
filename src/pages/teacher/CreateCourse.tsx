@@ -732,16 +732,8 @@ const CreateCourse = () => {
       toast({ title: t("common.error"), description: t("createCourse.titleRequired2"), variant: "destructive" });
       return;
     }
-    const invalidContent = contents.find((c) => !c.title.trim());
-    if (invalidContent) {
-      toast({ title: t("common.error"), description: t("createCourse.contentTitleRequired"), variant: "destructive" });
-      return;
-    }
-    const noUrlMango = contents.find((c) => c.source === "mangoboard" && !c.video_url.trim());
-    if (noUrlMango) {
-      toast({ title: t("common.error"), description: t("createCourse.flipUrlRequired"), variant: "destructive" });
-      return;
-    }
+    // 차시 title은 비어 있으면 자동으로 "Lesson N"으로 저장되므로 강제하지 않음.
+    // 망고보드 슬롯이 URL 없이 비어 있어도 OK — 빈 슬롯은 학생 화면에서 "준비 중" 처리됨.
     if (isEditMode) {
       updateMutation.mutate();
     } else {
