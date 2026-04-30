@@ -1315,6 +1315,54 @@ export type Database = {
           },
         ]
       }
+      learning_tracks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          description_en: string | null
+          id: string
+          is_sequential: boolean
+          status: string
+          target_branch_ids: string[] | null
+          target_team_ids: string[] | null
+          thumbnail_url: string | null
+          title: string
+          title_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          description_en?: string | null
+          id?: string
+          is_sequential?: boolean
+          status?: string
+          target_branch_ids?: string[] | null
+          target_team_ids?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          title_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          description_en?: string | null
+          id?: string
+          is_sequential?: boolean
+          status?: string
+          target_branch_ids?: string[] | null
+          target_team_ids?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          title_en?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       media_package_items: {
         Row: {
           caption: string | null
@@ -1722,6 +1770,124 @@ export type Database = {
         }
         Relationships: []
       }
+      track_enrollments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          completed_at: string | null
+          id: string
+          status: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          completed_at?: string | null
+          id?: string
+          status?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          completed_at?: string | null
+          id?: string
+          status?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_enrollments_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "learning_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_stage_courses: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          order_index: number
+          stage_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          stage_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          stage_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_stage_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_stage_courses_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "track_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_stages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          name_en: string | null
+          order_index: number
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          name_en?: string | null
+          order_index?: number
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          name_en?: string | null
+          order_index?: number
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_stages_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "learning_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       traffic_logs: {
         Row: {
           content_id: string | null
@@ -1959,6 +2125,14 @@ export type Database = {
     }
     Functions: {
       admin_dashboard_summary: { Args: never; Returns: Json }
+      assign_track_to_department: {
+        Args: { p_department_id: string; p_track_id: string }
+        Returns: Json
+      }
+      assign_track_to_user: {
+        Args: { p_track_id: string; p_user_id: string }
+        Returns: Json
+      }
       award_points: {
         Args: {
           p_action_type: string
