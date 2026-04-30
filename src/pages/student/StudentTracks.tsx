@@ -1,0 +1,236 @@
+import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { Layers, BookOpen, ChevronRight, Lock, CheckCircle2, Circle } from "lucide-react";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/contexts/UserContext";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const StudentTracks = () => {
+  const { user } = useUser();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+
+  const { data: tracks = [], isLoading } = useQuery({
+    queryKey: ["my-tracks", user?.id],
+    queryFn: async () => {
+      const { data: enrolls, error: e1 } = await supabase
+        .from("track_enrollments")
+        .select("track_id, assigned_at, learning_tracks(*)")
+        .eq("user_id", user!.id);
+      if (e1) throw e1;
+
+      const trackIds = (enrolls || []).map((e: any) => e.track_id);
+      if (trackIds.length === 0) return [];
+
+      const [{ data: stages }, { data: stageCourses }, { data: myEnrollments }] = await Promise.all([
+        supabase.from("track_stages").select("*").in("track_id", trackIds).order("order_index"),
+        supabase.from("track_stage_courses").select("*, courses(id, title, thumbnail_url, status)").order("order_index"),
+        supabase.from("enrollments").select("course_id, progress, completed_at").eq("user_id", user!.id),
+      ]);
+
+      const enrollMap = new Map((myEnrollments || []).map((e: any) => [e.course_id, e]));
+      const stageCoursesByStage = new Map<string, any[]>();
+      (stageCourses || []).forEach((sc: any) => {
+        if (!stageCoursesByStage.has(sc.stage_id)) stageCoursesByStage.set(sc.stage_id, []);
+        stageCoursesByStage.get(sc.stage_id)!.push(sc);
+      });
+
+      return (enrolls || []).map((te: any) => {
+        const track = te.learning_tracks;
+        const trackStages = (stages || []).filter((s: any) => s.track_id === track.id);
+        const stagesWithCourses = trackStages.map((s: any) => ({
+          ...s,
+          courses: (stageCoursesByStage.get(s.id) || []).map((sc: any) => ({
+            ...sc.courses,
+            enrollment: enrollMap.get(sc.course_id),
+          })),
+        }));
+        const allCourses = stagesWithCourses.flatMap((s: any) => s.courses);
+        const completedCount = allCourses.filter((c: any) => c.enrollment?.completed_at).length;
+        const totalCount = allCourses.length;
+        const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+        return {
+          ...track,
+          assigned_at: te.assigned_at,
+          stages: stagesWithCourses,
+          progress,
+          completedCount,
+          totalCount,
+        };
+      });
+    },
+    enabled: !!user?.id,
+  });
+
+  const getDisplayTitle = (track: any) =>
+    lang === "en" && track.title_en ? track.title_en : track.title;
+
+  return (
+    <DashboardLayout role="student">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
+            <Layers className="h-6 w-6" aria-hidden="true" />
+            {t("track.myTracks", "내 학습 트랙")}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {t("track.myTracksDesc", "배정받은 학습 경로를 단계별로 진행하세요.")}
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : tracks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-3 border border-border rounded-xl">
+            <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center">
+              <Layers className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("track.noTracks", "배정된 학습 트랙이 없습니다.")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {tracks.map((track: any) => (
+              <article key={track.id} className="border border-border rounded-xl overflow-hidden bg-background">
+                {/* Track header */}
+                <div className="p-5 border-b-2 border-border/80 space-y-3">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg font-semibold text-foreground">{getDisplayTitle(track)}</h2>
+                      {track.description && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{track.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {track.is_sequential ? (
+                        <Badge variant="outline" className="text-xs whitespace-nowrap">
+                          {t("track.sequential", "순차 진행")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                          {t("track.free", "자유 진행")}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Progress value={track.progress} className="flex-1 h-1.5" />
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                      {track.completedCount}/{track.totalCount} · {track.progress}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stages */}
+                <div className="divide-y-2 divide-border/80">
+                  {track.stages.map((stage: any, stageIdx: number) => {
+                    const prevStage = stageIdx > 0 ? track.stages[stageIdx - 1] : null;
+                    const prevAllDone =
+                      !prevStage ||
+                      (prevStage.courses.length > 0 &&
+                        prevStage.courses.every((c: any) => c.enrollment?.completed_at));
+                    const stageLocked = track.is_sequential && stageIdx > 0 && !prevAllDone;
+
+                    return (
+                      <div key={stage.id} className="p-5 space-y-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs">
+                            {t("track.stage", "단계")} {stageIdx + 1}
+                          </Badge>
+                          <h3 className="text-sm font-semibold text-foreground">
+                            {lang === "en" && stage.name_en ? stage.name_en : stage.name}
+                          </h3>
+                          {stageLocked && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Lock className="h-3 w-3" />
+                              {t("track.locked", "잠김")}
+                            </span>
+                          )}
+                        </div>
+
+                        {stage.courses.length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">
+                            {t("track.noCoursesInStage", "이 단계에 강의가 없습니다.")}
+                          </p>
+                        ) : (
+                          <div className="space-y-1">
+                            {stage.courses.map((course: any) => {
+                              const completed = !!course.enrollment?.completed_at;
+                              const progress = Number(course.enrollment?.progress) || 0;
+                              const Wrapper: any = stageLocked ? "div" : Link;
+                              const wrapperProps = stageLocked
+                                ? { className: "opacity-50 cursor-not-allowed" }
+                                : { to: `/student/courses/${course.id}?view=learn` };
+
+                              return (
+                                <Wrapper
+                                  key={course.id}
+                                  {...wrapperProps}
+                                  className={`group flex items-center gap-3 p-3 rounded-lg ${
+                                    stageLocked
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : "hover:bg-accent/50 transition-colors"
+                                  }`}
+                                >
+                                  {completed ? (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                                  ) : (
+                                    <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                                  )}
+                                  {course.thumbnail_url ? (
+                                    <img
+                                      src={course.thumbnail_url}
+                                      alt=""
+                                      className="h-10 w-10 rounded object-cover shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="h-10 w-10 rounded bg-accent flex items-center justify-center shrink-0">
+                                      <BookOpen className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground truncate">
+                                      {course.title}
+                                    </p>
+                                    {!completed && course.enrollment && (
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <Progress value={progress} className="h-1 flex-1" />
+                                        <span className="text-[10px] text-muted-foreground">
+                                          {Math.round(progress)}%
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {!stageLocked && (
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-foreground" />
+                                  )}
+                                </Wrapper>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default StudentTracks;
