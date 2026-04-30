@@ -597,6 +597,9 @@ const ContentPlayer = () => {
                 </div>
               </div>
 
+              {/* Comments (Instagram-style, course-level, shared across 4 languages) */}
+              {courseId && <CourseComments courseId={courseId} />}
+
               {/* Navigation */}
               <div className="flex items-center justify-between pt-4 border-t border-border">
                 <div>
