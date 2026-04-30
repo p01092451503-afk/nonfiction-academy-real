@@ -1341,34 +1341,35 @@ const UnifiedContentEditor = ({
           </>
         )}
 
-        {/* Common fields */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
-          <Textarea
-            value={content.description}
-            onChange={(e) => isKo && onChange("description", e.target.value)}
-            readOnly={!isKo}
-            placeholder={isKo ? t("createCourse.contentDescPlaceholder") : (isAutoTranslating ? "번역 중..." : "한국어 설명 입력 시 자동 번역됩니다")}
-            className={`min-h-[60px] rounded-lg border-border text-xs resize-none ${!isKo ? "bg-muted/40 cursor-not-allowed" : ""}`}
-          />
-        </div>
+        {/* Common fields - KO slot only (다른 언어 차시는 KO 값을 자동 동기화) */}
+        {isKo && (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.descLabel")}</label>
+              <Textarea
+                value={content.description}
+                onChange={(e) => onChange("description", e.target.value)}
+                placeholder={t("createCourse.contentDescPlaceholder")}
+                className="min-h-[60px] rounded-lg border-border text-xs resize-none"
+              />
+            </div>
 
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
-            {t("createCourse.allowPreview")}
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
-            {t("createCourse.publishToggle")}
-          </label>
-          {isKo && (
-            <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
-              <Languages className="h-3 w-3" />
-              {showEn ? t("course.koTab", "한국어") : "English"}
-            </button>
-          )}
-        </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <Switch checked={content.is_preview} onCheckedChange={(v) => onChange("is_preview", v)} className="scale-75" />
+                {t("createCourse.allowPreview")}
+              </label>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <Switch checked={content.is_published} onCheckedChange={(v) => onChange("is_published", v)} className="scale-75" />
+                {t("createCourse.publishToggle")}
+              </label>
+              <button type="button" onClick={() => setShowEn(!showEn)} className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
+                <Languages className="h-3 w-3" />
+                {showEn ? t("course.koTab", "한국어") : "English"}
+              </button>
+            </div>
+          </>
+        )}
 
         {isKo && showEn && (
           <div className="space-y-3 p-3 rounded-lg bg-accent/50 border border-border">
