@@ -6,7 +6,7 @@ import {
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
   Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown,
 } from "lucide-react";
-import { translateKoToEn } from "@/lib/translate";
+import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
