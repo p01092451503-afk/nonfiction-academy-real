@@ -122,7 +122,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   // Assessment translations
   const [assessmentI18nForm, setAssessmentI18nForm] = useState<Record<TargetLang, AssessmentI18nForm>>(emptyAssessmentI18n());
   const [assessmentManual, setAssessmentManual] = useState(emptyManualFlags());
-  const [translatingAssessment, setTranslatingAssessment] = useState<TargetLang | null>(null);
+  const [translatingAssessment, setTranslatingAssessment] = useState<TargetLang | "all" | null>(null);
 
   // Question translations
   const [questionI18nForm, setQuestionI18nForm] = useState<Record<TargetLang, QuestionI18nForm>>(emptyQuestionI18n(4));
