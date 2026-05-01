@@ -1298,6 +1298,7 @@
     "title": "评论",
     "confirmDelete": "删除此评论？",
     "notAllowed": "无法评论。请确认您的报名审批。",
-    "replyPlaceholder": "回复 @{{name}}..."
+    "replyPlaceholder": "回复 @{{name}}...",
+    "translatedBadge": "已翻译"
   }
 }

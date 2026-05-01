@@ -1298,6 +1298,7 @@
     "title": "Comments",
     "confirmDelete": "Delete this comment?",
     "notAllowed": "You cannot comment. Please check your enrollment approval.",
-    "replyPlaceholder": "Reply to @{{name}}..."
+    "replyPlaceholder": "Reply to @{{name}}...",
+    "translatedBadge": "Translated"
   }
 }
