@@ -583,7 +583,81 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     finally { setTranslatingQuestion(null); }
   };
 
-  const updateLangAssessment = (lc: TargetLang, patch: Partial<AssessmentI18nForm>) => {
+  // Translate assessment for ALL target languages at once
+  const handleTranslateAssessmentAll = async () => {
+    if (!assessmentForm.title && !assessmentForm.description) return;
+    setTranslatingAssessment("all");
+    try {
+      await Promise.all(I18N_LANGS.map(async (lc) => {
+        const texts: string[] = [];
+        if (assessmentForm.title) texts.push(assessmentForm.title);
+        if (assessmentForm.description) texts.push(assessmentForm.description);
+        try {
+          const results = await translateKoTo(lc, texts);
+          let idx = 0;
+          const tTitle = assessmentForm.title ? (results[idx++] || "") : "";
+          const tDesc = assessmentForm.description ? (results[idx++] || "") : "";
+          setAssessmentI18nForm(prev => ({
+            ...prev,
+            [lc]: {
+              title: tTitle || prev[lc].title,
+              description: tDesc || prev[lc].description,
+            },
+          }));
+          setAssessmentManual(prev => ({ ...prev, [lc]: { title: true, description: true } }));
+        } catch { /* per-lang silent */ }
+      }));
+    } finally {
+      setTranslatingAssessment(null);
+    }
+  };
+
+  // Translate question for ALL target languages at once
+  const handleTranslateQuestionAll = async () => {
+    if (!questionForm.question_text.trim()) return;
+    const texts: string[] = [];
+    const fields: string[] = [];
+    if (questionForm.question_text) { texts.push(questionForm.question_text); fields.push("question_text"); }
+    if (questionForm.correct_answer && questionForm.question_type !== "ox") { texts.push(questionForm.correct_answer); fields.push("correct_answer"); }
+    if (questionForm.explanation) { texts.push(questionForm.explanation); fields.push("explanation"); }
+    if (questionForm.hint) { texts.push(questionForm.hint); fields.push("hint"); }
+    if (["multiple_choice_4", "multiple_choice_5"].includes(questionForm.question_type)) {
+      questionForm.options.forEach((opt, i) => {
+        if (opt.trim()) { texts.push(opt); fields.push(`option_${i}`); }
+      });
+    }
+    if (!texts.length) return;
+    setTranslatingQuestion("all");
+    try {
+      await Promise.all(I18N_LANGS.map(async (lc) => {
+        try {
+          const results = await translateKoTo(lc, texts);
+          const newOptions = [...questionI18nForm[lc].options];
+          const updates: Partial<QuestionI18nForm> = {};
+          let idx = 0;
+          for (const field of fields) {
+            if (field === "question_text") updates.question_text = results[idx];
+            else if (field === "correct_answer") updates.correct_answer = results[idx];
+            else if (field === "explanation") updates.explanation = results[idx];
+            else if (field === "hint") updates.hint = results[idx];
+            else if (field.startsWith("option_")) {
+              const optIdx = parseInt(field.split("_")[1]);
+              newOptions[optIdx] = results[idx] || "";
+            }
+            idx++;
+          }
+          updates.options = newOptions;
+          setQuestionI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...updates } }));
+          setQuestionManual(prev => ({
+            ...prev,
+            [lc]: { question_text: true, options: true, correct_answer: true, explanation: true, hint: true },
+          }));
+        } catch { /* per-lang silent */ }
+      }));
+    } finally {
+      setTranslatingQuestion(null);
+    }
+  };
     setAssessmentI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
     setAssessmentManual(prev => ({
       ...prev,
