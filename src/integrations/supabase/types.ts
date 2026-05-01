@@ -1363,6 +1363,44 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_tracks_i18n: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          language_code: string
+          title: string
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language_code: string
+          title: string
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language_code?: string
+          title?: string
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_tracks_i18n_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "learning_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_package_items: {
         Row: {
           caption: string | null
@@ -1884,6 +1922,44 @@ export type Database = {
             columns: ["track_id"]
             isOneToOne: false
             referencedRelation: "learning_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_stages_i18n: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          language_code: string
+          name: string
+          stage_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language_code: string
+          name: string
+          stage_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          language_code?: string
+          name?: string
+          stage_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_stages_i18n_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "track_stages"
             referencedColumns: ["id"]
           },
         ]
