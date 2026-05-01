@@ -7,17 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Languages } from "lucide-react";
-import { translateKoToEn } from "@/lib/translate";
+import { translateKoTo, type TargetLang } from "@/lib/translate";
 import { toast } from "sonner";
+
+export type MlLang = "ko" | "en" | "ja" | "zh-CN";
 
 export interface MultilingualValue {
   ko: { title: string; content: string };
   en: { title: string; content: string };
+  ja: { title: string; content: string };
+  "zh-CN": { title: string; content: string };
 }
 
 export const EMPTY_MULTILINGUAL: MultilingualValue = {
   ko: { title: "", content: "" },
   en: { title: "", content: "" },
+  ja: { title: "", content: "" },
+  "zh-CN": { title: "", content: "" },
+};
+
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const LANG_LABEL: Record<MlLang, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "中文",
 };
 
 interface Props {
@@ -37,14 +51,18 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
   const setAuto = (v: boolean) => {
     if (isControlled) onAutoTranslateChange!(v);
     else setInternalAuto(v);
-    // Clear EN when enabling auto-translate so save-time translation kicks in
-    if (v) onChange({ ...value, en: { title: "", content: "" } });
+    if (v) {
+      onChange({
+        ...value,
+        en: { title: "", content: "" },
+        ja: { title: "", content: "" },
+        "zh-CN": { title: "", content: "" },
+      });
+    }
   };
 
-  const updateKo = (patch: Partial<MultilingualValue["ko"]>) =>
-    onChange({ ...value, ko: { ...value.ko, ...patch } });
-  const updateEn = (patch: Partial<MultilingualValue["en"]>) =>
-    onChange({ ...value, en: { ...value.en, ...patch } });
+  const updateLang = (lang: MlLang, patch: Partial<MultilingualValue["ko"]>) =>
+    onChange({ ...value, [lang]: { ...value[lang], ...patch } });
 
   const handleAutoTranslate = async () => {
     if (!value.ko.title.trim() && !value.ko.content.trim()) {
@@ -53,9 +71,16 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
     }
     try {
       setTranslating(true);
-      const [enTitle, enContent] = await translateKoToEn([value.ko.title, value.ko.content]);
-      onChange({ ...value, en: { title: enTitle || value.en.title, content: enContent || value.en.content } });
-      toast.success(t("multilingual.translated", "영어로 자동 번역되었습니다."));
+      const results = await Promise.all(
+        TARGET_LANGS.map((lc) => translateKoTo(lc, [value.ko.title, value.ko.content]))
+      );
+      const next = { ...value };
+      TARGET_LANGS.forEach((lc, i) => {
+        const [tt, tc] = results[i];
+        next[lc] = { title: tt || value[lc].title, content: tc || value[lc].content };
+      });
+      onChange(next);
+      toast.success(t("multilingual.translatedAll", "3개 언어로 자동 번역되었습니다."));
     } catch {
       toast.error(t("multilingual.translateFailed", "번역에 실패했습니다."));
     } finally {
@@ -63,12 +88,17 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
     }
   };
 
+  const allLangs: MlLang[] = ["ko", "en", "ja", "zh-CN"];
+
   return (
     <Tabs defaultValue="ko" className="w-full">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <TabsList className="h-8">
-          <TabsTrigger value="ko" className="text-xs h-6">한국어</TabsTrigger>
-          <TabsTrigger value="en" className="text-xs h-6" disabled={auto}>English</TabsTrigger>
+          {allLangs.map((lc) => (
+            <TabsTrigger key={lc} value={lc} className="text-xs h-6" disabled={auto && lc !== "ko"}>
+              {LANG_LABEL[lc]}
+            </TabsTrigger>
+          ))}
         </TabsList>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -80,38 +110,49 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
           {!auto && (
             <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleAutoTranslate} disabled={translating}>
               <Languages className="h-3 w-3" />
-              {t("multilingual.translateNow", "한→영 번역")}
+              {translating ? t("common.processing") : t("multilingual.translateAll", "3개 언어 자동 번역")}
             </Button>
           )}
         </div>
       </div>
+
       <TabsContent value="ko" className="space-y-3 mt-3">
         <div className="space-y-1">
           <Label className="text-xs">{t("announcements.titleLabel", "제목")} (KO) *</Label>
-          <Input value={value.ko.title} onChange={(e) => updateKo({ title: e.target.value })} />
+          <Input value={value.ko.title} onChange={(e) => updateLang("ko", { title: e.target.value })} />
         </div>
         <div className="space-y-1">
           <Label className="text-xs">{t("announcements.content", "내용")} (KO) *</Label>
-          <Textarea value={value.ko.content} onChange={(e) => updateKo({ content: e.target.value })} rows={contentRows} />
+          <Textarea value={value.ko.content} onChange={(e) => updateLang("ko", { content: e.target.value })} rows={contentRows} />
         </div>
         {auto && (
           <p className="text-[11px] text-muted-foreground">
-            {t("multilingual.autoTranslateHint", "저장 시 한국어 내용이 영어로 자동 번역됩니다.")}
+            {t("multilingual.autoTranslateHintAll", "저장 시 영어/일본어/중국어로 자동 번역됩니다.")}
           </p>
         )}
       </TabsContent>
-      {!auto && (
-      <TabsContent value="en" className="space-y-3 mt-3">
-        <div className="space-y-1">
-          <Label className="text-xs">{t("announcements.titleLabel", "제목")} (EN)</Label>
-          <Input value={value.en.title} onChange={(e) => updateEn({ title: e.target.value })} placeholder={t("multilingual.autoFillHint", "비워두면 한국어로 표시됩니다")} />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">{t("announcements.content", "내용")} (EN)</Label>
-          <Textarea value={value.en.content} onChange={(e) => updateEn({ content: e.target.value })} rows={contentRows} placeholder={t("multilingual.autoFillHint", "비워두면 한국어로 표시됩니다")} />
-        </div>
-      </TabsContent>
-      )}
+
+      {!auto && (["en", "ja", "zh-CN"] as MlLang[]).map((lc) => (
+        <TabsContent key={lc} value={lc} className="space-y-3 mt-3">
+          <div className="space-y-1">
+            <Label className="text-xs">{t("announcements.titleLabel", "제목")} ({lc.toUpperCase()})</Label>
+            <Input
+              value={value[lc].title}
+              onChange={(e) => updateLang(lc, { title: e.target.value })}
+              placeholder={t("multilingual.autoFillHint", "비워두면 한국어로 표시됩니다")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">{t("announcements.content", "내용")} ({lc.toUpperCase()})</Label>
+            <Textarea
+              value={value[lc].content}
+              onChange={(e) => updateLang(lc, { content: e.target.value })}
+              rows={contentRows}
+              placeholder={t("multilingual.autoFillHint", "비워두면 한국어로 표시됩니다")}
+            />
+          </div>
+        </TabsContent>
+      ))}
     </Tabs>
   );
 };
