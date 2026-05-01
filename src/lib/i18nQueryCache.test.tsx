@@ -118,9 +118,9 @@ describe("i18nQueryCache", () => {
       await act(async () => {
         await i18n.changeLanguage(lang);
       });
-      // Re-fetch after invalidation so React Query records a new fetch.
-      await qc.refetchQueries({ queryKey: ["course-i18n", "c1"] });
-      await qc.refetchQueries({ queryKey: ["content-i18n", "c1"] });
+      // After invalidation, fetchQuery refetches because data is marked stale.
+      await qc.fetchQuery({ queryKey: ["course-i18n", "c1"], queryFn: courseFetcher });
+      await qc.fetchQuery({ queryKey: ["content-i18n", "c1"], queryFn: contentFetcher });
     }
 
     // Initial + one refetch per language switch = 4 total
