@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "i18n:check": "node ./scripts/i18n-check-keys.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
