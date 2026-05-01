@@ -164,7 +164,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
         { key: "attendanceManagement", label: t("nav.attendanceManagement"), href: "/admin/attendance", icon: CalendarCheck },
         { key: "completionManagement", label: t("nav.completionManagement"), href: "/admin/completion", icon: Trophy, tourId: "nav-completion-mgmt" },
         { key: "surveyManagement", label: t("nav.surveyManagement", "설문 관리"), href: "/admin/surveys", icon: ClipboardList },
-        { key: "legacyRecords", label: t("nav.legacyRecords", "학습이력 관리"), href: "/admin/legacy-records", icon: Archive },
+        { key: "legacyRecords", label: t("nav.legacyRecords", "학습 이력 관리"), href: "/admin/legacy-records", icon: Archive },
       ],
     },
     {
