@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ChartTooltipContent, chartTooltipDefaults } from "@/components/ui/chart-tooltip";
 
 const DeptAdminDashboard = () => {
   const { t, i18n } = useTranslation();
@@ -160,7 +161,7 @@ const DeptAdminDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} domain={[0, 100]} />
-                  <Tooltip />
+                  <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
                   <Bar dataKey="rate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { ChartTooltipContent, chartTooltipDefaults, chartLineCursor } from "@/components/ui/chart-tooltip";
 import { format, subDays } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
@@ -244,7 +245,7 @@ const AdminTraffic = () => {
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} tickMargin={8} minTickGap={isMobile ? 24 : 12} />
                         <YAxis tick={{ fontSize: 10 }} width={35} hide={isMobile} />
-                        <Tooltip />
+                        <Tooltip cursor={chartLineCursor} content={<ChartTooltipContent />} />
                         <Line type="monotone" dataKey="views" name={t("stats.pageViewLabel")} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                         <Line type="monotone" dataKey="access" name={t("stats.lessonAccess")} stroke="hsl(var(--chart-2))" strokeWidth={2} dot={false} />
                       </LineChart>
@@ -264,7 +265,7 @@ const AdminTraffic = () => {
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} tickMargin={8} minTickGap={isMobile ? 24 : 12} />
                         <YAxis tick={{ fontSize: 10 }} width={35} hide={isMobile} />
-                        <Tooltip formatter={(value: number) => `${value} GB`} />
+                        <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit=" GB" />} />
                         <Bar dataKey="bytesGB" name={t("stats.transferLabel")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>

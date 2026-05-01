@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, subDays } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
+import { ChartTooltipContent, chartLineCursor } from "@/components/ui/chart-tooltip";
 
 interface Props {
   period: number;
@@ -55,7 +56,7 @@ const SignupTrendChart = ({ period }: Props) => {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="date" tick={{ fontSize: 9 }} tickMargin={6} minTickGap={isMobile ? 24 : 12} />
               <YAxis tick={{ fontSize: 10 }} width={30} hide={isMobile} />
-              <Tooltip />
+              <Tooltip cursor={chartLineCursor} content={<ChartTooltipContent />} />
               <Area type="monotone" dataKey={signupLabel} stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>

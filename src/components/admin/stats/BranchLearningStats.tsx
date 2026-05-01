@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ChartTooltipContent, chartTooltipDefaults } from "@/components/ui/chart-tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 
@@ -111,7 +112,7 @@ const BranchLearningStats = () => {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="name" tick={{ fontSize: 10 }} tickMargin={6} />
                   <YAxis tick={{ fontSize: 10 }} width={30} hide={isMobile} domain={[0, 100]} />
-                  <Tooltip formatter={(value: number) => `${value}%`} />
+                  <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
                   <Bar dataKey={completionRateLabel} fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
                   <Bar dataKey={avgProgressLabel} fill="hsl(var(--chart-2))" radius={[3, 3, 0, 0]} />
                 </BarChart>

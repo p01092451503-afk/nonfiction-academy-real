@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { ChartTooltipContent } from "@/components/ui/chart-tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 
@@ -81,7 +82,7 @@ const MemberStatsCard = () => {
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `${value}${t("common.people")}`} />
+                  <Tooltip content={<ChartTooltipContent hideLabel unit={t("common.people")} />} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
