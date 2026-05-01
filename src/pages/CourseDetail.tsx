@@ -220,7 +220,12 @@ const CourseDetail = () => {
     contentI18nData.find((i: any) => i.content_id === contentId && i.language_code === lang);
 
   const stripLessonPrefix = (title: string) =>
-    title.replace(/^\d+차시\.\s*/, "");
+    title
+      .replace(/^\d+차시\.\s*/, "")
+      .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
+      .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
+      .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
+      .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "");
 
   const getLocalizedContentTitle = (content: any) => {
     if (currentLang === "ko") return stripLessonPrefix(content.title);
