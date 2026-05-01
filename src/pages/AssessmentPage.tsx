@@ -634,7 +634,7 @@ export default function AssessmentPage() {
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{assessment.title} — {isEn ? "Results" : "결과"}</span>
+                <span className="text-sm font-semibold">{assessmentLocalized.title} — {isEn ? "Results" : "결과"}</span>
               </div>
               <button
                 type="button"
@@ -646,9 +646,9 @@ export default function AssessmentPage() {
             </div>
             <CardContent className="pt-6 pb-8 px-4 sm:px-6">
               <ResultSummary
-                assessment={assessment}
+                assessment={assessmentLocalized}
                 attempt={latestCompleted}
-                questions={reviewQuestions as any[]}
+                questions={localizedReviewQuestions as any[]}
                 answerMap={answerMap}
                 isEn={!!isEn}
                 t={t}
@@ -666,7 +666,7 @@ export default function AssessmentPage() {
 
   // ─── REVIEW MODE ───
   if (reviewMode && previousAnswers.length > 0) {
-    const rQuestions = reviewQuestions as any[];
+    const rQuestions = localizedReviewQuestions as any[];
     const currentQ = rQuestions[currentQuestionIndex];
     const ansData = currentQ ? answerMap[currentQ.id] : null;
     const progressPercent = rQuestions.length > 0 ? Math.round(((currentQuestionIndex + 1) / rQuestions.length) * 100) : 0;
@@ -678,7 +678,7 @@ export default function AssessmentPage() {
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{assessment.title}</span>
+                <span className="text-sm font-semibold">{assessmentLocalized.title}</span>
               </div>
               <button
                 type="button"
@@ -743,7 +743,7 @@ export default function AssessmentPage() {
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{assessment.title}</span>
+                <span className="text-sm font-semibold">{assessmentLocalized.title}</span>
               </div>
               <div className="flex items-center gap-3">
                 {timeLeft !== null && (
@@ -896,9 +896,9 @@ export default function AssessmentPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <ClipboardCheck className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">{assessment.title}</CardTitle>
+              <CardTitle className="text-lg">{assessmentLocalized.title}</CardTitle>
             </div>
-            {assessment.description && <p className="text-sm text-muted-foreground">{assessment.description}</p>}
+            {assessmentLocalized.description && <p className="text-sm text-muted-foreground">{assessmentLocalized.description}</p>}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
