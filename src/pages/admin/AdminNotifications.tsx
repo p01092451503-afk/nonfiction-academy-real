@@ -177,17 +177,16 @@ const AdminNotifications = () => {
                     </div>
                   </div>
                 )}
-                <div>
-                  <Label>{t("notifications.title", "제목")}</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("notifications.titlePlaceholder", "알림 제목을 입력하세요")} />
-                </div>
-                <div>
-                  <Label>{t("notifications.message", "내용")}</Label>
-                  <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("notifications.messagePlaceholder", "알림 내용을 입력하세요")} rows={4} />
-                </div>
+                <MultilingualTextFields
+                  value={ml}
+                  onChange={setMl}
+                  contentRows={4}
+                  autoTranslate={autoTranslate}
+                  onAutoTranslateChange={setAutoTranslate}
+                />
                 <Button
                   onClick={() => sendMutation.mutate()}
-                  disabled={!title || !message || sendMutation.isPending}
+                  disabled={!ml.ko.title.trim() || !ml.ko.content.trim() || sendMutation.isPending}
                   className="w-full"
                 >
                   {sendMutation.isPending ? t("common.processing") : t("notifications.send", "알림 발송")}
