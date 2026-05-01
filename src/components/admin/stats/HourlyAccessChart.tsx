@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { startOfDay } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
+import { ChartTooltipContent, chartTooltipDefaults } from "@/components/ui/chart-tooltip";
 
 const HourlyAccessChart = () => {
   const isMobile = useIsMobile();
@@ -47,7 +48,14 @@ const HourlyAccessChart = () => {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="hour" tick={{ fontSize: 9 }} tickMargin={6} interval={isMobile ? 3 : 1} />
               <YAxis tick={{ fontSize: 10 }} width={30} hide={isMobile} />
-              <Tooltip formatter={(value: number) => [t("stats.accessCount", { count: value }), t("stats.accessLabel")]} />
+              <Tooltip
+                {...chartTooltipDefaults}
+                content={
+                  <ChartTooltipContent
+                    valueFormatter={(v) => t("stats.accessCount", { count: Number(v) })}
+                  />
+                }
+              />
               <Bar dataKey="count" name={t("stats.accessLabel")} fill="hsl(var(--chart-2))" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

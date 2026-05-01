@@ -299,7 +299,7 @@ const StudentAchievements = () => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="week" tick={{ fontSize: 10 }} tickMargin={6} />
                 <YAxis tick={{ fontSize: 10 }} width={36} />
-                <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                <Tooltip cursor={chartLineCursor} content={<ChartTooltipContent />} />
                 <Area type="monotone" dataKey="points" stroke="hsl(var(--foreground))" strokeWidth={2} fill="url(#pointGrad)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -322,7 +322,7 @@ const StudentAchievements = () => {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} />
-                    <Tooltip formatter={(v: number) => [`${v}%`, t("achievements.progressRate")]} contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                    <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" valueFormatter={() => undefined as any} />} />
                     <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
                       {courseChartData.map((entry, idx) => (
                         <Cell key={idx} fill={getBarColor(entry.progress)} />
