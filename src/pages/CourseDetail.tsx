@@ -734,8 +734,8 @@ const CourseDetail = () => {
           onOpenChange={setCourseEditOpen}
           form={courseForm}
           setForm={setCourseForm}
-          enForm={courseEnForm}
-          setEnForm={setCourseEnForm}
+          i18nForm={courseI18nForm}
+          setI18nForm={setCourseI18nForm}
           courseId={courseId!}
           onSubmit={() => updateCourseMutation.mutate(courseForm)}
           isPending={updateCourseMutation.isPending}
