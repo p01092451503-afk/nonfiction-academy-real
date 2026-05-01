@@ -822,74 +822,74 @@ const CreateCourse = () => {
         </div>
 
         {/* Course Info */}
-        <div className="stat-card space-y-5">
-          <h2 className="text-base font-semibold text-foreground border-b border-border pb-3">{t("createCourse.courseInfo")}</h2>
+        <div className="stat-card space-y-3.5">
+          <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">{t("createCourse.courseInfo")}</h2>
 
           {/* Thumbnail Upload */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.thumbnailLabel")}</label>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.thumbnailLabel")}</label>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
             {thumbnailPreview ? (
-              <div className="relative w-full h-44 rounded-xl overflow-hidden border border-border">
+              <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
                 <img src={thumbnailPreview} alt={t("createCourse.thumbnailAlt")} className="w-full h-full object-cover" />
-                <button type="button" onClick={removeThumbnail} className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
+                <button type="button" onClick={removeThumbnail} className="absolute top-2 right-2 h-7 w-7 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ) : (
               <button type="button" onClick={() => fileInputRef.current?.click()} onPaste={handlePaste} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}
-                className="w-full h-32 rounded-xl border-2 border-dashed border-border hover:border-primary/50 focus:border-primary/50 focus:outline-none flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground transition-colors" tabIndex={0}>
-                <ImagePlus className="h-6 w-6" />
-                <span className="text-xs">{t("createCourse.thumbnailDropHint")}</span>
+                className="w-full h-20 rounded-lg border-2 border-dashed border-border hover:border-primary/50 focus:border-primary/50 focus:outline-none flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-foreground transition-colors" tabIndex={0}>
+                <ImagePlus className="h-5 w-5" />
+                <span className="text-[11px]">{t("createCourse.thumbnailDropHint")}</span>
               </button>
             )}
           </div>
 
           <Tabs defaultValue="ko" className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="ko" className="flex-1">{t("course.koTab", "한국어")}</TabsTrigger>
-              <TabsTrigger value="en" className="flex-1">{t("course.enTab", "English")}</TabsTrigger>
+            <TabsList className="w-full h-9">
+              <TabsTrigger value="ko" className="flex-1 text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
+              <TabsTrigger value="en" className="flex-1 text-xs">{t("course.enTab", "English")}</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="ko" className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.courseTitleRequired")}</label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("createCourse.courseTitleExample")} className="h-11 rounded-xl border-border" />
+            <TabsContent value="ko" className="space-y-3 pt-2">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.courseTitleRequired")}</label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("createCourse.courseTitleExample")} className="h-9 rounded-lg border-border text-sm" />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.descriptionLabel")}</label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("createCourse.descriptionPlaceholder2")} className="min-h-[100px] rounded-xl border-border resize-none" />
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.descriptionLabel")}</label>
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("createCourse.descriptionPlaceholder2")} className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
               </div>
             </TabsContent>
 
-            <TabsContent value="en" className="space-y-4 pt-2">
+            <TabsContent value="en" className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{t("course.enOptional", "영어 버전 (선택)")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("course.enOptional", "영어 버전 (선택)")}</p>
                 <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateCourse} disabled={translatingCourse || (!title && !description)}>
                   <Languages className="h-3 w-3" />
                   {t("course.autoTranslate", "자동 번역")}
                 </Button>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("course.enTitle", "영어 제목")}</label>
-                <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)} placeholder="English title" className="h-11 rounded-xl border-border" />
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("course.enTitle", "영어 제목")}</label>
+                <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)} placeholder="English title" className="h-9 rounded-lg border-border text-sm" />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("course.enDescription", "영어 설명")}</label>
-                <Textarea value={enDescription} onChange={(e) => setEnDescription(e.target.value)} placeholder="English description" className="min-h-[100px] rounded-xl border-border resize-none" />
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("course.enDescription", "영어 설명")}</label>
+                <Textarea value={enDescription} onChange={(e) => setEnDescription(e.target.value)} placeholder="English description" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.categoryLabel2")}</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.categoryLabel2")}</label>
               <CategorySelect value={categoryId} onValueChange={setCategoryId} />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.difficultyLabel2")}</label>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.difficultyLabel2")}</label>
               <Select value={difficultyLevel} onValueChange={setDifficultyLevel}>
-                <SelectTrigger className="h-11 rounded-xl border-border"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 rounded-lg border-border text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="beginner">{t("createCourse.beginnerLevel")}</SelectItem>
                   <SelectItem value="intermediate">{t("createCourse.intermediateLevel")}</SelectItem>
@@ -899,23 +899,23 @@ const CreateCourse = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.estimatedDurationLabel")}</label>
-              <Input type="number" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} placeholder={t("createCourse.estimatedDurationExample")} className="h-11 rounded-xl border-border" min="0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.estimatedDurationLabel")}</label>
+              <Input type="number" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} placeholder={t("createCourse.estimatedDurationExample")} className="h-9 rounded-lg border-border text-sm" min="0" />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.maxStudentsLabel")}</label>
-              <Input type="number" value={maxStudents} onChange={(e) => setMaxStudents(e.target.value)} placeholder={t("createCourse.maxStudentsPlaceholder")} className="h-11 rounded-xl border-border" min="1" />
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.maxStudentsLabel")}</label>
+              <Input type="number" value={maxStudents} onChange={(e) => setMaxStudents(e.target.value)} placeholder={t("createCourse.maxStudentsPlaceholder")} className="h-9 rounded-lg border-border text-sm" min="1" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.deadlineLabelCreate")}</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.deadlineLabelCreate")}</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={`h-11 w-full rounded-xl border-border justify-start text-left font-normal ${!deadline ? "text-muted-foreground" : ""}`}>
+                  <Button variant="outline" className={`h-9 w-full rounded-lg border-border justify-start text-left font-normal text-sm ${!deadline ? "text-muted-foreground" : ""}`}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {deadline ? formatDeadline(deadline) : t("createCourse.selectDate")}
                   </Button>
@@ -925,10 +925,10 @@ const CreateCourse = () => {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.publishStatusLabel")}</label>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.publishStatusLabel")}</label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-11 rounded-xl border-border"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-9 rounded-lg border-border text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="draft">{t("createCourse.draftPrivate")}</SelectItem>
                   <SelectItem value="published">{t("createCourse.publishedOpen")}</SelectItem>
@@ -937,17 +937,17 @@ const CreateCourse = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-1">
             <div>
-              <p className="text-sm font-medium text-foreground">{t("createCourse.mandatoryLabel")}</p>
-              <p className="text-xs text-muted-foreground">{t("createCourse.mandatoryDesc2")}</p>
+              <p className="text-xs font-medium text-foreground">{t("createCourse.mandatoryLabel")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("createCourse.mandatoryDesc2")}</p>
             </div>
             <Switch checked={isMandatory} onCheckedChange={setIsMandatory} />
           </div>
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-1">
             <div>
-              <p className="text-sm font-medium text-foreground">{t("course.sequentialToggle")}</p>
-              <p className="text-xs text-muted-foreground">{t("course.sequentialToggleDesc")}</p>
+              <p className="text-xs font-medium text-foreground">{t("course.sequentialToggle")}</p>
+              <p className="text-[11px] text-muted-foreground">{t("course.sequentialToggleDesc")}</p>
             </div>
             <Switch checked={isSequential} onCheckedChange={setIsSequential} />
           </div>
