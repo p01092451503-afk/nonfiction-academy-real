@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
 const StudentCourses = () => {
   const { user } = useUser();
