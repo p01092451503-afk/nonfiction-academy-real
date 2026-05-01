@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { translateKoToEn } from "@/lib/translate";
+import { translateKoToEn, translateKoTo } from "@/lib/translate";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
