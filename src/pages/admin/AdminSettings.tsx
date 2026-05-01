@@ -255,8 +255,79 @@ const AdminSettings = () => {
         <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
             <TabsTrigger value="general">{t("admin.generalSettings")}</TabsTrigger>
+            <TabsTrigger value="menus">{t("admin.menuVisibility", "메뉴 표시 설정")}</TabsTrigger>
             <TabsTrigger value="departments">{t("admin.deptManagement")}</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="menus" className="space-y-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">
+                {t("admin.menuVisibility", "메뉴 표시 설정")}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t(
+                  "admin.menuVisibilityDesc",
+                  "역할별로 좌측 사이드바에 노출할 메뉴를 켜거나 끌 수 있습니다. 일부 핵심 메뉴(대시보드, 시스템 설정, 마이페이지)는 항상 노출됩니다.",
+                )}
+              </p>
+            </div>
+
+            <Tabs defaultValue="student" className="space-y-4">
+              <TabsList>
+                {ROLE_TABS.map((r) => (
+                  <TabsTrigger key={r.value} value={r.value}>{r.label}</TabsTrigger>
+                ))}
+              </TabsList>
+
+              {ROLE_TABS.map((r) => {
+                const groups = MENU_CATALOG[r.value];
+                const roleMap = (menuVisibility?.[r.value] || {}) as Record<string, boolean>;
+                const setItemVisibility = (key: string, visible: boolean) => {
+                  const next: MenuVisibilityMap = {
+                    ...(menuVisibility || {}),
+                    [r.value]: { ...(menuVisibility?.[r.value] || {}), [key]: visible },
+                  };
+                  updateSettingMutation.mutate({ key: "menu_visibility", value: next });
+                };
+                return (
+                  <TabsContent key={r.value} value={r.value} className="space-y-6">
+                    {groups.map((group, gi) => (
+                      <div key={gi} className="stat-card !p-0 overflow-hidden">
+                        {group.groupLabel && (
+                          <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-accent/30">
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-semibold text-foreground">{group.groupLabel}</span>
+                          </div>
+                        )}
+                        {group.items.map((item) => {
+                          const visible = item.protected ? true : (roleMap[item.key] !== false);
+                          return (
+                            <div key={item.key} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
+                              <div className="min-w-0">
+                                <p className="text-sm text-foreground">{item.label}</p>
+                                {item.protected && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                                    {t("admin.menuProtected", "필수 메뉴 (숨길 수 없음)")}
+                                  </p>
+                                )}
+                              </div>
+                              <Switch
+                                checked={visible}
+                                disabled={item.protected || updateSettingMutation.isPending}
+                                onCheckedChange={(v) => setItemVisibility(item.key, v)}
+                                aria-label={item.label}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
+          </TabsContent>
+
 
           <TabsContent value="general" className="space-y-8">
             {/* 역할 표시 설정 */}
