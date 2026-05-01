@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Lock, Camera, ArrowRight, UserCircle, BookOpen, Trophy, Star, TrendingUp, Award, Download } from "lucide-react";
+import { User, Lock, Camera, ArrowRight, UserCircle, BookOpen, Trophy, Star, TrendingUp, Award, Download, Archive } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,20 @@ const MyPage = () => {
       return data;
     },
     enabled: certificates.length > 0,
+  });
+
+  const { data: legacyRecords = [] } = useQuery({
+    queryKey: ["my-legacy-records", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("legacy_learning_records")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("completed_at", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
   });
 
   const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
@@ -287,6 +301,9 @@ const MyPage = () => {
             <TabsTrigger value="certificates" className="rounded-lg gap-1.5 text-sm">
               <Award className="h-4 w-4" /> {t("mypage.certificatesTab")}
             </TabsTrigger>
+            <TabsTrigger value="legacy" className="rounded-lg gap-1.5 text-sm">
+              <Archive className="h-4 w-4" /> {t("mypage.legacyTab", "이전 학습 이력")}
+            </TabsTrigger>
             <TabsTrigger value="password" className="rounded-lg gap-1.5 text-sm">
               <Lock className="h-4 w-4" /> {t("mypage.passwordTab")}
             </TabsTrigger>
@@ -370,6 +387,41 @@ const MyPage = () => {
                           <Download className="h-3.5 w-3.5" />
                           {downloadingCertId === cert.id ? t("mypage.generating") : t("mypage.downloadCert")}
                         </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="legacy">
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-semibold">{t("mypage.legacyTab", "이전 학습 이력")}</h2>
+                  <p className="text-sm text-muted-foreground">기존 LMS에서 이관된 수강 이력입니다. (참고용)</p>
+                </div>
+                {legacyRecords.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                    <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center">
+                      <Archive className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">이전 학습 이력이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {legacyRecords.map((r: any) => (
+                      <div key={r.id} className="flex items-center justify-between gap-4 border-b-2 border-border/80 pb-3">
+                        <div className="min-w-0 space-y-1">
+                          <h3 className="text-sm font-semibold text-foreground truncate">{r.course_title}</h3>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                            {r.source_lms && <span>{r.source_lms}</span>}
+                            {r.completed_at && <><span>·</span><span>{r.completed_at}</span></>}
+                          </div>
+                        </div>
+                        {r.is_completed ? (
+                          <span className="text-xs font-semibold px-2 py-1 rounded bg-foreground text-background shrink-0">수료</span>
+                        ) : (
+                          <span className="text-xs font-medium px-2 py-1 rounded border border-border text-muted-foreground shrink-0">미수료</span>
+                        )}
                       </div>
                     ))}
                   </div>

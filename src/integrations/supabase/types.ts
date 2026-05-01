@@ -1436,6 +1436,54 @@ export type Database = {
           },
         ]
       }
+      legacy_learning_records: {
+        Row: {
+          completed_at: string | null
+          course_title: string
+          course_title_en: string | null
+          created_at: string
+          id: string
+          is_completed: boolean
+          notes: string | null
+          source_course_id: string | null
+          source_lms: string | null
+          updated_at: string
+          upload_batch_id: string | null
+          uploaded_by: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_title: string
+          course_title_en?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          source_course_id?: string | null
+          source_lms?: string | null
+          updated_at?: string
+          upload_batch_id?: string | null
+          uploaded_by?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_title?: string
+          course_title_en?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          source_course_id?: string | null
+          source_lms?: string | null
+          updated_at?: string
+          upload_batch_id?: string | null
+          uploaded_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       media_package_items: {
         Row: {
           caption: string | null
