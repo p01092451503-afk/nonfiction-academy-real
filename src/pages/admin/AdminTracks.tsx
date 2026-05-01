@@ -422,6 +422,8 @@ const AdminTracks = () => {
             qc.invalidateQueries({ queryKey: ["admin-tracks"] });
             qc.invalidateQueries({ queryKey: ["admin-track-stages"] });
             qc.invalidateQueries({ queryKey: ["admin-track-stage-courses"] });
+            qc.invalidateQueries({ queryKey: ["admin-tracks-i18n"] });
+            qc.invalidateQueries({ queryKey: ["admin-track-stages-i18n"] });
           }}
         />
       )}
