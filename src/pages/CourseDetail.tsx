@@ -1268,17 +1268,26 @@ const ContentDialog = ({
   );
 };
 
-// --- Course Edit Dialog with i18n tabs + thumbnail + extended fields ---
+// --- Course Edit Dialog with i18n tabs (ko/en/ja/zh-CN) + thumbnail + extended fields ---
+type CourseI18nLang = "en" | "ja" | "zh-CN";
+type CourseI18nForm = { title: string; description: string };
+const COURSE_I18N_LANGS: CourseI18nLang[] = ["en", "ja", "zh-CN"];
+const COURSE_I18N_LANG_LABELS: Record<CourseI18nLang, string> = {
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "简体中文",
+};
+
 const CourseEditDialog = ({
-  open, onOpenChange, form, setForm, enForm, setEnForm, courseId, onSubmit, isPending, t,
+  open, onOpenChange, form, setForm, i18nForm, setI18nForm, courseId, onSubmit, isPending, t,
   thumbnailPreview, onThumbnailChange, onThumbnailRemove, categories,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   form: { title: string; description: string; status: string; is_mandatory: boolean; deadline: string; category_id: string; difficulty_level: string; estimated_duration_hours: string; max_students: string; is_sequential: boolean };
   setForm: React.Dispatch<React.SetStateAction<typeof form>>;
-  enForm: { title: string; description: string };
-  setEnForm: React.Dispatch<React.SetStateAction<{ title: string; description: string }>>;
+  i18nForm: Record<CourseI18nLang, CourseI18nForm>;
+  setI18nForm: React.Dispatch<React.SetStateAction<Record<CourseI18nLang, CourseI18nForm>>>;
   courseId: string;
   onSubmit: () => void;
   isPending: boolean;
@@ -1289,49 +1298,67 @@ const CourseEditDialog = ({
   categories: { id: string; name: string }[];
 }) => {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [translating, setTranslating] = useState(false);
-  const [enTitleManual, setEnTitleManual] = useState(false);
-  const [enDescManual, setEnDescManual] = useState(false);
-  const prevKoTitle = useRef(form.title);
-  const prevKoDesc = useRef(form.description);
+  const [translating, setTranslating] = useState<CourseI18nLang | null>(null);
+  // Track which language fields the user has manually edited so we don't overwrite them
+  const [manualEdits, setManualEdits] = useState<Record<CourseI18nLang, { title: boolean; description: boolean }>>({
+    en: { title: false, description: false },
+    ja: { title: false, description: false },
+    "zh-CN": { title: false, description: false },
+  });
 
-  // Sync KO → EN title if not manually edited
+  // Sync KO → other-lang fields when not manually edited
   useEffect(() => {
-    if (!enTitleManual) {
-      setEnForm(f => ({ ...f, title: form.title }));
-    }
-    prevKoTitle.current = form.title;
-  }, [form.title, enTitleManual]);
+    setI18nForm((prev) => {
+      const next = { ...prev };
+      COURSE_I18N_LANGS.forEach((lc) => {
+        if (!manualEdits[lc].title) next[lc] = { ...next[lc], title: form.title };
+      });
+      return next;
+    });
+  }, [form.title]);
 
-  // Sync KO → EN description if not manually edited
   useEffect(() => {
-    if (!enDescManual) {
-      setEnForm(f => ({ ...f, description: form.description }));
-    }
-    prevKoDesc.current = form.description;
-  }, [form.description, enDescManual]);
+    setI18nForm((prev) => {
+      const next = { ...prev };
+      COURSE_I18N_LANGS.forEach((lc) => {
+        if (!manualEdits[lc].description) next[lc] = { ...next[lc], description: form.description };
+      });
+      return next;
+    });
+  }, [form.description]);
 
-  const handleAutoTranslate = async () => {
+  const updateLang = (lc: CourseI18nLang, patch: Partial<CourseI18nForm>) => {
+    setI18nForm((prev) => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
+    setManualEdits((prev) => ({
+      ...prev,
+      [lc]: {
+        title: patch.title !== undefined ? true : prev[lc].title,
+        description: patch.description !== undefined ? true : prev[lc].description,
+      },
+    }));
+  };
+
+  const handleAutoTranslate = async (lc: CourseI18nLang) => {
     const textsToTranslate = [form.title, form.description].filter(Boolean);
     if (textsToTranslate.length === 0) return;
-    setTranslating(true);
+    setTranslating(lc);
     try {
-      const results = await translateKoToEn(textsToTranslate);
+      const results = await translateKoTo(lc, textsToTranslate);
       let idx = 0;
       const translatedTitle = form.title ? (results[idx++] || "") : "";
       const translatedDesc = form.description ? (results[idx++] || "") : "";
-      setEnForm(f => ({
-        ...f,
-        title: translatedTitle || f.title,
-        description: translatedDesc || f.description,
+      setI18nForm((prev) => ({
+        ...prev,
+        [lc]: {
+          title: translatedTitle || prev[lc].title,
+          description: translatedDesc || prev[lc].description,
+        },
       }));
-      setEnTitleManual(true);
-      setEnDescManual(true);
-      // Auto-save translated i18n to DB
+      setManualEdits((prev) => ({ ...prev, [lc]: { title: true, description: true } }));
       if (courseId && translatedTitle) {
         await supabase.from("course_i18n").upsert({
           course_id: courseId,
-          language_code: "en",
+          language_code: lc,
           title: translatedTitle,
           description: translatedDesc || null,
         }, { onConflict: "course_id,language_code" });
@@ -1339,7 +1366,7 @@ const CourseEditDialog = ({
     } catch {
       // silently fail
     } finally {
-      setTranslating(false);
+      setTranslating(null);
     }
   };
 
