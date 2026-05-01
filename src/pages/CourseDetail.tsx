@@ -907,39 +907,74 @@ const CourseDetail = () => {
                 const localizedTitle = getLocalizedContentTitle(content);
                 const providerLabel = content.video_provider === "custom" ? t("course.flip") : t("course.video");
                 
+                const langCode = content.language_code || "";
+                const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
+                const langStyle: Record<string, string> = {
+                  KO: "bg-foreground text-background border-foreground",
+                  EN: "bg-background text-foreground border-foreground/70",
+                  JA: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800",
+                  ZH: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+                };
+                const langClass = langStyle[langLabel] || "bg-muted text-muted-foreground border-border";
+
                 elements.push(
                   <li key={content.id}>
                     <button
                       type="button"
-                      className={`flex w-full items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${!isAccessible ? "opacity-50" : "cursor-pointer hover:bg-accent/30"}`}
+                      className={`group flex w-full items-center gap-4 rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${!isAccessible ? "opacity-50" : "cursor-pointer hover:border-foreground/30 hover:bg-accent/30 hover:shadow-sm"}`}
                       onClick={() => isAccessible && navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`)}
                       aria-disabled={!isAccessible}
                     >
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isCompleted ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : !isAccessible ? "bg-muted" : "bg-accent text-accent-foreground"}`} aria-hidden="true">
-                        {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : !isAccessible ? <Lock className="h-3.5 w-3.5 text-muted-foreground" /> : <Icon className="h-4 w-4" />}
-                      </div>
-                      <span className="font-mono text-xs text-muted-foreground">{String(idx + 1).padStart(2, "0")}</span>
-                      <span className="flex-1 truncate text-sm font-medium text-foreground">{localizedTitle}</span>
-                      {!isAccessible && seqAccess.reason && (
-                        <span className="text-[9px] text-muted-foreground shrink-0">{t("course.sequentialLockedShort")}</span>
+                      {/* 언어 배지 (차시 번호 자리 대체) */}
+                      {langLabel ? (
+                        <span
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-[11px] font-semibold tracking-wider ${langClass}`}
+                          aria-label={`${isEn ? "Language" : "언어"}: ${langLabel}`}
+                        >
+                          {langLabel}
+                        </span>
+                      ) : (
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-[11px] font-semibold text-muted-foreground">
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
                       )}
-                      {content.language_code && (() => {
-                        const code = content.language_code;
-                        const label = code === "ko" ? "KO" : code === "en" ? "EN" : code === "ja" ? "JA" : code.startsWith("zh") ? "ZH" : code.toUpperCase();
-                        return (
-                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground" aria-label={`${isEn ? "Language" : "언어"}: ${label}`}>
-                            {label}
-                          </span>
-                        );
-                      })()}
-                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${content.video_provider === "custom" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`}>
-                        {providerLabel}
-                      </span>
-                      {content.duration_minutes && <span className="shrink-0 text-[10px] text-muted-foreground">{content.duration_minutes}{t("common.minutes")}</span>}
-                      {isAccessible && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />}
+
+                      {/* 완료/잠금 상태 점 + 제목 */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {isCompleted ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" aria-hidden="true" />
+                          ) : !isAccessible ? (
+                            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          ) : (
+                            <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          )}
+                          <span className="truncate text-sm font-semibold text-foreground">{localizedTitle}</span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <span>{providerLabel}</span>
+                          {content.duration_minutes && (
+                            <>
+                              <span className="text-border">·</span>
+                              <span>{content.duration_minutes}{t("common.minutes")}</span>
+                            </>
+                          )}
+                          {!isAccessible && seqAccess.reason && (
+                            <>
+                              <span className="text-border">·</span>
+                              <span>{t("course.sequentialLockedShort")}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {isAccessible && (
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" aria-hidden="true" />
+                      )}
                     </button>
                   </li>
                 );
+
                 
                 // Insert inline assessment gate after this content if one exists
                 const gateAssessment = assessmentGateMap.get(idx);
