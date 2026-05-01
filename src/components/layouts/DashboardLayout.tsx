@@ -111,80 +111,88 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
   }, [profile?.avatar_url]);
 
   const studentNav: NavItem[] = [
-    { label: t("nav.dashboard"), href: "/student", icon: LayoutDashboard, tourId: "nav-dashboard" },
-    { label: t("nav.courseCatalog"), href: "/catalog", icon: Compass, tourId: "nav-catalog" },
-    { label: t("nav.myCourses"), href: "/dashboard/courses", icon: BookOpen, tourId: "nav-courses" },
-    { label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers },
-    { label: t("nav.assignments"), href: "/dashboard/assignments", icon: ClipboardList, tourId: "nav-assignments" },
-    { label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
-    { label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
-    { label: t("nav.board", "게시판"), href: "/student/board", icon: FileText, showNew: hasNewBoardPost },
-    { label: t("nav.myPage"), href: "/mypage", icon: UserCircle },
+    { key: "dashboard", label: t("nav.dashboard"), href: "/student", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
+    { key: "catalog", label: t("nav.courseCatalog"), href: "/catalog", icon: Compass, tourId: "nav-catalog" },
+    { key: "myCourses", label: t("nav.myCourses"), href: "/dashboard/courses", icon: BookOpen, tourId: "nav-courses" },
+    { key: "myTracks", label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers },
+    { key: "assignments", label: t("nav.assignments"), href: "/dashboard/assignments", icon: ClipboardList, tourId: "nav-assignments" },
+    { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
+    { key: "announcements", label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
+    { key: "board", label: t("nav.board", "게시판"), href: "/student/board", icon: FileText, showNew: hasNewBoardPost },
+    { key: "myPage", label: t("nav.myPage"), href: "/mypage", icon: UserCircle, protected: true },
   ];
 
   const teacherNav: NavItem[] = [
-    { label: t("nav.dashboard"), href: "/teacher", icon: LayoutDashboard, tourId: "nav-dashboard" },
-    { label: t("nav.courseManagement"), href: "/teacher/courses", icon: BookOpen, tourId: "nav-course-mgmt" },
-    { label: t("nav.assignmentManagement"), href: "/teacher/assignments", icon: ClipboardList, tourId: "nav-assignment-mgmt" },
-    { label: t("nav.studentManagement"), href: "/teacher/students", icon: Users, tourId: "nav-student-mgmt" },
-    { label: t("nav.notificationManagement", "알림 관리"), href: "/teacher/notifications", icon: Bell },
-    { label: t("nav.announcementManagement", "공지사항 관리"), href: "/teacher/announcements", icon: Megaphone },
-    { label: t("nav.boardManagement", "게시판 관리"), href: "/teacher/board", icon: FileText },
-    { label: t("nav.attendanceManagement"), href: "/teacher/attendance", icon: CalendarCheck },
+    { key: "dashboard", label: t("nav.dashboard"), href: "/teacher", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
+    { key: "courseManagement", label: t("nav.courseManagement"), href: "/teacher/courses", icon: BookOpen, tourId: "nav-course-mgmt" },
+    { key: "assignmentManagement", label: t("nav.assignmentManagement"), href: "/teacher/assignments", icon: ClipboardList, tourId: "nav-assignment-mgmt" },
+    { key: "studentManagement", label: t("nav.studentManagement"), href: "/teacher/students", icon: Users, tourId: "nav-student-mgmt" },
+    { key: "notificationManagement", label: t("nav.notificationManagement", "알림 관리"), href: "/teacher/notifications", icon: Bell },
+    { key: "announcementManagement", label: t("nav.announcementManagement", "공지사항 관리"), href: "/teacher/announcements", icon: Megaphone },
+    { key: "boardManagement", label: t("nav.boardManagement", "게시판 관리"), href: "/teacher/board", icon: FileText },
+    { key: "attendanceManagement", label: t("nav.attendanceManagement"), href: "/teacher/attendance", icon: CalendarCheck },
   ];
   const adminGroups: NavGroup[] = [
     {
       label: "인사이트",
       items: [
-        { label: t("nav.dashboard"), href: "/admin", icon: LayoutDashboard, tourId: "nav-dashboard" },
-        { label: t("nav.trafficMonitoring", "통계 현황"), href: "/admin/traffic", icon: BarChart3, tourId: "nav-traffic" },
+        { key: "dashboard", label: t("nav.dashboard"), href: "/admin", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
+        { key: "trafficMonitoring", label: t("nav.trafficMonitoring", "통계 현황"), href: "/admin/traffic", icon: BarChart3, tourId: "nav-traffic" },
       ],
     },
     {
       label: "회원·조직",
       items: [
-        { label: t("nav.userManagement"), href: "/admin/users", icon: Users, tourId: "nav-user-mgmt" },
-         { label: t("nav.branchManagement", "조직 관리"), href: "/admin/branches", icon: Building2, tourId: "nav-branch-mgmt" },
+        { key: "userManagement", label: t("nav.userManagement"), href: "/admin/users", icon: Users, tourId: "nav-user-mgmt" },
+        { key: "branchManagement", label: t("nav.branchManagement", "조직 관리"), href: "/admin/branches", icon: Building2, tourId: "nav-branch-mgmt" },
       ],
     },
     {
       label: "콘텐츠",
       items: [
-        { label: t("nav.courseManagement"), href: "/admin/courses", icon: BookOpen, tourId: "nav-course-mgmt" },
-        { label: t("nav.trackManagement", "학습 트랙 관리"), href: "/admin/tracks", icon: Layers },
-        { label: t("nav.videoManagement", "동영상 관리"), href: "/admin/videos", icon: Video },
-        { label: t("nav.i18nManagement", "다국어 관리"), href: "/admin/i18n", icon: Languages },
+        { key: "courseManagement", label: t("nav.courseManagement"), href: "/admin/courses", icon: BookOpen, tourId: "nav-course-mgmt" },
+        { key: "trackManagement", label: t("nav.trackManagement", "학습 트랙 관리"), href: "/admin/tracks", icon: Layers },
+        { key: "videoManagement", label: t("nav.videoManagement", "동영상 관리"), href: "/admin/videos", icon: Video },
+        { key: "i18nManagement", label: t("nav.i18nManagement", "다국어 관리"), href: "/admin/i18n", icon: Languages },
       ],
     },
     {
       label: "학습 운영",
       items: [
-        { label: t("nav.enrollmentManagement"), href: "/admin/enrollments", icon: ClipboardCheck, tourId: "nav-enrollment-mgmt" },
-        { label: t("nav.learningManagement"), href: "/admin/learning", icon: GraduationCap },
-        { label: t("nav.attendanceManagement"), href: "/admin/attendance", icon: CalendarCheck },
-        { label: t("nav.completionManagement"), href: "/admin/completion", icon: Trophy, tourId: "nav-completion-mgmt" },
-        { label: t("nav.surveyManagement", "설문 관리"), href: "/admin/surveys", icon: ClipboardList },
+        { key: "enrollmentManagement", label: t("nav.enrollmentManagement"), href: "/admin/enrollments", icon: ClipboardCheck, tourId: "nav-enrollment-mgmt" },
+        { key: "learningManagement", label: t("nav.learningManagement"), href: "/admin/learning", icon: GraduationCap },
+        { key: "attendanceManagement", label: t("nav.attendanceManagement"), href: "/admin/attendance", icon: CalendarCheck },
+        { key: "completionManagement", label: t("nav.completionManagement"), href: "/admin/completion", icon: Trophy, tourId: "nav-completion-mgmt" },
+        { key: "surveyManagement", label: t("nav.surveyManagement", "설문 관리"), href: "/admin/surveys", icon: ClipboardList },
       ],
     },
     {
       label: "커뮤니케이션",
       items: [
-        { label: t("nav.notificationManagement", "알림 관리"), href: "/admin/notifications", icon: Bell },
-        { label: t("nav.announcementManagement", "공지사항 관리"), href: "/admin/announcements", icon: Megaphone },
-        { label: t("nav.boardManagement", "게시판 관리"), href: "/admin/board", icon: FileText },
+        { key: "notificationManagement", label: t("nav.notificationManagement", "알림 관리"), href: "/admin/notifications", icon: Bell },
+        { key: "announcementManagement", label: t("nav.announcementManagement", "공지사항 관리"), href: "/admin/announcements", icon: Megaphone },
+        { key: "boardManagement", label: t("nav.boardManagement", "게시판 관리"), href: "/admin/board", icon: FileText },
       ],
     },
     {
       label: "시스템",
       items: [
-        { label: t("nav.settings"), href: "/admin/settings", icon: Settings, tourId: "nav-settings" },
-        { label: t("nav.systemInfo", "시스템 정보"), href: "/admin/system-info", icon: Info },
+        { key: "settings", label: t("nav.settings"), href: "/admin/settings", icon: Settings, tourId: "nav-settings", protected: true },
+        { key: "systemInfo", label: t("nav.systemInfo", "시스템 정보"), href: "/admin/system-info", icon: Info },
       ],
     },
   ];
 
-  const flatNav = activeRole === "teacher" ? teacherNav : studentNav;
-  const navGroups: NavGroup[] | null = activeRole === "admin" ? adminGroups : null;
+  // Apply visibility rules from system settings
+  const filterItems = (items: NavItem[]) =>
+    items.filter((it) => it.protected || isMenuVisible(activeRole as "student" | "teacher" | "admin", it.key));
+
+  const flatNav = filterItems(activeRole === "teacher" ? teacherNav : studentNav);
+  const navGroups: NavGroup[] | null = activeRole === "admin"
+    ? adminGroups
+        .map((g) => ({ ...g, items: filterItems(g.items) }))
+        .filter((g) => g.items.length > 0)
+    : null;
   // Track collapsed groups (admin only)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (label: string) =>
