@@ -25,8 +25,8 @@ const AdminNotifications = () => {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<"all" | "individual">("all");
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
+  const [ml, setMl] = useState<MultilingualValue>(EMPTY_MULTILINGUAL);
+  const [autoTranslate, setAutoTranslate] = useState(true);
   const [searchUser, setSearchUser] = useState("");
 
   const { data: students } = useQuery({
