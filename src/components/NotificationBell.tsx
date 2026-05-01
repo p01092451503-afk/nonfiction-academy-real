@@ -7,6 +7,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
+import { pickNotificationText } from "@/lib/notificationI18n";
 
 const typeIcon: Record<string, React.ElementType> = {
   deadline: AlertTriangle,
@@ -180,6 +181,8 @@ const NotificationBell = () => {
                 notifications.map((n) => {
                   const Icon = typeIcon[n.type || "info"] || Bell;
                   const timeAgo = formatDistanceToNow(new Date(n.created_at!), { addSuffix: true, locale });
+                  const displayTitle = pickNotificationText(n.title_i18n as any, i18n.language, n.title);
+                  const displayMessage = pickNotificationText(n.message_i18n as any, i18n.language, n.message);
                   return (
                     <li key={n.id}>
                       <button
@@ -192,7 +195,7 @@ const NotificationBell = () => {
                             window.location.href = n.action_url;
                           }
                         }}
-                        aria-label={`${!n.is_read ? `(${t("notification.unread", "읽지 않음")}) ` : ""}${n.title}. ${n.message}. ${timeAgo}`}
+                        aria-label={`${!n.is_read ? `(${t("notification.unread", "읽지 않음")}) ` : ""}${displayTitle}. ${displayMessage}. ${timeAgo}`}
                       >
                         <div
                           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
@@ -208,9 +211,9 @@ const NotificationBell = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className={`text-xs leading-relaxed ${!n.is_read ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
-                            {n.title}
+                            {displayTitle}
                           </p>
-                          <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{n.message}</p>
+                          <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{displayMessage}</p>
                           <p className="mt-1 text-[10px] text-muted-foreground/60">{timeAgo}</p>
                         </div>
                         {!n.is_read && (
