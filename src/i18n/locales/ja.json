@@ -1269,5 +1269,15 @@
     "lessonCompletions": "時限履修",
     "realtimeUsers": "現在の同時接続者数",
     "autoRefresh": "リアルタイム自動更新"
+  },
+  "track": {
+    "myTracks": "マイ学習トラック",
+    "myTracksDesc": "割り当てられた学習パスを段階ごとに進めましょう。",
+    "noTracks": "割り当てられた学習トラックはありません。",
+    "sequential": "順次進行",
+    "free": "自由進行",
+    "stage": "ステージ",
+    "locked": "ロック中",
+    "noCoursesInStage": "このステージには講義がありません。"
   }
 }

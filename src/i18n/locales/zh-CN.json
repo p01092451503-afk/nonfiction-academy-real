@@ -1269,5 +1269,15 @@
     "lessonCompletions": "课时完成",
     "realtimeUsers": "实时在线用户",
     "autoRefresh": "实时自动刷新"
+  },
+  "track": {
+    "myTracks": "我的学习轨道",
+    "myTracksDesc": "按阶段完成已分配的学习路径。",
+    "noTracks": "暂无分配的学习轨道。",
+    "sequential": "顺序进行",
+    "free": "自由进行",
+    "stage": "阶段",
+    "locked": "已锁定",
+    "noCoursesInStage": "此阶段暂无课程。"
   }
 }

@@ -635,7 +635,7 @@
     "overdue": "Overdue",
     "dDay": "D-Day",
     "totalLabel": "total",
-    "completedLabel": "completed",
+    "completedLabel": "Completed",
     "learningManagement": "Learning Management",
     "learningManagementDesc": "Track progress, grades, and completion",
     "download": "Download",
@@ -678,7 +678,6 @@
     "completionReq": "Completion Req.",
     "completionStatus": "Completion Status",
     "progress80": "80%+ progress",
-    "completedLabel": "Completed",
     "incompletedLabel": "Incomplete",
     "noStudentData": "No student data",
     "bulkSettings": "Bulk Settings",
@@ -1270,5 +1269,15 @@
     "lessonCompletions": "Lesson Completions",
     "realtimeUsers": "Current Online Users",
     "autoRefresh": "Auto-refreshing"
+  },
+  "track": {
+    "myTracks": "My Learning Tracks",
+    "myTracksDesc": "Progress through your assigned learning paths stage by stage.",
+    "noTracks": "No learning tracks assigned.",
+    "sequential": "Sequential",
+    "free": "Free order",
+    "stage": "Stage",
+    "locked": "Locked",
+    "noCoursesInStage": "No courses in this stage."
   }
 }
