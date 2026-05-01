@@ -389,7 +389,7 @@ const AdminTracks = () => {
                                     return (
                                       <li key={sc.id} className="flex items-center gap-2 text-xs text-foreground pl-1">
                                         <BookOpen className="h-3 w-3 text-muted-foreground shrink-0" />
-                                        <span className="truncate">{c?.title || sc.course_id}</span>
+                                        <span className="truncate">{c ? courseTitleLocalized(c) : sc.course_id}</span>
                                         {c && (
                                           <Badge variant="outline" className="text-[9px] ml-auto shrink-0">
                                             {c.status === "published" ? "공개" : "초안"}
