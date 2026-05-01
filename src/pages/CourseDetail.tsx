@@ -97,7 +97,15 @@ const CourseDetail = () => {
     category_id: "", difficulty_level: "beginner", estimated_duration_hours: "", max_students: "",
     is_sequential: false,
   });
-  const [courseEnForm, setCourseEnForm] = useState({ title: "", description: "" });
+  // Multi-language i18n forms for course edit (en, ja, zh-CN)
+  type CourseI18nLang = "en" | "ja" | "zh-CN";
+  type CourseI18nForm = { title: string; description: string };
+  const EMPTY_COURSE_I18N: Record<CourseI18nLang, CourseI18nForm> = {
+    en: { title: "", description: "" },
+    ja: { title: "", description: "" },
+    "zh-CN": { title: "", description: "" },
+  };
+  const [courseI18nForm, setCourseI18nForm] = useState<Record<CourseI18nLang, CourseI18nForm>>(EMPTY_COURSE_I18N);
   const [courseThumbnailFile, setCourseThumbnailFile] = useState<File | null>(null);
   const [courseThumbnailPreview, setCourseThumbnailPreview] = useState<string | null>(null);
 
