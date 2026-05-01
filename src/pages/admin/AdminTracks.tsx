@@ -719,21 +719,62 @@ const TrackEditorDialog = ({
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
-          {/* Track basics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">{t("track.titleLabel", "트랙 이름 (KO)")}</label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} className="h-9 rounded-lg text-sm" placeholder="예: 강남점 신입 온보딩 트랙" />
+          {/* Track basics — 4 language tabs */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("track.multilingualLabel", "트랙 이름 / 설명 (다국어)")}
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1 rounded-lg"
+                onClick={autoTranslateAll}
+                disabled={translating || !(titles.ko || "").trim()}
+              >
+                {translating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Languages className="h-3 w-3" />}
+                {t("track.autoTranslate", "한국어 → EN/JA/ZH 자동 번역")}
+              </Button>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">{t("track.titleEnLabel", "Track Name (EN)")}</label>
-              <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className="h-9 rounded-lg text-sm" placeholder="e.g. Gangnam Onboarding Track" />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">{t("track.descLabel", "설명")}</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-[60px] rounded-lg text-xs" />
+            <Tabs value={activeLang} onValueChange={(v) => setActiveLang(v as I18nLang)}>
+              <TabsList className="h-8">
+                {I18N_LANGS.map((lc) => (
+                  <TabsTrigger key={lc} value={lc} className="text-xs h-6">
+                    {LANG_LABEL[lc]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {I18N_LANGS.map((lc) => (
+                <TabsContent key={lc} value={lc} className="space-y-2 mt-3">
+                  <Input
+                    value={titles[lc] || ""}
+                    onChange={(e) => setTitles((prev) => ({ ...prev, [lc]: e.target.value }))}
+                    className="h-9 rounded-lg text-sm"
+                    placeholder={
+                      lc === "ko"
+                        ? "트랙 이름 (예: 강남점 신입 온보딩 트랙)"
+                        : `Track name (${LANG_LABEL[lc]})`
+                    }
+                  />
+                  <Textarea
+                    value={descriptions[lc] || ""}
+                    onChange={(e) => setDescriptions((prev) => ({ ...prev, [lc]: e.target.value }))}
+                    className="min-h-[60px] rounded-lg text-xs"
+                    placeholder={
+                      lc === "ko"
+                        ? "설명 (선택)"
+                        : `Description (${LANG_LABEL[lc]}, optional)`
+                    }
+                  />
+                  {lc !== "ko" && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {t("track.fallbackHint", "비워두면 한국어로 표시됩니다.")}
+                    </p>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
           </div>
 
           <div className="flex items-center gap-6 flex-wrap">
