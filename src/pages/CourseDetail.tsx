@@ -99,7 +99,7 @@ const CourseDetail = () => {
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
-  const [contentEnForm, setContentEnForm] = useState<ContentI18nData>(emptyI18n);
+  const [contentI18nForm, setContentI18nForm] = useState<Record<ContentI18nLang, ContentI18nData>>(emptyI18nAll);
   const [courseEditOpen, setCourseEditOpen] = useState(false);
   const [courseForm, setCourseForm] = useState({
     title: "", description: "", status: "draft", is_mandatory: false, deadline: "",
