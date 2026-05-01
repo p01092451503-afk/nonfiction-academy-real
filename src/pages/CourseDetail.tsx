@@ -57,6 +57,9 @@ type ContentI18nData = {
   duration_minutes: number | null;
 };
 
+type ContentI18nLang = "en" | "ja" | "zh-CN";
+const CONTENT_I18N_LANGS: ContentI18nLang[] = ["en", "ja", "zh-CN"];
+
 const emptyContent: ContentFormData = {
   title: "", content_type: "video", video_url: "", video_provider: "",
   duration_minutes: null, description: "", is_preview: false, is_published: true,
@@ -64,6 +67,12 @@ const emptyContent: ContentFormData = {
 
 const emptyI18n: ContentI18nData = {
   title: "", description: "", video_url: "", video_provider: "", duration_minutes: null,
+};
+
+const emptyI18nAll: Record<ContentI18nLang, ContentI18nData> = {
+  en: { ...emptyI18n },
+  ja: { ...emptyI18n },
+  "zh-CN": { ...emptyI18n },
 };
 
 const CourseDetail = () => {
