@@ -19,27 +19,46 @@ function flatten(obj: JsonObj, prefix = ""): Record<string, unknown> {
   return out;
 }
 
-const source = flatten(ko as JsonObj);
-const sourceKeys = Object.keys(source);
-
+const flatKo = flatten(ko as JsonObj);
 const targets: Record<string, Record<string, unknown>> = {
   en: flatten(en as JsonObj),
   ja: flatten(ja as JsonObj),
   "zh-CN": flatten(zhCN as JsonObj),
 };
 
-describe("i18n locale parity (source: ko)", () => {
-  for (const [locale, flat] of Object.entries(targets)) {
-    it(`${locale} has no missing keys`, () => {
-      const missing = sourceKeys.filter((k) => !(k in flat));
-      expect(missing, `Missing in ${locale}:\n${missing.slice(0, 20).join("\n")}`).toEqual([]);
+/**
+ * Namespaces that MUST stay in perfect parity across all 4 locales.
+ * Add new top-level namespaces here as they are fully translated, so any
+ * missing key (e.g. a new `track.*` entry added only to ko.json) fails CI.
+ *
+ * The standalone `npm run i18n:check` script reports every locale gap;
+ * this Vitest spec is the fast guard that runs with the normal test suite.
+ */
+const ENFORCED_NAMESPACES = ["track", "common.save", "common.cancel"];
+
+function keysIn(flat: Record<string, unknown>, ns: string) {
+  return Object.keys(flat).filter((k) => k === ns || k.startsWith(`${ns}.`));
+}
+
+describe("i18n locale parity (enforced namespaces)", () => {
+  for (const ns of ENFORCED_NAMESPACES) {
+    const sourceKeys = keysIn(flatKo, ns);
+
+    it(`source (ko) defines keys under "${ns}"`, () => {
+      expect(sourceKeys.length, `No source keys found for namespace "${ns}"`).toBeGreaterThan(0);
     });
 
-    it(`${locale} has no empty string values`, () => {
-      const empty = sourceKeys.filter(
-        (k) => typeof flat[k] === "string" && (flat[k] as string).trim() === "",
-      );
-      expect(empty, `Empty in ${locale}:\n${empty.slice(0, 20).join("\n")}`).toEqual([]);
-    });
+    for (const [locale, flat] of Object.entries(targets)) {
+      it(`${locale} has all "${ns}" keys present and non-empty`, () => {
+        const missing = sourceKeys.filter((k) => !(k in flat));
+        const empty = sourceKeys.filter(
+          (k) => typeof flat[k] === "string" && (flat[k] as string).trim() === "",
+        );
+        expect(
+          { missing, empty },
+          `Locale "${locale}" namespace "${ns}":\nMissing: ${missing.join(", ") || "-"}\nEmpty: ${empty.join(", ") || "-"}`,
+        ).toEqual({ missing: [], empty: [] });
+      });
+    }
   }
 });
