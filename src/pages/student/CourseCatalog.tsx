@@ -429,7 +429,7 @@ const CourseCatalog = () => {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading || isLangSwitching || isFetching ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-live="polite" aria-label="Loading">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-64 rounded-xl" />
