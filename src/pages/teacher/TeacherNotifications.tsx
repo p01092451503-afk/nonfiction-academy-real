@@ -25,8 +25,8 @@ const TeacherNotifications = () => {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<"all" | "individual">("all");
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
+  const [ml, setMl] = useState<MultilingualValue>(EMPTY_MULTILINGUAL);
+  const [autoTranslate, setAutoTranslate] = useState(true);
   const [searchUser, setSearchUser] = useState("");
 
   // Fetch students enrolled in teacher's courses
