@@ -186,6 +186,42 @@ const AdminTracks = () => {
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
 
+  // Localization helpers (use new i18n tables, fallback to legacy _en columns then base)
+  const trackTitle = (track: Track) => {
+    if (lang === "ko") return track.title;
+    const tr = (tracksI18n as any[]).find(
+      (r) => r.track_id === track.id && r.language_code === lang
+    );
+    if (tr?.title) return tr.title;
+    if (lang === "en" && track.title_en) return track.title_en;
+    return track.title;
+  };
+  const trackDescription = (track: Track) => {
+    if (lang === "ko") return track.description;
+    const tr = (tracksI18n as any[]).find(
+      (r) => r.track_id === track.id && r.language_code === lang
+    );
+    if (tr?.description) return tr.description;
+    if (lang === "en" && (track as any).description_en) return (track as any).description_en;
+    return track.description;
+  };
+  const stageName = (stage: Stage) => {
+    if (lang === "ko") return stage.name;
+    const tr = (stagesI18n as any[]).find(
+      (r) => r.stage_id === stage.id && r.language_code === lang
+    );
+    if (tr?.name) return tr.name;
+    if (lang === "en" && stage.name_en) return stage.name_en;
+    return stage.name;
+  };
+  const courseTitleLocalized = (course: { id: string; title: string }) => {
+    if (lang === "ko") return course.title;
+    const tr = (coursesI18n as any[]).find(
+      (r) => r.course_id === course.id && r.language_code === lang
+    );
+    return tr?.title || course.title;
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("learning_tracks" as any).delete().eq("id", id);
