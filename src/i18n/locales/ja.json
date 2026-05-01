@@ -1298,6 +1298,7 @@
     "title": "コメント",
     "confirmDelete": "このコメントを削除しますか？",
     "notAllowed": "コメントできません。受講承認をご確認ください。",
-    "replyPlaceholder": "@{{name}} に返信..."
+    "replyPlaceholder": "@{{name}} に返信...",
+    "translatedBadge": "翻訳済み"
   }
 }

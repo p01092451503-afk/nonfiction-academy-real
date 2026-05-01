@@ -255,27 +255,23 @@ const CourseComments = ({ courseId }: Props) => {
             <span className="text-sm font-semibold text-foreground">{name}</span>
             <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
           </div>
-          <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5 leading-relaxed">
-            {c.content}
-          </p>
-          {translations[c.id] && (
-            <div className="mt-2 rounded-md border border-border/70 bg-muted/40 p-2">
-              <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                <Languages className="h-3 w-3" />
-                <span>{langBadge(translations[c.id].lang)}</span>
-              </div>
-              <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
-                {translations[c.id].text}
-              </p>
-              <button
-                type="button"
-                onClick={() => clearTranslation(c.id)}
-                className="mt-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t("comments.hideTranslation", "원문 보기")}
-              </button>
-            </div>
-          )}
+          {(() => {
+            const tr = translations[c.id];
+            const showingTranslation = !!tr;
+            return (
+              <>
+                <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5 leading-relaxed">
+                  {showingTranslation ? tr.text : c.content}
+                </p>
+                {showingTranslation && (
+                  <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <Languages className="h-3 w-3" />
+                    <span>{t("comments.translatedBadge", "번역됨")} · {langBadge(tr.lang)}</span>
+                  </div>
+                )}
+              </>
+            );
+          })()}
           <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
             {!isReply && (
               <button

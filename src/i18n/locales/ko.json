@@ -1298,6 +1298,7 @@
     "title": "댓글",
     "confirmDelete": "이 댓글을 삭제하시겠습니까?",
     "notAllowed": "댓글을 작성할 수 없습니다. 수강 승인 여부를 확인해 주세요.",
-    "replyPlaceholder": "@{{name}} 에게 답글 달기..."
+    "replyPlaceholder": "@{{name}} 에게 답글 달기...",
+    "translatedBadge": "번역됨"
   }
 }
