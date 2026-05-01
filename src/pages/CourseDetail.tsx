@@ -836,7 +836,11 @@ const CourseDetail = () => {
                 <span className="font-medium text-foreground">{overallProgress}%</span>
               </div>
               <Progress value={overallProgress} className="h-1.5" aria-label={`${t("course.enrollProgress")} ${overallProgress}%`} />
-              <p className="text-[10px] text-muted-foreground">{completedCount}/{contents.length} {t("course.completed")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {_courseCompletion.isCompleted
+                  ? (isEn ? "Course completed" : "강의 학습완료")
+                  : (isEn ? "In progress" : "학습 진행중")}
+              </p>
             </div>
           ) : (
             <Button className="w-full sm:w-auto" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending} aria-label={t("course.enrollCourse")}>
