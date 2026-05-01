@@ -365,17 +365,22 @@ const CourseDetail = () => {
         savedContentId = data.id;
       }
 
-      // Upsert English i18n if provided
-      if (savedContentId && contentEnForm.title.trim()) {
-        await supabase.from("course_content_i18n").upsert({
-          content_id: savedContentId,
-          language_code: "en",
-          title: contentEnForm.title,
-          description: contentEnForm.description || null,
-          video_url: contentEnForm.video_url || null,
-          video_provider: contentEnForm.video_provider || null,
-          duration_minutes: contentEnForm.duration_minutes,
-        }, { onConflict: "content_id,language_code" });
+      // Upsert i18n rows for each language that has at least a title
+      if (savedContentId) {
+        const i18nRows = CONTENT_I18N_LANGS
+          .filter((lc) => contentI18nForm[lc].title.trim().length > 0)
+          .map((lc) => ({
+            content_id: savedContentId!,
+            language_code: lc,
+            title: contentI18nForm[lc].title,
+            description: contentI18nForm[lc].description || null,
+            video_url: contentI18nForm[lc].video_url || null,
+            video_provider: contentI18nForm[lc].video_provider || null,
+            duration_minutes: contentI18nForm[lc].duration_minutes,
+          }));
+        if (i18nRows.length > 0) {
+          await supabase.from("course_content_i18n").upsert(i18nRows, { onConflict: "content_id,language_code" });
+        }
       }
     },
     onSuccess: () => {
@@ -383,7 +388,7 @@ const CourseDetail = () => {
       setContentDialogOpen(false);
       setEditingContentId(null);
       setContentForm(emptyContent);
-      setContentEnForm(emptyI18n);
+      setContentI18nForm(emptyI18nAll);
       toast({ title: editingContentId ? t("course.contentModified") : t("course.contentAdded") });
     },
     onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
