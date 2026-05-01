@@ -247,6 +247,15 @@ const CourseDetail = () => {
     return tr?.description || course?.description || "";
   };
 
+  // Invalidate language-scoped caches whenever the active language changes,
+  // so localized titles/descriptions never display stale data from another language.
+  useEffect(() => {
+    if (!courseId) return;
+    queryClient.invalidateQueries({ queryKey: ["course-i18n", courseId] });
+    queryClient.invalidateQueries({ queryKey: ["content-i18n", courseId] });
+    queryClient.invalidateQueries({ queryKey: ["course-contents", courseId] });
+  }, [currentLang, courseId, queryClient]);
+
   // --- Mutations ---
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["course", courseId] });
