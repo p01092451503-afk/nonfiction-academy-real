@@ -82,7 +82,7 @@ const CourseComments = ({ courseId }: Props) => {
     setTranslatingId(c.id);
     try {
       const { data, error } = await supabase.functions.invoke("translate-comment", {
-        body: { text: c.content, target },
+        body: { text: c.content, target, comment_id: c.id, source_lang: c.language_code },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
