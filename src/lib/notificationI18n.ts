@@ -3,6 +3,7 @@ import { translateKoTo, type TargetLang } from "@/lib/translate";
 const TARGETS: TargetLang[] = ["en", "ja", "zh-CN"];
 
 export interface NotificationI18n {
+  [key: string]: string;
   ko: string;
   en: string;
   ja: string;
