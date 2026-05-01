@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import i18n from "@/i18n";
+import { tryBrowserTranslate } from "@/lib/browserTranslator";
 
 // Normalize i18n language to one of the supported translation targets
 const normalizeLang = (lng: string): "ko" | "en" | "ja" | "zh-CN" => {
