@@ -71,7 +71,8 @@ const CourseComments = ({ courseId }: Props) => {
   const [translatingId, setTranslatingId] = useState<string | null>(null);
 
   const translateComment = async (c: CommentRow, target: string) => {
-    if (c.language_code === target) {
+    // Toggle off if translation already shown
+    if (translations[c.id]) {
       setTranslations((prev) => {
         const next = { ...prev };
         delete next[c.id];
@@ -79,6 +80,7 @@ const CourseComments = ({ courseId }: Props) => {
       });
       return;
     }
+    if (c.language_code === target) return;
     setTranslatingId(c.id);
     try {
       const { data, error } = await supabase.functions.invoke("translate-comment", {
