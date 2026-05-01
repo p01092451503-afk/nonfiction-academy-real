@@ -108,6 +108,20 @@ const MyPage = () => {
     enabled: certificates.length > 0,
   });
 
+  const { data: legacyRecords = [] } = useQuery({
+    queryKey: ["my-legacy-records", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("legacy_learning_records")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("completed_at", { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
   const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
 
   const handleDownloadCert = async (cert: any) => {
