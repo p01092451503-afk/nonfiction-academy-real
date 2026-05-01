@@ -142,6 +142,7 @@ const AppRoutes = () => {
           <Route path="/admin/i18n" element={<AdminRoute><AdminI18n /></AdminRoute>} />
           <Route path="/admin/system-info" element={<AdminRoute><AdminSystemInfo /></AdminRoute>} />
           <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
+          <Route path="/admin/legacy-records" element={<AdminRoute><AdminLegacyRecords /></AdminRoute>} />
 
           {/* Dept Admin */}
           <Route path="/dept-admin" element={<ProtectedRoute><DeptAdminDashboard /></ProtectedRoute>} />
