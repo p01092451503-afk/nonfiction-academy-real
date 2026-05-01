@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const StudentCourses = () => {
   const { user } = useUser();
@@ -20,7 +21,7 @@ const StudentCourses = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const { t, i18n } = useTranslation();
-  const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+  const lang = normalizeLang(i18n.language);
   const isLangSwitching = useLanguageSwitching();
 
   const { data: enrollments = [], isLoading, isFetching } = useQuery({
