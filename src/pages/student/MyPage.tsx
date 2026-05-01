@@ -302,7 +302,7 @@ const MyPage = () => {
               <Award className="h-4 w-4" /> {t("mypage.certificatesTab")}
             </TabsTrigger>
             <TabsTrigger value="legacy" className="rounded-lg gap-1.5 text-sm">
-              <Archive className="h-4 w-4" /> {t("mypage.legacyTab", "학습이력 관리")}
+              <Archive className="h-4 w-4" /> {t("mypage.legacyTab", "학습 이력 관리")}
             </TabsTrigger>
             <TabsTrigger value="password" className="rounded-lg gap-1.5 text-sm">
               <Lock className="h-4 w-4" /> {t("mypage.passwordTab")}
