@@ -10,12 +10,13 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const StudentDashboard = () => {
   const { user, profile } = useUser();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+  const lang = normalizeLang(i18n.language);
   const displayName = profile?.full_name || t("common.user");
 
   // 수강 중인 강좌 (진행 중)
