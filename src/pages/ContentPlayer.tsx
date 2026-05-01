@@ -138,7 +138,13 @@ const ContentPlayer = () => {
   });
 
   const getI18n = (cId: string) => contentI18nData.find((i: any) => i.content_id === cId && i.language_code === "en");
-  const stripLessonPrefix = (title: string) => title.replace(/^\d+차시\.\s*/, "");
+  const stripLessonPrefix = (title: string) =>
+    (title || "")
+      .replace(/^\d+차시\.\s*/, "")
+      .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
+      .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
+      .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
+      .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "");
   const getTitle = (c: any) => { if (isEn) { const en = getI18n(c.id); return stripLessonPrefix(en?.title || c.title); } return stripLessonPrefix(c.title); };
   const getDescription = (c: any) => { if (isEn) { const en = getI18n(c.id); return en?.description || c.description; } return c.description; };
   const getVideoUrl = (c: any) => { if (isEn) { const en = getI18n(c.id); return en?.video_url || c.video_url; } return c.video_url; };
