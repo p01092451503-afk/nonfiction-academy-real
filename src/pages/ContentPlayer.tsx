@@ -645,23 +645,37 @@ const ContentPlayer = () => {
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">{t("course.learningProgress")}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{completedCount} / {contents.length} {t("course.completed")}</p>
+                  <div className="mt-1">
+                    {_courseCompletion.isCompleted ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+                        <CheckCircle2 className="h-3 w-3" />
+                        {t("course.completed")}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {t("course.inProgress")}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button onClick={() => setSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
-              <div className="px-4 py-3 border-b border-border">
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                  <span>{t("course.progress")}</span>
-                  <span className="font-semibold text-foreground">{overallProgress}%</span>
-                </div>
-                <Progress value={overallProgress} className="h-2" />
-              </div>
-              <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+              <nav className="flex-1 overflow-y-auto p-2 space-y-1">
                 {contents.map((c, idx) => {
                   const isActive = c.id === contentId;
                   const isCompleted = progressMap.get(c.id)?.completed;
+                  const langCode = (c as any).language_code || "";
+                  const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
+                  const langStyleMap: Record<string, string> = {
+                    KO: "bg-foreground text-background border-foreground",
+                    EN: "bg-background text-foreground border-foreground/70",
+                    JA: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800",
+                    ZH: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+                  };
+                  const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground border-border";
                   return (
                     <button
                       key={c.id}
@@ -669,16 +683,22 @@ const ContentPlayer = () => {
                       onClick={() => navigate(`${routePrefix}/courses/${courseId}/content/${c.id}`)}
                       className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-sm transition-all ${isActive ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary/20" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}
                     >
-                      <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-medium ${isCompleted ? "bg-green-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>
-                        {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
-                      </div>
-                      <span className="truncate flex-1">{getTitle(c)}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${c.video_provider === "custom" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`}>
-                          {c.video_provider === "custom" ? t("course.flip") : t("course.video")}
+                      {langLabel ? (
+                        <span className={`relative h-9 w-9 shrink-0 rounded-lg border flex items-center justify-center text-[10px] font-semibold tracking-wider ${langClass}`}>
+                          {langLabel}
+                          {isCompleted && (
+                            <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-green-500 text-white flex items-center justify-center ring-2 ring-card">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </span>
+                          )}
                         </span>
-                        {c.duration_minutes && <span className="text-[10px] text-muted-foreground">{c.duration_minutes}{t("common.minutes")}</span>}
-                      </div>
+                      ) : (
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-medium ${isCompleted ? "bg-green-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>
+                          {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
+                        </div>
+                      )}
+                      <span className="truncate flex-1">{getTitle(c)}</span>
+                      {c.duration_minutes && <span className="text-[10px] text-muted-foreground shrink-0">{c.duration_minutes}{t("common.minutes")}</span>}
                     </button>
                   );
                 })}
@@ -741,23 +761,54 @@ const ContentPlayer = () => {
         <DrawerContent className="max-h-[80vh]">
           <DrawerHeader className="pb-2">
             <DrawerTitle className="text-base">{t("course.learningProgress")}</DrawerTitle>
-            <p className="text-xs text-muted-foreground">{completedCount} / {contents.length} {t("course.completed")} · {overallProgress}%</p>
-            <Progress value={overallProgress} className="h-2 mt-2" />
+            <div className="mt-1">
+              {_courseCompletion.isCompleted ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {t("course.completed")}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {t("course.inProgress")}
+                </span>
+              )}
+            </div>
           </DrawerHeader>
           <ScrollArea className="flex-1 px-4 pb-4 max-h-[55vh]">
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {contents.map((c, idx) => {
                 const isActive = c.id === contentId;
                 const isCompleted = progressMap.get(c.id)?.completed;
+                const langCode = (c as any).language_code || "";
+                const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
+                const langStyleMap: Record<string, string> = {
+                  KO: "bg-foreground text-background border-foreground",
+                  EN: "bg-background text-foreground border-foreground/70",
+                  JA: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800",
+                  ZH: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+                };
+                const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground border-border";
                 return (
                   <button
                     key={c.id}
                     onClick={() => { setMobileCurriculumOpen(false); navigate(`${routePrefix}/courses/${courseId}/content/${c.id}`); }}
                     className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 text-sm transition-all ${isActive ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary/20" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}
                   >
-                    <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium ${isCompleted ? "bg-green-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>
-                      {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
-                    </div>
+                    {langLabel ? (
+                      <span className={`relative h-10 w-10 shrink-0 rounded-lg border flex items-center justify-center text-[11px] font-semibold tracking-wider ${langClass}`}>
+                        {langLabel}
+                        {isCompleted && (
+                          <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-green-500 text-white flex items-center justify-center ring-2 ring-background">
+                            <CheckCircle2 className="h-3 w-3" />
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-medium ${isCompleted ? "bg-green-500 text-white" : isActive ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"}`}>
+                        {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
+                      </div>
+                    )}
                     <span className="truncate flex-1">{getTitle(c)}</span>
                     {c.duration_minutes && <span className="text-[11px] text-muted-foreground shrink-0">{c.duration_minutes}{t("common.minutes")}</span>}
                   </button>
