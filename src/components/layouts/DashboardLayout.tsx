@@ -19,11 +19,14 @@ import GuidedTourButton from "@/components/GuidedTourButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItem {
+  key: string;
   label: string;
   href: string;
   icon: React.ElementType;
   showNew?: boolean;
   tourId?: string;
+  /** Items that cannot be hidden via system settings (e.g. dashboard, settings) */
+  protected?: boolean;
 }
 
 interface NavGroup {
