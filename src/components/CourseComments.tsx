@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import i18n from "@/i18n";
+import { tryBrowserTranslate } from "@/lib/browserTranslator";
 
 // Normalize i18n language to one of the supported translation targets
 const normalizeLang = (lng: string): "ko" | "en" | "ja" | "zh-CN" => {
@@ -83,6 +84,18 @@ const CourseComments = ({ courseId }: Props) => {
     if (c.language_code === target) return;
     setTranslatingId(c.id);
     try {
+      // 1) Try browser-native Translator API first (free, on-device, Chrome 138+)
+      const localResult = await tryBrowserTranslate(
+        c.content,
+        target as "ko" | "en" | "ja" | "zh-CN",
+        c.language_code
+      );
+      if (localResult) {
+        setTranslations((prev) => ({ ...prev, [c.id]: { lang: target, text: localResult } }));
+        return;
+      }
+
+      // 2) Fallback to server-side AI translation (with DB cache)
       const { data, error } = await supabase.functions.invoke("translate-comment", {
         body: { text: c.content, target, comment_id: c.id, source_lang: c.language_code },
       });
