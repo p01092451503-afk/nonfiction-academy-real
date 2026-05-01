@@ -72,7 +72,8 @@ const statusBadgeColor: Record<string, string> = {
 };
 
 const AdminTracks = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = resolveLang(i18n.language);
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -91,6 +92,39 @@ const AdminTracks = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data as unknown as Track[]) || [];
+    },
+  });
+
+  const { data: tracksI18n = [] } = useQuery({
+    queryKey: ["admin-tracks-i18n"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("learning_tracks_i18n" as any)
+        .select("*");
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: stagesI18n = [] } = useQuery({
+    queryKey: ["admin-track-stages-i18n"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("track_stages_i18n" as any)
+        .select("*");
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: coursesI18n = [] } = useQuery({
+    queryKey: ["admin-courses-i18n-for-tracks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_i18n")
+        .select("course_id, language_code, title");
+      if (error) throw error;
+      return (data as any[]) || [];
     },
   });
 
