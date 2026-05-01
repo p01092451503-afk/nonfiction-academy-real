@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Layers, Plus, Pencil, Trash2, UserPlus, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle } from "lucide-react";
+import { Layers, Plus, Pencil, Trash2, UserPlus, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle, Languages, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { translateKoTo, type TargetLang } from "@/lib/translate";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,24 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+const I18N_LANGS = ["ko", "en", "ja", "zh-CN"] as const;
+type I18nLang = (typeof I18N_LANGS)[number];
+const LANG_LABEL: Record<I18nLang, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "中文",
+};
+
+const resolveLang = (l: string | undefined): I18nLang => {
+  const lower = (l || "ko").toLowerCase();
+  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("ja")) return "ja";
+  if (lower.startsWith("zh")) return "zh-CN";
+  return "ko";
+};
 
 type Track = {
   id: string;
