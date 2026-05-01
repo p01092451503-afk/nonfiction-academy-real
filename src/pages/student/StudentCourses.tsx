@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
 const StudentCourses = () => {
   const { user } = useUser();
@@ -20,8 +21,9 @@ const StudentCourses = () => {
   const [search, setSearch] = useState("");
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+  const isLangSwitching = useLanguageSwitching();
 
-  const { data: enrollments = [], isLoading } = useQuery({
+  const { data: enrollments = [], isLoading, isFetching } = useQuery({
     queryKey: ["my-enrollments", user?.id, lang],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -176,7 +178,7 @@ const StudentCourses = () => {
           <Input id="course-search" placeholder={t("course.searchCourse")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl border-border" />
         </div>
 
-        {isLoading ? (
+        {isLoading || isLangSwitching || isFetching ? (
           <div className="space-y-8" role="status" aria-live="polite" aria-label={t("common.loading", "로딩 중")}>
             {Array.from({ length: 2 }).map((_, section) => (
               <section key={section} className="space-y-3">

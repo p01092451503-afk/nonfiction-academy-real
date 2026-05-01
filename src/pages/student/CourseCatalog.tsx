@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
 const categoryGradients: Record<string, string> = {
   marketing: "from-orange-500 to-pink-500",
@@ -247,7 +248,9 @@ const CourseCatalog = () => {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
-  const { data: courses = [], isLoading } = useQuery({
+  const isLangSwitching = useLanguageSwitching();
+
+  const { data: courses = [], isLoading, isFetching } = useQuery({
     queryKey: ["catalog-courses", lang],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -426,7 +429,7 @@ const CourseCatalog = () => {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading || isLangSwitching || isFetching ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-live="polite" aria-label="Loading">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-64 rounded-xl" />

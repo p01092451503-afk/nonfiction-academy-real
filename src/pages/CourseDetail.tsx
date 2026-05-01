@@ -31,6 +31,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
@@ -83,6 +84,8 @@ const CourseDetail = () => {
     return "ko";
   })();
 
+  const isLangSwitching = useLanguageSwitching();
+
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
@@ -130,7 +133,7 @@ const CourseDetail = () => {
     enabled: !!courseId,
   });
 
-  const { data: courseI18n } = useQuery({
+  const { data: courseI18n, isFetching: courseI18nFetching } = useQuery({
     queryKey: ["course-i18n", courseId, currentLang],
     queryFn: async () => {
       const { data } = await supabase.from("course_i18n").select("*").eq("course_id", courseId!);
@@ -140,7 +143,7 @@ const CourseDetail = () => {
     staleTime: 0,
   });
 
-  const { data: contents = [] } = useQuery({
+  const { data: contents = [], isFetching: contentsFetching } = useQuery({
     queryKey: ["course-contents", courseId, currentLang],
     queryFn: async () => {
       const { data, error } = await supabase.from("course_contents").select("*").eq("course_id", courseId!).order("order_index", { ascending: true });
@@ -150,7 +153,7 @@ const CourseDetail = () => {
     enabled: !!courseId,
   });
 
-  const { data: contentI18nData = [] } = useQuery({
+  const { data: contentI18nData = [], isFetching: contentI18nFetching } = useQuery({
     queryKey: ["content-i18n", courseId, currentLang, contents.map(c => c.id).join(",")],
     queryFn: async () => {
       const contentIds = contents.map(c => c.id);
@@ -454,7 +457,7 @@ const CourseDetail = () => {
   const publishedCount = contents.filter(c => c.is_published).length;
   const totalDuration = contents.reduce((sum, c) => sum + (c.duration_minutes || 0), 0);
 
-  if (courseLoading) {
+  if (courseLoading || isLangSwitching || courseI18nFetching || contentsFetching || contentI18nFetching) {
     return (
       <DashboardLayout role={role}>
         <PageSkeleton blocks={4} />

@@ -8,6 +8,7 @@ import { useUser } from "@/contexts/UserContext";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
 type Lang = "ko" | "en" | "ja" | "zh-CN";
 
@@ -23,8 +24,9 @@ const StudentTracks = () => {
   const { user } = useUser();
   const { t, i18n } = useTranslation();
   const lang: Lang = resolveLang(i18n.language);
+  const isLangSwitching = useLanguageSwitching();
 
-  const { data: tracks = [], isLoading } = useQuery({
+  const { data: tracks = [], isLoading, isFetching } = useQuery({
     queryKey: ["my-tracks", user?.id, lang],
     queryFn: async () => {
       const { data: enrolls, error: e1 } = await supabase
@@ -158,7 +160,7 @@ const StudentTracks = () => {
           </p>
         </div>
 
-        {isLoading ? (
+        {isLoading || isLangSwitching || isFetching ? (
           <div className="space-y-4">
             {Array.from({ length: 2 }).map((_, i) => (
               <Skeleton key={i} className="h-48 w-full rounded-xl" />
