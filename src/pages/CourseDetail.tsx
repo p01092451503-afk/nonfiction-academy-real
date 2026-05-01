@@ -1071,78 +1071,166 @@ const StudentAssessmentSection = ({
   );
 };
 
-// --- Content Dialog with i18n tabs ---
+// --- Content Dialog with i18n tabs (ko/en/ja/zh-CN) ---
+const I18N_LANG_LABELS: Record<ContentI18nLang, string> = {
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "简体中文",
+};
+
 const ContentDialog = ({
-  open, onOpenChange, form, setForm, enForm, setEnForm, editingId, courseId, onSubmit, isPending, t,
+  open, onOpenChange, form, setForm, i18nForm, setI18nForm, editingId, courseId, onSubmit, isPending, t,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   form: ContentFormData;
   setForm: React.Dispatch<React.SetStateAction<ContentFormData>>;
-  enForm: ContentI18nData;
-  setEnForm: React.Dispatch<React.SetStateAction<ContentI18nData>>;
+  i18nForm: Record<ContentI18nLang, ContentI18nData>;
+  setI18nForm: React.Dispatch<React.SetStateAction<Record<ContentI18nLang, ContentI18nData>>>;
   editingId: string | null;
   courseId: string;
   onSubmit: () => void;
   isPending: boolean;
   t: any;
 }) => {
-  const [translating, setTranslating] = useState(false);
+  const [translating, setTranslating] = useState<ContentI18nLang | "all" | null>(null);
+  // Track manual edits per language so we don't overwrite user-edited fields
+  const [manualEdited, setManualEdited] = useState<Record<ContentI18nLang, { title: boolean; description: boolean }>>({
+    en: { title: false, description: false },
+    ja: { title: false, description: false },
+    "zh-CN": { title: false, description: false },
+  });
 
-  // Real-time sync: copy non-translatable fields from KO to EN automatically
+  // Reset manual flags when dialog opens
   useEffect(() => {
-    setEnForm(f => ({
-      ...f,
-      video_url: f.video_url || form.video_url,
-      video_provider: f.video_provider || form.video_provider,
-      duration_minutes: f.duration_minutes ?? form.duration_minutes,
-    }));
+    if (open) {
+      setManualEdited({
+        en: { title: false, description: false },
+        ja: { title: false, description: false },
+        "zh-CN": { title: false, description: false },
+      });
+    }
+  }, [open]);
+
+  // Sync non-translatable fields (url/provider/duration) from KO to all langs unless manually changed
+  useEffect(() => {
+    setI18nForm(prev => {
+      const next = { ...prev };
+      for (const lc of CONTENT_I18N_LANGS) {
+        next[lc] = {
+          ...prev[lc],
+          video_url: prev[lc].video_url || form.video_url,
+          video_provider: prev[lc].video_provider || form.video_provider,
+          duration_minutes: prev[lc].duration_minutes ?? form.duration_minutes,
+        };
+      }
+      return next;
+    });
   }, [form.video_url, form.video_provider, form.duration_minutes]);
 
-  // Real-time sync: mirror KO title/description to EN (raw, untranslated) so EN is never empty
+  // Mirror KO title/description to lang fields when not yet edited (so empty langs always have a fallback)
   useEffect(() => {
-    setEnForm(f => ({
-      ...f,
-      title: f.title || form.title,
-      description: f.description || form.description,
-    }));
+    setI18nForm(prev => {
+      const next = { ...prev };
+      for (const lc of CONTENT_I18N_LANGS) {
+        next[lc] = {
+          ...prev[lc],
+          title: prev[lc].title || form.title,
+          description: prev[lc].description || form.description,
+        };
+      }
+      return next;
+    });
   }, [form.title, form.description]);
 
-  const handleAutoTranslate = async () => {
-    const textsToTranslate = [form.title, form.description].filter(Boolean);
-    if (textsToTranslate.length === 0) return;
-    setTranslating(true);
+  const updateI18n = (lc: ContentI18nLang, patch: Partial<ContentI18nData>) => {
+    setI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
+  };
+
+  const markManual = (lc: ContentI18nLang, field: "title" | "description") => {
+    setManualEdited(prev => ({ ...prev, [lc]: { ...prev[lc], [field]: true } }));
+  };
+
+  const translateOne = async (lc: ContentI18nLang) => {
+    const texts = [form.title, form.description];
+    const results = await translateKoTo(lc, texts.filter(Boolean));
+    let idx = 0;
+    const tTitle = form.title ? (results[idx++] || "") : "";
+    const tDesc = form.description ? (results[idx++] || "") : "";
+    setI18nForm(prev => ({
+      ...prev,
+      [lc]: {
+        ...prev[lc],
+        title: manualEdited[lc].title ? prev[lc].title : (tTitle || prev[lc].title),
+        description: manualEdited[lc].description ? prev[lc].description : (tDesc || prev[lc].description),
+        video_url: prev[lc].video_url || form.video_url,
+        video_provider: prev[lc].video_provider || form.video_provider,
+        duration_minutes: prev[lc].duration_minutes ?? form.duration_minutes,
+      },
+    }));
+  };
+
+  const handleTranslateAll = async () => {
+    if (!form.title && !form.description) return;
+    setTranslating("all");
     try {
-      const results = await translateKoToEn(textsToTranslate);
-      let idx = 0;
-      const translatedTitle = form.title ? (results[idx++] || "") : "";
-      const translatedDesc = form.description ? (results[idx++] || "") : "";
-      setEnForm(f => ({
-        ...f,
-        title: translatedTitle || f.title,
-        description: translatedDesc || f.description,
-        video_url: f.video_url || form.video_url,
-        video_provider: f.video_provider || form.video_provider,
-        duration_minutes: f.duration_minutes ?? form.duration_minutes,
-      }));
-      // Auto-save translated i18n to DB if editing existing content
-      if (editingId && translatedTitle) {
-        await supabase.from("course_content_i18n").upsert({
-          content_id: editingId,
-          language_code: "en",
-          title: translatedTitle,
-          description: translatedDesc || null,
-          video_url: form.video_url || null,
-          video_provider: form.video_provider || null,
-          duration_minutes: form.duration_minutes,
-        }, { onConflict: "content_id,language_code" });
-      }
-    } catch {
-      // silently fail
+      await Promise.all(CONTENT_I18N_LANGS.map((lc) => translateOne(lc)));
+    } catch (e) {
+      console.error("translate all failed", e);
     } finally {
-      setTranslating(false);
+      setTranslating(null);
     }
   };
+
+  const handleTranslateLang = async (lc: ContentI18nLang) => {
+    if (!form.title && !form.description) return;
+    setTranslating(lc);
+    try {
+      await translateOne(lc);
+    } catch (e) {
+      console.error("translate failed", e);
+    } finally {
+      setTranslating(null);
+    }
+  };
+
+  const renderTypeAndDuration = (
+    durationVal: number | null,
+    onDuration: (n: number | null) => void,
+  ) => (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-1">
+        <Label className="text-xs">{t("course.contentType")}</Label>
+        <Select value={form.content_type} onValueChange={(v) => setForm(f => ({ ...f, content_type: v }))}>
+          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="video">{t("course.video")}</SelectItem>
+            <SelectItem value="document">{t("course.document")}</SelectItem>
+            <SelectItem value="quiz">{t("course.quiz")}</SelectItem>
+            <SelectItem value="assignment">{t("course.assignment")}</SelectItem>
+            <SelectItem value="live">{t("course.live")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">{t("course.playbackTime")}</Label>
+        <Input className="h-9 text-sm" type="number" value={durationVal ?? ""} onChange={(e) => onDuration(e.target.value ? Number(e.target.value) : null)} />
+      </div>
+    </div>
+  );
+
+  const publishSwitches = (
+    <div className="flex items-center gap-6">
+      <div className="flex items-center gap-2">
+        <Switch checked={form.is_published} onCheckedChange={(v) => setForm(f => ({ ...f, is_published: v }))} />
+        <Label className="text-xs">{t("course.isPublished")}</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch checked={form.is_preview} onCheckedChange={(v) => setForm(f => ({ ...f, is_preview: v }))} />
+        <Label className="text-xs">{t("course.allowPreview")}</Label>
+      </div>
+    </div>
+  );
 
   return (
   <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1152,34 +1240,34 @@ const ContentDialog = ({
       </DialogHeader>
       <Tabs defaultValue="ko" className="w-full">
         <TabsList className="w-full">
-          <TabsTrigger value="ko" className="flex-1">{t("course.koTab")}</TabsTrigger>
-          <TabsTrigger value="en" className="flex-1">{t("course.enTab")}</TabsTrigger>
+          <TabsTrigger value="ko" className="flex-1 text-xs">{t("course.koTab")}</TabsTrigger>
+          <TabsTrigger value="en" className="flex-1 text-xs">English</TabsTrigger>
+          <TabsTrigger value="ja" className="flex-1 text-xs">日本語</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="flex-1 text-xs">简体中文</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{t("course.koPrimary", "한국어 (기본)")}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={handleTranslateAll}
+              disabled={translating !== null || (!form.title && !form.description)}
+            >
+              <Languages className="h-3 w-3" />
+              {translating === "all"
+                ? t("course.translatingAll", "번역 중...")
+                : t("course.autoTranslateAll", "전체 자동 번역 (3개 언어)")}
+            </Button>
+          </div>
           <div className="space-y-1">
             <Label className="text-xs">{t("course.contentTitle")} *</Label>
             <Input className="h-9 text-sm" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} placeholder={t("course.contentPlaceholder")} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">{t("course.contentType")}</Label>
-              <Select value={form.content_type} onValueChange={(v) => setForm(f => ({ ...f, content_type: v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="video">{t("course.video")}</SelectItem>
-                  <SelectItem value="document">{t("course.document")}</SelectItem>
-                  <SelectItem value="quiz">{t("course.quiz")}</SelectItem>
-                  <SelectItem value="assignment">{t("course.assignment")}</SelectItem>
-                  <SelectItem value="live">{t("course.live")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("course.playbackTime")}</Label>
-              <Input className="h-9 text-sm" type="number" value={form.duration_minutes ?? ""} onChange={(e) => setForm(f => ({ ...f, duration_minutes: e.target.value ? Number(e.target.value) : null }))} />
-            </div>
-          </div>
+          {renderTypeAndDuration(form.duration_minutes, (n) => setForm(f => ({ ...f, duration_minutes: n })))}
           <div className="space-y-1">
             <Label className="text-xs">{t("course.contentUrl")}</Label>
             <Input className="h-9 text-sm" value={form.video_url} onChange={(e) => setForm(f => ({ ...f, video_url: e.target.value }))} placeholder="https://..." />
@@ -1200,80 +1288,64 @@ const ContentDialog = ({
             <Label className="text-xs">{t("course.description")}</Label>
             <Textarea className="text-sm" value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Switch checked={form.is_published} onCheckedChange={(v) => setForm(f => ({ ...f, is_published: v }))} />
-              <Label className="text-xs">{t("course.isPublished")}</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={form.is_preview} onCheckedChange={(v) => setForm(f => ({ ...f, is_preview: v }))} />
-              <Label className="text-xs">{t("course.allowPreview")}</Label>
-            </div>
-          </div>
+          {publishSwitches}
         </TabsContent>
 
-        <TabsContent value="en" className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">{t("course.enOptional")}</p>
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleAutoTranslate} disabled={translating || (!form.title && !form.description)}>
-              <Languages className="h-3 w-3" />
-              {t("course.autoTranslate", "자동 번역")}
-            </Button>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.enTitle")}</Label>
-            <Input className="h-9 text-sm" value={enForm.title} onChange={(e) => setEnForm(f => ({ ...f, title: e.target.value }))} placeholder="English title" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        {CONTENT_I18N_LANGS.map((lc) => (
+          <TabsContent key={lc} value={lc} className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">{t("course.langFallbackHint", "(미입력 시 한국어 폴백)")}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5"
+                onClick={() => handleTranslateLang(lc)}
+                disabled={translating !== null || (!form.title && !form.description)}
+              >
+                <Languages className="h-3 w-3" />
+                {translating === lc ? t("course.translating", "번역 중...") : t("course.autoTranslate", "자동 번역")}
+              </Button>
+            </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t("course.contentType")}</Label>
-              <Select value={form.content_type} onValueChange={(v) => setForm(f => ({ ...f, content_type: v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <Label className="text-xs">{I18N_LANG_LABELS[lc]} {t("course.contentTitle")}</Label>
+              <Input
+                className="h-9 text-sm"
+                value={i18nForm[lc].title}
+                onChange={(e) => { markManual(lc, "title"); updateI18n(lc, { title: e.target.value }); }}
+                placeholder={`${I18N_LANG_LABELS[lc]} title`}
+              />
+            </div>
+            {renderTypeAndDuration(i18nForm[lc].duration_minutes, (n) => updateI18n(lc, { duration_minutes: n }))}
+            <div className="space-y-1">
+              <Label className="text-xs">{t("course.contentUrl")}</Label>
+              <Input className="h-9 text-sm" value={i18nForm[lc].video_url} onChange={(e) => updateI18n(lc, { video_url: e.target.value })} placeholder="https://..." />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t("course.provider")}</Label>
+              <Select value={i18nForm[lc].video_provider || form.video_provider} onValueChange={(v) => updateI18n(lc, { video_provider: v })}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("course.select")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="video">{t("course.video")}</SelectItem>
-                  <SelectItem value="document">{t("course.document")}</SelectItem>
-                  <SelectItem value="quiz">{t("course.quiz")}</SelectItem>
-                  <SelectItem value="assignment">{t("course.assignment")}</SelectItem>
-                  <SelectItem value="live">{t("course.live")}</SelectItem>
+                  <SelectItem value="youtube">{t("course.youtube")}</SelectItem>
+                  <SelectItem value="vimeo">{t("course.vimeo")}</SelectItem>
+                  <SelectItem value="custom">{t("course.flipLearningMango")}</SelectItem>
+                  <SelectItem value="upload">{t("course.cdnUpload")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t("course.playbackTime")}</Label>
-              <Input className="h-9 text-sm" type="number" value={enForm.duration_minutes ?? ""} onChange={(e) => setEnForm(f => ({ ...f, duration_minutes: e.target.value ? Number(e.target.value) : null }))} />
+              <Label className="text-xs">{I18N_LANG_LABELS[lc]} {t("course.description")}</Label>
+              <Textarea
+                className="text-sm"
+                value={i18nForm[lc].description}
+                onChange={(e) => { markManual(lc, "description"); updateI18n(lc, { description: e.target.value }); }}
+                rows={2}
+                placeholder={`${I18N_LANG_LABELS[lc]} description`}
+              />
             </div>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.contentUrl")}</Label>
-            <Input className="h-9 text-sm" value={enForm.video_url} onChange={(e) => setEnForm(f => ({ ...f, video_url: e.target.value }))} placeholder="https://..." />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.provider")}</Label>
-            <Select value={enForm.video_provider || form.video_provider} onValueChange={(v) => setEnForm(f => ({ ...f, video_provider: v }))}>
-              <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("course.select")} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="youtube">{t("course.youtube")}</SelectItem>
-                <SelectItem value="vimeo">{t("course.vimeo")}</SelectItem>
-                <SelectItem value="custom">{t("course.flipLearningMango")}</SelectItem>
-                <SelectItem value="upload">{t("course.cdnUpload")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.enDescription")}</Label>
-            <Textarea className="text-sm" value={enForm.description} onChange={(e) => setEnForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="English description" />
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Switch checked={form.is_published} onCheckedChange={(v) => setForm(f => ({ ...f, is_published: v }))} />
-              <Label className="text-xs">{t("course.isPublished")}</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={form.is_preview} onCheckedChange={(v) => setForm(f => ({ ...f, is_preview: v }))} />
-              <Label className="text-xs">{t("course.allowPreview")}</Label>
-            </div>
-          </div>
-        </TabsContent>
+            {publishSwitches}
+          </TabsContent>
+        ))}
       </Tabs>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
