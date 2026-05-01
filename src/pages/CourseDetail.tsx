@@ -131,16 +131,17 @@ const CourseDetail = () => {
   });
 
   const { data: courseI18n } = useQuery({
-    queryKey: ["course-i18n", courseId],
+    queryKey: ["course-i18n", courseId, currentLang],
     queryFn: async () => {
       const { data } = await supabase.from("course_i18n").select("*").eq("course_id", courseId!);
       return data || [];
     },
     enabled: !!courseId,
+    staleTime: 0,
   });
 
   const { data: contents = [] } = useQuery({
-    queryKey: ["course-contents", courseId],
+    queryKey: ["course-contents", courseId, currentLang],
     queryFn: async () => {
       const { data, error } = await supabase.from("course_contents").select("*").eq("course_id", courseId!).order("order_index", { ascending: true });
       if (error) throw error;
@@ -150,7 +151,7 @@ const CourseDetail = () => {
   });
 
   const { data: contentI18nData = [] } = useQuery({
-    queryKey: ["content-i18n", courseId],
+    queryKey: ["content-i18n", courseId, currentLang, contents.map(c => c.id).join(",")],
     queryFn: async () => {
       const contentIds = contents.map(c => c.id);
       if (contentIds.length === 0) return [];
@@ -158,6 +159,7 @@ const CourseDetail = () => {
       return data || [];
     },
     enabled: contents.length > 0,
+    staleTime: 0,
   });
 
   const { data: enrollment } = useQuery({
@@ -244,6 +246,15 @@ const CourseDetail = () => {
     const tr = courseI18n?.find((i: any) => i.language_code === currentLang);
     return tr?.description || course?.description || "";
   };
+
+  // Invalidate language-scoped caches whenever the active language changes,
+  // so localized titles/descriptions never display stale data from another language.
+  useEffect(() => {
+    if (!courseId) return;
+    queryClient.invalidateQueries({ queryKey: ["course-i18n", courseId] });
+    queryClient.invalidateQueries({ queryKey: ["content-i18n", courseId] });
+    queryClient.invalidateQueries({ queryKey: ["course-contents", courseId] });
+  }, [currentLang, courseId, queryClient]);
 
   // --- Mutations ---
   const invalidateAll = () => {
