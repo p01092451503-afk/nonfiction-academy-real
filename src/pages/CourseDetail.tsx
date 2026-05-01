@@ -75,6 +75,13 @@ const CourseDetail = () => {
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
+  const currentLang: "ko" | "en" | "ja" | "zh-CN" = (() => {
+    const l = i18n.language || "ko";
+    if (l.startsWith("en")) return "en";
+    if (l.startsWith("ja")) return "ja";
+    if (l.startsWith("zh")) return "zh-CN";
+    return "ko";
+  })();
 
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
@@ -216,27 +223,21 @@ const CourseDetail = () => {
     title.replace(/^\d+차시\.\s*/, "");
 
   const getLocalizedContentTitle = (content: any) => {
-    if (isEn) {
-      const en = getContentI18n(content.id, "en");
-      return stripLessonPrefix(en?.title || content.title);
-    }
-    return stripLessonPrefix(content.title);
+    if (currentLang === "ko") return stripLessonPrefix(content.title);
+    const tr = getContentI18n(content.id, currentLang);
+    return stripLessonPrefix(tr?.title || content.title);
   };
 
   const getCourseTitle = () => {
-    if (isEn) {
-      const en = courseI18n?.find((i: any) => i.language_code === "en");
-      return en?.title || course?.title || "";
-    }
-    return course?.title || "";
+    if (currentLang === "ko") return course?.title || "";
+    const tr = courseI18n?.find((i: any) => i.language_code === currentLang);
+    return tr?.title || course?.title || "";
   };
 
   const getCourseDesc = () => {
-    if (isEn) {
-      const en = courseI18n?.find((i: any) => i.language_code === "en");
-      return en?.description || course?.description || "";
-    }
-    return course?.description || "";
+    if (currentLang === "ko") return course?.description || "";
+    const tr = courseI18n?.find((i: any) => i.language_code === currentLang);
+    return tr?.description || course?.description || "";
   };
 
   // --- Mutations ---
