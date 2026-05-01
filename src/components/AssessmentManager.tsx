@@ -828,6 +828,16 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-3">
+              <div className="flex items-center justify-end">
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5"
+                  onClick={handleTranslateAssessmentAll}
+                  disabled={!!translatingAssessment || (!assessmentForm.title && !assessmentForm.description)}>
+                  <Languages className="h-3 w-3" />
+                  {translatingAssessment === "all"
+                    ? (isEn ? "Translating all…" : "전체 번역 중…")
+                    : (isEn ? "Auto-translate all (3 langs)" : "전체 자동 번역 (3개 언어)")}
+                </Button>
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">{t("assessment.assessmentTitle")}</Label>
                 <Input className="h-9 text-sm" value={assessmentForm.title} onChange={e => setAssessmentForm(f => ({ ...f, title: e.target.value }))} />
