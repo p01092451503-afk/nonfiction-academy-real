@@ -577,10 +577,20 @@ export default function AssessmentPage() {
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!currentAttemptId) return;
-      const answerPayloads = questions.map((q: any) => ({
-        question_id: q.id,
-        user_answer: answers[q.id] || "",
-      }));
+      // Map localized answers back to base (KO) for server-side grading consistency
+      const rawById = new Map<string, any>(rawQuestions.map((q: any) => [q.id, q]));
+      const answerPayloads = questions.map((q: any) => {
+        const userAns = answers[q.id] || "";
+        const baseQ = rawById.get(q.id);
+        const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(q.question_type);
+        if (isMcq && baseQ && Array.isArray(q.options) && Array.isArray(baseQ.options)) {
+          const idx = q.options.findIndex((o: string) => o === userAns);
+          if (idx >= 0 && baseQ.options[idx] != null) {
+            return { question_id: q.id, user_answer: String(baseQ.options[idx]) };
+          }
+        }
+        return { question_id: q.id, user_answer: userAns };
+      });
 
       const { data, error } = await supabase.rpc("submit_and_grade_assessment", {
         p_attempt_id: currentAttemptId,
