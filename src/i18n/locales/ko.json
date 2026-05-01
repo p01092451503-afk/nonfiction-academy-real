@@ -678,7 +678,6 @@
     "completionReq": "수료요건",
     "completionStatus": "수료여부",
     "progress80": "진도 80% 이상",
-    "completedLabel": "수료",
     "incompletedLabel": "미수료",
     "noStudentData": "수강생 데이터가 없습니다",
     "bulkSettings": "전체 일괄 설정",
@@ -1270,5 +1269,15 @@
     "lessonCompletions": "차시 이수",
     "realtimeUsers": "현재 동시접속자",
     "autoRefresh": "실시간 자동 갱신"
+  },
+  "track": {
+    "myTracks": "내 학습 트랙",
+    "myTracksDesc": "배정받은 학습 경로를 단계별로 진행하세요.",
+    "noTracks": "배정된 학습 트랙이 없습니다.",
+    "sequential": "순차 진행",
+    "free": "자유 진행",
+    "stage": "단계",
+    "locked": "잠김",
+    "noCoursesInStage": "이 단계에 강의가 없습니다."
   }
 }
