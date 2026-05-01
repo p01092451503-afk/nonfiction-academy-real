@@ -1,10 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import { translateKoToEn } from "@/lib/translate";
-import type { MultilingualValue } from "@/components/admin/MultilingualTextFields";
+import { translateKoTo, type TargetLang } from "@/lib/translate";
+import type { MultilingualValue, MlLang } from "@/components/admin/MultilingualTextFields";
+
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
 
 /**
- * Saves Korean + English translations for a record into an i18n table.
- * Auto-translates KO→EN if EN is empty.
+ * Saves Korean + English/Japanese/Chinese translations for a record into an i18n table.
+ * Auto-translates KO→{en,ja,zh-CN} for any language with empty title/content.
  */
 export async function saveContentTranslations(params: {
   table: "announcement_i18n" | "board_post_i18n";
@@ -14,34 +16,43 @@ export async function saveContentTranslations(params: {
 }) {
   const { table, fkColumn, recordId, value } = params;
 
-  let enTitle = value.en.title.trim();
-  let enContent = value.en.content.trim();
+  // For each target lang, translate any empty field
+  const filled: Record<MlLang, { title: string; content: string }> = {
+    ko: { title: value.ko.title, content: value.ko.content },
+    en: { title: value.en.title.trim(), content: value.en.content.trim() },
+    ja: { title: value.ja.title.trim(), content: value.ja.content.trim() },
+    "zh-CN": { title: value["zh-CN"].title.trim(), content: value["zh-CN"].content.trim() },
+  };
 
-  // Auto-translate missing English fields
-  const needsTranslation = !enTitle || !enContent;
-  if (needsTranslation) {
-    try {
-      const [tTitle, tContent] = await translateKoToEn([
-        enTitle ? "" : value.ko.title,
-        enContent ? "" : value.ko.content,
-      ]);
-      if (!enTitle) enTitle = tTitle || value.ko.title;
-      if (!enContent) enContent = tContent || value.ko.content;
-    } catch {
-      // Fallback to KO if translation fails
-      if (!enTitle) enTitle = value.ko.title;
-      if (!enContent) enContent = value.ko.content;
-    }
-  }
+  await Promise.all(
+    TARGET_LANGS.map(async (lc) => {
+      const cur = filled[lc];
+      const needsTitle = !cur.title;
+      const needsContent = !cur.content;
+      if (!needsTitle && !needsContent) return;
+      try {
+        const [tt, tc] = await translateKoTo(lc, [
+          needsTitle ? value.ko.title : "",
+          needsContent ? value.ko.content : "",
+        ]);
+        if (needsTitle) cur.title = tt || value.ko.title;
+        if (needsContent) cur.content = tc || value.ko.content;
+      } catch {
+        if (needsTitle) cur.title = value.ko.title;
+        if (needsContent) cur.content = value.ko.content;
+      }
+    })
+  );
 
-  // Delete existing translations for clean upsert
+  // Delete existing translations for clean insert
   await (supabase as any).from(table).delete().eq(fkColumn, recordId);
 
-  // Insert KO + EN
-  const rows = [
-    { [fkColumn]: recordId, language_code: "ko", title: value.ko.title, content: value.ko.content },
-    { [fkColumn]: recordId, language_code: "en", title: enTitle, content: enContent },
-  ];
+  const rows = (Object.keys(filled) as MlLang[]).map((lc) => ({
+    [fkColumn]: recordId,
+    language_code: lc,
+    title: filled[lc].title,
+    content: filled[lc].content,
+  }));
   const { error } = await (supabase as any).from(table).insert(rows);
   if (error) throw error;
 }
@@ -58,12 +69,17 @@ export async function loadContentTranslations(params: {
   fallbackContent: string;
 }): Promise<MultilingualValue> {
   const { table, fkColumn, recordId, fallbackTitle, fallbackContent } = params;
-  const { data } = await (supabase as any).from(table).select("language_code, title, content").eq(fkColumn, recordId);
-  const ko = (data || []).find((r: any) => r.language_code === "ko");
-  const en = (data || []).find((r: any) => r.language_code === "en");
+  const { data } = await (supabase as any)
+    .from(table)
+    .select("language_code, title, content")
+    .eq(fkColumn, recordId);
+  const pick = (lc: string) => (data || []).find((r: any) => r.language_code === lc);
+  const ko = pick("ko");
   return {
     ko: { title: ko?.title ?? fallbackTitle, content: ko?.content ?? fallbackContent },
-    en: { title: en?.title ?? "", content: en?.content ?? "" },
+    en: { title: pick("en")?.title ?? "", content: pick("en")?.content ?? "" },
+    ja: { title: pick("ja")?.title ?? "", content: pick("ja")?.content ?? "" },
+    "zh-CN": { title: pick("zh-CN")?.title ?? "", content: pick("zh-CN")?.content ?? "" },
   };
 }
 

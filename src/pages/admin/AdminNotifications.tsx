@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "@/hooks/use-toast";
 import { Bell, Send, Users, User } from "lucide-react";
 import { format } from "date-fns";
+import { buildNotificationI18n } from "@/lib/notificationI18n";
 
 const AdminNotifications = () => {
   const { t } = useTranslation();
@@ -58,6 +59,7 @@ const AdminNotifications = () => {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
+      const { title_i18n, message_i18n } = await buildNotificationI18n(title, message);
       if (target === "all") {
         const ids = students?.map((s) => s.user_id) || [];
         const rows = ids.map((uid) => ({
@@ -65,6 +67,8 @@ const AdminNotifications = () => {
           title,
           message,
           type: "info",
+          title_i18n,
+          message_i18n,
         }));
         if (rows.length === 0) throw new Error("발송 대상이 없습니다.");
         const { error } = await supabase.from("notifications").insert(rows);
@@ -76,6 +80,8 @@ const AdminNotifications = () => {
           title,
           message,
           type: "info",
+          title_i18n,
+          message_i18n,
         });
         if (error) throw error;
       }

@@ -35,11 +35,16 @@ const TeacherStudents = () => {
   const sendMessageMutation = useMutation({
     mutationFn: async () => {
       if (!msgTarget) throw new Error("No target");
+      const finalTitle = msgTitle || t("students.defaultMessageTitle");
+      const { buildNotificationI18n } = await import("@/lib/notificationI18n");
+      const { title_i18n, message_i18n } = await buildNotificationI18n(finalTitle, msgBody);
       const { error } = await supabase.from("notifications").insert({
         user_id: msgTarget.userId,
-        title: msgTitle || t("students.defaultMessageTitle"),
+        title: finalTitle,
         message: msgBody,
         type: "message",
+        title_i18n,
+        message_i18n,
       });
       if (error) throw error;
     },

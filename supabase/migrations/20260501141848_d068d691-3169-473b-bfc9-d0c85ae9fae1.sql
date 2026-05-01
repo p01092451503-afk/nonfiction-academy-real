@@ -1,0 +1,3 @@
+ALTER TABLE public.notifications
+  ADD COLUMN IF NOT EXISTS title_i18n JSONB,
+  ADD COLUMN IF NOT EXISTS message_i18n JSONB;
