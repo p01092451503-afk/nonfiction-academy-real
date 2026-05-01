@@ -248,7 +248,9 @@ const CourseCatalog = () => {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
-  const { data: courses = [], isLoading } = useQuery({
+  const isLangSwitching = useLanguageSwitching();
+
+  const { data: courses = [], isLoading, isFetching } = useQuery({
     queryKey: ["catalog-courses", lang],
     queryFn: async () => {
       const { data, error } = await supabase
