@@ -188,11 +188,6 @@ const CourseComments = ({ courseId }: Props) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-sm font-semibold text-foreground">{name}</span>
-            {c.language_code && (
-              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                {langBadge(c.language_code)}
-              </span>
-            )}
             <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
           </div>
           <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5 leading-relaxed">
