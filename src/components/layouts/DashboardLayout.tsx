@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, BookOpen, ClipboardList, Trophy, Users, Settings, Compass, UserCircle, ClipboardCheck,
   LogOut, Menu, X, ChevronRight, GraduationCap, CalendarCheck, Activity, Building2, Bell, Megaphone, FileText, BarChart3, Video,
-  PanelLeftClose, PanelLeftOpen, Languages, Layers,
+  PanelLeftClose, PanelLeftOpen, Languages, Layers, Archive,
   Info,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
