@@ -26,6 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Separator } from "@/components/ui/separator";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import PageSkeleton from "@/components/PageSkeleton";
+import { computeCourseProgress } from "@/lib/courseCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
