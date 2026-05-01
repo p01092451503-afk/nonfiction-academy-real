@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { translateKoToEn } from "@/lib/translate";
+import { translateKoToEn, translateKoTo } from "@/lib/translate";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -97,7 +97,15 @@ const CourseDetail = () => {
     category_id: "", difficulty_level: "beginner", estimated_duration_hours: "", max_students: "",
     is_sequential: false,
   });
-  const [courseEnForm, setCourseEnForm] = useState({ title: "", description: "" });
+  // Multi-language i18n forms for course edit (en, ja, zh-CN)
+  type CourseI18nLang = "en" | "ja" | "zh-CN";
+  type CourseI18nForm = { title: string; description: string };
+  const EMPTY_COURSE_I18N: Record<CourseI18nLang, CourseI18nForm> = {
+    en: { title: "", description: "" },
+    ja: { title: "", description: "" },
+    "zh-CN": { title: "", description: "" },
+  };
+  const [courseI18nForm, setCourseI18nForm] = useState<Record<CourseI18nLang, CourseI18nForm>>(EMPTY_COURSE_I18N);
   const [courseThumbnailFile, setCourseThumbnailFile] = useState<File | null>(null);
   const [courseThumbnailPreview, setCourseThumbnailPreview] = useState<string | null>(null);
 
@@ -303,14 +311,19 @@ const CourseDetail = () => {
         is_sequential: vals.is_sequential,
       } as any).eq("id", courseId!);
       if (error) throw error;
-      // Upsert English i18n
-      if (courseEnForm.title.trim()) {
-        await supabase.from("course_i18n").upsert({
+      // Upsert i18n rows for each non-Korean language that has at least a title
+      const i18nRows = (Object.keys(courseI18nForm) as CourseI18nLang[])
+        .filter((lc) => courseI18nForm[lc].title.trim().length > 0)
+        .map((lc) => ({
           course_id: courseId!,
-          language_code: "en",
-          title: courseEnForm.title,
-          description: courseEnForm.description || null,
-        }, { onConflict: "course_id,language_code" });
+          language_code: lc,
+          title: courseI18nForm[lc].title,
+          description: courseI18nForm[lc].description || null,
+        }));
+      if (i18nRows.length > 0) {
+        await supabase
+          .from("course_i18n")
+          .upsert(i18nRows, { onConflict: "course_id,language_code" });
       }
     },
     onSuccess: () => { invalidateAll(); setCourseEditOpen(false); setCourseThumbnailFile(null); toast({ title: t("course.courseModified") }); },
@@ -440,8 +453,13 @@ const CourseDetail = () => {
       max_students: course.max_students ? String(course.max_students) : "",
       is_sequential: (course as any).is_sequential || false,
     });
-    const enCourse = courseI18n?.find((i: any) => i.language_code === "en");
-    setCourseEnForm({ title: enCourse?.title || "", description: enCourse?.description || "" });
+    const findRow = (lc: CourseI18nLang) =>
+      courseI18n?.find((i: any) => i.language_code === lc);
+    setCourseI18nForm({
+      en: { title: findRow("en")?.title || "", description: findRow("en")?.description || "" },
+      ja: { title: findRow("ja")?.title || "", description: findRow("ja")?.description || "" },
+      "zh-CN": { title: findRow("zh-CN")?.title || "", description: findRow("zh-CN")?.description || "" },
+    });
     setCourseThumbnailFile(null);
     setCourseThumbnailPreview(course.thumbnail_url || null);
     setCourseEditOpen(true);
@@ -716,8 +734,8 @@ const CourseDetail = () => {
           onOpenChange={setCourseEditOpen}
           form={courseForm}
           setForm={setCourseForm}
-          enForm={courseEnForm}
-          setEnForm={setCourseEnForm}
+          i18nForm={courseI18nForm}
+          setI18nForm={setCourseI18nForm}
           courseId={courseId!}
           onSubmit={() => updateCourseMutation.mutate(courseForm)}
           isPending={updateCourseMutation.isPending}
@@ -1250,17 +1268,26 @@ const ContentDialog = ({
   );
 };
 
-// --- Course Edit Dialog with i18n tabs + thumbnail + extended fields ---
+// --- Course Edit Dialog with i18n tabs (ko/en/ja/zh-CN) + thumbnail + extended fields ---
+type CourseI18nLang = "en" | "ja" | "zh-CN";
+type CourseI18nForm = { title: string; description: string };
+const COURSE_I18N_LANGS: CourseI18nLang[] = ["en", "ja", "zh-CN"];
+const COURSE_I18N_LANG_LABELS: Record<CourseI18nLang, string> = {
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "简体中文",
+};
+
 const CourseEditDialog = ({
-  open, onOpenChange, form, setForm, enForm, setEnForm, courseId, onSubmit, isPending, t,
+  open, onOpenChange, form, setForm, i18nForm, setI18nForm, courseId, onSubmit, isPending, t,
   thumbnailPreview, onThumbnailChange, onThumbnailRemove, categories,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   form: { title: string; description: string; status: string; is_mandatory: boolean; deadline: string; category_id: string; difficulty_level: string; estimated_duration_hours: string; max_students: string; is_sequential: boolean };
   setForm: React.Dispatch<React.SetStateAction<typeof form>>;
-  enForm: { title: string; description: string };
-  setEnForm: React.Dispatch<React.SetStateAction<{ title: string; description: string }>>;
+  i18nForm: Record<CourseI18nLang, CourseI18nForm>;
+  setI18nForm: React.Dispatch<React.SetStateAction<Record<CourseI18nLang, CourseI18nForm>>>;
   courseId: string;
   onSubmit: () => void;
   isPending: boolean;
@@ -1271,49 +1298,67 @@ const CourseEditDialog = ({
   categories: { id: string; name: string }[];
 }) => {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [translating, setTranslating] = useState(false);
-  const [enTitleManual, setEnTitleManual] = useState(false);
-  const [enDescManual, setEnDescManual] = useState(false);
-  const prevKoTitle = useRef(form.title);
-  const prevKoDesc = useRef(form.description);
+  const [translating, setTranslating] = useState<CourseI18nLang | null>(null);
+  // Track which language fields the user has manually edited so we don't overwrite them
+  const [manualEdits, setManualEdits] = useState<Record<CourseI18nLang, { title: boolean; description: boolean }>>({
+    en: { title: false, description: false },
+    ja: { title: false, description: false },
+    "zh-CN": { title: false, description: false },
+  });
 
-  // Sync KO → EN title if not manually edited
+  // Sync KO → other-lang fields when not manually edited
   useEffect(() => {
-    if (!enTitleManual) {
-      setEnForm(f => ({ ...f, title: form.title }));
-    }
-    prevKoTitle.current = form.title;
-  }, [form.title, enTitleManual]);
+    setI18nForm((prev) => {
+      const next = { ...prev };
+      COURSE_I18N_LANGS.forEach((lc) => {
+        if (!manualEdits[lc].title) next[lc] = { ...next[lc], title: form.title };
+      });
+      return next;
+    });
+  }, [form.title]);
 
-  // Sync KO → EN description if not manually edited
   useEffect(() => {
-    if (!enDescManual) {
-      setEnForm(f => ({ ...f, description: form.description }));
-    }
-    prevKoDesc.current = form.description;
-  }, [form.description, enDescManual]);
+    setI18nForm((prev) => {
+      const next = { ...prev };
+      COURSE_I18N_LANGS.forEach((lc) => {
+        if (!manualEdits[lc].description) next[lc] = { ...next[lc], description: form.description };
+      });
+      return next;
+    });
+  }, [form.description]);
 
-  const handleAutoTranslate = async () => {
+  const updateLang = (lc: CourseI18nLang, patch: Partial<CourseI18nForm>) => {
+    setI18nForm((prev) => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
+    setManualEdits((prev) => ({
+      ...prev,
+      [lc]: {
+        title: patch.title !== undefined ? true : prev[lc].title,
+        description: patch.description !== undefined ? true : prev[lc].description,
+      },
+    }));
+  };
+
+  const handleAutoTranslate = async (lc: CourseI18nLang) => {
     const textsToTranslate = [form.title, form.description].filter(Boolean);
     if (textsToTranslate.length === 0) return;
-    setTranslating(true);
+    setTranslating(lc);
     try {
-      const results = await translateKoToEn(textsToTranslate);
+      const results = await translateKoTo(lc, textsToTranslate);
       let idx = 0;
       const translatedTitle = form.title ? (results[idx++] || "") : "";
       const translatedDesc = form.description ? (results[idx++] || "") : "";
-      setEnForm(f => ({
-        ...f,
-        title: translatedTitle || f.title,
-        description: translatedDesc || f.description,
+      setI18nForm((prev) => ({
+        ...prev,
+        [lc]: {
+          title: translatedTitle || prev[lc].title,
+          description: translatedDesc || prev[lc].description,
+        },
       }));
-      setEnTitleManual(true);
-      setEnDescManual(true);
-      // Auto-save translated i18n to DB
+      setManualEdits((prev) => ({ ...prev, [lc]: { title: true, description: true } }));
       if (courseId && translatedTitle) {
         await supabase.from("course_i18n").upsert({
           course_id: courseId,
-          language_code: "en",
+          language_code: lc,
           title: translatedTitle,
           description: translatedDesc || null,
         }, { onConflict: "course_id,language_code" });
@@ -1321,7 +1366,7 @@ const CourseEditDialog = ({
     } catch {
       // silently fail
     } finally {
-      setTranslating(false);
+      setTranslating(null);
     }
   };
 
@@ -1332,9 +1377,11 @@ const CourseEditDialog = ({
         <DialogTitle className="text-base">{t("course.courseEditTitle")}</DialogTitle>
       </DialogHeader>
       <Tabs defaultValue="ko" className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="ko" className="flex-1">{t("course.koTab")}</TabsTrigger>
-          <TabsTrigger value="en" className="flex-1">{t("course.enTab")}</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="ko" className="text-xs">{t("course.koTab")}</TabsTrigger>
+          <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
+          <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
@@ -1472,137 +1519,78 @@ const CourseEditDialog = ({
           </div>
         </TabsContent>
 
-        <TabsContent value="en" className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">{t("course.enOptional")}</p>
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleAutoTranslate} disabled={translating || (!form.title && !form.description)}>
-              <Languages className="h-3 w-3" />
-              {t("course.autoTranslate", "자동 번역")}
-            </Button>
-          </div>
+        {COURSE_I18N_LANGS.map((lc) => (
+          <TabsContent key={lc} value={lc} className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {t("course.enOptional", "(미입력 시 한국어 폴백)")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5"
+                onClick={() => handleAutoTranslate(lc)}
+                disabled={translating === lc || (!form.title && !form.description)}
+              >
+                <Languages className="h-3 w-3" />
+                {translating === lc
+                  ? t("common.translating", "번역 중...")
+                  : t("course.autoTranslate", "자동 번역")}
+              </Button>
+            </div>
 
-          {/* Thumbnail (shared) */}
-          <div className="space-y-1">
-            <Label className="text-xs">{t("createCourse.thumbnailLabel") || "썸네일"}</Label>
-            {thumbnailPreview ? (
-              <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
-                <img src={thumbnailPreview} alt="thumbnail" className="w-full h-full object-cover" />
+            {/* Thumbnail (shared) */}
+            <div className="space-y-1">
+              <Label className="text-xs">{t("createCourse.thumbnailLabel") || "썸네일"}</Label>
+              {thumbnailPreview ? (
+                <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
+                  <img src={thumbnailPreview} alt="thumbnail" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={onThumbnailRemove}
+                    className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={onThumbnailRemove}
-                  className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background transition-colors"
+                  onClick={() => fileRef.current?.click()}
+                  className="flex w-full h-24 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Upload className="h-4 w-4" />
+                  {t("createCourse.thumbnailDropHint")}
                 </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="flex w-full h-24 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                {t("createCourse.thumbnailDropHint")}
-              </button>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.enTitle")}</Label>
-            <Input className="h-9 text-sm" value={enForm.title} onChange={(e) => { setEnTitleManual(true); setEnForm(f => ({ ...f, title: e.target.value })); }} placeholder="English title" />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.enDescription")}</Label>
-            <Textarea className="text-sm" value={enForm.description} onChange={(e) => { setEnDescManual(true); setEnForm(f => ({ ...f, description: e.target.value })); }} rows={3} placeholder="English description" />
-          </div>
-
-          {/* Category & Difficulty (shared) */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.categoryLabel")}</Label>
-              <Select value={form.category_id} onValueChange={(v) => setForm(f => ({ ...f, category_id: v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("common.select") || "선택"} /></SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              )}
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.difficultyLabel")}</Label>
-              <Select value={form.difficulty_level} onValueChange={(v) => setForm(f => ({ ...f, difficulty_level: v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">{t("createCourse.beginnerLevel")}</SelectItem>
-                  <SelectItem value="intermediate">{t("createCourse.intermediateLevel")}</SelectItem>
-                  <SelectItem value="advanced">{t("createCourse.advancedLevel")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          {/* Duration & Max students (shared) */}
-          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.estimatedDuration") || "예상 소요시간(h)"}</Label>
-              <Input className="h-9 text-sm" type="number" min={0} value={form.estimated_duration_hours} onChange={(e) => setForm(f => ({ ...f, estimated_duration_hours: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.maxStudents") || "최대 수강인원"}</Label>
-              <Input className="h-9 text-sm" type="number" min={0} value={form.max_students} onChange={(e) => setForm(f => ({ ...f, max_students: e.target.value }))} />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.courseStatus")}</Label>
-            <Select value={form.status} onValueChange={(v) => setForm(f => ({ ...f, status: v }))}>
-              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">{t("course.draftStatus")}</SelectItem>
-                <SelectItem value="published">{t("course.publishedStatus")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 필수교육 설정 (shared) */}
-          <Separator />
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-xs font-semibold">{t("course.mandatoryToggle")}</Label>
-                <p className="text-[11px] text-muted-foreground">{t("course.mandatoryToggleDesc")}</p>
-              </div>
-              <Switch
-                checked={form.is_mandatory}
-                onCheckedChange={(v) => setForm(f => ({ ...f, is_mandatory: v }))}
+              <Label className="text-xs">
+                {t("course.courseTitle")} ({COURSE_I18N_LANG_LABELS[lc]})
+              </Label>
+              <Input
+                className="h-9 text-sm"
+                value={i18nForm[lc].title}
+                onChange={(e) => updateLang(lc, { title: e.target.value })}
+                placeholder={`${COURSE_I18N_LANG_LABELS[lc]} title`}
               />
             </div>
-            {form.is_mandatory && (
-              <div className="space-y-1">
-                <Label className="text-xs">{t("course.deadlineLabel")}</Label>
-                <Input
-                  type="date"
-                  className="h-9 text-sm"
-                  value={form.deadline}
-                  onChange={(e) => setForm(f => ({ ...f, deadline: e.target.value }))}
-                />
-                <p className="text-[10px] text-muted-foreground">{t("course.deadlineHelp")}</p>
-              </div>
-            )}
-            {/* Sequential Learning Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-xs font-semibold">{t("course.sequentialToggle")}</Label>
-                <p className="text-[11px] text-muted-foreground">{t("course.sequentialToggleDesc")}</p>
-              </div>
-              <Switch
-                checked={form.is_sequential}
-                onCheckedChange={(v) => setForm(f => ({ ...f, is_sequential: v }))}
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {t("course.description")} ({COURSE_I18N_LANG_LABELS[lc]})
+              </Label>
+              <Textarea
+                className="text-sm"
+                value={i18nForm[lc].description}
+                onChange={(e) => updateLang(lc, { description: e.target.value })}
+                rows={3}
+                placeholder={`${COURSE_I18N_LANG_LABELS[lc]} description`}
               />
             </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        ))}
       </Tabs>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
