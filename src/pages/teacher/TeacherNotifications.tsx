@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "@/hooks/use-toast";
 import { Bell, Send, Users, User } from "lucide-react";
 import { format } from "date-fns";
-import { buildNotificationI18n } from "@/lib/notificationI18n";
+import { buildNotificationI18n, type NotificationI18n } from "@/lib/notificationI18n";
+import MultilingualTextFields, { EMPTY_MULTILINGUAL, type MultilingualValue } from "@/components/admin/MultilingualTextFields";
 
 const TeacherNotifications = () => {
   const { t } = useTranslation();
@@ -24,8 +25,8 @@ const TeacherNotifications = () => {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<"all" | "individual">("all");
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
+  const [ml, setMl] = useState<MultilingualValue>(EMPTY_MULTILINGUAL);
+  const [autoTranslate, setAutoTranslate] = useState(true);
   const [searchUser, setSearchUser] = useState("");
 
   // Fetch students enrolled in teacher's courses
@@ -68,16 +69,38 @@ const TeacherNotifications = () => {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
-      const { title_i18n, message_i18n } = await buildNotificationI18n(title, message);
+      const koTitle = ml.ko.title.trim();
+      const koMessage = ml.ko.content.trim();
+      if (!koTitle || !koMessage) throw new Error("한국어 제목/내용을 입력하세요.");
+
+      let title_i18n: NotificationI18n;
+      let message_i18n: NotificationI18n;
+      if (autoTranslate) {
+        ({ title_i18n, message_i18n } = await buildNotificationI18n(koTitle, koMessage));
+      } else {
+        title_i18n = {
+          ko: koTitle,
+          en: ml.en.title.trim() || koTitle,
+          ja: ml.ja.title.trim() || koTitle,
+          "zh-CN": ml["zh-CN"].title.trim() || koTitle,
+        };
+        message_i18n = {
+          ko: koMessage,
+          en: ml.en.content.trim() || koMessage,
+          ja: ml.ja.content.trim() || koMessage,
+          "zh-CN": ml["zh-CN"].content.trim() || koMessage,
+        };
+      }
+
       if (target === "all") {
         const ids = students?.map((s) => s.user_id) || [];
-        const rows = ids.map((uid) => ({ user_id: uid, title, message, type: "info", title_i18n, message_i18n }));
+        const rows = ids.map((uid) => ({ user_id: uid, title: koTitle, message: koMessage, type: "info", title_i18n, message_i18n }));
         if (rows.length === 0) throw new Error("발송 대상이 없습니다.");
         const { error } = await supabase.from("notifications").insert(rows);
         if (error) throw error;
       } else {
         if (!selectedUserId) throw new Error("대상을 선택해주세요.");
-        const { error } = await supabase.from("notifications").insert({ user_id: selectedUserId, title, message, type: "info", title_i18n, message_i18n });
+        const { error } = await supabase.from("notifications").insert({ user_id: selectedUserId, title: koTitle, message: koMessage, type: "info", title_i18n, message_i18n });
         if (error) throw error;
       }
     },
@@ -85,8 +108,7 @@ const TeacherNotifications = () => {
       toast({ title: "알림 발송 완료" });
       queryClient.invalidateQueries({ queryKey: ["teacher-recent-notifications"] });
       setOpen(false);
-      setTitle("");
-      setMessage("");
+      setMl(EMPTY_MULTILINGUAL);
       setSelectedUserId("");
     },
     onError: (err: Error) => toast({ title: "오류", description: err.message, variant: "destructive" }),
@@ -143,15 +165,14 @@ const TeacherNotifications = () => {
                     </div>
                   </div>
                 )}
-                <div>
-                  <Label>{t("notifications.title", "제목")}</Label>
-                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("notifications.titlePlaceholder", "알림 제목을 입력하세요")} />
-                </div>
-                <div>
-                  <Label>{t("notifications.message", "내용")}</Label>
-                  <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("notifications.messagePlaceholder", "알림 내용을 입력하세요")} rows={4} />
-                </div>
-                <Button onClick={() => sendMutation.mutate()} disabled={!title || !message || sendMutation.isPending} className="w-full">
+                <MultilingualTextFields
+                  value={ml}
+                  onChange={setMl}
+                  contentRows={4}
+                  autoTranslate={autoTranslate}
+                  onAutoTranslateChange={setAutoTranslate}
+                />
+                <Button onClick={() => sendMutation.mutate()} disabled={!ml.ko.title.trim() || !ml.ko.content.trim() || sendMutation.isPending} className="w-full">
                   {sendMutation.isPending ? t("common.processing") : t("notifications.send", "알림 발송")}
                 </Button>
               </div>
