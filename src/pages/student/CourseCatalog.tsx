@@ -244,7 +244,15 @@ const CourseCatalog = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { i18n } = useTranslation();
-  const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+  const normalizeLang = (l?: string): string => {
+    if (!l) return "ko";
+    if (l.startsWith("ko")) return "ko";
+    if (l.startsWith("en")) return "en";
+    if (l.startsWith("ja")) return "ja";
+    if (l.startsWith("zh")) return "zh-CN";
+    return "ko";
+  };
+  const lang = normalizeLang(i18n.language);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -281,6 +289,7 @@ const CourseCatalog = () => {
         .order("display_order", { ascending: true });
       if (error) throw error;
       if (lang === "ko") return data;
+      // categories only has KO + name_en; for JA/ZH fall back to EN, then KO
       return (data || []).map((c: any) => ({ ...c, name: c.name_en || c.name }));
     },
   });
