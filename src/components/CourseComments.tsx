@@ -10,20 +10,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import i18n from "@/i18n";
 
-const TRANSLATE_LANGS: { code: string; label: string }[] = [
-  { code: "ko", label: "한국어" },
-  { code: "en", label: "English" },
-  { code: "ja", label: "日本語" },
-  { code: "zh-CN", label: "中文" },
-];
+// Normalize i18n language to one of the supported translation targets
+const normalizeLang = (lng: string): "ko" | "en" | "ja" | "zh-CN" => {
+  if (!lng) return "en";
+  if (lng.startsWith("ko")) return "ko";
+  if (lng.startsWith("ja")) return "ja";
+  if (lng.startsWith("zh")) return "zh-CN";
+  return "en";
+};
 
 interface CommentRow {
   id: string;
