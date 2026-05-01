@@ -71,6 +71,47 @@ const CourseComments = ({ courseId }: Props) => {
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [translations, setTranslations] = useState<Record<string, { lang: string; text: string }>>({});
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
+
+  const translateComment = async (c: CommentRow, target: string) => {
+    if (c.language_code === target) {
+      setTranslations((prev) => {
+        const next = { ...prev };
+        delete next[c.id];
+        return next;
+      });
+      return;
+    }
+    setTranslatingId(c.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-comment", {
+        body: { text: c.content, target },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const translated = (data as any)?.translated as string;
+      if (translated) {
+        setTranslations((prev) => ({ ...prev, [c.id]: { lang: target, text: translated } }));
+      }
+    } catch (e: any) {
+      toast({
+        title: t("common.error", "오류"),
+        description: e?.message || t("comments.translateFailed", "번역에 실패했습니다"),
+        variant: "destructive",
+      });
+    } finally {
+      setTranslatingId(null);
+    }
+  };
+
+  const clearTranslation = (id: string) => {
+    setTranslations((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
 
   const queryKey = ["course-comments", courseId];
 
