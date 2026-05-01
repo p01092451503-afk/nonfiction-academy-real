@@ -485,29 +485,59 @@ const TrackEditorDialog = ({
     enabled: !!trackId,
     queryFn: async () => {
       if (!trackId) return null;
-      const [{ data: trk }, { data: sts }, { data: tsc }] = await Promise.all([
+      const [
+        { data: trk },
+        { data: sts },
+        { data: tsc },
+        { data: trackI18nRows },
+        { data: stageI18nRows },
+      ] = await Promise.all([
         supabase.from("learning_tracks" as any).select("*").eq("id", trackId).single(),
         supabase.from("track_stages" as any).select("*").eq("track_id", trackId).order("order_index"),
         supabase.from("track_stage_courses" as any).select("*").order("order_index"),
+        supabase.from("learning_tracks_i18n" as any).select("*").eq("track_id", trackId),
+        supabase.from("track_stages_i18n" as any).select("*"),
       ]);
       const track = trk as any;
       if (track) {
-        setTitle(track.title || "");
-        setTitleEn(track.title_en || "");
-        setDescription(track.description || "");
+        const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
+        const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
+        if (track.title_en) nextTitles.en = track.title_en;
+        if (track.description_en) nextDescs.en = track.description_en;
+        ((trackI18nRows as any[]) || []).forEach((row) => {
+          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+            nextTitles[row.language_code as I18nLang] = row.title || nextTitles[row.language_code as I18nLang] || "";
+            nextDescs[row.language_code as I18nLang] = row.description || nextDescs[row.language_code as I18nLang] || "";
+          }
+        });
+        setTitles(nextTitles);
+        setDescriptions(nextDescs);
         setIsSequential(!!track.is_sequential);
         setStatus(track.status || "draft");
       }
       const stageList = (sts as any[]) || [];
       const courseList = (tsc as any[]) || [];
-      const stagesWithCourses: DraftStage[] = stageList.map((s) => ({
-        id: s.id,
-        name: s.name || "",
-        name_en: s.name_en || "",
-        description: s.description || "",
-        order_index: s.order_index ?? 0,
-        course_ids: courseList.filter((c) => c.stage_id === s.id).map((c) => c.course_id),
-      }));
+      const stageI18nByStage = new Map<string, any[]>();
+      ((stageI18nRows as any[]) || []).forEach((row) => {
+        if (!stageI18nByStage.has(row.stage_id)) stageI18nByStage.set(row.stage_id, []);
+        stageI18nByStage.get(row.stage_id)!.push(row);
+      });
+      const stagesWithCourses: DraftStage[] = stageList.map((s) => {
+        const names: LangMap = { ...emptyLangMap(), ko: s.name || "" };
+        if (s.name_en) names.en = s.name_en;
+        (stageI18nByStage.get(s.id) || []).forEach((row) => {
+          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+            names[row.language_code as I18nLang] = row.name || names[row.language_code as I18nLang] || "";
+          }
+        });
+        return {
+          id: s.id,
+          names,
+          description: s.description || "",
+          order_index: s.order_index ?? 0,
+          course_ids: courseList.filter((c) => c.stage_id === s.id).map((c) => c.course_id),
+        };
+      });
       if (stagesWithCourses.length) setDraftStages(stagesWithCourses);
       return null;
     },
@@ -516,7 +546,7 @@ const TrackEditorDialog = ({
   const addStage = () => {
     setDraftStages((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: "", name_en: "", description: "", order_index: prev.length, course_ids: [], _isNew: true },
+      { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: prev.length, course_ids: [], _isNew: true },
     ]);
   };
   const removeStage = (id: string) => {
