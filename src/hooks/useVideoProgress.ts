@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { syncEnrollmentOnContentCompleted } from "@/lib/courseCompletion";
 
 interface UseVideoProgressOptions {
   userId: string | undefined;
