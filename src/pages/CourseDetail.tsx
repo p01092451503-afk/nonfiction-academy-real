@@ -433,7 +433,7 @@ const CourseDetail = () => {
   const openAddContent = () => {
     setEditingContentId(null);
     setContentForm(emptyContent);
-    setContentEnForm(emptyI18n);
+    setContentI18nForm(emptyI18nAll);
     setContentDialogOpen(true);
   };
   const openEditContent = (c: typeof contents[0]) => {
@@ -444,13 +444,17 @@ const CourseDetail = () => {
       duration_minutes: c.duration_minutes, description: c.description || "",
       is_preview: c.is_preview ?? false, is_published: c.is_published ?? true,
     });
-    // Load English i18n
-    const enI18n = getContentI18n(c.id, "en");
-    setContentEnForm(enI18n ? {
-      title: enI18n.title || "", description: enI18n.description || "",
-      video_url: enI18n.video_url || "", video_provider: enI18n.video_provider || "",
-      duration_minutes: enI18n.duration_minutes,
-    } : emptyI18n);
+    // Load i18n for all target languages
+    const next: Record<ContentI18nLang, ContentI18nData> = { ...emptyI18nAll };
+    for (const lc of CONTENT_I18N_LANGS) {
+      const tr: any = getContentI18n(c.id, lc);
+      next[lc] = tr ? {
+        title: tr.title || "", description: tr.description || "",
+        video_url: tr.video_url || "", video_provider: tr.video_provider || "",
+        duration_minutes: tr.duration_minutes,
+      } : { ...emptyI18n };
+    }
+    setContentI18nForm(next);
     setContentDialogOpen(true);
   };
   const openCourseEdit = () => {
