@@ -89,6 +89,8 @@
   "nav": {
     "dashboard": "仪表板",
     "myCourses": "我的课程",
+    "myTracks": "我的学习轨道",
+    "trackManagement": "学习轨道管理",
     "assignments": "作业",
     "achievements": "成就",
     "courseManagement": "课程/评估管理",

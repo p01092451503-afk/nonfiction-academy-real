@@ -89,6 +89,8 @@
   "nav": {
     "dashboard": "대시보드",
     "myCourses": "내 강의",
+    "myTracks": "내 학습 트랙",
+    "trackManagement": "학습 트랙 관리",
     "assignments": "과제",
     "achievements": "성취",
     "courseManagement": "강의/평가 관리",

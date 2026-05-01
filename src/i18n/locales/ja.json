@@ -89,6 +89,8 @@
   "nav": {
     "dashboard": "ダッシュボード",
     "myCourses": "マイコース",
+    "myTracks": "マイ学習トラック",
+    "trackManagement": "学習トラック管理",
     "assignments": "課題",
     "achievements": "達成",
     "courseManagement": "コース/評価管理",

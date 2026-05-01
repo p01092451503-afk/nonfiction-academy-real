@@ -89,6 +89,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "myCourses": "My Courses",
+    "myTracks": "My Learning Track",
+    "trackManagement": "Learning Track Management",
     "assignments": "Assignments",
     "achievements": "Achievements",
     "courseManagement": "Course/Assessment Mgmt",
