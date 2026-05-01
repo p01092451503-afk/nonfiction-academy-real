@@ -958,6 +958,16 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
 
               {/* Korean tab */}
               <TabsContent value="ko" className="space-y-3 pt-3">
+                <div className="flex items-center justify-end">
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5"
+                    onClick={handleTranslateQuestionAll}
+                    disabled={!!translatingQuestion || !questionForm.question_text.trim()}>
+                    <Languages className="h-3 w-3" />
+                    {translatingQuestion === "all"
+                      ? (isEn ? "Translating all…" : "전체 번역 중…")
+                      : (isEn ? "Auto-translate all (3 langs)" : "전체 자동 번역 (3개 언어)")}
+                  </Button>
+                </div>
                 <div className="space-y-1">
                   <Label className="text-xs">{t("assessment.questionText")}</Label>
                   <Textarea className="text-sm" value={questionForm.question_text} onChange={e => setQuestionForm(f => ({ ...f, question_text: e.target.value }))} rows={3} />
