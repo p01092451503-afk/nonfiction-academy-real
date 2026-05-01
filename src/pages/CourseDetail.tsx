@@ -453,8 +453,13 @@ const CourseDetail = () => {
       max_students: course.max_students ? String(course.max_students) : "",
       is_sequential: (course as any).is_sequential || false,
     });
-    const enCourse = courseI18n?.find((i: any) => i.language_code === "en");
-    setCourseEnForm({ title: enCourse?.title || "", description: enCourse?.description || "" });
+    const findRow = (lc: CourseI18nLang) =>
+      courseI18n?.find((i: any) => i.language_code === lc);
+    setCourseI18nForm({
+      en: { title: findRow("en")?.title || "", description: findRow("en")?.description || "" },
+      ja: { title: findRow("ja")?.title || "", description: findRow("ja")?.description || "" },
+      "zh-CN": { title: findRow("zh-CN")?.title || "", description: findRow("zh-CN")?.description || "" },
+    });
     setCourseThumbnailFile(null);
     setCourseThumbnailPreview(course.thumbnail_url || null);
     setCourseEditOpen(true);
