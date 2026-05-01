@@ -32,6 +32,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
+import { useInvalidateI18nQueriesOnLangChange } from "@/lib/i18nQueryCache";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
@@ -250,14 +251,9 @@ const CourseDetail = () => {
     return tr?.description || course?.description || "";
   };
 
-  // Invalidate language-scoped caches whenever the active language changes,
-  // so localized titles/descriptions never display stale data from another language.
-  useEffect(() => {
-    if (!courseId) return;
-    queryClient.invalidateQueries({ queryKey: ["course-i18n", courseId] });
-    queryClient.invalidateQueries({ queryKey: ["content-i18n", courseId] });
-    queryClient.invalidateQueries({ queryKey: ["course-contents", courseId] });
-  }, [currentLang, courseId, queryClient]);
+  // Language-scoped cache invalidation is handled centrally so every page
+  // shares the same registry of i18n-dependent query keys.
+  useInvalidateI18nQueriesOnLangChange();
 
   // --- Mutations ---
   const invalidateAll = () => {
