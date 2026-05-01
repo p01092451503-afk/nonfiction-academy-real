@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +13,86 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { useSystemSettings, type MenuVisibilityMap } from "@/hooks/useSystemSettings";
+
+// Menu catalog mirrors the items defined in DashboardLayout.
+// Items marked `protected` cannot be hidden from the sidebar.
+type MenuRole = "student" | "teacher" | "admin";
+const MENU_CATALOG: Record<MenuRole, { groupLabel?: string; items: { key: string; label: string; protected?: boolean }[] }[]> = {
+  student: [
+    {
+      items: [
+        { key: "dashboard", label: "대시보드", protected: true },
+        { key: "catalog", label: "강의 카탈로그" },
+        { key: "myCourses", label: "내 강의" },
+        { key: "myTracks", label: "내 학습 트랙" },
+        { key: "assignments", label: "과제" },
+        { key: "achievements", label: "성취" },
+        { key: "announcements", label: "공지사항" },
+        { key: "board", label: "게시판" },
+        { key: "myPage", label: "마이페이지", protected: true },
+      ],
+    },
+  ],
+  teacher: [
+    {
+      items: [
+        { key: "dashboard", label: "대시보드", protected: true },
+        { key: "courseManagement", label: "강의 관리" },
+        { key: "assignmentManagement", label: "과제 관리" },
+        { key: "studentManagement", label: "학습자 관리" },
+        { key: "notificationManagement", label: "알림 관리" },
+        { key: "announcementManagement", label: "공지사항 관리" },
+        { key: "boardManagement", label: "게시판 관리" },
+        { key: "attendanceManagement", label: "출석 관리" },
+      ],
+    },
+  ],
+  admin: [
+    { groupLabel: "인사이트", items: [
+      { key: "dashboard", label: "대시보드", protected: true },
+      { key: "trafficMonitoring", label: "통계 현황" },
+    ]},
+    { groupLabel: "회원·조직", items: [
+      { key: "userManagement", label: "사용자 관리" },
+      { key: "branchManagement", label: "조직 관리" },
+    ]},
+    { groupLabel: "콘텐츠", items: [
+      { key: "courseManagement", label: "강의 관리" },
+      { key: "trackManagement", label: "학습 트랙 관리" },
+      { key: "videoManagement", label: "동영상 관리" },
+      { key: "i18nManagement", label: "다국어 관리" },
+    ]},
+    { groupLabel: "학습 운영", items: [
+      { key: "enrollmentManagement", label: "수강 신청 관리" },
+      { key: "learningManagement", label: "학습 관리" },
+      { key: "attendanceManagement", label: "출석 관리" },
+      { key: "completionManagement", label: "수료 관리" },
+      { key: "surveyManagement", label: "설문 관리" },
+    ]},
+    { groupLabel: "커뮤니케이션", items: [
+      { key: "notificationManagement", label: "알림 관리" },
+      { key: "announcementManagement", label: "공지사항 관리" },
+      { key: "boardManagement", label: "게시판 관리" },
+    ]},
+    { groupLabel: "시스템", items: [
+      { key: "settings", label: "시스템 설정", protected: true },
+      { key: "systemInfo", label: "시스템 정보" },
+    ]},
+  ],
+};
+
+const ROLE_TABS: { value: MenuRole; label: string }[] = [
+  { value: "student", label: "학습자" },
+  { value: "teacher", label: "강사" },
+  { value: "admin", label: "관리자" },
+];
 
 const AdminSettings = () => {
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
   const queryClient = useQueryClient();
-  const { teacherRoleEnabled } = useSystemSettings();
+  const { teacherRoleEnabled, menuVisibility } = useSystemSettings();
   const [deptDialogOpen, setDeptDialogOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<any>(null);
   const [deleteDeptId, setDeleteDeptId] = useState<string | null>(null);
@@ -182,8 +255,79 @@ const AdminSettings = () => {
         <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
             <TabsTrigger value="general">{t("admin.generalSettings")}</TabsTrigger>
+            <TabsTrigger value="menus">{t("admin.menuVisibility", "메뉴 표시 설정")}</TabsTrigger>
             <TabsTrigger value="departments">{t("admin.deptManagement")}</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="menus" className="space-y-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">
+                {t("admin.menuVisibility", "메뉴 표시 설정")}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t(
+                  "admin.menuVisibilityDesc",
+                  "역할별로 좌측 사이드바에 노출할 메뉴를 켜거나 끌 수 있습니다. 일부 핵심 메뉴(대시보드, 시스템 설정, 마이페이지)는 항상 노출됩니다.",
+                )}
+              </p>
+            </div>
+
+            <Tabs defaultValue="student" className="space-y-4">
+              <TabsList>
+                {ROLE_TABS.map((r) => (
+                  <TabsTrigger key={r.value} value={r.value}>{r.label}</TabsTrigger>
+                ))}
+              </TabsList>
+
+              {ROLE_TABS.map((r) => {
+                const groups = MENU_CATALOG[r.value];
+                const roleMap = (menuVisibility?.[r.value] || {}) as Record<string, boolean>;
+                const setItemVisibility = (key: string, visible: boolean) => {
+                  const next: MenuVisibilityMap = {
+                    ...(menuVisibility || {}),
+                    [r.value]: { ...(menuVisibility?.[r.value] || {}), [key]: visible },
+                  };
+                  updateSettingMutation.mutate({ key: "menu_visibility", value: next });
+                };
+                return (
+                  <TabsContent key={r.value} value={r.value} className="space-y-6">
+                    {groups.map((group, gi) => (
+                      <div key={gi} className="stat-card !p-0 overflow-hidden">
+                        {group.groupLabel && (
+                          <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-accent/30">
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-semibold text-foreground">{group.groupLabel}</span>
+                          </div>
+                        )}
+                        {group.items.map((item) => {
+                          const visible = item.protected ? true : (roleMap[item.key] !== false);
+                          return (
+                            <div key={item.key} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
+                              <div className="min-w-0">
+                                <p className="text-sm text-foreground">{item.label}</p>
+                                {item.protected && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                                    {t("admin.menuProtected", "필수 메뉴 (숨길 수 없음)")}
+                                  </p>
+                                )}
+                              </div>
+                              <Switch
+                                checked={visible}
+                                disabled={item.protected || updateSettingMutation.isPending}
+                                onCheckedChange={(v) => setItemVisibility(item.key, v)}
+                                aria-label={item.label}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
+          </TabsContent>
+
 
           <TabsContent value="general" className="space-y-8">
             {/* 역할 표시 설정 */}
