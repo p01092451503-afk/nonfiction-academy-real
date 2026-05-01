@@ -409,10 +409,102 @@ export default function AssessmentPage() {
     enabled: !!assessmentId && (isTeacherOrAdmin || !!latestCompleted),
   });
 
+  // i18n: assessment translation for current language
+  const { data: assessmentI18nRow } = useQuery({
+    queryKey: ["assessment-i18n-view", assessmentId, currentLang],
+    queryFn: async () => {
+      if (!currentLang) return null;
+      const { data, error } = await supabase
+        .from("assessment_i18n" as any)
+        .select("*")
+        .eq("assessment_id", assessmentId!)
+        .eq("language_code", currentLang)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!assessmentId && !!currentLang,
+  });
+
+  // Pick the active question source for i18n lookup (prefer rawQuestions; fallback to reviewQuestions)
+  const questionIdsForI18n = useMemo(() => {
+    const ids = new Set<string>();
+    rawQuestions.forEach((q: any) => q?.id && ids.add(q.id));
+    reviewQuestions.forEach((q: any) => q?.id && ids.add(q.id));
+    return Array.from(ids);
+  }, [rawQuestions, reviewQuestions]);
+
+  const { data: questionI18nRows = [] } = useQuery({
+    queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsForI18n.length],
+    queryFn: async () => {
+      if (!currentLang || questionIdsForI18n.length === 0) return [];
+      const { data, error } = await supabase
+        .from("assessment_question_i18n" as any)
+        .select("*")
+        .in("question_id", questionIdsForI18n)
+        .eq("language_code", currentLang);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!currentLang && questionIdsForI18n.length > 0,
+  });
+
+  const questionI18nMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (questionI18nRows || []).forEach((r: any) => m.set(r.question_id, r));
+    return m;
+  }, [questionI18nRows]);
+
+  // Apply translation to a question (preserving original correct_answer position for MCQ)
+  const localizeQuestion = (q: any) => {
+    if (!q) return q;
+    const tr = questionI18nMap.get(q.id);
+    if (!tr) return q;
+    const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(q.question_type);
+    let options = q.options;
+    let correctAnswer = q.correct_answer;
+    if (isMcq && Array.isArray(q.options) && Array.isArray(tr.options) && tr.options.length === q.options.length) {
+      options = tr.options;
+      // Map correct_answer index from KO options to translated options
+      const idx = q.options.findIndex((o: string) => o === q.correct_answer);
+      if (idx >= 0 && tr.options[idx]) correctAnswer = tr.options[idx];
+    } else if (!isMcq && tr.correct_answer) {
+      correctAnswer = tr.correct_answer;
+    }
+    return {
+      ...q,
+      question_text: tr.question_text || q.question_text,
+      options,
+      correct_answer: correctAnswer,
+      explanation: tr.explanation ?? q.explanation,
+      hint: tr.hint ?? q.hint,
+    };
+  };
+
+  // Localized assessment + questions used for rendering
+  const assessmentLocalized = useMemo(() => {
+    if (!assessment) return assessment;
+    if (!assessmentI18nRow) return assessment;
+    return {
+      ...assessment,
+      title: assessmentI18nRow.title || assessment.title,
+      description: assessmentI18nRow.description ?? assessment.description,
+    };
+  }, [assessment, assessmentI18nRow]);
+
+  const localizedRawQuestions = useMemo(
+    () => rawQuestions.map(localizeQuestion),
+    [rawQuestions, questionI18nMap]
+  );
+  const localizedReviewQuestions = useMemo(
+    () => reviewQuestions.map(localizeQuestion),
+    [reviewQuestions, questionI18nMap]
+  );
+
   const questions = useMemo(() => {
-    if (!assessment?.randomize_questions) return rawQuestions;
-    return [...rawQuestions].sort(() => Math.random() - 0.5);
-  }, [rawQuestions, assessment?.randomize_questions]);
+    if (!assessment?.randomize_questions) return localizedRawQuestions;
+    return [...localizedRawQuestions].sort(() => Math.random() - 0.5);
+  }, [localizedRawQuestions, assessment?.randomize_questions]);
 
   const { data: previousAnswers = [] } = useQuery({
     queryKey: ["assessment-answers", latestCompleted?.id],
