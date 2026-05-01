@@ -738,8 +738,8 @@ const CourseDetail = () => {
           onOpenChange={setContentDialogOpen}
           form={contentForm}
           setForm={setContentForm}
-          enForm={contentEnForm}
-          setEnForm={setContentEnForm}
+          i18nForm={contentI18nForm}
+          setI18nForm={setContentI18nForm}
           editingId={editingContentId}
           courseId={courseId!}
           onSubmit={() => upsertContentMutation.mutate()}
