@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "@/hooks/use-toast";
 import { Bell, Send, Users, User } from "lucide-react";
 import { format } from "date-fns";
+import { buildNotificationI18n } from "@/lib/notificationI18n";
 
 const AdminNotifications = () => {
   const { t } = useTranslation();
