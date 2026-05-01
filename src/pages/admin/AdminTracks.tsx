@@ -815,17 +815,24 @@ const TrackEditorDialog = ({
                     STEP {String(idx + 1).padStart(2, "0")}
                   </span>
                   <Input
-                    value={stage.name}
-                    onChange={(e) => updateStage(stage.id, { name: e.target.value })}
-                    placeholder="단계명 (KO)"
+                    value={stage.names[activeLang] || ""}
+                    onChange={(e) =>
+                      updateStage(stage.id, {
+                        names: { ...stage.names, [activeLang]: e.target.value },
+                      })
+                    }
+                    placeholder={
+                      activeLang === "ko"
+                        ? "단계명 (KO)"
+                        : `Stage name (${LANG_LABEL[activeLang]})`
+                    }
                     className="h-8 rounded-lg text-xs flex-1"
                   />
-                  <Input
-                    value={stage.name_en}
-                    onChange={(e) => updateStage(stage.id, { name_en: e.target.value })}
-                    placeholder="Stage name (EN)"
-                    className="h-8 rounded-lg text-xs flex-1"
-                  />
+                  {activeLang !== "ko" && (stage.names.ko || "").trim() && (
+                    <span className="text-[10px] text-muted-foreground shrink-0 max-w-[120px] truncate">
+                      KO: {stage.names.ko}
+                    </span>
+                  )}
                   <div className="flex items-center gap-0.5 shrink-0">
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => moveStage(idx, -1)} disabled={idx === 0}>
                       <GripVertical className="h-3.5 w-3.5 rotate-180" />
