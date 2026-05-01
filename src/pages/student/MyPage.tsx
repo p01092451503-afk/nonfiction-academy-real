@@ -393,6 +393,41 @@ const MyPage = () => {
                 )}
               </div>
             </TabsContent>
+            <TabsContent value="legacy">
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-semibold">{t("mypage.legacyTab", "이전 학습 이력")}</h2>
+                  <p className="text-sm text-muted-foreground">기존 LMS에서 이관된 수강 이력입니다. (참고용)</p>
+                </div>
+                {legacyRecords.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                    <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center">
+                      <Archive className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">이전 학습 이력이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {legacyRecords.map((r: any) => (
+                      <div key={r.id} className="flex items-center justify-between gap-4 border-b-2 border-border/80 pb-3">
+                        <div className="min-w-0 space-y-1">
+                          <h3 className="text-sm font-semibold text-foreground truncate">{r.course_title}</h3>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                            {r.source_lms && <span>{r.source_lms}</span>}
+                            {r.completed_at && <><span>·</span><span>{r.completed_at}</span></>}
+                          </div>
+                        </div>
+                        {r.is_completed ? (
+                          <span className="text-xs font-semibold px-2 py-1 rounded bg-foreground text-background shrink-0">수료</span>
+                        ) : (
+                          <span className="text-xs font-medium px-2 py-1 rounded border border-border text-muted-foreground shrink-0">미수료</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
             <TabsContent value="password">
               <div className="max-w-lg space-y-6">
                 <div className="space-y-1">
