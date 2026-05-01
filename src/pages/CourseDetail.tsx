@@ -457,7 +457,7 @@ const CourseDetail = () => {
   const publishedCount = contents.filter(c => c.is_published).length;
   const totalDuration = contents.reduce((sum, c) => sum + (c.duration_minutes || 0), 0);
 
-  if (courseLoading) {
+  if (courseLoading || isLangSwitching || courseI18nFetching || contentsFetching || contentI18nFetching) {
     return (
       <DashboardLayout role={role}>
         <PageSkeleton blocks={4} />
