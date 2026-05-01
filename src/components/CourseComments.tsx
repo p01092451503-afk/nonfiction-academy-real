@@ -275,11 +275,16 @@ const CourseComments = ({ courseId }: Props) => {
                 {t("comments.reply", "답글")}
               </button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {(() => {
+              const userLang = normalizeLang(i18n.language);
+              const commentLang = c.language_code ? normalizeLang(c.language_code) : null;
+              // Hide button when comment language matches user's UI language
+              if (commentLang && commentLang === userLang) return null;
+              return (
                 <button
                   type="button"
                   disabled={translatingId === c.id}
+                  onClick={() => translateComment(c, userLang)}
                   className="inline-flex items-center gap-1 hover:text-foreground transition-colors disabled:opacity-50"
                 >
                   {translatingId === c.id ? (
@@ -287,24 +292,12 @@ const CourseComments = ({ courseId }: Props) => {
                   ) : (
                     <Languages className="h-3 w-3" />
                   )}
-                  {t("comments.translate", "번역")}
+                  {translations[c.id]
+                    ? t("comments.hideTranslation", "원문 보기")
+                    : t("comments.translateToMine", "내 언어로 번역")}
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[140px]">
-                {TRANSLATE_LANGS.map((l) => (
-                  <DropdownMenuItem
-                    key={l.code}
-                    onClick={() => translateComment(c, l.code)}
-                    className="text-xs cursor-pointer"
-                  >
-                    <span className="font-mono text-[10px] text-muted-foreground mr-2">
-                      {langBadge(l.code)}
-                    </span>
-                    {l.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              );
+            })()}
             {isOwner && (
               <button
                 type="button"
