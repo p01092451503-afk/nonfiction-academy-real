@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Layers, Plus, Pencil, Trash2, UserPlus, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle } from "lucide-react";
+import { Layers, Plus, Pencil, Trash2, UserPlus, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle, Languages, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { translateKoTo, type TargetLang } from "@/lib/translate";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,24 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+const I18N_LANGS = ["ko", "en", "ja", "zh-CN"] as const;
+type I18nLang = (typeof I18N_LANGS)[number];
+const LANG_LABEL: Record<I18nLang, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "中文",
+};
+
+const resolveLang = (l: string | undefined): I18nLang => {
+  const lower = (l || "ko").toLowerCase();
+  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("ja")) return "ja";
+  if (lower.startsWith("zh")) return "zh-CN";
+  return "ko";
+};
 
 type Track = {
   id: string;
@@ -53,7 +72,8 @@ const statusBadgeColor: Record<string, string> = {
 };
 
 const AdminTracks = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = resolveLang(i18n.language);
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -72,6 +92,39 @@ const AdminTracks = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data as unknown as Track[]) || [];
+    },
+  });
+
+  const { data: tracksI18n = [] } = useQuery({
+    queryKey: ["admin-tracks-i18n"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("learning_tracks_i18n" as any)
+        .select("*");
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: stagesI18n = [] } = useQuery({
+    queryKey: ["admin-track-stages-i18n"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("track_stages_i18n" as any)
+        .select("*");
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+  });
+
+  const { data: coursesI18n = [] } = useQuery({
+    queryKey: ["admin-courses-i18n-for-tracks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_i18n")
+        .select("course_id, language_code, title");
+      if (error) throw error;
+      return (data as any[]) || [];
     },
   });
 
@@ -132,6 +185,42 @@ const AdminTracks = () => {
   }, [stageCourses]);
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
+
+  // Localization helpers (use new i18n tables, fallback to legacy _en columns then base)
+  const trackTitle = (track: Track) => {
+    if (lang === "ko") return track.title;
+    const tr = (tracksI18n as any[]).find(
+      (r) => r.track_id === track.id && r.language_code === lang
+    );
+    if (tr?.title) return tr.title;
+    if (lang === "en" && track.title_en) return track.title_en;
+    return track.title;
+  };
+  const trackDescription = (track: Track) => {
+    if (lang === "ko") return track.description;
+    const tr = (tracksI18n as any[]).find(
+      (r) => r.track_id === track.id && r.language_code === lang
+    );
+    if (tr?.description) return tr.description;
+    if (lang === "en" && (track as any).description_en) return (track as any).description_en;
+    return track.description;
+  };
+  const stageName = (stage: Stage) => {
+    if (lang === "ko") return stage.name;
+    const tr = (stagesI18n as any[]).find(
+      (r) => r.stage_id === stage.id && r.language_code === lang
+    );
+    if (tr?.name) return tr.name;
+    if (lang === "en" && stage.name_en) return stage.name_en;
+    return stage.name;
+  };
+  const courseTitleLocalized = (course: { id: string; title: string }) => {
+    if (lang === "ko") return course.title;
+    const tr = (coursesI18n as any[]).find(
+      (r) => r.course_id === course.id && r.language_code === lang
+    );
+    return tr?.title || course.title;
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -224,8 +313,8 @@ const AdminTracks = () => {
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base font-semibold text-foreground truncate">{track.title}</h3>
-                        {track.title_en && (
+                        <h3 className="text-base font-semibold text-foreground truncate">{trackTitle(track)}</h3>
+                        {lang === "ko" && track.title_en && (
                           <span className="text-xs text-muted-foreground truncate">/ {track.title_en}</span>
                         )}
                         <Badge className={`text-[10px] font-semibold px-2 py-0.5 rounded ${statusBadgeColor[track.status]}`} variant="secondary">
@@ -243,8 +332,8 @@ const AdminTracks = () => {
                           <Badge variant="outline" className="text-[10px]">{t("track.free", "자유")}</Badge>
                         )}
                       </div>
-                      {track.description && (
-                        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{track.description}</p>
+                      {trackDescription(track) && (
+                        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{trackDescription(track)}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -283,8 +372,8 @@ const AdminTracks = () => {
                                 <span className="text-[10px] font-bold text-muted-foreground">
                                   STEP {String(idx + 1).padStart(2, "0")}
                                 </span>
-                                <span className="text-sm font-semibold text-foreground">{stage.name}</span>
-                                {stage.name_en && (
+                                <span className="text-sm font-semibold text-foreground">{stageName(stage)}</span>
+                                {lang === "ko" && stage.name_en && (
                                   <span className="text-[11px] text-muted-foreground">/ {stage.name_en}</span>
                                 )}
                                 <span className="ml-auto text-[10px] text-muted-foreground">
@@ -300,7 +389,7 @@ const AdminTracks = () => {
                                     return (
                                       <li key={sc.id} className="flex items-center gap-2 text-xs text-foreground pl-1">
                                         <BookOpen className="h-3 w-3 text-muted-foreground shrink-0" />
-                                        <span className="truncate">{c?.title || sc.course_id}</span>
+                                        <span className="truncate">{c ? courseTitleLocalized(c) : sc.course_id}</span>
                                         {c && (
                                           <Badge variant="outline" className="text-[9px] ml-auto shrink-0">
                                             {c.status === "published" ? "공개" : "초안"}
@@ -333,6 +422,8 @@ const AdminTracks = () => {
             qc.invalidateQueries({ queryKey: ["admin-tracks"] });
             qc.invalidateQueries({ queryKey: ["admin-track-stages"] });
             qc.invalidateQueries({ queryKey: ["admin-track-stage-courses"] });
+            qc.invalidateQueries({ queryKey: ["admin-tracks-i18n"] });
+            qc.invalidateQueries({ queryKey: ["admin-track-stages-i18n"] });
           }}
         />
       )}
@@ -349,10 +440,12 @@ const AdminTracks = () => {
 
 /* ────────────── Track Editor ────────────── */
 
+type LangMap = Partial<Record<I18nLang, string>>;
+const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
+
 type DraftStage = {
   id: string; // local or db id
-  name: string;
-  name_en: string;
+  names: LangMap;
   description: string;
   order_index: number;
   course_ids: string[];
@@ -373,15 +466,16 @@ const TrackEditorDialog = ({
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const [title, setTitle] = useState("");
-  const [titleEn, setTitleEn] = useState("");
-  const [description, setDescription] = useState("");
+  const [titles, setTitles] = useState<LangMap>(emptyLangMap());
+  const [descriptions, setDescriptions] = useState<LangMap>(emptyLangMap());
   const [isSequential, setIsSequential] = useState(true);
   const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
+  const [activeLang, setActiveLang] = useState<I18nLang>("ko");
+  const [translating, setTranslating] = useState(false);
   const [draftStages, setDraftStages] = useState<DraftStage[]>([
-    { id: crypto.randomUUID(), name: "Foundation", name_en: "Foundation", description: "", order_index: 0, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), name: "Basic", name_en: "Basic", description: "", order_index: 1, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), name: "Advanced", name_en: "Advanced", description: "", order_index: 2, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "Foundation", en: "Foundation" }, description: "", order_index: 0, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "Basic", en: "Basic" }, description: "", order_index: 1, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "Advanced", en: "Advanced" }, description: "", order_index: 2, course_ids: [], _isNew: true },
   ]);
   const [saving, setSaving] = useState(false);
 
@@ -391,29 +485,59 @@ const TrackEditorDialog = ({
     enabled: !!trackId,
     queryFn: async () => {
       if (!trackId) return null;
-      const [{ data: trk }, { data: sts }, { data: tsc }] = await Promise.all([
+      const [
+        { data: trk },
+        { data: sts },
+        { data: tsc },
+        { data: trackI18nRows },
+        { data: stageI18nRows },
+      ] = await Promise.all([
         supabase.from("learning_tracks" as any).select("*").eq("id", trackId).single(),
         supabase.from("track_stages" as any).select("*").eq("track_id", trackId).order("order_index"),
         supabase.from("track_stage_courses" as any).select("*").order("order_index"),
+        supabase.from("learning_tracks_i18n" as any).select("*").eq("track_id", trackId),
+        supabase.from("track_stages_i18n" as any).select("*"),
       ]);
       const track = trk as any;
       if (track) {
-        setTitle(track.title || "");
-        setTitleEn(track.title_en || "");
-        setDescription(track.description || "");
+        const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
+        const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
+        if (track.title_en) nextTitles.en = track.title_en;
+        if (track.description_en) nextDescs.en = track.description_en;
+        ((trackI18nRows as any[]) || []).forEach((row) => {
+          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+            nextTitles[row.language_code as I18nLang] = row.title || nextTitles[row.language_code as I18nLang] || "";
+            nextDescs[row.language_code as I18nLang] = row.description || nextDescs[row.language_code as I18nLang] || "";
+          }
+        });
+        setTitles(nextTitles);
+        setDescriptions(nextDescs);
         setIsSequential(!!track.is_sequential);
         setStatus(track.status || "draft");
       }
       const stageList = (sts as any[]) || [];
       const courseList = (tsc as any[]) || [];
-      const stagesWithCourses: DraftStage[] = stageList.map((s) => ({
-        id: s.id,
-        name: s.name || "",
-        name_en: s.name_en || "",
-        description: s.description || "",
-        order_index: s.order_index ?? 0,
-        course_ids: courseList.filter((c) => c.stage_id === s.id).map((c) => c.course_id),
-      }));
+      const stageI18nByStage = new Map<string, any[]>();
+      ((stageI18nRows as any[]) || []).forEach((row) => {
+        if (!stageI18nByStage.has(row.stage_id)) stageI18nByStage.set(row.stage_id, []);
+        stageI18nByStage.get(row.stage_id)!.push(row);
+      });
+      const stagesWithCourses: DraftStage[] = stageList.map((s) => {
+        const names: LangMap = { ...emptyLangMap(), ko: s.name || "" };
+        if (s.name_en) names.en = s.name_en;
+        (stageI18nByStage.get(s.id) || []).forEach((row) => {
+          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+            names[row.language_code as I18nLang] = row.name || names[row.language_code as I18nLang] || "";
+          }
+        });
+        return {
+          id: s.id,
+          names,
+          description: s.description || "",
+          order_index: s.order_index ?? 0,
+          course_ids: courseList.filter((c) => c.stage_id === s.id).map((c) => c.course_id),
+        };
+      });
       if (stagesWithCourses.length) setDraftStages(stagesWithCourses);
       return null;
     },
@@ -422,7 +546,7 @@ const TrackEditorDialog = ({
   const addStage = () => {
     setDraftStages((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: "", name_en: "", description: "", order_index: prev.length, course_ids: [], _isNew: true },
+      { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: prev.length, course_ids: [], _isNew: true },
     ]);
   };
   const removeStage = (id: string) => {
@@ -450,8 +574,38 @@ const TrackEditorDialog = ({
     );
   };
 
+  const autoTranslateAll = async () => {
+    const koTitle = (titles.ko || "").trim();
+    if (!koTitle) {
+      toast({ title: t("track.titleRequired", "트랙 이름을 입력해주세요"), variant: "destructive" });
+      return;
+    }
+    setTranslating(true);
+    try {
+      const targets: TargetLang[] = ["en", "ja", "zh-CN"];
+      const koDesc = (descriptions.ko || "").trim();
+      const stageKoNames = draftStages.map((s) => (s.names.ko || "").trim());
+      const sourceTexts = [koTitle, koDesc, ...stageKoNames];
+      for (const target of targets) {
+        const translated = await translateKoTo(target, sourceTexts);
+        const [tTitle, tDesc, ...tStageNames] = translated;
+        setTitles((prev) => ({ ...prev, [target]: tTitle || prev[target] || "" }));
+        if (koDesc) setDescriptions((prev) => ({ ...prev, [target]: tDesc || prev[target] || "" }));
+        setDraftStages((prev) =>
+          prev.map((s, i) => ({ ...s, names: { ...s.names, [target]: tStageNames[i] || s.names[target] || "" } }))
+        );
+      }
+      toast({ title: t("track.translated", "자동 번역이 완료되었습니다") });
+    } catch (e: any) {
+      toast({ title: t("common.error", "오류"), description: e.message, variant: "destructive" });
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const handleSave = async () => {
-    if (!title.trim()) {
+    const koTitle = (titles.ko || "").trim();
+    if (!koTitle) {
       toast({ title: t("track.titleRequired", "트랙 이름을 입력해주세요"), variant: "destructive" });
       return;
     }
@@ -466,9 +620,10 @@ const TrackEditorDialog = ({
 
       let savedTrackId = trackId;
       const trackPayload = {
-        title: title.trim(),
-        title_en: titleEn.trim() || null,
-        description: description.trim() || null,
+        title: koTitle,
+        title_en: (titles.en || "").trim() || null,
+        description: (descriptions.ko || "").trim() || null,
+        description_en: (descriptions.en || "").trim() || null,
         is_sequential: isSequential,
         status,
         ...(trackId ? {} : { created_by: userId }),
@@ -477,7 +632,6 @@ const TrackEditorDialog = ({
       if (trackId) {
         const { error } = await supabase.from("learning_tracks" as any).update(trackPayload).eq("id", trackId);
         if (error) throw error;
-        // Delete existing stages (cascade removes stage_courses)
         await supabase.from("track_stages" as any).delete().eq("track_id", trackId);
       } else {
         const { data, error } = await supabase
@@ -491,11 +645,25 @@ const TrackEditorDialog = ({
 
       if (!savedTrackId) throw new Error("track id missing");
 
-      // Insert stages
+      // Track i18n: replace
+      await supabase.from("learning_tracks_i18n" as any).delete().eq("track_id", savedTrackId);
+      const trackI18nRows = (["en", "ja", "zh-CN"] as I18nLang[])
+        .map((lc) => ({
+          track_id: savedTrackId!,
+          language_code: lc,
+          title: (titles[lc] || "").trim(),
+          description: (descriptions[lc] || "").trim() || null,
+        }))
+        .filter((r) => r.title);
+      if (trackI18nRows.length) {
+        const { error: tiErr } = await supabase.from("learning_tracks_i18n" as any).insert(trackI18nRows);
+        if (tiErr) throw tiErr;
+      }
+
       const stagesToInsert = draftStages.map((s, i) => ({
         track_id: savedTrackId!,
-        name: s.name.trim() || `Stage ${i + 1}`,
-        name_en: s.name_en.trim() || null,
+        name: (s.names.ko || "").trim() || `Stage ${i + 1}`,
+        name_en: (s.names.en || "").trim() || null,
         description: s.description.trim() || null,
         order_index: i,
       }));
@@ -505,16 +673,26 @@ const TrackEditorDialog = ({
         .select("id");
       if (stageErr) throw stageErr;
 
-      // Insert stage_courses
       const stageRows: any[] = [];
+      const stageI18nRows: any[] = [];
       (insertedStages as any[]).forEach((s, i) => {
-        draftStages[i]?.course_ids.forEach((cid, j) => {
+        const draft = draftStages[i];
+        if (!draft) return;
+        draft.course_ids.forEach((cid, j) => {
           stageRows.push({ stage_id: s.id, course_id: cid, order_index: j });
+        });
+        (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
+          const name = (draft.names[lc] || "").trim();
+          if (name) stageI18nRows.push({ stage_id: s.id, language_code: lc, name });
         });
       });
       if (stageRows.length) {
         const { error: scErr } = await supabase.from("track_stage_courses" as any).insert(stageRows);
         if (scErr) throw scErr;
+      }
+      if (stageI18nRows.length) {
+        const { error: siErr } = await supabase.from("track_stages_i18n" as any).insert(stageI18nRows);
+        if (siErr) throw siErr;
       }
 
       toast({ title: trackId ? t("track.updated", "트랙이 수정되었습니다") : t("track.created", "트랙이 생성되었습니다") });
@@ -526,6 +704,7 @@ const TrackEditorDialog = ({
       setSaving(false);
     }
   };
+
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

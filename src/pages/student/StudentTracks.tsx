@@ -9,13 +9,23 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type Lang = "ko" | "en" | "ja" | "zh-CN";
+
+const resolveLang = (l: string | undefined): Lang => {
+  const lower = (l || "ko").toLowerCase();
+  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("ja")) return "ja";
+  if (lower.startsWith("zh")) return "zh-CN";
+  return "ko";
+};
+
 const StudentTracks = () => {
   const { user } = useUser();
   const { t, i18n } = useTranslation();
-  const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+  const lang: Lang = resolveLang(i18n.language);
 
   const { data: tracks = [], isLoading } = useQuery({
-    queryKey: ["my-tracks", user?.id],
+    queryKey: ["my-tracks", user?.id, lang],
     queryFn: async () => {
       const { data: enrolls, error: e1 } = await supabase
         .from("track_enrollments")
@@ -26,10 +36,33 @@ const StudentTracks = () => {
       const trackIds = (enrolls || []).map((e: any) => e.track_id);
       if (trackIds.length === 0) return [];
 
-      const [{ data: stages }, { data: stageCourses }, { data: myEnrollments }] = await Promise.all([
+      const [
+        { data: stages },
+        { data: stageCourses },
+        { data: myEnrollments },
+        { data: tracksI18n },
+      ] = await Promise.all([
         supabase.from("track_stages").select("*").in("track_id", trackIds).order("order_index"),
-        supabase.from("track_stage_courses").select("*, courses(id, title, thumbnail_url, status)").order("order_index"),
+        supabase
+          .from("track_stage_courses")
+          .select("*, courses(id, title, thumbnail_url, status)")
+          .order("order_index"),
         supabase.from("enrollments").select("course_id, progress, completed_at").eq("user_id", user!.id),
+        supabase.from("learning_tracks_i18n").select("*").in("track_id", trackIds),
+      ]);
+
+      const stageIds = (stages || []).map((s: any) => s.id);
+      const courseIds = Array.from(
+        new Set((stageCourses || []).map((sc: any) => sc.course_id).filter(Boolean))
+      );
+
+      const [{ data: stagesI18n }, { data: courseI18n }] = await Promise.all([
+        stageIds.length
+          ? supabase.from("track_stages_i18n").select("*").in("stage_id", stageIds)
+          : Promise.resolve({ data: [] as any[] }),
+        courseIds.length
+          ? supabase.from("course_i18n").select("course_id, language_code, title").in("course_id", courseIds)
+          : Promise.resolve({ data: [] as any[] }),
       ]);
 
       const enrollMap = new Map((myEnrollments || []).map((e: any) => [e.course_id, e]));
@@ -39,16 +72,55 @@ const StudentTracks = () => {
         stageCoursesByStage.get(sc.stage_id)!.push(sc);
       });
 
+      const trackI18nByTrack = new Map<string, any[]>();
+      (tracksI18n || []).forEach((row: any) => {
+        if (!trackI18nByTrack.has(row.track_id)) trackI18nByTrack.set(row.track_id, []);
+        trackI18nByTrack.get(row.track_id)!.push(row);
+      });
+
+      const stageI18nByStage = new Map<string, any[]>();
+      (stagesI18n || []).forEach((row: any) => {
+        if (!stageI18nByStage.has(row.stage_id)) stageI18nByStage.set(row.stage_id, []);
+        stageI18nByStage.get(row.stage_id)!.push(row);
+      });
+
+      const courseI18nByCourse = new Map<string, any[]>();
+      (courseI18n || []).forEach((row: any) => {
+        if (!courseI18nByCourse.has(row.course_id)) courseI18nByCourse.set(row.course_id, []);
+        courseI18nByCourse.get(row.course_id)!.push(row);
+      });
+
+      const pickCourseTitle = (course: any) => {
+        if (lang === "ko") return course.title;
+        const tr = (courseI18nByCourse.get(course.id) || []).find(
+          (r: any) => r.language_code === lang
+        );
+        return tr?.title || course.title;
+      };
+
       return (enrolls || []).map((te: any) => {
         const track = te.learning_tracks;
+        const trackTr = (trackI18nByTrack.get(track.id) || []).find(
+          (r: any) => r.language_code === lang
+        );
+
         const trackStages = (stages || []).filter((s: any) => s.track_id === track.id);
-        const stagesWithCourses = trackStages.map((s: any) => ({
-          ...s,
-          courses: (stageCoursesByStage.get(s.id) || []).map((sc: any) => ({
-            ...sc.courses,
-            enrollment: enrollMap.get(sc.course_id),
-          })),
-        }));
+        const stagesWithCourses = trackStages.map((s: any) => {
+          const stageTr = (stageI18nByStage.get(s.id) || []).find(
+            (r: any) => r.language_code === lang
+          );
+          return {
+            ...s,
+            localizedName:
+              stageTr?.name ||
+              (lang === "en" && s.name_en ? s.name_en : s.name),
+            courses: (stageCoursesByStage.get(s.id) || []).map((sc: any) => ({
+              ...sc.courses,
+              localizedTitle: pickCourseTitle(sc.courses),
+              enrollment: enrollMap.get(sc.course_id),
+            })),
+          };
+        });
         const allCourses = stagesWithCourses.flatMap((s: any) => s.courses);
         const completedCount = allCourses.filter((c: any) => c.enrollment?.completed_at).length;
         const totalCount = allCourses.length;
@@ -56,6 +128,12 @@ const StudentTracks = () => {
 
         return {
           ...track,
+          localizedTitle:
+            trackTr?.title ||
+            (lang === "en" && track.title_en ? track.title_en : track.title),
+          localizedDescription:
+            trackTr?.description ||
+            (lang === "en" && track.description_en ? track.description_en : track.description),
           assigned_at: te.assigned_at,
           stages: stagesWithCourses,
           progress,
@@ -66,9 +144,6 @@ const StudentTracks = () => {
     },
     enabled: !!user?.id,
   });
-
-  const getDisplayTitle = (track: any) =>
-    lang === "en" && track.title_en ? track.title_en : track.title;
 
   return (
     <DashboardLayout role="student">
@@ -106,9 +181,9 @@ const StudentTracks = () => {
                 <div className="p-5 border-b-2 border-border/80 space-y-3">
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-semibold text-foreground">{getDisplayTitle(track)}</h2>
-                      {track.description && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{track.description}</p>
+                      <h2 className="text-lg font-semibold text-foreground">{track.localizedTitle}</h2>
+                      {track.localizedDescription && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{track.localizedDescription}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -149,7 +224,7 @@ const StudentTracks = () => {
                             {t("track.stage", "단계")} {stageIdx + 1}
                           </Badge>
                           <h3 className="text-sm font-semibold text-foreground">
-                            {lang === "en" && stage.name_en ? stage.name_en : stage.name}
+                            {stage.localizedName}
                           </h3>
                           {stageLocked && (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -201,7 +276,7 @@ const StudentTracks = () => {
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-foreground truncate">
-                                      {course.title}
+                                      {course.localizedTitle}
                                     </p>
                                     {!completed && course.enrollment && (
                                       <div className="flex items-center gap-2 mt-1">
