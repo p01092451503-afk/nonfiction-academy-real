@@ -160,7 +160,7 @@ const StudentTracks = () => {
           </p>
         </div>
 
-        {isLoading ? (
+        {isLoading || isLangSwitching || isFetching ? (
           <div className="space-y-4">
             {Array.from({ length: 2 }).map((_, i) => (
               <Skeleton key={i} className="h-48 w-full rounded-xl" />
