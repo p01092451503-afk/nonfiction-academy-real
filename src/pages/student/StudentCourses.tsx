@@ -178,7 +178,7 @@ const StudentCourses = () => {
           <Input id="course-search" placeholder={t("course.searchCourse")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10 rounded-xl border-border" />
         </div>
 
-        {isLoading ? (
+        {isLoading || isLangSwitching || isFetching ? (
           <div className="space-y-8" role="status" aria-live="polite" aria-label={t("common.loading", "로딩 중")}>
             {Array.from({ length: 2 }).map((_, section) => (
               <section key={section} className="space-y-3">
