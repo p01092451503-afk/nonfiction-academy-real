@@ -1283,5 +1283,21 @@
     "stage": "ステージ",
     "locked": "ロック中",
     "noCoursesInStage": "このステージには講義がありません。"
+  },
+  "comments": {
+    "translate": "翻訳",
+    "translateToMine": "自分の言語に翻訳",
+    "hideTranslation": "原文を表示",
+    "translateFailed": "翻訳に失敗しました",
+    "reply": "返信",
+    "post": "投稿",
+    "anonymous": "ユーザー",
+    "signInRequired": "ログインが必要です",
+    "placeholder": "この講義についての意見を残してください...",
+    "empty": "まだコメントがありません。最初のコメントを残しましょう！",
+    "title": "コメント",
+    "confirmDelete": "このコメントを削除しますか？",
+    "notAllowed": "コメントできません。受講承認をご確認ください。",
+    "replyPlaceholder": "@{{name}} に返信..."
   }
 }

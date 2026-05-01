@@ -10,20 +10,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import i18n from "@/i18n";
 
-const TRANSLATE_LANGS: { code: string; label: string }[] = [
-  { code: "ko", label: "한국어" },
-  { code: "en", label: "English" },
-  { code: "ja", label: "日本語" },
-  { code: "zh-CN", label: "中文" },
-];
+// Normalize i18n language to one of the supported translation targets
+const normalizeLang = (lng: string): "ko" | "en" | "ja" | "zh-CN" => {
+  if (!lng) return "en";
+  if (lng.startsWith("ko")) return "ko";
+  if (lng.startsWith("ja")) return "ja";
+  if (lng.startsWith("zh")) return "zh-CN";
+  return "en";
+};
 
 interface CommentRow {
   id: string;
@@ -75,7 +71,8 @@ const CourseComments = ({ courseId }: Props) => {
   const [translatingId, setTranslatingId] = useState<string | null>(null);
 
   const translateComment = async (c: CommentRow, target: string) => {
-    if (c.language_code === target) {
+    // Toggle off if translation already shown
+    if (translations[c.id]) {
       setTranslations((prev) => {
         const next = { ...prev };
         delete next[c.id];
@@ -83,10 +80,11 @@ const CourseComments = ({ courseId }: Props) => {
       });
       return;
     }
+    if (c.language_code === target) return;
     setTranslatingId(c.id);
     try {
       const { data, error } = await supabase.functions.invoke("translate-comment", {
-        body: { text: c.content, target },
+        body: { text: c.content, target, comment_id: c.id, source_lang: c.language_code },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -279,11 +277,16 @@ const CourseComments = ({ courseId }: Props) => {
                 {t("comments.reply", "답글")}
               </button>
             )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {(() => {
+              const userLang = normalizeLang(i18n.language);
+              const commentLang = c.language_code ? normalizeLang(c.language_code) : null;
+              // Hide button when comment language matches user's UI language
+              if (commentLang && commentLang === userLang) return null;
+              return (
                 <button
                   type="button"
                   disabled={translatingId === c.id}
+                  onClick={() => translateComment(c, userLang)}
                   className="inline-flex items-center gap-1 hover:text-foreground transition-colors disabled:opacity-50"
                 >
                   {translatingId === c.id ? (
@@ -291,24 +294,12 @@ const CourseComments = ({ courseId }: Props) => {
                   ) : (
                     <Languages className="h-3 w-3" />
                   )}
-                  {t("comments.translate", "번역")}
+                  {translations[c.id]
+                    ? t("comments.hideTranslation", "원문 보기")
+                    : t("comments.translateToMine", "내 언어로 번역")}
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[140px]">
-                {TRANSLATE_LANGS.map((l) => (
-                  <DropdownMenuItem
-                    key={l.code}
-                    onClick={() => translateComment(c, l.code)}
-                    className="text-xs cursor-pointer"
-                  >
-                    <span className="font-mono text-[10px] text-muted-foreground mr-2">
-                      {langBadge(l.code)}
-                    </span>
-                    {l.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              );
+            })()}
             {isOwner && (
               <button
                 type="button"

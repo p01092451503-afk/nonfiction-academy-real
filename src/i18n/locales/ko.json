@@ -1283,5 +1283,21 @@
     "stage": "단계",
     "locked": "잠김",
     "noCoursesInStage": "이 단계에 강의가 없습니다."
+  },
+  "comments": {
+    "translate": "번역",
+    "translateToMine": "내 언어로 번역",
+    "hideTranslation": "원문 보기",
+    "translateFailed": "번역에 실패했습니다",
+    "reply": "답글",
+    "post": "게시",
+    "anonymous": "사용자",
+    "signInRequired": "로그인이 필요합니다",
+    "placeholder": "이 강의에 대한 의견을 남겨보세요...",
+    "empty": "아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!",
+    "title": "댓글",
+    "confirmDelete": "이 댓글을 삭제하시겠습니까?",
+    "notAllowed": "댓글을 작성할 수 없습니다. 수강 승인 여부를 확인해 주세요.",
+    "replyPlaceholder": "@{{name}} 에게 답글 달기..."
   }
 }

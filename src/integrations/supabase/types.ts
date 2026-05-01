@@ -825,6 +825,41 @@ export type Database = {
           },
         ]
       }
+      comment_translations: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          source_lang: string | null
+          target_lang: string
+          translated_text: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          source_lang?: string | null
+          target_lang: string
+          translated_text: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          source_lang?: string | null
+          target_lang?: string
+          translated_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_translations_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "course_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       completion_criteria: {
         Row: {
           certificate_enabled: boolean
