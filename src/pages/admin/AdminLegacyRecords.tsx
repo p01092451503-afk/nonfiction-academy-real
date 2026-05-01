@@ -221,7 +221,7 @@ const AdminLegacyRecords = () => {
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
               <Archive className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-              이전 학습 이력 관리
+              학습이력 관리
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               기존 LMS에서 이관된 수강 이력을 CSV로 일괄 업로드하고 조회합니다. (조회 전용 — 신규 통계/수료증에는 영향 없음)
