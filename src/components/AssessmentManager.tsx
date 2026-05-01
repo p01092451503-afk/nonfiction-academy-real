@@ -127,7 +127,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   // Question translations
   const [questionI18nForm, setQuestionI18nForm] = useState<Record<TargetLang, QuestionI18nForm>>(emptyQuestionI18n(4));
   const [questionManual, setQuestionManual] = useState(emptyQuestionManualFlags());
-  const [translatingQuestion, setTranslatingQuestion] = useState<TargetLang | null>(null);
+  const [translatingQuestion, setTranslatingQuestion] = useState<TargetLang | "all" | null>(null);
 
   // Auto-sync KO → each language for assessment when not manually edited
   useEffect(() => {
