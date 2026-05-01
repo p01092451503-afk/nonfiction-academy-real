@@ -658,6 +658,8 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
       setTranslatingQuestion(null);
     }
   };
+
+  const updateLangAssessment = (lc: TargetLang, patch: Partial<AssessmentI18nForm>) => {
     setAssessmentI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
     setAssessmentManual(prev => ({
       ...prev,
