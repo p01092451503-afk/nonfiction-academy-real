@@ -526,11 +526,22 @@ export default function AssessmentPage() {
 
   const answerMap = useMemo(() => {
     const map: Record<string, { user_answer: string | null; is_correct: boolean | null }> = {};
+    // Map base (KO) user_answer back to localized option string for display alignment
+    const baseById = new Map<string, any>(reviewQuestions.map((q: any) => [q.id, q]));
     for (const a of previousAnswers) {
-      map[a.question_id] = { user_answer: a.user_answer, is_correct: a.is_correct };
+      let display = a.user_answer as string | null;
+      if (currentLang && display) {
+        const baseQ = baseById.get(a.question_id);
+        const tr = questionI18nMap.get(a.question_id);
+        if (baseQ && tr && Array.isArray(baseQ.options) && Array.isArray(tr.options) && tr.options.length === baseQ.options.length) {
+          const idx = baseQ.options.findIndex((o: string) => o === display);
+          if (idx >= 0 && tr.options[idx]) display = tr.options[idx];
+        }
+      }
+      map[a.question_id] = { user_answer: display, is_correct: a.is_correct };
     }
     return map;
-  }, [previousAnswers]);
+  }, [previousAnswers, reviewQuestions, questionI18nMap, currentLang]);
 
   const reviewCorrectCount = previousAnswers.filter((a: any) => a.is_correct === true).length;
   const reviewWrongCount = previousAnswers.filter((a: any) => a.is_correct === false).length;
