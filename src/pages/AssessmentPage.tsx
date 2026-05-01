@@ -316,6 +316,15 @@ export default function AssessmentPage() {
   const isEn = i18n.language?.startsWith("en");
   const queryClient = useQueryClient();
 
+  // Map current UI language to assessment_i18n.language_code (null = Korean = base)
+  const currentLang: "en" | "ja" | "zh-CN" | null = (() => {
+    const lng = (i18n.language || "").toLowerCase();
+    if (lng.startsWith("en")) return "en";
+    if (lng.startsWith("ja")) return "ja";
+    if (lng.startsWith("zh")) return "zh-CN";
+    return null;
+  })();
+
   const isStudentRoute = location.pathname.startsWith("/student");
   const routePrefix = location.pathname.startsWith("/admin") ? "/admin" : location.pathname.startsWith("/teacher") ? "/teacher" : "/student";
 
