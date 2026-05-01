@@ -1,1 +1,3 @@
 project_id = "jabagvlhgxrwbnxyrmvv"
+[functions.translate-comment]
+verify_jwt = false

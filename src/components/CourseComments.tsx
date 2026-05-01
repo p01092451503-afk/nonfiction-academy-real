@@ -3,14 +3,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS, ja, zhCN } from "date-fns/locale";
-import { MessageCircle, Send, Trash2, Reply, Heart } from "lucide-react";
+import { MessageCircle, Send, Trash2, Reply, Heart, Languages, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import i18n from "@/i18n";
+
+const TRANSLATE_LANGS: { code: string; label: string }[] = [
+  { code: "ko", label: "한국어" },
+  { code: "en", label: "English" },
+  { code: "ja", label: "日本語" },
+  { code: "zh-CN", label: "中文" },
+];
 
 interface CommentRow {
   id: string;
@@ -58,6 +71,47 @@ const CourseComments = ({ courseId }: Props) => {
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [translations, setTranslations] = useState<Record<string, { lang: string; text: string }>>({});
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
+
+  const translateComment = async (c: CommentRow, target: string) => {
+    if (c.language_code === target) {
+      setTranslations((prev) => {
+        const next = { ...prev };
+        delete next[c.id];
+        return next;
+      });
+      return;
+    }
+    setTranslatingId(c.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-comment", {
+        body: { text: c.content, target },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const translated = (data as any)?.translated as string;
+      if (translated) {
+        setTranslations((prev) => ({ ...prev, [c.id]: { lang: target, text: translated } }));
+      }
+    } catch (e: any) {
+      toast({
+        title: t("common.error", "오류"),
+        description: e?.message || t("comments.translateFailed", "번역에 실패했습니다"),
+        variant: "destructive",
+      });
+    } finally {
+      setTranslatingId(null);
+    }
+  };
+
+  const clearTranslation = (id: string) => {
+    setTranslations((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
 
   const queryKey = ["course-comments", courseId];
 
@@ -193,6 +247,24 @@ const CourseComments = ({ courseId }: Props) => {
           <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5 leading-relaxed">
             {c.content}
           </p>
+          {translations[c.id] && (
+            <div className="mt-2 rounded-md border border-border/70 bg-muted/40 p-2">
+              <div className="flex items-center gap-1.5 mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <Languages className="h-3 w-3" />
+                <span>{langBadge(translations[c.id].lang)}</span>
+              </div>
+              <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                {translations[c.id].text}
+              </p>
+              <button
+                type="button"
+                onClick={() => clearTranslation(c.id)}
+                className="mt-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t("comments.hideTranslation", "원문 보기")}
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
             {!isReply && (
               <button
@@ -207,6 +279,36 @@ const CourseComments = ({ courseId }: Props) => {
                 {t("comments.reply", "답글")}
               </button>
             )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  disabled={translatingId === c.id}
+                  className="inline-flex items-center gap-1 hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  {translatingId === c.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Languages className="h-3 w-3" />
+                  )}
+                  {t("comments.translate", "번역")}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[140px]">
+                {TRANSLATE_LANGS.map((l) => (
+                  <DropdownMenuItem
+                    key={l.code}
+                    onClick={() => translateComment(c, l.code)}
+                    className="text-xs cursor-pointer"
+                  >
+                    <span className="font-mono text-[10px] text-muted-foreground mr-2">
+                      {langBadge(l.code)}
+                    </span>
+                    {l.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {isOwner && (
               <button
                 type="button"
