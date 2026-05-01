@@ -84,6 +84,18 @@ const CourseComments = ({ courseId }: Props) => {
     if (c.language_code === target) return;
     setTranslatingId(c.id);
     try {
+      // 1) Try browser-native Translator API first (free, on-device, Chrome 138+)
+      const localResult = await tryBrowserTranslate(
+        c.content,
+        target as "ko" | "en" | "ja" | "zh-CN",
+        c.language_code
+      );
+      if (localResult) {
+        setTranslations((prev) => ({ ...prev, [c.id]: { lang: target, text: localResult } }));
+        return;
+      }
+
+      // 2) Fallback to server-side AI translation (with DB cache)
       const { data, error } = await supabase.functions.invoke("translate-comment", {
         body: { text: c.content, target, comment_id: c.id, source_lang: c.language_code },
       });
