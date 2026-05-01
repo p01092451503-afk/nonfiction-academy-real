@@ -1490,7 +1490,9 @@ export type Database = {
           id: string
           is_read: boolean | null
           message: string
+          message_i18n: Json | null
           title: string
+          title_i18n: Json | null
           type: string | null
           user_id: string
         }
@@ -1500,7 +1502,9 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message: string
+          message_i18n?: Json | null
           title: string
+          title_i18n?: Json | null
           type?: string | null
           user_id: string
         }
@@ -1510,7 +1514,9 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message?: string
+          message_i18n?: Json | null
           title?: string
+          title_i18n?: Json | null
           type?: string | null
           user_id?: string
         }
