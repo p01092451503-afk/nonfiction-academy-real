@@ -69,16 +69,38 @@ const TeacherNotifications = () => {
 
   const sendMutation = useMutation({
     mutationFn: async () => {
-      const { title_i18n, message_i18n } = await buildNotificationI18n(title, message);
+      const koTitle = ml.ko.title.trim();
+      const koMessage = ml.ko.content.trim();
+      if (!koTitle || !koMessage) throw new Error("한국어 제목/내용을 입력하세요.");
+
+      let title_i18n: NotificationI18n;
+      let message_i18n: NotificationI18n;
+      if (autoTranslate) {
+        ({ title_i18n, message_i18n } = await buildNotificationI18n(koTitle, koMessage));
+      } else {
+        title_i18n = {
+          ko: koTitle,
+          en: ml.en.title.trim() || koTitle,
+          ja: ml.ja.title.trim() || koTitle,
+          "zh-CN": ml["zh-CN"].title.trim() || koTitle,
+        };
+        message_i18n = {
+          ko: koMessage,
+          en: ml.en.content.trim() || koMessage,
+          ja: ml.ja.content.trim() || koMessage,
+          "zh-CN": ml["zh-CN"].content.trim() || koMessage,
+        };
+      }
+
       if (target === "all") {
         const ids = students?.map((s) => s.user_id) || [];
-        const rows = ids.map((uid) => ({ user_id: uid, title, message, type: "info", title_i18n, message_i18n }));
+        const rows = ids.map((uid) => ({ user_id: uid, title: koTitle, message: koMessage, type: "info", title_i18n, message_i18n }));
         if (rows.length === 0) throw new Error("발송 대상이 없습니다.");
         const { error } = await supabase.from("notifications").insert(rows);
         if (error) throw error;
       } else {
         if (!selectedUserId) throw new Error("대상을 선택해주세요.");
-        const { error } = await supabase.from("notifications").insert({ user_id: selectedUserId, title, message, type: "info", title_i18n, message_i18n });
+        const { error } = await supabase.from("notifications").insert({ user_id: selectedUserId, title: koTitle, message: koMessage, type: "info", title_i18n, message_i18n });
         if (error) throw error;
       }
     },
@@ -86,8 +108,7 @@ const TeacherNotifications = () => {
       toast({ title: "알림 발송 완료" });
       queryClient.invalidateQueries({ queryKey: ["teacher-recent-notifications"] });
       setOpen(false);
-      setTitle("");
-      setMessage("");
+      setMl(EMPTY_MULTILINGUAL);
       setSelectedUserId("");
     },
     onError: (err: Error) => toast({ title: "오류", description: err.message, variant: "destructive" }),
