@@ -313,8 +313,8 @@ const AdminTracks = () => {
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base font-semibold text-foreground truncate">{track.title}</h3>
-                        {track.title_en && (
+                        <h3 className="text-base font-semibold text-foreground truncate">{trackTitle(track)}</h3>
+                        {lang === "ko" && track.title_en && (
                           <span className="text-xs text-muted-foreground truncate">/ {track.title_en}</span>
                         )}
                         <Badge className={`text-[10px] font-semibold px-2 py-0.5 rounded ${statusBadgeColor[track.status]}`} variant="secondary">
