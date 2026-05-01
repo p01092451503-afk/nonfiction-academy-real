@@ -1283,5 +1283,21 @@
     "stage": "Stage",
     "locked": "Locked",
     "noCoursesInStage": "No courses in this stage."
+  },
+  "comments": {
+    "translate": "Translate",
+    "translateToMine": "Translate to my language",
+    "hideTranslation": "Show original",
+    "translateFailed": "Translation failed",
+    "reply": "Reply",
+    "post": "Post",
+    "anonymous": "User",
+    "signInRequired": "Sign-in required",
+    "placeholder": "Share your thoughts about this course...",
+    "empty": "No comments yet. Be the first to comment!",
+    "title": "Comments",
+    "confirmDelete": "Delete this comment?",
+    "notAllowed": "You cannot comment. Please check your enrollment approval.",
+    "replyPlaceholder": "Reply to @{{name}}..."
   }
 }

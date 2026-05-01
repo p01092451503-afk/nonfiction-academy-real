@@ -1283,5 +1283,21 @@
     "stage": "阶段",
     "locked": "已锁定",
     "noCoursesInStage": "此阶段暂无课程。"
+  },
+  "comments": {
+    "translate": "翻译",
+    "translateToMine": "翻译为我的语言",
+    "hideTranslation": "查看原文",
+    "translateFailed": "翻译失败",
+    "reply": "回复",
+    "post": "发布",
+    "anonymous": "用户",
+    "signInRequired": "需要登录",
+    "placeholder": "分享您对本课程的看法...",
+    "empty": "暂无评论。来发表第一条评论吧！",
+    "title": "评论",
+    "confirmDelete": "删除此评论？",
+    "notAllowed": "无法评论。请确认您的报名审批。",
+    "replyPlaceholder": "回复 @{{name}}..."
   }
 }
