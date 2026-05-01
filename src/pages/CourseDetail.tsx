@@ -864,6 +864,13 @@ const CourseDetail = () => {
                       {!isAccessible && seqAccess.reason && (
                         <span className="text-[9px] text-muted-foreground shrink-0">{t("course.sequentialLockedShort")}</span>
                       )}
+                      <span className="hidden sm:flex shrink-0 items-center gap-1" aria-label={isEn ? "Available languages: Korean, English, Japanese, Chinese" : "지원 언어: 한국어, 영어, 일본어, 중국어"}>
+                        {(["KO", "EN", "JA", "ZH"] as const).map((code) => (
+                          <span key={code} className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                            {code}
+                          </span>
+                        ))}
+                      </span>
                       <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${content.video_provider === "custom" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`}>
                         {providerLabel}
                       </span>
