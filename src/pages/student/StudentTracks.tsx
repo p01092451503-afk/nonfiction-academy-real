@@ -8,6 +8,7 @@ import { useUser } from "@/contexts/UserContext";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
 type Lang = "ko" | "en" | "ja" | "zh-CN";
 
