@@ -1377,9 +1377,11 @@ const CourseEditDialog = ({
         <DialogTitle className="text-base">{t("course.courseEditTitle")}</DialogTitle>
       </DialogHeader>
       <Tabs defaultValue="ko" className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="ko" className="flex-1">{t("course.koTab")}</TabsTrigger>
-          <TabsTrigger value="en" className="flex-1">{t("course.enTab")}</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="ko" className="text-xs">{t("course.koTab")}</TabsTrigger>
+          <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
+          <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
