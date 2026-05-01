@@ -332,8 +332,8 @@ const AdminTracks = () => {
                           <Badge variant="outline" className="text-[10px]">{t("track.free", "자유")}</Badge>
                         )}
                       </div>
-                      {track.description && (
-                        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{track.description}</p>
+                      {trackDescription(track) && (
+                        <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">{trackDescription(track)}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
