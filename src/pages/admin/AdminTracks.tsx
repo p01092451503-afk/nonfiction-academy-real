@@ -574,8 +574,38 @@ const TrackEditorDialog = ({
     );
   };
 
+  const autoTranslateAll = async () => {
+    const koTitle = (titles.ko || "").trim();
+    if (!koTitle) {
+      toast({ title: t("track.titleRequired", "트랙 이름을 입력해주세요"), variant: "destructive" });
+      return;
+    }
+    setTranslating(true);
+    try {
+      const targets: TargetLang[] = ["en", "ja", "zh-CN"];
+      const koDesc = (descriptions.ko || "").trim();
+      const stageKoNames = draftStages.map((s) => (s.names.ko || "").trim());
+      const sourceTexts = [koTitle, koDesc, ...stageKoNames];
+      for (const target of targets) {
+        const translated = await translateKoTo(target, sourceTexts);
+        const [tTitle, tDesc, ...tStageNames] = translated;
+        setTitles((prev) => ({ ...prev, [target]: tTitle || prev[target] || "" }));
+        if (koDesc) setDescriptions((prev) => ({ ...prev, [target]: tDesc || prev[target] || "" }));
+        setDraftStages((prev) =>
+          prev.map((s, i) => ({ ...s, names: { ...s.names, [target]: tStageNames[i] || s.names[target] || "" } }))
+        );
+      }
+      toast({ title: t("track.translated", "자동 번역이 완료되었습니다") });
+    } catch (e: any) {
+      toast({ title: t("common.error", "오류"), description: e.message, variant: "destructive" });
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const handleSave = async () => {
-    if (!title.trim()) {
+    const koTitle = (titles.ko || "").trim();
+    if (!koTitle) {
       toast({ title: t("track.titleRequired", "트랙 이름을 입력해주세요"), variant: "destructive" });
       return;
     }
@@ -590,9 +620,10 @@ const TrackEditorDialog = ({
 
       let savedTrackId = trackId;
       const trackPayload = {
-        title: title.trim(),
-        title_en: titleEn.trim() || null,
-        description: description.trim() || null,
+        title: koTitle,
+        title_en: (titles.en || "").trim() || null,
+        description: (descriptions.ko || "").trim() || null,
+        description_en: (descriptions.en || "").trim() || null,
         is_sequential: isSequential,
         status,
         ...(trackId ? {} : { created_by: userId }),
@@ -601,7 +632,6 @@ const TrackEditorDialog = ({
       if (trackId) {
         const { error } = await supabase.from("learning_tracks" as any).update(trackPayload).eq("id", trackId);
         if (error) throw error;
-        // Delete existing stages (cascade removes stage_courses)
         await supabase.from("track_stages" as any).delete().eq("track_id", trackId);
       } else {
         const { data, error } = await supabase
@@ -615,11 +645,25 @@ const TrackEditorDialog = ({
 
       if (!savedTrackId) throw new Error("track id missing");
 
-      // Insert stages
+      // Track i18n: replace
+      await supabase.from("learning_tracks_i18n" as any).delete().eq("track_id", savedTrackId);
+      const trackI18nRows = (["en", "ja", "zh-CN"] as I18nLang[])
+        .map((lc) => ({
+          track_id: savedTrackId!,
+          language_code: lc,
+          title: (titles[lc] || "").trim(),
+          description: (descriptions[lc] || "").trim() || null,
+        }))
+        .filter((r) => r.title);
+      if (trackI18nRows.length) {
+        const { error: tiErr } = await supabase.from("learning_tracks_i18n" as any).insert(trackI18nRows);
+        if (tiErr) throw tiErr;
+      }
+
       const stagesToInsert = draftStages.map((s, i) => ({
         track_id: savedTrackId!,
-        name: s.name.trim() || `Stage ${i + 1}`,
-        name_en: s.name_en.trim() || null,
+        name: (s.names.ko || "").trim() || `Stage ${i + 1}`,
+        name_en: (s.names.en || "").trim() || null,
         description: s.description.trim() || null,
         order_index: i,
       }));
@@ -629,16 +673,26 @@ const TrackEditorDialog = ({
         .select("id");
       if (stageErr) throw stageErr;
 
-      // Insert stage_courses
       const stageRows: any[] = [];
+      const stageI18nRows: any[] = [];
       (insertedStages as any[]).forEach((s, i) => {
-        draftStages[i]?.course_ids.forEach((cid, j) => {
+        const draft = draftStages[i];
+        if (!draft) return;
+        draft.course_ids.forEach((cid, j) => {
           stageRows.push({ stage_id: s.id, course_id: cid, order_index: j });
+        });
+        (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
+          const name = (draft.names[lc] || "").trim();
+          if (name) stageI18nRows.push({ stage_id: s.id, language_code: lc, name });
         });
       });
       if (stageRows.length) {
         const { error: scErr } = await supabase.from("track_stage_courses" as any).insert(stageRows);
         if (scErr) throw scErr;
+      }
+      if (stageI18nRows.length) {
+        const { error: siErr } = await supabase.from("track_stages_i18n" as any).insert(stageI18nRows);
+        if (siErr) throw siErr;
       }
 
       toast({ title: trackId ? t("track.updated", "트랙이 수정되었습니다") : t("track.created", "트랙이 생성되었습니다") });
@@ -650,6 +704,7 @@ const TrackEditorDialog = ({
       setSaving(false);
     }
   };
+
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
