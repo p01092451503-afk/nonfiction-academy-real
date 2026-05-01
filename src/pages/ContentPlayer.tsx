@@ -187,8 +187,10 @@ const ContentPlayer = () => {
   const nextContent = currentIndex < contents.length - 1 ? contents[currentIndex + 1] : null;
   const progressMap = new Map(progressData.map((p) => [p.content_id, p]));
   const currentProgress = progressMap.get(contentId || "");
-  const completedCount = progressData.filter((p) => p.completed).length;
-  const overallProgress = contents.length > 0 ? Math.round((completedCount / contents.length) * 100) : 0;
+  // 차시들은 동일 콘텐츠의 다국어 버전이므로, 어느 한 차시라도 완료되면 강의가 완료로 처리된다.
+  const _courseCompletion = computeCourseProgress(contents as any, progressData as any);
+  const completedCount = _courseCompletion.isCompleted ? 1 : 0;
+  const overallProgress = _courseCompletion.percentage;
 
   const localVideoUrlForHook = currentContent ? getVideoUrl(currentContent) : null;
   const localProviderForHook = currentContent ? getVideoProvider(currentContent) : null;
