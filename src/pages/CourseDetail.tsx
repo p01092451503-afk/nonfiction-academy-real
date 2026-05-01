@@ -84,6 +84,8 @@ const CourseDetail = () => {
     return "ko";
   })();
 
+  const isLangSwitching = useLanguageSwitching();
+
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
