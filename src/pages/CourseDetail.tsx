@@ -311,14 +311,19 @@ const CourseDetail = () => {
         is_sequential: vals.is_sequential,
       } as any).eq("id", courseId!);
       if (error) throw error;
-      // Upsert English i18n
-      if (courseEnForm.title.trim()) {
-        await supabase.from("course_i18n").upsert({
+      // Upsert i18n rows for each non-Korean language that has at least a title
+      const i18nRows = (Object.keys(courseI18nForm) as CourseI18nLang[])
+        .filter((lc) => courseI18nForm[lc].title.trim().length > 0)
+        .map((lc) => ({
           course_id: courseId!,
-          language_code: "en",
-          title: courseEnForm.title,
-          description: courseEnForm.description || null,
-        }, { onConflict: "course_id,language_code" });
+          language_code: lc,
+          title: courseI18nForm[lc].title,
+          description: courseI18nForm[lc].description || null,
+        }));
+      if (i18nRows.length > 0) {
+        await supabase
+          .from("course_i18n")
+          .upsert(i18nRows, { onConflict: "course_id,language_code" });
       }
     },
     onSuccess: () => { invalidateAll(); setCourseEditOpen(false); setCourseThumbnailFile(null); toast({ title: t("course.courseModified") }); },
