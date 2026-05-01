@@ -65,7 +65,13 @@ export function useVideoProgress({
       }
 
       if (completed) {
+        // 한 차시 완료 시 강의 enrollment도 100% / completed 처리 (다국어 차시 정책)
+        if (userId && courseId) {
+          await syncEnrollmentOnContentCompleted({ userId, courseId });
+        }
         queryClient.invalidateQueries({ queryKey: ["content-progress", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
       }
     },
     [userId, contentId, courseId, existingProgress?.id, queryClient]
