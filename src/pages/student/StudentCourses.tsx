@@ -21,8 +21,9 @@ const StudentCourses = () => {
   const [search, setSearch] = useState("");
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith("en") ? "en" : "ko";
+  const isLangSwitching = useLanguageSwitching();
 
-  const { data: enrollments = [], isLoading } = useQuery({
+  const { data: enrollments = [], isLoading, isFetching } = useQuery({
     queryKey: ["my-enrollments", user?.id, lang],
     queryFn: async () => {
       const { data, error } = await supabase
