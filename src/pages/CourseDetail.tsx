@@ -26,6 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Separator } from "@/components/ui/separator";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import PageSkeleton from "@/components/PageSkeleton";
+import { computeCourseProgress } from "@/lib/courseCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -484,8 +485,10 @@ const CourseDetail = () => {
   };
 
   const progressMap = new Map(progressData.map((p) => [p.content_id, p]));
-  const completedCount = progressData.filter((p) => p.completed).length;
-  const overallProgress = contents.length > 0 ? Math.round((completedCount / contents.length) * 100) : 0;
+  // 차시들은 동일 콘텐츠의 다국어 버전이므로, 어느 한 차시라도 완료되면 강의 전체가 완료로 간주된다.
+  const _courseCompletion = computeCourseProgress(contents, progressData as any);
+  const completedCount = _courseCompletion.isCompleted ? 1 : 0;
+  const overallProgress = _courseCompletion.percentage;
   const publishedCount = contents.filter(c => c.is_published).length;
   const totalDuration = contents.reduce((sum, c) => sum + (c.duration_minutes || 0), 0);
 
@@ -833,7 +836,11 @@ const CourseDetail = () => {
                 <span className="font-medium text-foreground">{overallProgress}%</span>
               </div>
               <Progress value={overallProgress} className="h-1.5" aria-label={`${t("course.enrollProgress")} ${overallProgress}%`} />
-              <p className="text-[10px] text-muted-foreground">{completedCount}/{contents.length} {t("course.completed")}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {_courseCompletion.isCompleted
+                  ? (isEn ? "Course completed" : "강의 학습완료")
+                  : (isEn ? "In progress" : "학습 진행중")}
+              </p>
             </div>
           ) : (
             <Button className="w-full sm:w-auto" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending} aria-label={t("course.enrollCourse")}>
