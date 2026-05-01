@@ -11,14 +11,36 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { translateKoToEn } from "@/lib/translate";
+import { translateKoTo, type TargetLang } from "@/lib/translate";
 
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
+
+// Supported non-Korean languages for assessment translations
+const I18N_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const LANG_LABELS: Record<TargetLang, string> = {
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "简体中文",
+};
+
+interface AssessmentI18nForm {
+  title: string;
+  description: string;
+}
+
+interface QuestionI18nForm {
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+  explanation: string;
+  hint: string;
+}
 
 interface QuestionForm {
   question_type: QuestionType;
@@ -28,18 +50,6 @@ interface QuestionForm {
   points: number;
   explanation: string;
   hint: string;
-  // EN fields
-  en_question_text: string;
-  en_options: string[];
-  en_correct_answer: string;
-  en_explanation: string;
-  en_hint: string;
-  // Manual edit flags
-  en_question_text_manual: boolean;
-  en_options_manual: boolean;
-  en_correct_answer_manual: boolean;
-  en_explanation_manual: boolean;
-  en_hint_manual: boolean;
 }
 
 const emptyQuestion: QuestionForm = {
@@ -50,17 +60,31 @@ const emptyQuestion: QuestionForm = {
   points: 10,
   explanation: "",
   hint: "",
-  en_question_text: "",
-  en_options: ["", "", "", ""],
-  en_correct_answer: "",
-  en_explanation: "",
-  en_hint: "",
-  en_question_text_manual: false,
-  en_options_manual: false,
-  en_correct_answer_manual: false,
-  en_explanation_manual: false,
-  en_hint_manual: false,
 };
+
+const emptyAssessmentI18n = (): Record<TargetLang, AssessmentI18nForm> => ({
+  en: { title: "", description: "" },
+  ja: { title: "", description: "" },
+  "zh-CN": { title: "", description: "" },
+});
+
+const emptyQuestionI18n = (optCount: number): Record<TargetLang, QuestionI18nForm> => ({
+  en: { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
+  ja: { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
+  "zh-CN": { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
+});
+
+const emptyManualFlags = (): Record<TargetLang, { title: boolean; description: boolean }> => ({
+  en: { title: false, description: false },
+  ja: { title: false, description: false },
+  "zh-CN": { title: false, description: false },
+});
+
+const emptyQuestionManualFlags = (): Record<TargetLang, { question_text: boolean; options: boolean; correct_answer: boolean; explanation: boolean; hint: boolean }> => ({
+  en: { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
+  ja: { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
+  "zh-CN": { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
+});
 
 const questionTypeLabels: Record<QuestionType, { ko: string; en: string }> = {
   multiple_choice_4: { ko: "4지선다", en: "4 Choices" },
@@ -83,7 +107,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   const [questionForm, setQuestionForm] = useState<QuestionForm>(emptyQuestion);
   const [showResults, setShowResults] = useState(false);
 
-  // Assessment form with EN fields
+  // Assessment base form (Korean)
   const [assessmentForm, setAssessmentForm] = useState({
     title: "",
     description: "",
@@ -95,52 +119,87 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     randomize_questions: true,
     is_published: false,
   });
-  const [enTitle, setEnTitle] = useState("");
-  const [enDescription, setEnDescription] = useState("");
-  const [enTitleManual, setEnTitleManual] = useState(false);
-  const [enDescManual, setEnDescManual] = useState(false);
-  const [translatingAssessment, setTranslatingAssessment] = useState(false);
-  const [translatingQuestion, setTranslatingQuestion] = useState(false);
+  // Assessment translations
+  const [assessmentI18nForm, setAssessmentI18nForm] = useState<Record<TargetLang, AssessmentI18nForm>>(emptyAssessmentI18n());
+  const [assessmentManual, setAssessmentManual] = useState(emptyManualFlags());
+  const [translatingAssessment, setTranslatingAssessment] = useState<TargetLang | null>(null);
 
-  // Auto-sync KO → EN for assessment
-  useEffect(() => {
-    if (!enTitleManual) setEnTitle(assessmentForm.title);
-  }, [assessmentForm.title, enTitleManual]);
+  // Question translations
+  const [questionI18nForm, setQuestionI18nForm] = useState<Record<TargetLang, QuestionI18nForm>>(emptyQuestionI18n(4));
+  const [questionManual, setQuestionManual] = useState(emptyQuestionManualFlags());
+  const [translatingQuestion, setTranslatingQuestion] = useState<TargetLang | null>(null);
 
+  // Auto-sync KO → each language for assessment when not manually edited
   useEffect(() => {
-    if (!enDescManual) setEnDescription(assessmentForm.description);
-  }, [assessmentForm.description, enDescManual]);
-
-  // Auto-sync KO → EN for question
-  useEffect(() => {
-    if (!questionForm.en_question_text_manual) {
-      setQuestionForm(f => ({ ...f, en_question_text: f.question_text }));
-    }
-  }, [questionForm.question_text, questionForm.en_question_text_manual]);
+    setAssessmentI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!assessmentManual[lc].title) next[lc] = { ...next[lc], title: assessmentForm.title };
+      });
+      return next;
+    });
+  }, [assessmentForm.title]);
 
   useEffect(() => {
-    if (!questionForm.en_correct_answer_manual) {
-      setQuestionForm(f => ({ ...f, en_correct_answer: f.correct_answer }));
-    }
-  }, [questionForm.correct_answer, questionForm.en_correct_answer_manual]);
+    setAssessmentI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!assessmentManual[lc].description) next[lc] = { ...next[lc], description: assessmentForm.description };
+      });
+      return next;
+    });
+  }, [assessmentForm.description]);
+
+  // Auto-sync KO → each language for question fields
+  useEffect(() => {
+    setQuestionI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!questionManual[lc].question_text) next[lc] = { ...next[lc], question_text: questionForm.question_text };
+      });
+      return next;
+    });
+  }, [questionForm.question_text]);
 
   useEffect(() => {
-    if (!questionForm.en_explanation_manual) {
-      setQuestionForm(f => ({ ...f, en_explanation: f.explanation }));
-    }
-  }, [questionForm.explanation, questionForm.en_explanation_manual]);
+    setQuestionI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!questionManual[lc].correct_answer) next[lc] = { ...next[lc], correct_answer: questionForm.correct_answer };
+      });
+      return next;
+    });
+  }, [questionForm.correct_answer]);
 
   useEffect(() => {
-    if (!questionForm.en_hint_manual) {
-      setQuestionForm(f => ({ ...f, en_hint: f.hint }));
-    }
-  }, [questionForm.hint, questionForm.en_hint_manual]);
+    setQuestionI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!questionManual[lc].explanation) next[lc] = { ...next[lc], explanation: questionForm.explanation };
+      });
+      return next;
+    });
+  }, [questionForm.explanation]);
 
   useEffect(() => {
-    if (!questionForm.en_options_manual) {
-      setQuestionForm(f => ({ ...f, en_options: [...f.options] }));
-    }
-  }, [questionForm.options, questionForm.en_options_manual]);
+    setQuestionI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!questionManual[lc].hint) next[lc] = { ...next[lc], hint: questionForm.hint };
+      });
+      return next;
+    });
+  }, [questionForm.hint]);
+
+  useEffect(() => {
+    setQuestionI18nForm(prev => {
+      const next = { ...prev };
+      I18N_LANGS.forEach(lc => {
+        if (!questionManual[lc].options) next[lc] = { ...next[lc], options: [...questionForm.options] };
+      });
+      return next;
+    });
+  }, [questionForm.options]);
 
   // Fetch assessment
   const { data: assessment, isLoading } = useQuery({
@@ -171,40 +230,42 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     enabled: !!assessment?.id,
   });
 
-  // Fetch assessment i18n
-  const { data: assessmentI18n } = useQuery({
-    queryKey: ["assessment-i18n", assessment?.id],
+  // Fetch ALL assessment i18n rows
+  const { data: assessmentI18nRows = [] } = useQuery({
+    queryKey: ["assessment-i18n-all", assessment?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assessment_i18n" as any)
         .select("*")
-        .eq("assessment_id", assessment!.id)
-        .eq("language_code", "en")
-        .maybeSingle();
+        .eq("assessment_id", assessment!.id);
       if (error) throw error;
-      return data as any;
+      return (data || []) as any[];
     },
     enabled: !!assessment?.id,
   });
 
-  // Fetch question i18n
+  // Fetch ALL question i18n rows
   const { data: questionI18nList = [] } = useQuery({
-    queryKey: ["assessment-question-i18n", assessment?.id],
+    queryKey: ["assessment-question-i18n-all", assessment?.id],
     queryFn: async () => {
       const qIds = questions.map((q: any) => q.id);
       if (qIds.length === 0) return [];
       const { data, error } = await supabase
         .from("assessment_question_i18n" as any)
         .select("*")
-        .in("question_id", qIds)
-        .eq("language_code", "en");
+        .in("question_id", qIds);
       if (error) throw error;
       return (data || []) as any[];
     },
     enabled: questions.length > 0,
   });
 
-  const questionI18nMap = new Map((questionI18nList || []).map((qi: any) => [qi.question_id, qi]));
+  // Index: question_id -> { en: row, ja: row, "zh-CN": row }
+  const questionI18nMap = new Map<string, Record<string, any>>();
+  (questionI18nList || []).forEach((qi: any) => {
+    if (!questionI18nMap.has(qi.question_id)) questionI18nMap.set(qi.question_id, {});
+    questionI18nMap.get(qi.question_id)![qi.language_code] = qi;
+  });
 
   // Create/update assessment
   const upsertAssessmentMutation = useMutation({
@@ -225,20 +286,27 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
         assessmentId = data.id;
       }
 
-      // Save EN i18n
-      if (assessmentId && (enTitle.trim() || enDescription.trim())) {
-        const { error } = await supabase.from("assessment_i18n" as any).upsert({
-          assessment_id: assessmentId,
-          language_code: "en",
-          title: enTitle || assessmentForm.title,
-          description: enDescription || null,
-        } as any, { onConflict: "assessment_id,language_code" });
-        if (error) console.error("i18n save error:", error);
+      if (!assessmentId) return;
+
+      // Save i18n rows for each language
+      const rows = I18N_LANGS.map(lc => ({
+        assessment_id: assessmentId,
+        language_code: lc,
+        title: (assessmentI18nForm[lc].title || assessmentForm.title || "").trim(),
+        description: assessmentI18nForm[lc].description?.trim() || null,
+      })).filter(r => r.title); // skip empty titles
+
+      if (rows.length) {
+        const { error } = await supabase.from("assessment_i18n" as any).upsert(
+          rows as any,
+          { onConflict: "assessment_id,language_code" }
+        );
+        if (error) console.error("assessment i18n save error:", error);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assessment", courseId] });
-      queryClient.invalidateQueries({ queryKey: ["assessment-i18n"] });
+      queryClient.invalidateQueries({ queryKey: ["assessment-i18n-all"] });
       setAssessmentDialogOpen(false);
       toast({ title: t("assessment.saved") });
     },
@@ -248,13 +316,12 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   // Add/update question
   const upsertQuestionMutation = useMutation({
     mutationFn: async () => {
+      const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionForm.question_type);
       const payload = {
         assessment_id: assessment!.id,
         question_type: questionForm.question_type,
         question_text: questionForm.question_text,
-        options: ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionForm.question_type)
-          ? questionForm.options
-          : null,
+        options: isMcq ? questionForm.options : null,
         correct_answer: questionForm.correct_answer,
         points: questionForm.points,
         explanation: questionForm.explanation || null,
@@ -272,21 +339,25 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
         questionId = data.id;
       }
 
-      // Save EN i18n
-      if (questionId) {
-        const enPayload: any = {
+      if (!questionId) return;
+
+      // Save i18n rows for each language
+      const rows = I18N_LANGS.map(lc => {
+        const f = questionI18nForm[lc];
+        return {
           question_id: questionId,
-          language_code: "en",
-          question_text: questionForm.en_question_text || questionForm.question_text,
-          options: ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionForm.question_type)
-            ? questionForm.en_options
-            : null,
-          correct_answer: questionForm.en_correct_answer || questionForm.correct_answer,
-          explanation: questionForm.en_explanation || null,
-          hint: questionForm.en_hint || null,
+          language_code: lc,
+          question_text: (f.question_text || questionForm.question_text || "").trim(),
+          options: isMcq ? (f.options.length ? f.options : questionForm.options) : null,
+          correct_answer: (f.correct_answer || questionForm.correct_answer || "").trim(),
+          explanation: f.explanation?.trim() || null,
+          hint: f.hint?.trim() || null,
         };
+      }).filter(r => r.question_text);
+
+      if (rows.length) {
         const { error } = await supabase.from("assessment_question_i18n" as any).upsert(
-          enPayload,
+          rows as any,
           { onConflict: "question_id,language_code" }
         );
         if (error) console.error("question i18n save error:", error);
@@ -294,10 +365,12 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assessment-questions", assessment?.id] });
-      queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n"] });
+      queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-all"] });
       setQuestionDialogOpen(false);
       setEditingQuestionId(null);
       setQuestionForm(emptyQuestion);
+      setQuestionI18nForm(emptyQuestionI18n(4));
+      setQuestionManual(emptyQuestionManualFlags());
       toast({ title: editingQuestionId ? t("assessment.questionUpdated") : t("assessment.questionAdded") });
     },
     onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
@@ -339,10 +412,20 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
         randomize_questions: assessment.randomize_questions,
         is_published: assessment.is_published,
       });
-      setEnTitle(assessmentI18n?.title || assessment.title);
-      setEnDescription(assessmentI18n?.description || assessment.description || "");
-      setEnTitleManual(!!assessmentI18n);
-      setEnDescManual(!!assessmentI18n);
+      // Load i18n rows
+      const next = emptyAssessmentI18n();
+      const flags = emptyManualFlags();
+      I18N_LANGS.forEach(lc => {
+        const row = assessmentI18nRows.find((r: any) => r.language_code === lc);
+        if (row) {
+          next[lc] = { title: row.title || assessment.title, description: row.description || "" };
+          flags[lc] = { title: true, description: true };
+        } else {
+          next[lc] = { title: assessment.title, description: assessment.description || "" };
+        }
+      });
+      setAssessmentI18nForm(next);
+      setAssessmentManual(flags);
     } else {
       setAssessmentForm({
         title: isEn ? "Course Assessment" : "과정 평가",
@@ -355,10 +438,8 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
         randomize_questions: true,
         is_published: false,
       });
-      setEnTitle("");
-      setEnDescription("");
-      setEnTitleManual(false);
-      setEnDescManual(false);
+      setAssessmentI18nForm(emptyAssessmentI18n());
+      setAssessmentManual(emptyManualFlags());
     }
     setAssessmentDialogOpen(true);
   };
@@ -366,109 +447,165 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   const openAddQuestion = () => {
     setEditingQuestionId(null);
     setQuestionForm(emptyQuestion);
+    setQuestionI18nForm(emptyQuestionI18n(4));
+    setQuestionManual(emptyQuestionManualFlags());
     setQuestionDialogOpen(true);
   };
 
   const openEditQuestion = (q: any) => {
     setEditingQuestionId(q.id);
     const opts = q.options || [];
-    const i18n = questionI18nMap.get(q.id);
-    const enOpts = i18n?.options || [];
+    const optCount = q.question_type === "multiple_choice_5" ? 5 : q.question_type === "multiple_choice_4" ? 4 : q.question_type === "ox" ? 2 : 0;
+    const baseOpts = q.question_type === "ox"
+      ? ["O", "X"]
+      : optCount > 0
+      ? [...opts, ...Array(Math.max(0, optCount - opts.length)).fill("")]
+      : [];
 
     setQuestionForm({
       question_type: q.question_type,
       question_text: q.question_text,
-      options: q.question_type === "multiple_choice_5"
-        ? [...opts, ...Array(5 - opts.length).fill("")]
-        : q.question_type === "multiple_choice_4"
-        ? [...opts, ...Array(4 - opts.length).fill("")]
-        : q.question_type === "ox"
-        ? ["O", "X"]
-        : [],
+      options: baseOpts,
       correct_answer: q.correct_answer,
       points: q.points,
       explanation: q.explanation || "",
       hint: q.hint || "",
-      en_question_text: i18n?.question_text || q.question_text,
-      en_options: q.question_type === "multiple_choice_5"
-        ? [...enOpts, ...Array(Math.max(0, 5 - enOpts.length)).fill("")]
-        : q.question_type === "multiple_choice_4"
-        ? [...enOpts, ...Array(Math.max(0, 4 - enOpts.length)).fill("")]
-        : q.question_type === "ox"
-        ? ["O", "X"]
-        : [],
-      en_correct_answer: i18n?.correct_answer || q.correct_answer,
-      en_explanation: i18n?.explanation || q.explanation || "",
-      en_hint: i18n?.hint || q.hint || "",
-      en_question_text_manual: !!i18n,
-      en_options_manual: !!i18n,
-      en_correct_answer_manual: !!i18n,
-      en_explanation_manual: !!i18n,
-      en_hint_manual: !!i18n,
     });
+
+    const i18nByLang = questionI18nMap.get(q.id) || {};
+    const next = emptyQuestionI18n(optCount);
+    const flags = emptyQuestionManualFlags();
+    I18N_LANGS.forEach(lc => {
+      const row = i18nByLang[lc];
+      const enOpts = row?.options || [];
+      const langOpts = q.question_type === "ox"
+        ? ["O", "X"]
+        : optCount > 0
+        ? [...enOpts, ...Array(Math.max(0, optCount - enOpts.length)).fill("")]
+        : [];
+      if (row) {
+        next[lc] = {
+          question_text: row.question_text || q.question_text,
+          options: langOpts,
+          correct_answer: row.correct_answer || q.correct_answer,
+          explanation: row.explanation || q.explanation || "",
+          hint: row.hint || q.hint || "",
+        };
+        flags[lc] = { question_text: true, options: true, correct_answer: true, explanation: true, hint: true };
+      } else {
+        next[lc] = {
+          question_text: q.question_text,
+          options: [...baseOpts],
+          correct_answer: q.correct_answer,
+          explanation: q.explanation || "",
+          hint: q.hint || "",
+        };
+      }
+    });
+    setQuestionI18nForm(next);
+    setQuestionManual(flags);
     setQuestionDialogOpen(true);
   };
 
   const handleTypeChange = (type: QuestionType) => {
     let options: string[] = [];
-    let enOptions: string[] = [];
-    if (type === "multiple_choice_4") { options = ["", "", "", ""]; enOptions = ["", "", "", ""]; }
-    else if (type === "multiple_choice_5") { options = ["", "", "", "", ""]; enOptions = ["", "", "", "", ""]; }
-    else if (type === "ox") { options = ["O", "X"]; enOptions = ["O", "X"]; }
-    setQuestionForm(f => ({ ...f, question_type: type, options, en_options: enOptions, correct_answer: "", en_correct_answer: "", en_options_manual: false, en_correct_answer_manual: false }));
+    let optCount = 0;
+    if (type === "multiple_choice_4") { options = ["", "", "", ""]; optCount = 4; }
+    else if (type === "multiple_choice_5") { options = ["", "", "", "", ""]; optCount = 5; }
+    else if (type === "ox") { options = ["O", "X"]; optCount = 2; }
+    setQuestionForm(f => ({ ...f, question_type: type, options, correct_answer: "" }));
+    setQuestionI18nForm(emptyQuestionI18n(optCount));
+    setQuestionManual(emptyQuestionManualFlags());
   };
 
-  // Translate assessment
-  const handleTranslateAssessment = async () => {
-    const texts = [assessmentForm.title, assessmentForm.description].filter(Boolean);
+  // Translate assessment for a specific language
+  const handleTranslateAssessment = async (lc: TargetLang) => {
+    const texts: string[] = [];
+    if (assessmentForm.title) texts.push(assessmentForm.title);
+    if (assessmentForm.description) texts.push(assessmentForm.description);
     if (!texts.length) return;
-    setTranslatingAssessment(true);
+    setTranslatingAssessment(lc);
     try {
-      const results = await translateKoToEn(texts);
+      const results = await translateKoTo(lc, texts);
       let idx = 0;
-      if (assessmentForm.title) { setEnTitle(results[idx++] || ""); setEnTitleManual(true); }
-      if (assessmentForm.description) { setEnDescription(results[idx++] || ""); setEnDescManual(true); }
+      const tTitle = assessmentForm.title ? (results[idx++] || "") : "";
+      const tDesc = assessmentForm.description ? (results[idx++] || "") : "";
+      setAssessmentI18nForm(prev => ({
+        ...prev,
+        [lc]: {
+          title: tTitle || prev[lc].title,
+          description: tDesc || prev[lc].description,
+        },
+      }));
+      setAssessmentManual(prev => ({ ...prev, [lc]: { title: true, description: true } }));
     } catch { /* silent */ }
-    finally { setTranslatingAssessment(false); }
+    finally { setTranslatingAssessment(null); }
   };
 
-  // Translate question
-  const handleTranslateQuestion = async () => {
+  // Translate question for a specific language
+  const handleTranslateQuestion = async (lc: TargetLang) => {
     const texts: string[] = [];
     const fields: string[] = [];
     if (questionForm.question_text) { texts.push(questionForm.question_text); fields.push("question_text"); }
     if (questionForm.correct_answer && questionForm.question_type !== "ox") { texts.push(questionForm.correct_answer); fields.push("correct_answer"); }
     if (questionForm.explanation) { texts.push(questionForm.explanation); fields.push("explanation"); }
     if (questionForm.hint) { texts.push(questionForm.hint); fields.push("hint"); }
-    // Options for MCQ (not OX)
     if (["multiple_choice_4", "multiple_choice_5"].includes(questionForm.question_type)) {
       questionForm.options.forEach((opt, i) => {
         if (opt.trim()) { texts.push(opt); fields.push(`option_${i}`); }
       });
     }
     if (!texts.length) return;
-    setTranslatingQuestion(true);
+    setTranslatingQuestion(lc);
     try {
-      const results = await translateKoToEn(texts);
-      const newEnOptions = [...questionForm.en_options];
+      const results = await translateKoTo(lc, texts);
+      const newOptions = [...questionI18nForm[lc].options];
+      const updates: Partial<QuestionI18nForm> = {};
       let idx = 0;
-      const updates: Partial<QuestionForm> = {};
       for (const field of fields) {
-        if (field === "question_text") { updates.en_question_text = results[idx]; updates.en_question_text_manual = true; }
-        else if (field === "correct_answer") { updates.en_correct_answer = results[idx]; updates.en_correct_answer_manual = true; }
-        else if (field === "explanation") { updates.en_explanation = results[idx]; updates.en_explanation_manual = true; }
-        else if (field === "hint") { updates.en_hint = results[idx]; updates.en_hint_manual = true; }
+        if (field === "question_text") updates.question_text = results[idx];
+        else if (field === "correct_answer") updates.correct_answer = results[idx];
+        else if (field === "explanation") updates.explanation = results[idx];
+        else if (field === "hint") updates.hint = results[idx];
         else if (field.startsWith("option_")) {
           const optIdx = parseInt(field.split("_")[1]);
-          newEnOptions[optIdx] = results[idx] || "";
-          updates.en_options_manual = true;
+          newOptions[optIdx] = results[idx] || "";
         }
         idx++;
       }
-      updates.en_options = newEnOptions;
-      setQuestionForm(f => ({ ...f, ...updates }));
+      updates.options = newOptions;
+      setQuestionI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...updates } }));
+      setQuestionManual(prev => ({
+        ...prev,
+        [lc]: { question_text: true, options: true, correct_answer: true, explanation: true, hint: true },
+      }));
     } catch { /* silent */ }
-    finally { setTranslatingQuestion(false); }
+    finally { setTranslatingQuestion(null); }
+  };
+
+  const updateLangAssessment = (lc: TargetLang, patch: Partial<AssessmentI18nForm>) => {
+    setAssessmentI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
+    setAssessmentManual(prev => ({
+      ...prev,
+      [lc]: {
+        title: patch.title !== undefined ? true : prev[lc].title,
+        description: patch.description !== undefined ? true : prev[lc].description,
+      },
+    }));
+  };
+
+  const updateLangQuestion = (lc: TargetLang, patch: Partial<QuestionI18nForm>) => {
+    setQuestionI18nForm(prev => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
+    setQuestionManual(prev => ({
+      ...prev,
+      [lc]: {
+        question_text: patch.question_text !== undefined ? true : prev[lc].question_text,
+        options: patch.options !== undefined ? true : prev[lc].options,
+        correct_answer: patch.correct_answer !== undefined ? true : prev[lc].correct_answer,
+        explanation: patch.explanation !== undefined ? true : prev[lc].explanation,
+        hint: patch.hint !== undefined ? true : prev[lc].hint,
+      },
+    }));
   };
 
   const totalPoints = questions.reduce((s: number, q: any) => s + (q.points || 0), 0);
@@ -605,41 +742,54 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
           <DialogHeader>
             <DialogTitle className="text-base">{assessment ? t("assessment.editSettings") : t("assessment.create")}</DialogTitle>
           </DialogHeader>
+
+          <Tabs defaultValue="ko" className="w-full">
+            <TabsList className="w-full grid grid-cols-4">
+              <TabsTrigger value="ko" className="text-xs">한국어</TabsTrigger>
+              {I18N_LANGS.map(lc => (
+                <TabsTrigger key={lc} value={lc} className="text-xs">{LANG_LABELS[lc]}</TabsTrigger>
+              ))}
+            </TabsList>
+
+            <TabsContent value="ko" className="space-y-3 pt-3">
+              <div className="space-y-1">
+                <Label className="text-xs">{t("assessment.assessmentTitle")}</Label>
+                <Input className="h-9 text-sm" value={assessmentForm.title} onChange={e => setAssessmentForm(f => ({ ...f, title: e.target.value }))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">{t("assessment.description")}</Label>
+                <Textarea className="text-sm" value={assessmentForm.description} onChange={e => setAssessmentForm(f => ({ ...f, description: e.target.value }))} rows={2} />
+              </div>
+            </TabsContent>
+
+            {I18N_LANGS.map(lc => (
+              <TabsContent key={lc} value={lc} className="space-y-3 pt-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-muted-foreground">{isEn ? "Falls back to Korean if empty" : "미입력 시 한국어 폴백"}</p>
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5"
+                    onClick={() => handleTranslateAssessment(lc)}
+                    disabled={!!translatingAssessment || (!assessmentForm.title && !assessmentForm.description)}>
+                    <Languages className="h-3 w-3" />
+                    {translatingAssessment === lc ? (isEn ? "Translating…" : "번역 중…") : t("course.autoTranslate", "자동 번역")}
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("assessment.assessmentTitle")} ({LANG_LABELS[lc]})</Label>
+                  <Input className="h-9 text-sm" value={assessmentI18nForm[lc].title}
+                    onChange={e => updateLangAssessment(lc, { title: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("assessment.description")} ({LANG_LABELS[lc]})</Label>
+                  <Textarea className="text-sm" value={assessmentI18nForm[lc].description}
+                    onChange={e => updateLangAssessment(lc, { description: e.target.value })} rows={2} />
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+
+          <Separator />
+
           <div className="space-y-4">
-            {/* KO Title */}
-            <div className="space-y-1">
-              <Label className="text-xs">{t("assessment.assessmentTitle")} (KO)</Label>
-              <Input className="h-9 text-sm" value={assessmentForm.title} onChange={e => setAssessmentForm(f => ({ ...f, title: e.target.value }))} />
-            </div>
-            {/* KO Description */}
-            <div className="space-y-1">
-              <Label className="text-xs">{t("assessment.description")} (KO)</Label>
-              <Textarea className="text-sm" value={assessmentForm.description} onChange={e => setAssessmentForm(f => ({ ...f, description: e.target.value }))} rows={2} />
-            </div>
-
-            <Separator />
-
-            {/* EN Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{t("course.enOptional", "영어 버전 (선택)")}</p>
-                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateAssessment} disabled={translatingAssessment || (!assessmentForm.title && !assessmentForm.description)}>
-                  <Languages className="h-3 w-3" />
-                  {t("course.autoTranslate", "자동 번역")}
-                </Button>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("assessment.assessmentTitle")} (EN)</Label>
-                <Input className="h-9 text-sm" value={enTitle} onChange={e => { setEnTitle(e.target.value); setEnTitleManual(true); }} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("assessment.description")} (EN)</Label>
-                <Textarea className="text-sm" value={enDescription} onChange={e => { setEnDescription(e.target.value); setEnDescManual(true); }} rows={2} />
-              </div>
-            </div>
-
-            <Separator />
-
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">{t("assessment.passingScore")}</Label>
@@ -676,6 +826,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
               <Switch checked={assessmentForm.randomize_questions} onCheckedChange={v => setAssessmentForm(f => ({ ...f, randomize_questions: v }))} />
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setAssessmentDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button size="sm" onClick={() => upsertAssessmentMutation.mutate()} disabled={!assessmentForm.title.trim() || upsertAssessmentMutation.isPending}>
@@ -691,6 +842,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
           <DialogHeader>
             <DialogTitle className="text-base">{editingQuestionId ? t("assessment.editQuestion") : t("assessment.addQuestion")}</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
@@ -710,34 +862,27 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
               </div>
             </div>
 
-            {/* KO & EN question text side by side */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">{t("assessment.questionText")} (KO)</Label>
-                <Textarea className="text-sm" value={questionForm.question_text} onChange={e => setQuestionForm(f => ({ ...f, question_text: e.target.value }))} rows={3} />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs">{t("assessment.questionText")} (EN)</Label>
-                  <Button type="button" variant="outline" size="sm" className="h-6 text-[10px] gap-1 px-2" onClick={handleTranslateQuestion} disabled={translatingQuestion || !questionForm.question_text.trim()}>
-                    <Languages className="h-2.5 w-2.5" />
-                    {t("course.autoTranslate", "자동 번역")}
-                  </Button>
-                </div>
-                <Textarea className="text-sm" value={questionForm.en_question_text} onChange={e => setQuestionForm(f => ({ ...f, en_question_text: e.target.value, en_question_text_manual: true }))} rows={3} />
-              </div>
-            </div>
+            <Tabs defaultValue="ko" className="w-full">
+              <TabsList className="w-full grid grid-cols-4">
+                <TabsTrigger value="ko" className="text-xs">한국어</TabsTrigger>
+                {I18N_LANGS.map(lc => (
+                  <TabsTrigger key={lc} value={lc} className="text-xs">{LANG_LABELS[lc]}</TabsTrigger>
+                ))}
+              </TabsList>
 
-            {/* Options for MCQ and OX */}
-            {["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionForm.question_type) && (
-              <div className="space-y-2">
-                <Label className="text-xs">{t("assessment.options")}</Label>
-                <div className="grid grid-cols-2 gap-3">
+              {/* Korean tab */}
+              <TabsContent value="ko" className="space-y-3 pt-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("assessment.questionText")}</Label>
+                  <Textarea className="text-sm" value={questionForm.question_text} onChange={e => setQuestionForm(f => ({ ...f, question_text: e.target.value }))} rows={3} />
+                </div>
+
+                {["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionForm.question_type) && (
                   <div className="space-y-2">
-                    <p className="text-[10px] text-muted-foreground">KO</p>
+                    <Label className="text-xs">{t("assessment.options")}</Label>
                     {questionForm.options.map((opt, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <input type="radio" name="correct_answer" checked={questionForm.correct_answer === opt && opt !== ""} onChange={() => setQuestionForm(f => ({ ...f, correct_answer: opt }))} className="h-4 w-4 text-primary" />
+                        <input type="radio" name="ko_correct_answer" checked={questionForm.correct_answer === opt && opt !== ""} onChange={() => setQuestionForm(f => ({ ...f, correct_answer: opt }))} className="h-4 w-4 text-primary" />
                         {questionForm.question_type === "ox" ? (
                           <span className="text-sm font-medium">{opt}</span>
                         ) : (
@@ -752,75 +897,105 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                         )}
                       </div>
                     ))}
+                    <p className="text-[10px] text-muted-foreground">{t("assessment.selectCorrect")}</p>
                   </div>
-                  {questionForm.question_type !== "ox" && (
-                    <div className="space-y-2">
-                      <p className="text-[10px] text-muted-foreground">EN</p>
-                      {questionForm.en_options.map((opt, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-4" />
-                          <Input className="h-8 text-sm flex-1" value={opt} placeholder={`Option ${i + 1}`}
-                            onChange={e => {
-                              const newOpts = [...questionForm.en_options];
-                              newOpts[i] = e.target.value;
-                              setQuestionForm(f => ({ ...f, en_options: newOpts, en_options_manual: true }));
-                            }}
-                          />
-                        </div>
-                      ))}
+                )}
+
+                {["short_answer", "essay"].includes(questionForm.question_type) && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("assessment.correctAnswer")}</Label>
+                    {questionForm.question_type === "short_answer" ? (
+                      <Input className="h-9 text-sm" value={questionForm.correct_answer} onChange={e => setQuestionForm(f => ({ ...f, correct_answer: e.target.value }))} placeholder="정답 (일치하는 답)" />
+                    ) : (
+                      <Textarea className="text-sm" value={questionForm.correct_answer} onChange={e => setQuestionForm(f => ({ ...f, correct_answer: e.target.value }))} rows={2} placeholder="모범 답안 / 키워드" />
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("assessment.explanation")}</Label>
+                  <Textarea className="text-sm" value={questionForm.explanation} onChange={e => setQuestionForm(f => ({ ...f, explanation: e.target.value }))} rows={2} placeholder="채점 후 표시될 해설 (선택사항)" />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">{isEn ? "Hint" : "힌트"}</Label>
+                  <Textarea className="text-sm" value={questionForm.hint} onChange={e => setQuestionForm(f => ({ ...f, hint: e.target.value }))} rows={2} placeholder="시험 중 학생에게 보여줄 힌트 (선택사항)" />
+                </div>
+              </TabsContent>
+
+              {/* Translation tabs */}
+              {I18N_LANGS.map(lc => {
+                const f = questionI18nForm[lc];
+                const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionForm.question_type);
+                return (
+                  <TabsContent key={lc} value={lc} className="space-y-3 pt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] text-muted-foreground">{isEn ? "Falls back to Korean if empty" : "미입력 시 한국어 폴백"}</p>
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5"
+                        onClick={() => handleTranslateQuestion(lc)}
+                        disabled={!!translatingQuestion || !questionForm.question_text.trim()}>
+                        <Languages className="h-3 w-3" />
+                        {translatingQuestion === lc ? (isEn ? "Translating…" : "번역 중…") : t("course.autoTranslate", "자동 번역")}
+                      </Button>
                     </div>
-                  )}
-                </div>
-                <p className="text-[10px] text-muted-foreground">{t("assessment.selectCorrect")}</p>
-              </div>
-            )}
 
-            {/* Short answer / essay correct answer */}
-            {["short_answer", "essay"].includes(questionForm.question_type) && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">{t("assessment.correctAnswer")} (KO)</Label>
-                  {questionForm.question_type === "short_answer" ? (
-                    <Input className="h-9 text-sm" value={questionForm.correct_answer} onChange={e => setQuestionForm(f => ({ ...f, correct_answer: e.target.value }))} placeholder="정답 (일치하는 답)" />
-                  ) : (
-                    <Textarea className="text-sm" value={questionForm.correct_answer} onChange={e => setQuestionForm(f => ({ ...f, correct_answer: e.target.value }))} rows={2} placeholder="모범 답안 / 키워드" />
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">{t("assessment.correctAnswer")} (EN)</Label>
-                  {questionForm.question_type === "short_answer" ? (
-                    <Input className="h-9 text-sm" value={questionForm.en_correct_answer} onChange={e => setQuestionForm(f => ({ ...f, en_correct_answer: e.target.value, en_correct_answer_manual: true }))} placeholder="Exact match answer" />
-                  ) : (
-                    <Textarea className="text-sm" value={questionForm.en_correct_answer} onChange={e => setQuestionForm(f => ({ ...f, en_correct_answer: e.target.value, en_correct_answer_manual: true }))} rows={2} placeholder="Model answer / keywords" />
-                  )}
-                </div>
-              </div>
-            )}
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t("assessment.questionText")} ({LANG_LABELS[lc]})</Label>
+                      <Textarea className="text-sm" value={f.question_text}
+                        onChange={e => updateLangQuestion(lc, { question_text: e.target.value })} rows={3} />
+                    </div>
 
-            {/* Explanation */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">{t("assessment.explanation")} (KO)</Label>
-                <Textarea className="text-sm" value={questionForm.explanation} onChange={e => setQuestionForm(f => ({ ...f, explanation: e.target.value }))} rows={2} placeholder="채점 후 표시될 해설 (선택사항)" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("assessment.explanation")} (EN)</Label>
-                <Textarea className="text-sm" value={questionForm.en_explanation} onChange={e => setQuestionForm(f => ({ ...f, en_explanation: e.target.value, en_explanation_manual: true }))} rows={2} placeholder="Explanation shown after grading (optional)" />
-              </div>
-            </div>
+                    {isMcq && (
+                      <div className="space-y-2">
+                        <Label className="text-xs">{t("assessment.options")} ({LANG_LABELS[lc]})</Label>
+                        {f.options.map((opt, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <div className="w-4" />
+                            {questionForm.question_type === "ox" ? (
+                              <span className="text-sm font-medium">{opt}</span>
+                            ) : (
+                              <Input className="h-8 text-sm flex-1" value={opt} placeholder={`Option ${i + 1}`}
+                                onChange={e => {
+                                  const newOpts = [...f.options];
+                                  newOpts[i] = e.target.value;
+                                  updateLangQuestion(lc, { options: newOpts });
+                                }} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-            {/* Hint */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">{isEn ? "Hint" : "힌트"} (KO)</Label>
-                <Textarea className="text-sm" value={questionForm.hint} onChange={e => setQuestionForm(f => ({ ...f, hint: e.target.value }))} rows={2} placeholder="시험 중 학생에게 보여줄 힌트 (선택사항)" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{isEn ? "Hint" : "힌트"} (EN)</Label>
-                <Textarea className="text-sm" value={questionForm.en_hint} onChange={e => setQuestionForm(f => ({ ...f, en_hint: e.target.value, en_hint_manual: true }))} rows={2} placeholder="Hint shown to students during test (optional)" />
-              </div>
-            </div>
+                    {["short_answer", "essay"].includes(questionForm.question_type) && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t("assessment.correctAnswer")} ({LANG_LABELS[lc]})</Label>
+                        {questionForm.question_type === "short_answer" ? (
+                          <Input className="h-9 text-sm" value={f.correct_answer}
+                            onChange={e => updateLangQuestion(lc, { correct_answer: e.target.value })} placeholder="Exact match answer" />
+                        ) : (
+                          <Textarea className="text-sm" value={f.correct_answer}
+                            onChange={e => updateLangQuestion(lc, { correct_answer: e.target.value })} rows={2} placeholder="Model answer / keywords" />
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t("assessment.explanation")} ({LANG_LABELS[lc]})</Label>
+                      <Textarea className="text-sm" value={f.explanation}
+                        onChange={e => updateLangQuestion(lc, { explanation: e.target.value })} rows={2} />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">{isEn ? "Hint" : "힌트"} ({LANG_LABELS[lc]})</Label>
+                      <Textarea className="text-sm" value={f.hint}
+                        onChange={e => updateLangQuestion(lc, { hint: e.target.value })} rows={2} />
+                    </div>
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
           </div>
+
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setQuestionDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button size="sm" onClick={() => upsertQuestionMutation.mutate()} disabled={!questionForm.question_text.trim() || !questionForm.correct_answer.trim() || upsertQuestionMutation.isPending}>
