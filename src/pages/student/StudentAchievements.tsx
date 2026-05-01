@@ -20,6 +20,7 @@ import {
   Bar,
   Cell,
 } from "recharts";
+import { ChartTooltipContent, chartTooltipDefaults, chartLineCursor } from "@/components/ui/chart-tooltip";
 import { format, startOfWeek, subWeeks } from "date-fns";
 
 const badgeIcons: Record<string, React.ElementType> = {
@@ -322,7 +323,7 @@ const StudentAchievements = () => {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} />
-                    <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" valueFormatter={() => undefined as any} />} />
+                    <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
                     <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
                       {courseChartData.map((entry, idx) => (
                         <Cell key={idx} fill={getBarColor(entry.progress)} />
