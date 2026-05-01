@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
@@ -167,13 +168,34 @@ const StudentTracks = () => {
             ))}
           </div>
         ) : tracks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 space-y-3 border border-border rounded-xl">
+          <div className="flex flex-col items-center justify-center text-center py-16 px-6 space-y-4 border border-border rounded-xl">
             <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center">
-              <Layers className="h-6 w-6 text-muted-foreground" />
+              <Layers className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {t("track.noTracks", "배정된 학습 트랙이 없습니다.")}
-            </p>
+            <div className="space-y-1.5 max-w-md">
+              <h2 className="text-base font-semibold text-foreground">
+                {t("track.noTracksTitle", "아직 시작된 학습 트랙이 없습니다")}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "track.noTracksDesc",
+                  "관리자가 학습 트랙을 배정할 때까지, 강의 카탈로그에서 관심 있는 강의를 둘러보고 먼저 수강해 보세요."
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <Button asChild size="sm">
+                <Link to="/student/catalog">
+                  <BookOpen className="h-4 w-4" aria-hidden="true" />
+                  {t("track.browseCourses", "강의 둘러보기")}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/student">
+                  {t("track.goToDashboard", "대시보드로 이동")}
+                </Link>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
