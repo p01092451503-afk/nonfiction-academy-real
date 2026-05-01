@@ -440,10 +440,12 @@ const AdminTracks = () => {
 
 /* ────────────── Track Editor ────────────── */
 
+type LangMap = Partial<Record<I18nLang, string>>;
+const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
+
 type DraftStage = {
   id: string; // local or db id
-  name: string;
-  name_en: string;
+  names: LangMap;
   description: string;
   order_index: number;
   course_ids: string[];
@@ -464,15 +466,16 @@ const TrackEditorDialog = ({
   const { t } = useTranslation();
   const { toast } = useToast();
 
-  const [title, setTitle] = useState("");
-  const [titleEn, setTitleEn] = useState("");
-  const [description, setDescription] = useState("");
+  const [titles, setTitles] = useState<LangMap>(emptyLangMap());
+  const [descriptions, setDescriptions] = useState<LangMap>(emptyLangMap());
   const [isSequential, setIsSequential] = useState(true);
   const [status, setStatus] = useState<"draft" | "published" | "archived">("draft");
+  const [activeLang, setActiveLang] = useState<I18nLang>("ko");
+  const [translating, setTranslating] = useState(false);
   const [draftStages, setDraftStages] = useState<DraftStage[]>([
-    { id: crypto.randomUUID(), name: "Foundation", name_en: "Foundation", description: "", order_index: 0, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), name: "Basic", name_en: "Basic", description: "", order_index: 1, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), name: "Advanced", name_en: "Advanced", description: "", order_index: 2, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "Foundation", en: "Foundation" }, description: "", order_index: 0, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "Basic", en: "Basic" }, description: "", order_index: 1, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "Advanced", en: "Advanced" }, description: "", order_index: 2, course_ids: [], _isNew: true },
   ]);
   const [saving, setSaving] = useState(false);
 
