@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "@/hooks/use-toast";
 import { Bell, Send, Users, User } from "lucide-react";
 import { format } from "date-fns";
-import { buildNotificationI18n } from "@/lib/notificationI18n";
+import { buildNotificationI18n, type NotificationI18n } from "@/lib/notificationI18n";
+import MultilingualTextFields, { EMPTY_MULTILINGUAL, type MultilingualValue } from "@/components/admin/MultilingualTextFields";
 
 const AdminNotifications = () => {
   const { t } = useTranslation();
