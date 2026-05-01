@@ -295,9 +295,15 @@ const ContentPlayer = () => {
         const { error } = await supabase.from("content_progress").insert({ user_id: user!.id, content_id: contentId!, completed: true, completed_at: new Date().toISOString(), progress_percentage: 100 });
         if (error) throw error;
       }
+      // 차시 = 동일 콘텐츠의 다국어 버전. 한 차시 완료 시 강의 전체를 완료 처리.
+      if (user?.id && courseId) {
+        await syncEnrollmentOnContentCompleted({ userId: user.id, courseId });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-progress", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
       toast({ title: t("course.completed"), description: t("course.learningComplete") });
     },
   });
