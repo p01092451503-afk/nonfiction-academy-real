@@ -53,7 +53,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
   const { profile, signOut } = useUser();
   const { primaryRole } = useUserRole();
   const { t, i18n } = useTranslation();
-  const { teacherRoleEnabled } = useSystemSettings();
+  const { teacherRoleEnabled, isMenuVisible } = useSystemSettings();
 
   const activeRole = role || primaryRole;
 
