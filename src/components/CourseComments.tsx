@@ -167,8 +167,9 @@ const CourseComments = ({ courseId }: Props) => {
   });
 
   useEffect(() => {
-    const channel = supabase
-      .channel(`course-comments-${courseId}`)
+    const uniqueId = `${courseId}-${Math.random().toString(36).slice(2, 10)}`;
+    const channel = supabase.channel(`course-comments-${uniqueId}`);
+    channel
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "course_comments", filter: `course_id=eq.${courseId}` },
