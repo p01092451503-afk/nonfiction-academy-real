@@ -1,4 +1,4 @@
-import { Search, BookOpen, Info, RefreshCw, Clock, Star, ChevronRight } from "lucide-react";
+import { Search, BookOpen, Info, RefreshCw, Clock, Star, ChevronRight, Layers } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import { normalizeLang } from "@/lib/i18nLang";
@@ -19,6 +19,7 @@ const StudentCourses = () => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
@@ -58,6 +59,61 @@ const StudentCourses = () => {
       if (lang === "ko") return data;
       return (data || []).map((c: any) => ({ ...c, name: c.name_en || c.name }));
     },
+  });
+
+  // 사용자가 배정받은 트랙 + 단계 + 강의 매핑 → 강의별 "어느 트랙의 어느 단계"인지 표시
+  const { data: courseTrackMap = new Map() } = useQuery({
+    queryKey: ["my-course-track-map", user?.id, lang],
+    queryFn: async () => {
+      const { data: te } = await supabase
+        .from("track_enrollments")
+        .select("track_id, learning_tracks(id, title, title_en)")
+        .eq("user_id", user!.id);
+      const trackIds = (te || []).map((r: any) => r.track_id);
+      if (trackIds.length === 0) return new Map();
+
+      const [{ data: stages }, { data: stageCourses }, { data: tracksI18n }, { data: stagesI18n }] = await Promise.all([
+        supabase.from("track_stages").select("id, track_id, name, name_en, order_index").in("track_id", trackIds).order("order_index"),
+        supabase.from("track_stage_courses").select("stage_id, course_id, order_index"),
+        supabase.from("learning_tracks_i18n").select("track_id, language_code, title").in("track_id", trackIds),
+        supabase.from("track_stages_i18n").select("stage_id, language_code, name"),
+      ]);
+
+      const trackById = new Map((te || []).map((r: any) => [r.track_id, r.learning_tracks]));
+      const stageById = new Map((stages || []).map((s: any) => [s.id, s]));
+      const stageIdxByTrack = new Map<string, Map<string, number>>();
+      (stages || []).forEach((s: any) => {
+        if (!stageIdxByTrack.has(s.track_id)) stageIdxByTrack.set(s.track_id, new Map());
+        stageIdxByTrack.get(s.track_id)!.set(s.id, s.order_index);
+      });
+
+      const trackTitle = (trackId: string) => {
+        const tr = (tracksI18n || []).find((r: any) => r.track_id === trackId && r.language_code === lang);
+        const base = trackById.get(trackId);
+        return tr?.title || (lang === "en" && base?.title_en ? base.title_en : base?.title) || "";
+      };
+      const stageName = (stage: any) => {
+        if (!stage) return "";
+        const tr = (stagesI18n || []).find((r: any) => r.stage_id === stage.id && r.language_code === lang);
+        return tr?.name || (lang === "en" && stage.name_en ? stage.name_en : stage.name) || "";
+      };
+
+      const map = new Map<string, Array<{ trackId: string; trackTitle: string; stageIdx: number; stageName: string }>>();
+      (stageCourses || []).forEach((sc: any) => {
+        const stage = stageById.get(sc.stage_id);
+        if (!stage) return;
+        const arr = map.get(sc.course_id) || [];
+        arr.push({
+          trackId: stage.track_id,
+          trackTitle: trackTitle(stage.track_id),
+          stageIdx: (stage.order_index ?? 0) + 1,
+          stageName: stageName(stage),
+        });
+        map.set(sc.course_id, arr);
+      });
+      return map;
+    },
+    enabled: !!user?.id,
   });
 
   const syncProgressMutation = useMutation({
@@ -101,6 +157,8 @@ const StudentCourses = () => {
     if (!course) return null;
     const cat = categoryMap.get(course.category_id);
     const progress = isCompleted ? 100 : Number(enrollment.progress) || 0;
+    const trackInfos: Array<{ trackId: string; trackTitle: string; stageIdx: number; stageName: string }> =
+      (courseTrackMap as Map<string, any[]>).get(course.id) || [];
 
     return (
       <Link
@@ -123,6 +181,18 @@ const StudentCourses = () => {
             <h3 className="text-sm font-semibold text-foreground truncate">{course.title}</h3>
             {course.is_mandatory && <Badge variant="destructive" className="text-[10px] h-5">{t("common.required")}</Badge>}
             {cat && <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">{cat.name}</span>}
+            {trackInfos.map((ti) => (
+              <button
+                key={`${ti.trackId}-${ti.stageIdx}`}
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate("/student/tracks"); }}
+                className="inline-flex items-center gap-1 text-[10px] text-foreground bg-accent hover:bg-accent/70 transition-colors px-2 py-0.5 rounded-md whitespace-nowrap"
+                title={`${ti.trackTitle} · ${t("track.stage", "단계")} ${ti.stageIdx} ${ti.stageName}`}
+              >
+                <Layers className="h-2.5 w-2.5" aria-hidden="true" />
+                {ti.trackTitle} · {t("track.stage", "단계")} {ti.stageIdx}
+              </button>
+            ))}
           </div>
           {!isCompleted && (
             <div className="flex items-center gap-3">
