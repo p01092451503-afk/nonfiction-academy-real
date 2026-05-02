@@ -1650,7 +1650,11 @@ const PackageItemsEditor = ({
                       item_type: url ? guessType(url) : it.item_type,
                     });
                   }}
-                  placeholder="https://... (이미지 또는 영상 URL)"
+                  placeholder={
+                    (it as any)._uploadingName
+                      ? `업로드 중: ${(it as any)._uploadingName}`
+                      : "https://... (이미지 또는 영상 URL)"
+                  }
                   className="h-8 rounded-lg border-border text-xs flex-1"
                 />
                 <button
