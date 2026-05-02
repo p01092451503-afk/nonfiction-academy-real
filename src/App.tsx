@@ -62,6 +62,7 @@ const AdminVideos = lazyWithRetry(() => import("./pages/admin/AdminVideos"));
 const AdminI18n = lazyWithRetry(() => import("./pages/admin/AdminI18n"));
 const AdminSystemInfo = lazyWithRetry(() => import("./pages/admin/AdminSystemInfo"));
 const AdminTracks = lazyWithRetry(() => import("./pages/admin/AdminTracks"));
+const AdminGlobalDashboard = lazyWithRetry(() => import("./pages/admin/AdminGlobalDashboard"));
 const AdminLegacyRecords = lazyWithRetry(() => import("./pages/admin/AdminLegacyRecords"));
 const StudentBoard = lazyWithRetry(() => import("./pages/student/StudentBoard"));
 const StudentTracks = lazyWithRetry(() => import("./pages/student/StudentTracks"));
@@ -142,6 +143,7 @@ const AppRoutes = () => {
           <Route path="/admin/i18n" element={<AdminRoute><AdminI18n /></AdminRoute>} />
           <Route path="/admin/system-info" element={<AdminRoute><AdminSystemInfo /></AdminRoute>} />
           <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
+          <Route path="/admin/global-dashboard" element={<AdminRoute><AdminGlobalDashboard /></AdminRoute>} />
           <Route path="/admin/legacy-records" element={<AdminRoute><AdminLegacyRecords /></AdminRoute>} />
 
           {/* Dept Admin */}

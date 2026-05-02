@@ -4,7 +4,7 @@ import {
   LayoutDashboard, BookOpen, ClipboardList, Trophy, Users, Settings, Compass, UserCircle, ClipboardCheck,
   LogOut, Menu, X, ChevronRight, GraduationCap, CalendarCheck, Activity, Building2, Bell, Megaphone, FileText, BarChart3, Video,
   PanelLeftClose, PanelLeftOpen, Languages, Layers, Archive,
-  Info,
+  Info, Globe2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -138,6 +138,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
       items: [
         { key: "dashboard", label: t("nav.dashboard"), href: "/admin", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
         { key: "trafficMonitoring", label: t("nav.trafficMonitoring", "통계 현황"), href: "/admin/traffic", icon: BarChart3, tourId: "nav-traffic" },
+        { key: "globalDashboard", label: t("nav.globalDashboard", "글로벌 대시보드"), href: "/admin/global-dashboard", icon: Globe2 },
       ],
     },
     {
