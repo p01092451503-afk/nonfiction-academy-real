@@ -928,13 +928,13 @@ const CourseDetail = () => {
                       {/* 언어 배지 (차시 번호 자리 대체) */}
                       {langLabel ? (
                         <span
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-[11px] font-semibold tracking-wider ${langClass}`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold tracking-wider shadow-sm ${langClass}`}
                           aria-label={`${isEn ? "Language" : "언어"}: ${langLabel}`}
                         >
                           {langLabel}
                         </span>
                       ) : (
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-[11px] font-semibold text-muted-foreground">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-[10px] font-semibold text-muted-foreground">
                           {String(idx + 1).padStart(2, "0")}
                         </span>
                       )}
