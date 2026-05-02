@@ -423,8 +423,10 @@ const ContentPlayer = () => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-4 pt-0 pb-6 lg:px-8 lg:py-8">
-            {/* Media area - sticky on mobile so only the content/comments scrolls */}
-            <div className="bg-background lg:bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-6 relative sticky top-0 z-20 -mx-4 lg:mx-0 lg:static lg:z-auto border-b border-border lg:border-b-0 shadow-sm lg:shadow-none">
+            {/* Sticky group: media + info row stay fixed on mobile while comments scroll */}
+            <div className="sticky top-0 z-20 -mx-4 lg:mx-0 lg:static lg:z-auto bg-background lg:bg-transparent border-b border-border lg:border-b-0 shadow-sm lg:shadow-none">
+            {/* Media area */}
+            <div className="bg-background lg:bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-0 lg:mb-6 relative">
               {currentContent.content_type === "media_package" ? (
                 <div className="p-4">
                   <MediaPackagePlayer contentId={currentContent.id} />
@@ -553,11 +555,8 @@ const ContentPlayer = () => {
               )}
             </div>
 
-            {/* Content info - Toss-style clean sections */}
-            <div className="space-y-6 mt-2">
-
-              {/* 과정 · 차시 · 학습상태 한줄 통합 */}
-              <div className="flex items-center gap-3 flex-wrap">
+            {/* Sticky info row (mobile) - 과정 · 차시 · 학습상태 한줄 통합 */}
+            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-3 lg:py-0 bg-background lg:bg-transparent">
                 {/* Content source badge */}
                 {(() => {
                   const url = localVideoUrl;
@@ -611,8 +610,11 @@ const ContentPlayer = () => {
                     </Badge>
                   ) : null}
                 </div>
-              </div>
+            </div>
+            </div>
+            {/* /sticky group */}
 
+            <div className="space-y-6 mt-6">
               {/* Comments (Instagram-style, course-level, shared across 4 languages) */}
               {courseId && <CourseComments courseId={courseId} />}
 
