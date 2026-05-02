@@ -844,8 +844,8 @@ const ContentPlayer = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Comments overlay: Sheet on desktop, Drawer on mobile */}
-      {courseId && isLgUp ? (
+      {/* Comments overlay: Sheet from the right on all viewports for consistent rounding */}
+      {courseId ? (
         <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
           <SheetContent
             side="right"
@@ -859,17 +859,6 @@ const ContentPlayer = () => {
             </div>
           </SheetContent>
         </Sheet>
-      ) : courseId ? (
-        <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-          <DrawerContent className="h-[90vh] p-0 flex flex-col overflow-hidden rounded-2xl !bottom-2 inset-x-2">
-            <DrawerHeader className="sr-only">
-              <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
-            </DrawerHeader>
-            <div className="flex-1 min-h-0 flex flex-col">
-              <CourseComments courseId={courseId} />
-            </div>
-          </DrawerContent>
-        </Drawer>
       ) : null}
     </div>
   );
