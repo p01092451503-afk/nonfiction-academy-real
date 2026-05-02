@@ -1016,12 +1016,9 @@ const CourseDetail = () => {
         {/* Student Assessment Section */}
         {courseId && <StudentAssessmentSection courseId={courseId} overallProgress={overallProgress} routePrefix={routePrefix} t={t} isEn={isEn} />}
 
-        {/* Survey Section - shown after course completion */}
+        {/* Survey Section - shown after course completion. Title comes from admin-configured survey. */}
         {courseId && enrollment?.completed_at && (
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">{t("survey.title", "과정 설문")}</h2>
-            <StudentSurvey courseId={courseId} />
-          </section>
+          <StudentSurvey courseId={courseId} />
         )}
       </div>
     </DashboardLayout>
