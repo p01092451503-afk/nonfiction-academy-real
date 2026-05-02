@@ -19,6 +19,7 @@ const StudentCourses = () => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
