@@ -385,7 +385,7 @@ const CourseComments = ({ courseId }: Props) => {
   const myInitial = (profile?.full_name || user?.email || "?").slice(0, 1).toUpperCase();
 
   return (
-    <section className="flex flex-col h-full min-h-0 lg:h-auto lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
+    <section className="flex flex-col h-full min-h-0" aria-labelledby="course-comments-heading">
       {/* Header (Instagram bottom-sheet style) */}
       <div className="relative border-b border-border shrink-0">
         <h3
@@ -400,7 +400,7 @@ const CourseComments = ({ courseId }: Props) => {
       </div>
 
       {/* List */}
-      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-border/50 lg:flex-none lg:overflow-visible">
+      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-border/50">
         {isLoading ? (
           <p className="text-xs text-muted-foreground py-8 text-center">{t("common.loading", "불러오는 중...")}</p>
         ) : threads.length === 0 ? (
