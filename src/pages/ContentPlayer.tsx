@@ -423,8 +423,8 @@ const ContentPlayer = () => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-4 py-6 lg:px-8 lg:py-8">
-            {/* Media area */}
-            <div className="bg-foreground/5 rounded-2xl overflow-hidden mb-6 relative">
+            {/* Media area - sticky on mobile so only the content/comments scrolls */}
+            <div className="bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-6 relative sticky top-0 z-20 -mx-4 lg:mx-0 lg:static lg:z-auto shadow-sm lg:shadow-none">
               {currentContent.content_type === "media_package" ? (
                 <div className="p-4">
                   <MediaPackagePlayer contentId={currentContent.id} />
