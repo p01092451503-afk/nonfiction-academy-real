@@ -180,6 +180,18 @@ const StudentCourses = () => {
             <h3 className="text-sm font-semibold text-foreground truncate">{course.title}</h3>
             {course.is_mandatory && <Badge variant="destructive" className="text-[10px] h-5">{t("common.required")}</Badge>}
             {cat && <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">{cat.name}</span>}
+            {trackInfos.map((ti) => (
+              <Link
+                key={`${ti.trackId}-${ti.stageIdx}`}
+                to="/student/tracks"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-[10px] text-foreground bg-accent hover:bg-accent/70 transition-colors px-2 py-0.5 rounded-md whitespace-nowrap"
+                title={`${ti.trackTitle} · ${t("track.stage", "단계")} ${ti.stageIdx} ${ti.stageName}`}
+              >
+                <Layers className="h-2.5 w-2.5" aria-hidden="true" />
+                {ti.trackTitle} · {t("track.stage", "단계")} {ti.stageIdx}
+              </Link>
+            ))}
           </div>
           {!isCompleted && (
             <div className="flex items-center gap-3">
