@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Play, FileText,
   Video, BarChart3, ExternalLink, Clock, X, RotateCcw, List, FolderOpen,
-  Lock as LockIcon,
+  Lock as LockIcon, MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -79,6 +79,7 @@ const ContentPlayer = () => {
   const [mangoElapsed, setMangoElapsed] = useState(0);
   const mangoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   const contentTypeLabel: Record<string, string> = {
@@ -423,10 +424,8 @@ const ContentPlayer = () => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-4 pt-0 pb-6 lg:px-8 lg:py-8">
-            {/* Sticky group: media + info row stay fixed on mobile while comments scroll */}
-            <div className="sticky top-0 z-20 -mx-4 lg:mx-0 lg:static lg:z-auto bg-background lg:bg-transparent border-b border-border lg:border-b-0 shadow-sm lg:shadow-none">
             {/* Media area */}
-            <div className="bg-background lg:bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-0 lg:mb-6 relative">
+            <div className="bg-background lg:bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-0 lg:mb-6 relative -mx-4 lg:mx-0">
               {currentContent.content_type === "media_package" ? (
                 <div className="p-4">
                   <MediaPackagePlayer contentId={currentContent.id} />
@@ -438,7 +437,6 @@ const ContentPlayer = () => {
                 const isImage = currentUrl.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i);
                 return (
                   <div className="flex flex-col items-center py-6 space-y-4">
-                    {/* Card display */}
                     <div className="relative w-72 sm:w-80">
                       <div className="rounded-2xl overflow-hidden border border-border shadow-lg" style={{ aspectRatio: "9/16" }}>
                         {isImage ? (
@@ -449,38 +447,22 @@ const ContentPlayer = () => {
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">카드 없음</div>
                         )}
                       </div>
-
-                      {/* Navigation arrows */}
                       {totalCards > 1 && (
                         <>
-                          <button
-                            onClick={() => setCardIndex(Math.max(0, cardIndex - 1))}
-                            disabled={cardIndex === 0}
-                            className="absolute left-[-40px] top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border shadow flex items-center justify-center disabled:opacity-30 hover:bg-background transition-colors"
-                          >
+                          <button onClick={() => setCardIndex(Math.max(0, cardIndex - 1))} disabled={cardIndex === 0} className="absolute left-[-40px] top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border shadow flex items-center justify-center disabled:opacity-30 hover:bg-background transition-colors">
                             <ChevronLeft className="h-5 w-5" />
                           </button>
-                          <button
-                            onClick={() => setCardIndex(Math.min(totalCards - 1, cardIndex + 1))}
-                            disabled={cardIndex === totalCards - 1}
-                            className="absolute right-[-40px] top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border shadow flex items-center justify-center disabled:opacity-30 hover:bg-background transition-colors"
-                          >
+                          <button onClick={() => setCardIndex(Math.min(totalCards - 1, cardIndex + 1))} disabled={cardIndex === totalCards - 1} className="absolute right-[-40px] top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-background/80 border border-border shadow flex items-center justify-center disabled:opacity-30 hover:bg-background transition-colors">
                             <ChevronRight className="h-5 w-5" />
                           </button>
                         </>
                       )}
                     </div>
-
-                    {/* Card indicator */}
                     {totalCards > 1 && (
                       <div className="flex items-center gap-3">
                         <div className="flex gap-1.5">
                           {urls.map((_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setCardIndex(i)}
-                              className={`h-2 rounded-full transition-all ${i === cardIndex ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"}`}
-                            />
+                            <button key={i} onClick={() => setCardIndex(i)} className={`h-2 rounded-full transition-all ${i === cardIndex ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"}`} />
                           ))}
                         </div>
                         <span className="text-xs text-muted-foreground font-medium">{cardIndex + 1} / {totalCards}</span>
@@ -503,27 +485,14 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "video" && embedUrl ? (
                 <div className="relative">
                   <div className="aspect-video w-full">
-                    <iframe
-                      key={`video-${contentId}`}
-                      ref={isTrackableVideo ? videoIframeCallback : undefined}
-                      id={`video-player-${contentId}`}
-                      src={embedUrl}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                      allowFullScreen
-                      referrerPolicy="no-referrer-when-downgrade"
-                      sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms"
-                      title={localTitle}
-                    />
+                    <iframe key={`video-${contentId}`} ref={isTrackableVideo ? videoIframeCallback : undefined} id={`video-player-${contentId}`} src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowFullScreen referrerPolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" title={localTitle} />
                   </div>
                   {isTrackableVideo && (
                     <div className="px-4 py-2.5 bg-secondary/60 flex items-center gap-3 text-xs">
                       <span className="text-muted-foreground shrink-0">{t("contentPlayer.watchProgress")}</span>
                       <Progress value={videoProgress.duration > 0 ? (videoProgress.currentTime / videoProgress.duration) * 100 : (currentProgress?.progress_percentage || 0)} className="h-1.5 flex-1" />
                       <span className="text-muted-foreground font-medium shrink-0">
-                        {videoProgress.duration > 0
-                          ? `${formatTime(videoProgress.currentTime)} / ${formatTime(videoProgress.duration)}`
-                          : `${Math.round(currentProgress?.progress_percentage || 0)}%`}
+                        {videoProgress.duration > 0 ? `${formatTime(videoProgress.currentTime)} / ${formatTime(videoProgress.duration)}` : `${Math.round(currentProgress?.progress_percentage || 0)}%`}
                       </span>
                       {videoProgress.resumePosition > 0 && !currentProgress?.completed && (
                         <Badge variant="outline" className="text-[10px] gap-1 shrink-0">
@@ -555,34 +524,20 @@ const ContentPlayer = () => {
               )}
             </div>
 
-            {/* Sticky info row (mobile) - 과정 · 차시 · 학습상태 한줄 통합 */}
-            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-3 lg:py-0 bg-background lg:bg-transparent">
-                {/* Content source badge */}
+            {/* Info row */}
+            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-3 lg:py-0">
                 {(() => {
                   const url = localVideoUrl;
                   const provider = currentContent.video_provider;
                   let sourceLabel = "";
                   let sourceColor = "";
-                  if (isMangoboard(url)) {
-                    sourceLabel = "Mangoboard";
-                    sourceColor = "bg-blue-500 text-white";
-                  } else if (provider === "youtube" || url?.includes("youtube.com") || url?.includes("youtu.be")) {
-                    sourceLabel = "YouTube";
-                    sourceColor = "bg-rose-500 text-white";
-                  } else if (provider === "vimeo" || url?.includes("vimeo.com")) {
-                    sourceLabel = "Vimeo";
-                    sourceColor = "bg-sky-500 text-white";
-                  } else if (provider === "upload") {
-                    sourceLabel = "CDN";
-                    sourceColor = "bg-emerald-500 text-white";
-                  } else if (provider === "custom" && !isMangoboard(url)) {
-                    sourceLabel = t("createCourse.customInput");
-                    sourceColor = "bg-amber-500 text-white";
-                  }
+                  if (isMangoboard(url)) { sourceLabel = "Mangoboard"; sourceColor = "bg-blue-500 text-white"; }
+                  else if (provider === "youtube" || url?.includes("youtube.com") || url?.includes("youtu.be")) { sourceLabel = "YouTube"; sourceColor = "bg-rose-500 text-white"; }
+                  else if (provider === "vimeo" || url?.includes("vimeo.com")) { sourceLabel = "Vimeo"; sourceColor = "bg-sky-500 text-white"; }
+                  else if (provider === "upload") { sourceLabel = "CDN"; sourceColor = "bg-emerald-500 text-white"; }
+                  else if (provider === "custom" && !isMangoboard(url)) { sourceLabel = t("createCourse.customInput"); sourceColor = "bg-amber-500 text-white"; }
                   return sourceLabel ? (
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md shrink-0 ${sourceColor}`}>
-                      {sourceLabel}
-                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md shrink-0 ${sourceColor}`}>{sourceLabel}</span>
                   ) : null;
                 })()}
                 <h2 className="text-lg font-bold text-foreground tracking-tight border-b-2 border-foreground/80 pb-0.5 shrink-0">
@@ -611,12 +566,33 @@ const ContentPlayer = () => {
                   ) : null}
                 </div>
             </div>
-            </div>
-            {/* /sticky group */}
 
             <div className="space-y-6 mt-6">
-              {/* Comments (Instagram-style, course-level, shared across 4 languages) */}
-              {courseId && <CourseComments courseId={courseId} />}
+              {/* Mobile: comment trigger button → Drawer */}
+              {courseId && (
+                <button
+                  type="button"
+                  onClick={() => setCommentsOpen(true)}
+                  className="lg:hidden w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {t("comments.title", "댓글")}
+                    </span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("comments.viewAll", "모두 보기")}
+                  </span>
+                </button>
+              )}
+
+              {/* Desktop: inline comments */}
+              {courseId && (
+                <div className="hidden lg:block">
+                  <CourseComments courseId={courseId} />
+                </div>
+              )}
 
               {/* Navigation */}
               <div className="flex items-center justify-between pt-4 border-t border-border">
@@ -824,6 +800,18 @@ const ContentPlayer = () => {
               })}
             </div>
           </ScrollArea>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Comments Drawer (mobile only - Instagram-style bottom sheet) */}
+      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <DrawerContent className="lg:hidden h-[90vh] p-0 flex flex-col">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {courseId && <CourseComments courseId={courseId} />}
+          </div>
         </DrawerContent>
       </Drawer>
     </div>
