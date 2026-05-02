@@ -849,7 +849,7 @@ const ContentPlayer = () => {
         <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
           <SheetContent
             side="right"
-            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col"
+            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col z-[120]"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>{t("comments.title", "댓글")}</SheetTitle>
