@@ -83,6 +83,14 @@ const ContentPlayer = () => {
   const mangoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [isLgUp, setIsLgUp] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsLgUp(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   const contentTypeLabel: Record<string, string> = {
