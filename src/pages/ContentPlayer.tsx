@@ -116,6 +116,21 @@ const ContentPlayer = () => {
     enabled: !!courseId,
   });
 
+  const { data: commentCount = 0 } = useQuery({
+    queryKey: ["course-comments-count", courseId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("course_comments" as any)
+        .select("*", { count: "exact", head: true })
+        .eq("course_id", courseId!)
+        .eq("is_deleted", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!courseId,
+    staleTime: 30_000,
+  });
+
   const { data: contentI18nData = [] } = useQuery({
     queryKey: ["content-i18n", courseId],
     queryFn: async () => {
