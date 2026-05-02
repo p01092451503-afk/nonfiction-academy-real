@@ -555,11 +555,8 @@ const ContentPlayer = () => {
               )}
             </div>
 
-            {/* Content info - Toss-style clean sections */}
-            <div className="space-y-6 mt-2">
-
-              {/* 과정 · 차시 · 학습상태 한줄 통합 */}
-              <div className="flex items-center gap-3 flex-wrap">
+            {/* Sticky info row (mobile) - 과정 · 차시 · 학습상태 한줄 통합 */}
+            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-3 lg:py-0 bg-background lg:bg-transparent">
                 {/* Content source badge */}
                 {(() => {
                   const url = localVideoUrl;
@@ -613,8 +610,11 @@ const ContentPlayer = () => {
                     </Badge>
                   ) : null}
                 </div>
-              </div>
+            </div>
+            </div>
+            {/* /sticky group */}
 
+            <div className="space-y-6 mt-6">
               {/* Comments (Instagram-style, course-level, shared across 4 languages) */}
               {courseId && <CourseComments courseId={courseId} />}
 
