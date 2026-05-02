@@ -448,7 +448,7 @@ const CourseComments = ({ courseId }: Props) => {
                                 return next;
                               })
                             }
-                            className="flex items-center gap-3 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-3 pl-16 sm:pl-20 pr-5 sm:pr-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <span className="h-px w-6 bg-border" />
                             {t("comments.hideReplies", "답글 숨기기")}
