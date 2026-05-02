@@ -617,7 +617,10 @@ const ContentPlayer = () => {
               {courseId && (
                 <button
                   type="button"
-                  onClick={() => setCommentsOpen(true)}
+                  onClick={() => {
+                    console.log("[comments] open click, isLgUp=", isLgUp);
+                    setCommentsOpen(true);
+                  }}
                   className="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <span className="flex items-center gap-2.5">
