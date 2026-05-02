@@ -116,6 +116,21 @@ const ContentPlayer = () => {
     enabled: !!courseId,
   });
 
+  const { data: commentCount = 0 } = useQuery({
+    queryKey: ["course-comments-count", courseId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("course_comments" as any)
+        .select("*", { count: "exact", head: true })
+        .eq("course_id", courseId!)
+        .eq("is_deleted", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!courseId,
+    staleTime: 30_000,
+  });
+
   const { data: contentI18nData = [] } = useQuery({
     queryKey: ["content-i18n", courseId],
     queryFn: async () => {
@@ -579,6 +594,9 @@ const ContentPlayer = () => {
                     <MessageCircle className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-semibold text-foreground">
                       {t("comments.title", "댓글")}
+                    </span>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      {commentCount}
                     </span>
                   </span>
                   <span className="text-xs text-muted-foreground">
