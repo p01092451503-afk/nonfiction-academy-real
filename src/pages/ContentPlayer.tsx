@@ -18,6 +18,9 @@ import { logContentAccess } from "@/hooks/useTrafficLogger";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaPackagePlayer from "@/components/MediaPackagePlayer";
 import CourseComments from "@/components/CourseComments";
