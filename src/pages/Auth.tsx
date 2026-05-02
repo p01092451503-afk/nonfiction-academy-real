@@ -27,20 +27,10 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [selectedBranch, setSelectedBranch] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-  const [branches, setBranches] = useState<any[]>([]);
   const [loginError, setLoginError] = useState<{ type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic"; raw?: string } | null>(null);
-
-  useEffect(() => {
-    supabase.from("departments").select("id, name, name_en, is_active").eq("is_active", true).order("display_order").order("name").then(({ data }) => {
-      if (data) setBranches(data);
-    });
-  }, []);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY);
@@ -55,38 +45,28 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { name: fullName, department_id: selectedBranch || undefined } },
-        });
-        if (error) throw error;
-        toast({ title: t("auth.signUpComplete"), description: t("auth.checkEmail") });
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          const msg = (error.message || "").toLowerCase();
-          let type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic" = "generic";
-          if (msg.includes("not confirmed") || msg.includes("email not confirmed")) {
-            type = "not_confirmed";
-          } else if (msg.includes("rate limit") || msg.includes("too many")) {
-            type = "too_many";
-          } else if (msg.includes("user not found") || msg.includes("no user")) {
-            type = "no_account";
-          } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
-            type = "invalid";
-          }
-          setLoginError({ type, raw: error.message });
-          return;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        const msg = (error.message || "").toLowerCase();
+        let type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic" = "generic";
+        if (msg.includes("not confirmed") || msg.includes("email not confirmed")) {
+          type = "not_confirmed";
+        } else if (msg.includes("rate limit") || msg.includes("too many")) {
+          type = "too_many";
+        } else if (msg.includes("user not found") || msg.includes("no user")) {
+          type = "no_account";
+        } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
+          type = "invalid";
         }
-        if (rememberMe) {
-          localStorage.setItem(SAVED_EMAIL_KEY, email);
-        } else {
-          localStorage.removeItem(SAVED_EMAIL_KEY);
-        }
-        navigate("/dashboard");
+        setLoginError({ type, raw: error.message });
+        return;
       }
+      if (rememberMe) {
+        localStorage.setItem(SAVED_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(SAVED_EMAIL_KEY);
+      }
+      navigate("/dashboard");
     } catch (error: any) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
