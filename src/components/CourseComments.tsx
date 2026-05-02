@@ -385,7 +385,7 @@ const CourseComments = ({ courseId }: Props) => {
   const myInitial = (profile?.full_name || user?.email || "?").slice(0, 1).toUpperCase();
 
   return (
-    <section className="lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
+    <section className="flex flex-col h-full min-h-0 lg:h-auto lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
       {/* Header (Instagram bottom-sheet style) */}
       <div className="relative border-b border-border">
         <h3
