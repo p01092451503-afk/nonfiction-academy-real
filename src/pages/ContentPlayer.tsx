@@ -123,13 +123,32 @@ const ContentPlayer = () => {
         .from("course_comments" as any)
         .select("*", { count: "exact", head: true })
         .eq("course_id", courseId!)
-        .eq("is_deleted", false);
+        .or("is_deleted.is.null,is_deleted.eq.false");
       if (error) throw error;
       return count ?? 0;
     },
     enabled: !!courseId,
     staleTime: 30_000,
   });
+
+  // Realtime 동기화: 새 댓글/삭제 시 카운트 즉시 갱신
+  useEffect(() => {
+    if (!courseId) return;
+    const uid = `${courseId}-count-${Math.random().toString(36).slice(2, 8)}`;
+    const channel = supabase
+      .channel(`comments-count-${uid}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "course_comments", filter: `course_id=eq.${courseId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["course-comments-count", courseId] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [courseId]);
 
   const { data: contentI18nData = [] } = useQuery({
     queryKey: ["content-i18n", courseId],
