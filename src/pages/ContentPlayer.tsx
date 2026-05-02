@@ -404,11 +404,17 @@ const ContentPlayer = () => {
           <button onClick={() => setMobileCurriculumOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-accent text-muted-foreground transition-colors" title={t("course.learningProgress")}>
             <List className="h-5 w-5" />
           </button>
-          <span className="text-sm text-muted-foreground">
-            <span className="font-bold text-foreground text-base">{currentIndex + 1}</span> / {contents.length} {t("course.lesson")}
-          </span>
-          <Progress value={overallProgress} className="w-28 h-2 hidden sm:block" />
-          <span className="text-sm font-bold text-foreground">{overallProgress}%</span>
+          {_courseCompletion.isCompleted ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {t("course.completed")}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              {t("course.inProgress")}
+            </span>
+          )}
         </div>
       </header>
 
