@@ -27,20 +27,10 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [selectedBranch, setSelectedBranch] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-  const [branches, setBranches] = useState<any[]>([]);
   const [loginError, setLoginError] = useState<{ type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic"; raw?: string } | null>(null);
-
-  useEffect(() => {
-    supabase.from("departments").select("id, name, name_en, is_active").eq("is_active", true).order("display_order").order("name").then(({ data }) => {
-      if (data) setBranches(data);
-    });
-  }, []);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem(SAVED_EMAIL_KEY);
@@ -55,38 +45,28 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { name: fullName, department_id: selectedBranch || undefined } },
-        });
-        if (error) throw error;
-        toast({ title: t("auth.signUpComplete"), description: t("auth.checkEmail") });
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          const msg = (error.message || "").toLowerCase();
-          let type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic" = "generic";
-          if (msg.includes("not confirmed") || msg.includes("email not confirmed")) {
-            type = "not_confirmed";
-          } else if (msg.includes("rate limit") || msg.includes("too many")) {
-            type = "too_many";
-          } else if (msg.includes("user not found") || msg.includes("no user")) {
-            type = "no_account";
-          } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
-            type = "invalid";
-          }
-          setLoginError({ type, raw: error.message });
-          return;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        const msg = (error.message || "").toLowerCase();
+        let type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic" = "generic";
+        if (msg.includes("not confirmed") || msg.includes("email not confirmed")) {
+          type = "not_confirmed";
+        } else if (msg.includes("rate limit") || msg.includes("too many")) {
+          type = "too_many";
+        } else if (msg.includes("user not found") || msg.includes("no user")) {
+          type = "no_account";
+        } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
+          type = "invalid";
         }
-        if (rememberMe) {
-          localStorage.setItem(SAVED_EMAIL_KEY, email);
-        } else {
-          localStorage.removeItem(SAVED_EMAIL_KEY);
-        }
-        navigate("/dashboard");
+        setLoginError({ type, raw: error.message });
+        return;
       }
+      if (rememberMe) {
+        localStorage.setItem(SAVED_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(SAVED_EMAIL_KEY);
+      }
+      navigate("/dashboard");
     } catch (error: any) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
@@ -127,33 +107,12 @@ const Auth = () => {
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground">
-              {isSignUp ? t("auth.createAccount") : t("auth.login")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isSignUp ? t("auth.signUpSubtitle") : t("auth.loginSubtitle")}
-            </p>
+            <h2 className="text-2xl font-semibold text-foreground">{t("auth.login")}</h2>
+            <p className="text-sm text-muted-foreground">{t("auth.loginSubtitle")}</p>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-4">
-              {isSignUp && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.name")}</label>
-                  <Input type="text" placeholder={t("auth.namePlaceholder")} value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required />
-                </div>
-              )}
-              {isSignUp && branches.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.branch")}</label>
-                  <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className="flex h-12 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20">
-                    <option value="">{t("auth.selectBranch")}</option>
-                    {branches.map((b: any) => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
               <div className="space-y-2">
                 <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.email")}</label>
                 <div className="relative">
@@ -173,34 +132,29 @@ const Auth = () => {
               </div>
             </div>
 
-            {!isSignUp && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-border text-foreground focus:ring-foreground/20" />
-                  <span className="text-sm text-muted-foreground">{t("auth.rememberMe")}</span>
-                </label>
-                <button type="button" onClick={() => { setShowForgotPassword(true); setResetEmail(email); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  {t("auth.forgotPassword")}
-                </button>
-              </div>
-            )}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-border text-foreground focus:ring-foreground/20" />
+                <span className="text-sm text-muted-foreground">{t("auth.rememberMe")}</span>
+              </label>
+              <button type="button" onClick={() => { setShowForgotPassword(true); setResetEmail(email); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {t("auth.forgotPassword")}
+              </button>
+            </div>
 
             <Button type="submit" variant="login" size="xl" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 t("common.processing")
               ) : (
                 <span className="flex items-center gap-2">
-                  {isSignUp ? t("auth.signUp") : t("auth.login")}
+                  {t("auth.login")}
                   <ArrowRight className="h-4 w-4" />
                 </span>
               )}
             </Button>
           </form>
 
-          <div className="text-center space-y-3">
-            <button onClick={() => setIsSignUp(!isSignUp)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {isSignUp ? t("auth.haveAccount") : t("auth.noAccount")}
-            </button>
+          <div className="text-center">
             <p className="text-xs text-muted-foreground/60">{t("auth.platformFooter")}</p>
           </div>
         </div>
