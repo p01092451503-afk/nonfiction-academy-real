@@ -489,7 +489,7 @@ const CourseComments = ({ courseId }: Props) => {
 
       {/* Bottom composer (Instagram-style) */}
       {user ? (
-        <div className="shrink-0 border-t border-border px-4 sm:px-6 py-2.5 bg-background lg:rounded-b-2xl">
+        <div className="shrink-0 border-t border-border px-4 sm:px-6 pt-2.5 pb-[max(env(safe-area-inset-bottom),1rem)] bg-background rounded-b-2xl">
           {replyTo && (
             <div className="flex items-center justify-between px-2 pb-2 text-[11px] text-muted-foreground">
               <span>
