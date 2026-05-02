@@ -696,7 +696,7 @@ const ContentPlayer = () => {
                   const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
                   const langStyleMap: Record<string, string> = {
                     KO: "bg-foreground text-background",
-                    EN: "bg-slate-700 text-white dark:bg-slate-600",
+                    EN: "bg-blue-600 text-white dark:bg-blue-500",
                     JA: "bg-rose-600 text-white dark:bg-rose-500",
                     ZH: "bg-amber-600 text-white dark:bg-amber-500",
                   };
@@ -809,7 +809,7 @@ const ContentPlayer = () => {
                 const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
                 const langStyleMap: Record<string, string> = {
                   KO: "bg-foreground text-background",
-                  EN: "bg-slate-700 text-white dark:bg-slate-600",
+                  EN: "bg-blue-600 text-white dark:bg-blue-500",
                   JA: "bg-rose-600 text-white dark:bg-rose-500",
                   ZH: "bg-amber-600 text-white dark:bg-amber-500",
                 };
