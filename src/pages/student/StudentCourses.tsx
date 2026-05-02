@@ -156,6 +156,8 @@ const StudentCourses = () => {
     if (!course) return null;
     const cat = categoryMap.get(course.category_id);
     const progress = isCompleted ? 100 : Number(enrollment.progress) || 0;
+    const trackInfos: Array<{ trackId: string; trackTitle: string; stageIdx: number; stageName: string }> =
+      (courseTrackMap as Map<string, any[]>).get(course.id) || [];
 
     return (
       <Link
