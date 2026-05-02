@@ -282,7 +282,7 @@ const CourseComments = ({ courseId }: Props) => {
     };
 
     return (
-      <div key={c.id} className={`flex gap-3 px-4 py-2.5 ${isReply ? "pl-14" : ""}`}>
+      <div key={c.id} className={`flex gap-3 px-5 sm:px-6 py-3 ${isReply ? "pl-16 sm:pl-20" : ""}`}>
         <Avatar className="h-9 w-9 shrink-0 ring-1 ring-border">
           <AvatarImage src={c.profile?.avatar_url || undefined} alt={name} />
           <AvatarFallback className="text-xs bg-muted">{initials}</AvatarFallback>
