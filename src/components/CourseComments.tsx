@@ -472,7 +472,7 @@ const CourseComments = ({ courseId }: Props) => {
 
       {/* Quick emoji reaction bar */}
       {user && (
-        <div className="flex items-center justify-around px-4 sm:px-6 py-2 border-t border-border">
+        <div className="shrink-0 flex items-center justify-around px-4 sm:px-6 py-2 border-t border-border bg-background">
           {QUICK_EMOJIS.map((e) => (
             <button
               key={e}
