@@ -385,9 +385,9 @@ const CourseComments = ({ courseId }: Props) => {
   const myInitial = (profile?.full_name || user?.email || "?").slice(0, 1).toUpperCase();
 
   return (
-    <section className="lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
+    <section className="flex flex-col h-full min-h-0 lg:h-auto lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
       {/* Header (Instagram bottom-sheet style) */}
-      <div className="relative border-b border-border">
+      <div className="relative border-b border-border shrink-0">
         <h3
           id="course-comments-heading"
           className="text-center text-sm font-semibold text-foreground py-2.5"
@@ -400,7 +400,7 @@ const CourseComments = ({ courseId }: Props) => {
       </div>
 
       {/* List */}
-      <div className="divide-y divide-border/50">
+      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-border/50 lg:flex-none lg:overflow-visible">
         {isLoading ? (
           <p className="text-xs text-muted-foreground py-8 text-center">{t("common.loading", "불러오는 중...")}</p>
         ) : threads.length === 0 ? (
@@ -472,7 +472,7 @@ const CourseComments = ({ courseId }: Props) => {
 
       {/* Quick emoji reaction bar */}
       {user && (
-        <div className="flex items-center justify-around px-4 sm:px-6 py-2 border-t border-border">
+        <div className="shrink-0 flex items-center justify-around px-4 sm:px-6 py-2 border-t border-border bg-background">
           {QUICK_EMOJIS.map((e) => (
             <button
               key={e}
@@ -489,7 +489,7 @@ const CourseComments = ({ courseId }: Props) => {
 
       {/* Bottom composer (Instagram-style) */}
       {user ? (
-        <div className="border-t border-border px-4 sm:px-6 py-2.5 bg-background lg:rounded-b-2xl">
+        <div className="shrink-0 border-t border-border px-4 sm:px-6 py-2.5 bg-background lg:rounded-b-2xl">
           {replyTo && (
             <div className="flex items-center justify-between px-2 pb-2 text-[11px] text-muted-foreground">
               <span>
