@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { ko, enUS, ja, zhCN } from "date-fns/locale";
-import { MessageCircle, Send, Trash2, Reply, Heart, Languages, Loader2 } from "lucide-react";
+import { Heart, Send, Trash2, Languages, Loader2, Image as ImageIcon, Smile } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import i18n from "@/i18n";
 import { tryBrowserTranslate } from "@/lib/browserTranslator";
 
-// Normalize i18n language to one of the supported translation targets
+const QUICK_EMOJIS = ["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"];
+
 const normalizeLang = (lng: string): "ko" | "en" | "ja" | "zh-CN" => {
   if (!lng) return "en";
   if (lng.startsWith("ko")) return "ko";
@@ -60,19 +59,44 @@ interface Props {
 
 const CourseComments = ({ courseId }: Props) => {
   const { t } = useTranslation();
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const { toast } = useToast();
   const qc = useQueryClient();
 
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
-  const [replyDraft, setReplyDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [translations, setTranslations] = useState<Record<string, { lang: string; text: string }>>({});
   const [translatingId, setTranslatingId] = useState<string | null>(null);
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [liked, setLiked] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(`course-comment-likes:${courseId}`);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
+
+  const persistLikes = (next: Set<string>) => {
+    try {
+      localStorage.setItem(`course-comment-likes:${courseId}`, JSON.stringify([...next]));
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleLike = (id: string) => {
+    setLiked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      persistLikes(next);
+      return next;
+    });
+  };
 
   const translateComment = async (c: CommentRow, target: string) => {
-    // Toggle off if translation already shown
     if (translations[c.id]) {
       setTranslations((prev) => {
         const next = { ...prev };
@@ -84,7 +108,6 @@ const CourseComments = ({ courseId }: Props) => {
     if (c.language_code === target) return;
     setTranslatingId(c.id);
     try {
-      // 1) Try browser-native Translator API first (free, on-device, Chrome 138+)
       const localResult = await tryBrowserTranslate(
         c.content,
         target as "ko" | "en" | "ja" | "zh-CN",
@@ -94,8 +117,6 @@ const CourseComments = ({ courseId }: Props) => {
         setTranslations((prev) => ({ ...prev, [c.id]: { lang: target, text: localResult } }));
         return;
       }
-
-      // 2) Fallback to server-side AI translation (with DB cache)
       const { data, error } = await supabase.functions.invoke("translate-comment", {
         body: { text: c.content, target, comment_id: c.id, source_lang: c.language_code },
       });
@@ -114,14 +135,6 @@ const CourseComments = ({ courseId }: Props) => {
     } finally {
       setTranslatingId(null);
     }
-  };
-
-  const clearTranslation = (id: string) => {
-    setTranslations((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
   };
 
   const queryKey = ["course-comments", courseId];
@@ -153,7 +166,6 @@ const CourseComments = ({ courseId }: Props) => {
     staleTime: 30_000,
   });
 
-  // Realtime
   useEffect(() => {
     const channel = supabase
       .channel(`course-comments-${courseId}`)
@@ -171,7 +183,6 @@ const CourseComments = ({ courseId }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
-  // Build threaded structure
   const threads = useMemo(() => {
     const top = comments.filter((c) => !c.parent_id);
     const childMap = new Map<string, CommentWithProfile[]>();
@@ -199,10 +210,13 @@ const CourseComments = ({ courseId }: Props) => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       setDraft("");
-      setReplyDraft("");
       setReplyTo(null);
+      // auto-expand replies after posting
+      if (vars.parent_id) {
+        setExpandedReplies((prev) => new Set(prev).add(vars.parent_id!));
+      }
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: any) => {
@@ -224,72 +238,83 @@ const CourseComments = ({ courseId }: Props) => {
     onError: (e: any) => toast({ title: t("common.error", "오류"), description: e.message, variant: "destructive" }),
   });
 
-  const handleSubmit = (parent_id: string | null, text: string) => {
+  const handleSubmit = () => {
     if (!user) {
       toast({ title: t("comments.signInRequired", "로그인이 필요합니다"), variant: "destructive" });
       return;
     }
-    const trimmed = text.trim();
+    const trimmed = draft.trim();
     if (!trimmed) return;
     setSubmitting(true);
-    submitMutation.mutate({ content: trimmed, parent_id });
+    let content = trimmed;
+    if (replyTo && !content.startsWith(`@${replyTo.name}`)) {
+      content = `@${replyTo.name} ${content}`;
+    }
+    submitMutation.mutate({ content, parent_id: replyTo?.id || null });
+  };
+
+  const insertEmoji = (e: string) => {
+    setDraft((prev) => prev + e);
   };
 
   const renderItem = (c: CommentWithProfile, isReply = false) => {
     const isOwner = user?.id === c.user_id;
     const name = c.profile?.full_name || t("comments.anonymous", "사용자");
     const initials = (name || "?").slice(0, 1).toUpperCase();
-    const timeAgo = formatDistanceToNow(new Date(c.created_at), {
-      addSuffix: true,
+    const timeAgo = formatDistanceToNowStrict(new Date(c.created_at), {
       locale: localeFor(i18n.language),
     });
+    const isLiked = liked.has(c.id);
+    const tr = translations[c.id];
+    const showingTranslation = !!tr;
+
+    // Render @mentions as colored
+    const renderContent = (text: string) => {
+      const parts = text.split(/(@\S+)/g);
+      return parts.map((p, i) =>
+        p.startsWith("@") ? (
+          <span key={i} className="text-[hsl(var(--primary))] font-medium">{p}</span>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      );
+    };
 
     return (
-      <div key={c.id} className={`flex gap-3 ${isReply ? "pl-10" : ""}`}>
-        <Avatar className="h-8 w-8 shrink-0">
+      <div key={c.id} className={`flex gap-3 px-4 py-2.5 ${isReply ? "pl-14" : ""}`}>
+        <Avatar className="h-9 w-9 shrink-0 ring-1 ring-border">
           <AvatarImage src={c.profile?.avatar_url || undefined} alt={name} />
           <AvatarFallback className="text-xs bg-muted">{initials}</AvatarFallback>
         </Avatar>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-foreground">{name}</span>
-            <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
+          <div className="text-sm leading-snug">
+            <span className="font-semibold text-foreground mr-2">{name}</span>
+            <span className="text-muted-foreground text-xs">{timeAgo}</span>
           </div>
-          {(() => {
-            const tr = translations[c.id];
-            const showingTranslation = !!tr;
-            return (
-              <>
-                <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5 leading-relaxed">
-                  {showingTranslation ? tr.text : c.content}
-                </p>
-                {showingTranslation && (
-                  <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <Languages className="h-3 w-3" />
-                    <span>{t("comments.translatedBadge", "번역됨")} · {langBadge(tr.lang)}</span>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-          <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
-            {!isReply && (
-              <button
-                type="button"
-                onClick={() => {
-                  setReplyTo({ id: c.id, name });
-                  setReplyDraft("");
-                }}
-                className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-              >
-                <Reply className="h-3 w-3" />
-                {t("comments.reply", "답글")}
-              </button>
-            )}
+          <p className="text-sm text-foreground whitespace-pre-wrap break-words mt-0.5 leading-relaxed">
+            {renderContent(showingTranslation ? tr.text : c.content)}
+          </p>
+          {showingTranslation && (
+            <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+              <Languages className="h-3 w-3" />
+              <span>{t("comments.translatedBadge", "번역됨")} · {langBadge(tr.lang)}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => {
+                setReplyTo({ id: c.parent_id || c.id, name });
+              }}
+              className="hover:text-foreground transition-colors font-medium"
+            >
+              {t("comments.reply", "답글 달기")}
+            </button>
             {(() => {
               const userLang = normalizeLang(i18n.language);
               const commentLang = c.language_code ? normalizeLang(c.language_code) : null;
-              // Hide button when comment language matches user's UI language
               if (commentLang && commentLang === userLang) return null;
               return (
                 <button
@@ -304,8 +329,8 @@ const CourseComments = ({ courseId }: Props) => {
                     <Languages className="h-3 w-3" />
                   )}
                   {translations[c.id]
-                    ? t("comments.hideTranslation", "원문 보기")
-                    : t("comments.translateToMine", "내 언어로 번역")}
+                    ? t("comments.hideTranslation", "원문")
+                    : t("comments.translateToMine", "번역")}
                 </button>
               );
             })()}
@@ -324,114 +349,198 @@ const CourseComments = ({ courseId }: Props) => {
               </button>
             )}
           </div>
-
-          {/* Inline reply composer */}
-          {replyTo?.id === c.id && (
-            <div className="mt-3 flex gap-2">
-              <Textarea
-                value={replyDraft}
-                onChange={(e) => setReplyDraft(e.target.value)}
-                placeholder={t("comments.replyPlaceholder", { name, defaultValue: `@${name} 에게 답글 달기...` })}
-                className="min-h-[60px] text-sm rounded-lg resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    handleSubmit(c.id, replyDraft);
-                  }
-                }}
-              />
-              <div className="flex flex-col gap-1.5">
-                <Button
-                  size="sm"
-                  className="rounded-lg gap-1 h-8 px-3"
-                  disabled={!replyDraft.trim() || submitting}
-                  onClick={() => handleSubmit(c.id, replyDraft)}
-                >
-                  <Send className="h-3 w-3" />
-                  {t("comments.post", "게시")}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="rounded-lg h-8 px-3 text-xs"
-                  onClick={() => {
-                    setReplyTo(null);
-                    setReplyDraft("");
-                  }}
-                >
-                  {t("common.cancel", "취소")}
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Right column: heart + count (Instagram-style) */}
+        <button
+          type="button"
+          onClick={() => toggleLike(c.id)}
+          className="flex flex-col items-center gap-0.5 shrink-0 pt-1 group"
+          aria-label="like"
+        >
+          <Heart
+            className={`h-4 w-4 transition-all ${
+              isLiked
+                ? "fill-rose-500 text-rose-500 scale-110"
+                : "text-muted-foreground group-hover:text-foreground"
+            }`}
+          />
+          {isLiked && (
+            <span className="text-[10px] text-muted-foreground leading-none">1</span>
+          )}
+        </button>
       </div>
     );
   };
 
+  const myAvatar = profile?.avatar_url || undefined;
+  const myInitial = (profile?.full_name || user?.email || "?").slice(0, 1).toUpperCase();
+
   return (
-    <section className="border-t border-border pt-6 mt-6 space-y-4" aria-labelledby="course-comments-heading">
-      <div className="flex items-center gap-2">
-        <MessageCircle className="h-4 w-4 text-muted-foreground" />
-        <h3 id="course-comments-heading" className="text-sm font-semibold text-foreground">
+    <section className="-mx-4 lg:mx-0 lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
+      {/* Header (Instagram bottom-sheet style) */}
+      <div className="relative border-b border-border">
+        <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 lg:hidden" aria-hidden />
+        <h3
+          id="course-comments-heading"
+          className="text-center text-sm font-semibold text-foreground py-2.5"
+        >
           {t("comments.title", "댓글")}
+          {totalCount > 0 && (
+            <span className="ml-1.5 text-muted-foreground font-normal">{totalCount}</span>
+          )}
         </h3>
-        <span className="text-xs text-muted-foreground">{totalCount}</span>
       </div>
 
-      {/* Composer (top-level) */}
-      {user ? (
-        <div className="flex gap-2">
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={t("comments.placeholder", "이 강의에 대한 의견을 남겨보세요...")}
-            className="min-h-[60px] text-sm rounded-lg resize-none"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                handleSubmit(null, draft);
-              }
-            }}
-          />
-          <Button
-            className="rounded-lg gap-1 h-auto px-4 self-stretch"
-            disabled={!draft.trim() || submitting}
-            onClick={() => handleSubmit(null, draft)}
-          >
-            <Send className="h-4 w-4" />
-            {t("comments.post", "게시")}
-          </Button>
+      {/* List */}
+      <div className="divide-y divide-border/50">
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground py-8 text-center">{t("common.loading", "불러오는 중...")}</p>
+        ) : threads.length === 0 ? (
+          <div className="py-12 text-center">
+            <Heart className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-foreground">
+              {t("comments.emptyTitle", "아직 댓글이 없습니다")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("comments.empty", "첫 번째 댓글을 남겨보세요!")}
+            </p>
+          </div>
+        ) : (
+          <ul>
+            {threads.map((c) => {
+              const replies = c.replies || [];
+              const isExpanded = expandedReplies.has(c.id);
+              return (
+                <li key={c.id}>
+                  {renderItem(c, false)}
+                  {replies.length > 0 && (
+                    <div>
+                      {!isExpanded ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedReplies((prev) => {
+                              const next = new Set(prev);
+                              next.add(c.id);
+                              return next;
+                            })
+                          }
+                          className="flex items-center gap-3 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <span className="h-px w-6 bg-border" />
+                          {t("comments.viewMoreReplies", { count: replies.length, defaultValue: `답글 ${replies.length}개 더 보기` })}
+                        </button>
+                      ) : (
+                        <>
+                          <ul>
+                            {replies.map((r) => (
+                              <li key={r.id}>{renderItem(r, true)}</li>
+                            ))}
+                          </ul>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedReplies((prev) => {
+                                const next = new Set(prev);
+                                next.delete(c.id);
+                                return next;
+                              })
+                            }
+                            className="flex items-center gap-3 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <span className="h-px w-6 bg-border" />
+                            {t("comments.hideReplies", "답글 숨기기")}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Quick emoji reaction bar */}
+      {user && (
+        <div className="flex items-center justify-around px-2 py-2 border-t border-border">
+          {QUICK_EMOJIS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => insertEmoji(e)}
+              className="text-xl hover:scale-125 transition-transform p-1"
+              aria-label={`emoji ${e}`}
+            >
+              {e}
+            </button>
+          ))}
         </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">{t("comments.signInRequired", "로그인이 필요합니다")}</p>
       )}
 
-      {/* List */}
-      {isLoading ? (
-        <p className="text-xs text-muted-foreground py-4">{t("common.loading", "불러오는 중...")}</p>
-      ) : threads.length === 0 ? (
-        <div className="py-8 text-center">
-          <Heart className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
-          <p className="text-xs text-muted-foreground">
-            {t("comments.empty", "아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!")}
-          </p>
+      {/* Bottom composer (Instagram-style) */}
+      {user ? (
+        <div className="border-t border-border px-3 py-2.5 bg-background lg:rounded-b-2xl">
+          {replyTo && (
+            <div className="flex items-center justify-between px-2 pb-2 text-[11px] text-muted-foreground">
+              <span>
+                {t("comments.replyingTo", { name: replyTo.name, defaultValue: `@${replyTo.name} 에게 답글 작성 중` })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {t("common.cancel", "취소")}
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2.5">
+            <Avatar className="h-8 w-8 shrink-0">
+              <AvatarImage src={myAvatar} alt="me" />
+              <AvatarFallback className="text-[11px] bg-muted">{myInitial}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 flex items-center gap-1 rounded-full border border-border bg-muted/40 pl-4 pr-1 py-1 focus-within:border-foreground/40 transition-colors">
+              <input
+                type="text"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                placeholder={
+                  replyTo
+                    ? t("comments.replyPlaceholderShort", { name: replyTo.name, defaultValue: `@${replyTo.name} 에게 답글 추가...` })
+                    : t("comments.placeholderShort", { name: profile?.full_name || "", defaultValue: "댓글 추가..." })
+                }
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground min-w-0"
+              />
+              {draft.trim() && (
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={handleSubmit}
+                  className="text-sm font-semibold text-[hsl(var(--primary))] px-3 py-1 hover:opacity-70 transition-opacity disabled:opacity-40"
+                >
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    t("comments.post", "게시")
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       ) : (
-        <ul className="space-y-5">
-          {threads.map((c) => (
-            <li key={c.id} className="space-y-3">
-              {renderItem(c, false)}
-              {c.replies && c.replies.length > 0 && (
-                <ul className="space-y-3">
-                  {c.replies.map((r) => (
-                    <li key={r.id}>{renderItem(r, true)}</li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
+        <p className="text-xs text-muted-foreground text-center py-4 border-t border-border">
+          {t("comments.signInRequired", "로그인이 필요합니다")}
+        </p>
       )}
     </section>
   );
