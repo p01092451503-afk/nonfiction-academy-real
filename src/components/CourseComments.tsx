@@ -282,7 +282,7 @@ const CourseComments = ({ courseId }: Props) => {
     };
 
     return (
-      <div key={c.id} className={`flex gap-3 px-4 py-2.5 ${isReply ? "pl-14" : ""}`}>
+      <div key={c.id} className={`flex gap-3 px-5 sm:px-6 py-3 ${isReply ? "pl-16 sm:pl-20" : ""}`}>
         <Avatar className="h-9 w-9 shrink-0 ring-1 ring-border">
           <AvatarImage src={c.profile?.avatar_url || undefined} alt={name} />
           <AvatarFallback className="text-xs bg-muted">{initials}</AvatarFallback>
@@ -378,7 +378,7 @@ const CourseComments = ({ courseId }: Props) => {
   const myInitial = (profile?.full_name || user?.email || "?").slice(0, 1).toUpperCase();
 
   return (
-    <section className="-mx-4 lg:mx-0 lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
+    <section className="lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
       {/* Header (Instagram bottom-sheet style) */}
       <div className="relative border-b border-border">
         <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 lg:hidden" aria-hidden />
@@ -427,7 +427,7 @@ const CourseComments = ({ courseId }: Props) => {
                               return next;
                             })
                           }
-                          className="flex items-center gap-3 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          className="flex items-center gap-3 pl-16 sm:pl-20 pr-5 sm:pr-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <span className="h-px w-6 bg-border" />
                           {t("comments.viewMoreReplies", { count: replies.length, defaultValue: `답글 ${replies.length}개 더 보기` })}
@@ -448,7 +448,7 @@ const CourseComments = ({ courseId }: Props) => {
                                 return next;
                               })
                             }
-                            className="flex items-center gap-3 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-3 pl-16 sm:pl-20 pr-5 sm:pr-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <span className="h-px w-6 bg-border" />
                             {t("comments.hideReplies", "답글 숨기기")}
@@ -466,7 +466,7 @@ const CourseComments = ({ courseId }: Props) => {
 
       {/* Quick emoji reaction bar */}
       {user && (
-        <div className="flex items-center justify-around px-2 py-2 border-t border-border">
+        <div className="flex items-center justify-around px-4 sm:px-6 py-2 border-t border-border">
           {QUICK_EMOJIS.map((e) => (
             <button
               key={e}
@@ -483,7 +483,7 @@ const CourseComments = ({ courseId }: Props) => {
 
       {/* Bottom composer (Instagram-style) */}
       {user ? (
-        <div className="border-t border-border px-3 py-2.5 bg-background lg:rounded-b-2xl">
+        <div className="border-t border-border px-4 sm:px-6 py-2.5 bg-background lg:rounded-b-2xl">
           {replyTo && (
             <div className="flex items-center justify-between px-2 pb-2 text-[11px] text-muted-foreground">
               <span>
