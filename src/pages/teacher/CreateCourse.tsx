@@ -1624,8 +1624,8 @@ const PackageItemsEditor = ({
     const failed: string[] = [];
 
     // Sequential to preserve selection order
-    for (let i = 0; i < allowed.length; i++) {
-      const file = allowed[i];
+    for (let i = 0; i < unique.length; i++) {
+      const file = unique[i];
       const ph = placeholders[i];
       const isVideo = file.type.startsWith("video/");
       try {
@@ -1645,7 +1645,13 @@ const PackageItemsEditor = ({
         }
         working = working.map((it) =>
           it.tempId === ph.tempId
-            ? { ...it, media_url: url, item_type: isVideo ? ("video" as const) : ("image" as const), _uploadingName: undefined as any }
+            ? ({
+                ...it,
+                media_url: url,
+                item_type: isVideo ? ("video" as const) : ("image" as const),
+                _uploadingName: undefined,
+                _sig: (ph as any)._sig, // preserve for future duplicate checks
+              } as any)
             : it
         );
         onChange(working);
@@ -1655,19 +1661,19 @@ const PackageItemsEditor = ({
         onChange(working);
       } finally {
         done += 1;
-        setBulkProgress({ done, total: allowed.length });
+        setBulkProgress({ done, total: unique.length });
       }
     }
 
     setBulkUploading(false);
     if (failed.length > 0) {
       toast({
-        title: `${allowed.length - failed.length}개 업로드 완료, ${failed.length}개 실패`,
+        title: `${unique.length - failed.length}개 업로드 완료, ${failed.length}개 실패`,
         description: failed.join(", "),
         variant: "destructive",
       });
     } else {
-      toast({ title: `${allowed.length}개 미디어를 업로드했습니다.` });
+      toast({ title: `${unique.length}개 미디어를 업로드했습니다.` });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (videoInputRef.current) videoInputRef.current.value = "";
