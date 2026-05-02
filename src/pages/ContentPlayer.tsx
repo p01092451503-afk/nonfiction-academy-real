@@ -849,19 +849,19 @@ const ContentPlayer = () => {
         <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
           <SheetContent
             side="right"
-            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col z-[120] rounded-l-2xl overflow-hidden"
+            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col z-[120] rounded-l-2xl overflow-hidden [&>button]:z-10"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>{t("comments.title", "댓글")}</SheetTitle>
             </SheetHeader>
-            <div className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-h-0 flex flex-col rounded-l-2xl overflow-hidden">
               <CourseComments courseId={courseId} />
             </div>
           </SheetContent>
         </Sheet>
       ) : courseId ? (
         <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-          <DrawerContent className="h-[90vh] p-0 flex flex-col overflow-hidden">
+          <DrawerContent className="h-[90vh] p-0 flex flex-col overflow-hidden rounded-t-2xl">
             <DrawerHeader className="sr-only">
               <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
             </DrawerHeader>
