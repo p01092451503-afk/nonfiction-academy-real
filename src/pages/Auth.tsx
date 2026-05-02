@@ -197,10 +197,7 @@ const Auth = () => {
             </Button>
           </form>
 
-          <div className="text-center space-y-3">
-            <button onClick={() => setIsSignUp(!isSignUp)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {isSignUp ? t("auth.haveAccount") : t("auth.noAccount")}
-            </button>
+          <div className="text-center">
             <p className="text-xs text-muted-foreground/60">{t("auth.platformFooter")}</p>
           </div>
         </div>
