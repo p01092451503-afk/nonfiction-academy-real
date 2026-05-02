@@ -107,33 +107,12 @@ const Auth = () => {
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-foreground">
-              {isSignUp ? t("auth.createAccount") : t("auth.login")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isSignUp ? t("auth.signUpSubtitle") : t("auth.loginSubtitle")}
-            </p>
+            <h2 className="text-2xl font-semibold text-foreground">{t("auth.login")}</h2>
+            <p className="text-sm text-muted-foreground">{t("auth.loginSubtitle")}</p>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-4">
-              {isSignUp && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.name")}</label>
-                  <Input type="text" placeholder={t("auth.namePlaceholder")} value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required />
-                </div>
-              )}
-              {isSignUp && branches.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.branch")}</label>
-                  <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className="flex h-12 w-full rounded-xl border border-border bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20">
-                    <option value="">{t("auth.selectBranch")}</option>
-                    {branches.map((b: any) => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
               <div className="space-y-2">
                 <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.email")}</label>
                 <div className="relative">
@@ -153,24 +132,22 @@ const Auth = () => {
               </div>
             </div>
 
-            {!isSignUp && (
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-border text-foreground focus:ring-foreground/20" />
-                  <span className="text-sm text-muted-foreground">{t("auth.rememberMe")}</span>
-                </label>
-                <button type="button" onClick={() => { setShowForgotPassword(true); setResetEmail(email); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  {t("auth.forgotPassword")}
-                </button>
-              </div>
-            )}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-border text-foreground focus:ring-foreground/20" />
+                <span className="text-sm text-muted-foreground">{t("auth.rememberMe")}</span>
+              </label>
+              <button type="button" onClick={() => { setShowForgotPassword(true); setResetEmail(email); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                {t("auth.forgotPassword")}
+              </button>
+            </div>
 
             <Button type="submit" variant="login" size="xl" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 t("common.processing")
               ) : (
                 <span className="flex items-center gap-2">
-                  {isSignUp ? t("auth.signUp") : t("auth.login")}
+                  {t("auth.login")}
                   <ArrowRight className="h-4 w-4" />
                 </span>
               )}
