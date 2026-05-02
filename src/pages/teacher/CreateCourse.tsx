@@ -1485,6 +1485,7 @@ const PackageItemsEditor = ({
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const guessType = (url: string): "image" | "video" => {
@@ -1493,20 +1494,91 @@ const PackageItemsEditor = ({
     return "image";
   };
 
-  const handleBulkFiles = async (fileList: FileList | null) => {
+  const uploadOneImage = async (file: File): Promise<string> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("folder", "media-package");
+    const { data, error } = await supabase.functions.invoke("bunny-upload-image", { body: fd });
+    if (error || !data?.url) throw new Error(error?.message || data?.error || "upload failed");
+    return data.url as string;
+  };
+
+  const uploadOneVideo = (file: File, onProgress: (pct: number) => void): Promise<string> =>
+    new Promise(async (resolve, reject) => {
+      try {
+        const { data: token, error: tokenErr } = await supabase.functions.invoke(
+          "bunny-create-video",
+          { body: { title: file.name } }
+        );
+        if (tokenErr || !token?.uploadUrl) {
+          throw new Error(tokenErr?.message || token?.error || "token failed");
+        }
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", token.uploadUrl, true);
+        xhr.setRequestHeader("AccessKey", token.accessKey);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            onProgress(Math.max(2, Math.round((e.loaded / e.total) * 95)));
+          }
+        };
+        xhr.onload = async () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const cdn = token.cdnHostname as string | null;
+            const playUrl = cdn
+              ? `https://${cdn}/${token.videoId}/playlist.m3u8`
+              : `https://iframe.mediadelivery.net/play/${token.libraryId}/${token.videoId}`;
+            const thumb = cdn ? `https://${cdn}/${token.videoId}/thumbnail.jpg` : null;
+            // Best-effort registration to video_assets (non-blocking)
+            try {
+              await supabase.from("video_assets").insert({
+                title: file.name,
+                video_url: playUrl,
+                video_provider: "bunny",
+                file_size_mb: Math.round((file.size / (1024 * 1024)) * 100) / 100,
+                thumbnail_url: thumb,
+              } as any);
+            } catch {}
+            resolve(playUrl);
+          } else {
+            reject(new Error(`Bunny upload HTTP ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error("network error"));
+        xhr.send(file);
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+  const handleBulkFiles = async (
+    fileList: FileList | null,
+    mode: "image" | "video" | "auto" = "auto"
+  ) => {
     if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
-    if (files.length === 0) {
-      toast({ title: "이미지 파일만 업로드할 수 있습니다.", variant: "destructive" });
+    const allowed = Array.from(fileList).filter((f) => {
+      if (mode === "image") return f.type.startsWith("image/");
+      if (mode === "video") return f.type.startsWith("video/");
+      return f.type.startsWith("image/") || f.type.startsWith("video/");
+    });
+    if (allowed.length === 0) {
+      toast({
+        title:
+          mode === "video"
+            ? "동영상 파일만 업로드할 수 있습니다."
+            : mode === "image"
+            ? "이미지 파일만 업로드할 수 있습니다."
+            : "이미지 또는 동영상 파일만 업로드할 수 있습니다.",
+        variant: "destructive",
+      });
       return;
     }
     setBulkUploading(true);
-    setBulkProgress({ done: 0, total: files.length });
+    setBulkProgress({ done: 0, total: allowed.length });
 
     // Pre-create placeholders so user sees order immediately
-    const placeholders: PackageItemDraft[] = files.map((f) => ({
+    const placeholders: PackageItemDraft[] = allowed.map((f) => ({
       tempId: crypto.randomUUID(),
-      item_type: "image",
+      item_type: f.type.startsWith("video/") ? "video" : "image",
       media_url: "",
       caption: "",
       _uploadingName: f.name,
@@ -1517,19 +1589,29 @@ const PackageItemsEditor = ({
     let done = 0;
     const failed: string[] = [];
 
-    // Upload sequentially to preserve order reliably
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    // Sequential to preserve selection order
+    for (let i = 0; i < allowed.length; i++) {
+      const file = allowed[i];
       const ph = placeholders[i];
+      const isVideo = file.type.startsWith("video/");
       try {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("folder", "media-package");
-        const { data, error } = await supabase.functions.invoke("bunny-upload-image", { body: fd });
-        if (error || !data?.url) throw new Error(error?.message || data?.error || "upload failed");
+        let url: string;
+        if (isVideo) {
+          url = await uploadOneVideo(file, (pct) => {
+            // Update placeholder caption-area name with progress
+            working = working.map((it) =>
+              it.tempId === ph.tempId
+                ? ({ ...it, _uploadingName: `${file.name} (${pct}%)` } as any)
+                : it
+            );
+            onChange(working);
+          });
+        } else {
+          url = await uploadOneImage(file);
+        }
         working = working.map((it) =>
           it.tempId === ph.tempId
-            ? { ...it, media_url: data.url, item_type: "image" as const }
+            ? { ...it, media_url: url, item_type: isVideo ? ("video" as const) : ("image" as const), _uploadingName: undefined as any }
             : it
         );
         onChange(working);
@@ -1539,22 +1621,24 @@ const PackageItemsEditor = ({
         onChange(working);
       } finally {
         done += 1;
-        setBulkProgress({ done, total: files.length });
+        setBulkProgress({ done, total: allowed.length });
       }
     }
 
     setBulkUploading(false);
     if (failed.length > 0) {
       toast({
-        title: `${files.length - failed.length}개 업로드 완료, ${failed.length}개 실패`,
+        title: `${allowed.length - failed.length}개 업로드 완료, ${failed.length}개 실패`,
         description: failed.join(", "),
         variant: "destructive",
       });
     } else {
-      toast({ title: `${files.length}개 이미지를 업로드했습니다.` });
+      toast({ title: `${allowed.length}개 미디어를 업로드했습니다.` });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
   };
+
 
   const updateItem = (idx: number, patch: Partial<PackageItemDraft>) => {
     const next = items.map((it, i) => (i === idx ? { ...it, ...patch } : it));
@@ -1722,7 +1806,15 @@ const PackageItemsEditor = ({
           accept="image/*"
           multiple
           className="hidden"
-          onChange={(e) => handleBulkFiles(e.target.files)}
+          onChange={(e) => handleBulkFiles(e.target.files, "image")}
+        />
+        <input
+          ref={videoInputRef}
+          type="file"
+          accept="video/*"
+          multiple
+          className="hidden"
+          onChange={(e) => handleBulkFiles(e.target.files, "video")}
         />
         <Button
           type="button"
@@ -1734,6 +1826,17 @@ const PackageItemsEditor = ({
         >
           <ImagePlus className="h-3.5 w-3.5" />
           {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "이미지 일괄 업로드"}
+        </Button>
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          onClick={() => videoInputRef.current?.click()}
+          disabled={bulkUploading}
+          className="gap-1.5 h-8 text-xs"
+        >
+          <Video className="h-3.5 w-3.5" />
+          {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "동영상 일괄 업로드"}
         </Button>
         <Button
           type="button"
@@ -1751,7 +1854,7 @@ const PackageItemsEditor = ({
           onClick={() => addItem("video")}
           className="gap-1.5 h-8 text-xs"
         >
-          <Video className="h-3.5 w-3.5" /> 영상 추가
+          <Video className="h-3.5 w-3.5" /> URL로 영상 추가
         </Button>
       </div>
     </div>
