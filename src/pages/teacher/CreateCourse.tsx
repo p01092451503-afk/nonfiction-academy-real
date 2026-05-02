@@ -1482,11 +1482,78 @@ const PackageItemsEditor = ({
   onChange: (items: PackageItemDraft[]) => void;
 }) => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const guessType = (url: string): "image" | "video" => {
     if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url)) return "video";
     if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url)) return "image";
     return "image";
+  };
+
+  const handleBulkFiles = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+    if (files.length === 0) {
+      toast({ title: "이미지 파일만 업로드할 수 있습니다.", variant: "destructive" });
+      return;
+    }
+    setBulkUploading(true);
+    setBulkProgress({ done: 0, total: files.length });
+
+    // Pre-create placeholders so user sees order immediately
+    const placeholders: PackageItemDraft[] = files.map((f) => ({
+      tempId: crypto.randomUUID(),
+      item_type: "image",
+      media_url: "",
+      caption: "",
+      _uploadingName: f.name,
+    } as any));
+    let working = [...items, ...placeholders];
+    onChange(working);
+
+    let done = 0;
+    const failed: string[] = [];
+
+    // Upload sequentially to preserve order reliably
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ph = placeholders[i];
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("folder", "media-package");
+        const { data, error } = await supabase.functions.invoke("bunny-upload-image", { body: fd });
+        if (error || !data?.url) throw new Error(error?.message || data?.error || "upload failed");
+        working = working.map((it) =>
+          it.tempId === ph.tempId
+            ? { ...it, media_url: data.url, item_type: "image" as const }
+            : it
+        );
+        onChange(working);
+      } catch (e: any) {
+        failed.push(file.name);
+        working = working.filter((it) => it.tempId !== ph.tempId);
+        onChange(working);
+      } finally {
+        done += 1;
+        setBulkProgress({ done, total: files.length });
+      }
+    }
+
+    setBulkUploading(false);
+    if (failed.length > 0) {
+      toast({
+        title: `${files.length - failed.length}개 업로드 완료, ${failed.length}개 실패`,
+        description: failed.join(", "),
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: `${files.length}개 이미지를 업로드했습니다.` });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const updateItem = (idx: number, patch: Partial<PackageItemDraft>) => {
