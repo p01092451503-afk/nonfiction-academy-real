@@ -400,7 +400,7 @@ const CourseComments = ({ courseId }: Props) => {
       </div>
 
       {/* List */}
-      <div className="divide-y divide-border/50">
+      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-border/50 lg:flex-none lg:overflow-visible">
         {isLoading ? (
           <p className="text-xs text-muted-foreground py-8 text-center">{t("common.loading", "불러오는 중...")}</p>
         ) : threads.length === 0 ? (
