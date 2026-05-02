@@ -194,8 +194,15 @@ const CourseComments = ({ courseId }: Props) => {
         childMap.set(c.parent_id, arr);
       }
     });
-    return top.map((p) => ({ ...p, replies: childMap.get(p.id) || [] }));
-  }, [comments]);
+    // 정렬: 내 댓글을 최상단(최신순) → 나머지는 최신순
+    const sortedTop = [...top].sort((a, b) => {
+      const aMine = user && a.user_id === user.id ? 1 : 0;
+      const bMine = user && b.user_id === user.id ? 1 : 0;
+      if (aMine !== bMine) return bMine - aMine;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+    return sortedTop.map((p) => ({ ...p, replies: childMap.get(p.id) || [] }));
+  }, [comments, user]);
 
   const totalCount = comments.filter((c) => !c.is_deleted).length;
 
