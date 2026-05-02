@@ -595,6 +595,9 @@ const ContentPlayer = () => {
                     <span className="text-sm font-semibold text-foreground">
                       {t("comments.title", "댓글")}
                     </span>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      {commentCount}
+                    </span>
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {t("comments.viewAll", "모두 보기")}
