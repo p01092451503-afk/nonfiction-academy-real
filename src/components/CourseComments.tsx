@@ -387,7 +387,7 @@ const CourseComments = ({ courseId }: Props) => {
   return (
     <section className="flex flex-col h-full min-h-0 lg:h-auto lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
       {/* Header (Instagram bottom-sheet style) */}
-      <div className="relative border-b border-border">
+      <div className="relative border-b border-border shrink-0">
         <h3
           id="course-comments-heading"
           className="text-center text-sm font-semibold text-foreground py-2.5"
