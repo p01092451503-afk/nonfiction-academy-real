@@ -151,14 +151,22 @@ const StudentTracks = () => {
   return (
     <DashboardLayout role="student">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
-            <Layers className="h-6 w-6" aria-hidden="true" />
-            {t("track.myTracks", "내 학습 트랙")}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {t("track.myTracksDesc", "배정받은 학습 경로를 단계별로 진행하세요.")}
-          </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
+              <Layers className="h-6 w-6" aria-hidden="true" />
+              {t("track.myTracks", "내 학습 트랙")}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {t("track.myTracksDesc", "배정받은 학습 경로를 단계별로 진행하세요.")}
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="gap-1.5 rounded-lg">
+            <Link to="/dashboard/courses">
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+              {t("track.viewAllMyCourses", "전체 내 강의 보기")}
+            </Link>
+          </Button>
         </div>
 
         {isLoading || isLangSwitching || isFetching ? (
