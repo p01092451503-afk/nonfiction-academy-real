@@ -802,6 +802,18 @@ const ContentPlayer = () => {
           </ScrollArea>
         </DrawerContent>
       </Drawer>
+
+      {/* Comments Drawer (mobile only - Instagram-style bottom sheet) */}
+      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <DrawerContent className="lg:hidden h-[90vh] p-0 flex flex-col">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {courseId && <CourseComments courseId={courseId} />}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
