@@ -18,6 +18,9 @@ import { logContentAccess } from "@/hooks/useTrafficLogger";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaPackagePlayer from "@/components/MediaPackagePlayer";
 import CourseComments from "@/components/CourseComments";
@@ -80,6 +83,14 @@ const ContentPlayer = () => {
   const mangoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [isLgUp, setIsLgUp] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsLgUp(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
   const contentTypeLabel: Record<string, string> = {
@@ -602,12 +613,12 @@ const ContentPlayer = () => {
             </div>
 
             <div className="space-y-6 mt-6">
-              {/* Mobile: comment trigger button → Drawer */}
+              {/* Comment trigger button (all viewports) */}
               {courseId && (
                 <button
                   type="button"
                   onClick={() => setCommentsOpen(true)}
-                  className="lg:hidden w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <span className="flex items-center gap-2.5">
                     <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -622,13 +633,6 @@ const ContentPlayer = () => {
                     {t("comments.viewAll", "모두 보기")}
                   </span>
                 </button>
-              )}
-
-              {/* Desktop: inline comments */}
-              {courseId && (
-                <div className="hidden lg:block">
-                  <CourseComments courseId={courseId} />
-                </div>
               )}
 
               {/* Navigation */}
@@ -840,17 +844,33 @@ const ContentPlayer = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Comments Drawer (mobile only - Instagram-style bottom sheet) */}
-      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-        <DrawerContent className="lg:hidden h-[90vh] p-0 flex flex-col">
-          <DrawerHeader className="sr-only">
-            <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
-          </DrawerHeader>
-          <div className="flex-1 min-h-0 flex flex-col">
-            {courseId && <CourseComments courseId={courseId} />}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {/* Comments overlay: Sheet on desktop, Drawer on mobile */}
+      {courseId && isLgUp ? (
+        <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
+          <SheetContent
+            side="right"
+            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col"
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("comments.title", "댓글")}</SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 min-h-0 flex flex-col">
+              <CourseComments courseId={courseId} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : courseId ? (
+        <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
+          <DrawerContent className="h-[90vh] p-0 flex flex-col">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex-1 min-h-0 flex flex-col">
+              <CourseComments courseId={courseId} />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : null}
     </div>
   );
 };
