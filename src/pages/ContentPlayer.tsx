@@ -602,12 +602,12 @@ const ContentPlayer = () => {
             </div>
 
             <div className="space-y-6 mt-6">
-              {/* Mobile: comment trigger button → Drawer */}
+              {/* Comment trigger button (all viewports) */}
               {courseId && (
                 <button
                   type="button"
                   onClick={() => setCommentsOpen(true)}
-                  className="lg:hidden w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl border border-border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <span className="flex items-center gap-2.5">
                     <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -622,13 +622,6 @@ const ContentPlayer = () => {
                     {t("comments.viewAll", "모두 보기")}
                   </span>
                 </button>
-              )}
-
-              {/* Desktop: inline comments */}
-              {courseId && (
-                <div className="hidden lg:block">
-                  <CourseComments courseId={courseId} />
-                </div>
               )}
 
               {/* Navigation */}
