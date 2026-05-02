@@ -381,7 +381,6 @@ const CourseComments = ({ courseId }: Props) => {
     <section className="lg:rounded-2xl lg:border lg:border-border lg:bg-card" aria-labelledby="course-comments-heading">
       {/* Header (Instagram bottom-sheet style) */}
       <div className="relative border-b border-border">
-        <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 lg:hidden" aria-hidden />
         <h3
           id="course-comments-heading"
           className="text-center text-sm font-semibold text-foreground py-2.5"
