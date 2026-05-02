@@ -1711,7 +1711,26 @@ const PackageItemsEditor = ({
         })}
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => handleBulkFiles(e.target.files)}
+        />
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={bulkUploading}
+          className="gap-1.5 h-8 text-xs"
+        >
+          <ImagePlus className="h-3.5 w-3.5" />
+          {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "이미지 일괄 업로드"}
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -1719,7 +1738,7 @@ const PackageItemsEditor = ({
           onClick={() => addItem("image")}
           className="gap-1.5 h-8 text-xs"
         >
-          <ImageIcon className="h-3.5 w-3.5" /> 이미지 추가
+          <ImageIcon className="h-3.5 w-3.5" /> URL로 이미지 추가
         </Button>
         <Button
           type="button"
