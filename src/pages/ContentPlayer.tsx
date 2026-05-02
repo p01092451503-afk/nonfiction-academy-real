@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Play, FileText,
   Video, BarChart3, ExternalLink, Clock, X, RotateCcw, List, FolderOpen,
-  Lock as LockIcon,
+  Lock as LockIcon, MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
