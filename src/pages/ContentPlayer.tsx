@@ -844,17 +844,33 @@ const ContentPlayer = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Comments Drawer (mobile only - Instagram-style bottom sheet) */}
-      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-        <DrawerContent className="lg:hidden h-[90vh] p-0 flex flex-col">
-          <DrawerHeader className="sr-only">
-            <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
-          </DrawerHeader>
-          <div className="flex-1 min-h-0 flex flex-col">
-            {courseId && <CourseComments courseId={courseId} />}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {/* Comments overlay: Sheet on desktop, Drawer on mobile */}
+      {courseId && isLgUp ? (
+        <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
+          <SheetContent
+            side="right"
+            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col"
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("comments.title", "댓글")}</SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 min-h-0 flex flex-col">
+              <CourseComments courseId={courseId} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : courseId ? (
+        <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
+          <DrawerContent className="h-[90vh] p-0 flex flex-col">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex-1 min-h-0 flex flex-col">
+              <CourseComments courseId={courseId} />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : null}
     </div>
   );
 };
