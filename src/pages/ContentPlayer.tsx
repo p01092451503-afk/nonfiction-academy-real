@@ -849,7 +849,7 @@ const ContentPlayer = () => {
         <Sheet open={commentsOpen} onOpenChange={setCommentsOpen}>
           <SheetContent
             side="right"
-            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col z-[120]"
+            className="w-full sm:max-w-md md:max-w-lg p-0 flex flex-col z-[120] rounded-l-2xl overflow-hidden"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>{t("comments.title", "댓글")}</SheetTitle>
@@ -861,7 +861,7 @@ const ContentPlayer = () => {
         </Sheet>
       ) : courseId ? (
         <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-          <DrawerContent className="h-[90vh] p-0 flex flex-col">
+          <DrawerContent className="h-[90vh] p-0 flex flex-col overflow-hidden">
             <DrawerHeader className="sr-only">
               <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
             </DrawerHeader>
