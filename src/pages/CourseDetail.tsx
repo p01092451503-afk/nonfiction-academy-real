@@ -817,10 +817,6 @@ const CourseDetail = () => {
           </div>
 
           <ul className="flex flex-wrap items-center gap-4 border-t border-border pt-2 text-xs text-muted-foreground" aria-label={isEn ? "Course details" : "강의 정보"}>
-            <li className="flex items-center gap-1">
-              <Video className="h-3 w-3" aria-hidden="true" />
-              {t("course.courseContentCount", { count: contents.length })}
-            </li>
             {course.estimated_duration_hours && (
               <li className="flex items-center gap-1">
                 <Clock className="h-3 w-3" aria-hidden="true" />
