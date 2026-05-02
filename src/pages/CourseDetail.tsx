@@ -910,12 +910,12 @@ const CourseDetail = () => {
                 const langCode = content.language_code || "";
                 const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
                 const langStyle: Record<string, string> = {
-                  KO: "bg-foreground text-background border-foreground",
-                  EN: "bg-background text-foreground border-foreground/70",
-                  JA: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800",
-                  ZH: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+                  KO: "bg-foreground text-background",
+                  EN: "bg-slate-700 text-white dark:bg-slate-600",
+                  JA: "bg-rose-600 text-white dark:bg-rose-500",
+                  ZH: "bg-amber-600 text-white dark:bg-amber-500",
                 };
-                const langClass = langStyle[langLabel] || "bg-muted text-muted-foreground border-border";
+                const langClass = langStyle[langLabel] || "bg-muted text-muted-foreground";
 
                 elements.push(
                   <li key={content.id}>
@@ -928,13 +928,13 @@ const CourseDetail = () => {
                       {/* 언어 배지 (차시 번호 자리 대체) */}
                       {langLabel ? (
                         <span
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-[11px] font-semibold tracking-wider ${langClass}`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold tracking-wider shadow-sm ${langClass}`}
                           aria-label={`${isEn ? "Language" : "언어"}: ${langLabel}`}
                         >
                           {langLabel}
                         </span>
                       ) : (
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-muted text-[11px] font-semibold text-muted-foreground">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-[10px] font-semibold text-muted-foreground">
                           {String(idx + 1).padStart(2, "0")}
                         </span>
                       )}

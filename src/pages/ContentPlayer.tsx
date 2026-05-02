@@ -670,12 +670,12 @@ const ContentPlayer = () => {
                   const langCode = (c as any).language_code || "";
                   const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
                   const langStyleMap: Record<string, string> = {
-                    KO: "bg-foreground text-background border-foreground",
-                    EN: "bg-background text-foreground border-foreground/70",
-                    JA: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800",
-                    ZH: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+                    KO: "bg-foreground text-background",
+                    EN: "bg-slate-700 text-white dark:bg-slate-600",
+                    JA: "bg-rose-600 text-white dark:bg-rose-500",
+                    ZH: "bg-amber-600 text-white dark:bg-amber-500",
                   };
-                  const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground border-border";
+                  const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground";
                   return (
                     <button
                       key={c.id}
@@ -684,11 +684,11 @@ const ContentPlayer = () => {
                       className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 text-sm transition-all ${isActive ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary/20" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}
                     >
                       {langLabel ? (
-                        <span className={`relative h-9 w-9 shrink-0 rounded-lg border flex items-center justify-center text-[10px] font-semibold tracking-wider ${langClass}`}>
+                        <span className={`relative h-6 w-6 shrink-0 rounded-md flex items-center justify-center text-[9px] font-bold tracking-wider shadow-sm ${langClass}`}>
                           {langLabel}
                           {isCompleted && (
-                            <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-green-500 text-white flex items-center justify-center ring-2 ring-card">
-                              <CheckCircle2 className="h-3 w-3" />
+                            <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-green-500 text-white flex items-center justify-center ring-2 ring-card">
+                              <CheckCircle2 className="h-2.5 w-2.5" />
                             </span>
                           )}
                         </span>
@@ -783,12 +783,12 @@ const ContentPlayer = () => {
                 const langCode = (c as any).language_code || "";
                 const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
                 const langStyleMap: Record<string, string> = {
-                  KO: "bg-foreground text-background border-foreground",
-                  EN: "bg-background text-foreground border-foreground/70",
-                  JA: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800",
-                  ZH: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800",
+                  KO: "bg-foreground text-background",
+                  EN: "bg-slate-700 text-white dark:bg-slate-600",
+                  JA: "bg-rose-600 text-white dark:bg-rose-500",
+                  ZH: "bg-amber-600 text-white dark:bg-amber-500",
                 };
-                const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground border-border";
+                const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground";
                 return (
                   <button
                     key={c.id}
@@ -796,11 +796,11 @@ const ContentPlayer = () => {
                     className={`w-full text-left px-3 py-3 rounded-xl flex items-center gap-3 text-sm transition-all ${isActive ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary/20" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}
                   >
                     {langLabel ? (
-                      <span className={`relative h-10 w-10 shrink-0 rounded-lg border flex items-center justify-center text-[11px] font-semibold tracking-wider ${langClass}`}>
+                      <span className={`relative h-7 w-7 shrink-0 rounded-md flex items-center justify-center text-[10px] font-bold tracking-wider shadow-sm ${langClass}`}>
                         {langLabel}
                         {isCompleted && (
-                          <span className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-green-500 text-white flex items-center justify-center ring-2 ring-background">
-                            <CheckCircle2 className="h-3 w-3" />
+                          <span className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-green-500 text-white flex items-center justify-center ring-2 ring-background">
+                            <CheckCircle2 className="h-2.5 w-2.5" />
                           </span>
                         )}
                       </span>
