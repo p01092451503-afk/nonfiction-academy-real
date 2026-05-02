@@ -1274,6 +1274,7 @@
   "track": {
     "myTracks": "My Learning Tracks",
     "myTracksDesc": "Progress through your assigned learning paths stage by stage.",
+    "viewAllMyCourses": "View all my courses",
     "noTracks": "No learning tracks assigned.",
     "noTracksTitle": "No learning tracks yet",
     "noTracksDesc": "Until an admin assigns a learning track to you, explore the course catalog and start with any course that interests you.",
