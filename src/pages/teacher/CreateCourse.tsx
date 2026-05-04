@@ -1034,8 +1034,9 @@ const UnifiedContentEditor = ({
   const isMango = content.source === "mangoboard";
   const isCard = content.source === "card";
   const isPackage = content.source === "package";
+  const isImages = content.source === "images";
   const isValidMangoboard = isMango && content.video_url.includes("mangoboard.net");
-  const Icon = isPackage ? Package : isCard ? LayoutGrid : isMango ? BookOpen : (contentTypeOptions.find((o) => o.value === content.content_type)?.icon || Video);
+  const Icon = isImages ? ImageIcon : isPackage ? Package : isCard ? LayoutGrid : isMango ? BookOpen : (contentTypeOptions.find((o) => o.value === content.content_type)?.icon || Video);
 
   // Real-time sync KO → EN
   useEffect(() => {
