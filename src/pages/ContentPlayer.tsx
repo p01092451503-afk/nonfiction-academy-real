@@ -472,7 +472,7 @@ const ContentPlayer = () => {
             {/* Media area */}
             <div className="bg-background lg:bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-0 lg:mb-6 relative -mx-4 lg:mx-0">
               {currentContent.content_type === "media_package" ? (
-                <div className="p-4">
+                <div className="px-4 pt-2 pb-1">
                   <MediaPackagePlayer contentId={currentContent.id} />
                 </div>
               ) : isCardContent(currentContent.description) ? (() => {
@@ -570,7 +570,7 @@ const ContentPlayer = () => {
             </div>
 
             {/* Info row */}
-            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-3 lg:py-0">
+            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-1 lg:py-0">
                 {(() => {
                   const url = localVideoUrl;
                   const provider = currentContent.video_provider;
