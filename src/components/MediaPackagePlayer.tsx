@@ -115,19 +115,19 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const renderSlide = (item: PackageItem, key: string) => {
     const isImage = item.item_type === "image" || isImageUrl(item.media_url);
     return (
-      <div key={key} className="w-full shrink-0 h-[70vh] sm:h-auto sm:aspect-video flex items-center justify-center">
+      <div key={key} className="w-full shrink-0 flex items-center justify-center">
         {isImage ? (
           <img
             src={item.media_url}
             alt={item.caption || "슬라이드"}
-            className="max-w-full max-h-full w-auto h-full object-contain select-none pointer-events-none"
+            className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
             draggable={false}
           />
         ) : (
           <video
             src={item.media_url}
             controls
-            className="w-full h-full"
+            className="w-full max-h-[85vh]"
             playsInline
           />
         )}
