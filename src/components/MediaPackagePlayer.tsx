@@ -157,13 +157,6 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           {items.map((it) => renderSlide(it, it.id))}
         </div>
 
-        {/* Step badge */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-background/90 backdrop-blur px-2.5 py-1 text-[11px] font-medium border border-border pointer-events-none">
-          {isImage ? <ImageIcon className="h-3 w-3" /> : <VideoIcon className="h-3 w-3" />}
-          <span className="text-muted-foreground">
-            {index + 1} / {items.length}
-          </span>
-        </div>
       </div>
 
       {/* Caption */}
