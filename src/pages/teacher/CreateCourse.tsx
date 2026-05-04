@@ -1491,9 +1491,11 @@ function normalizeMangoboardUrl(url: string): string {
 const PackageItemsEditor = ({
   items,
   onChange,
+  imagesOnly = false,
 }: {
   items: PackageItemDraft[];
   onChange: (items: PackageItemDraft[]) => void;
+  imagesOnly?: boolean;
 }) => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
