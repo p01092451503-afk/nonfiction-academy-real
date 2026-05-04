@@ -1913,15 +1913,17 @@ const PackageItemsEditor = ({
         >
           <ImageIcon className="h-3.5 w-3.5" /> URL로 이미지 추가
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => addItem("video")}
-          className="gap-1.5 h-8 text-xs"
-        >
-          <Video className="h-3.5 w-3.5" /> URL로 영상 추가
-        </Button>
+        {!imagesOnly && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addItem("video")}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Video className="h-3.5 w-3.5" /> URL로 영상 추가
+          </Button>
+        )}
       </div>
     </div>
   );
