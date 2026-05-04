@@ -861,7 +861,7 @@ const ContentPlayer = () => {
         </Sheet>
       ) : courseId ? (
         <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-          <DrawerContent className="h-[90vh] p-0 flex flex-col overflow-hidden rounded-2xl !bottom-2 inset-x-2">
+          <DrawerContent className="h-[25vh] max-h-[25vh] p-0 flex flex-col overflow-hidden rounded-2xl !bottom-2 inset-x-2">
             <DrawerHeader className="sr-only">
               <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
             </DrawerHeader>
