@@ -1724,7 +1724,9 @@ const PackageItemsEditor = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-muted-foreground">
-          이미지와 영상을 순서대로 배치하면 학습자가 [다음] 버튼으로 한 장씩 진행합니다. ({items.length}개)
+          {imagesOnly
+            ? `이미지를 순서대로 배치하면 학습자가 좌우로 스와이프하여 한 장씩 넘겨봅니다. (${items.length}개)`
+            : `이미지와 영상을 순서대로 배치하면 학습자가 [다음] 버튼으로 한 장씩 진행합니다. (${items.length}개)`}
         </p>
         {bulkUploading && (
           <p className="text-[10px] text-muted-foreground">
