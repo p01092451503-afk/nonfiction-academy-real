@@ -93,7 +93,13 @@ Deno.serve(async (req) => {
       if (put.status !== 401) break;
     }
 
-    return json({ error: "Bunny storage upload failed", ...lastFailure }, 200);
+    return json({
+      error: "Bunny storage upload failed",
+      status: lastFailure?.status,
+      details: lastFailure?.details,
+      message:
+        "Bunny Storage 인증에 실패했습니다. Storage Zone의 Access 탭에 있는 Read/Write Password를 BUNNY_STORAGE_API_KEY로 다시 저장해 주세요.",
+    }, 200);
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : "unknown" }, 500);
   }
