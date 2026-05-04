@@ -595,17 +595,17 @@ const ContentPlayer = () => {
                 <h2 className="text-lg font-bold text-foreground tracking-tight border-b-2 border-foreground/80 pb-0.5 shrink-0">
                   {localTitle}
                 </h2>
-                <div className="flex items-center gap-2 shrink-0 ml-auto">
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                   {currentProgress?.completed ? (
-                    <Badge variant="outline" className="text-xs font-semibold px-3 py-1.5 rounded-xl border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-700 dark:text-green-400 whitespace-nowrap">
+                      <CheckCircle2 className="h-3 w-3" />
                       {t("course.alreadyCompleted")}
-                    </Badge>
+                    </span>
                   ) : user ? (
-                    <Badge variant="outline" className="text-xs font-semibold px-3 py-1.5 rounded-xl gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                       {t("course.inProgress")}
-                    </Badge>
+                    </span>
                   ) : null}
                 </div>
             </div>
