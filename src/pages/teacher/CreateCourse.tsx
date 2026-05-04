@@ -1891,17 +1891,19 @@ const PackageItemsEditor = ({
           <ImagePlus className="h-3.5 w-3.5" />
           {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "이미지 일괄 업로드"}
         </Button>
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          onClick={() => videoInputRef.current?.click()}
-          disabled={bulkUploading}
-          className="gap-1.5 h-8 text-xs"
-        >
-          <Video className="h-3.5 w-3.5" />
-          {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "동영상 일괄 업로드"}
-        </Button>
+        {!imagesOnly && (
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => videoInputRef.current?.click()}
+            disabled={bulkUploading}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Video className="h-3.5 w-3.5" />
+            {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "동영상 일괄 업로드"}
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
