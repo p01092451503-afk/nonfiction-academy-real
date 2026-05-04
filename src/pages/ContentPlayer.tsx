@@ -570,7 +570,7 @@ const ContentPlayer = () => {
             </div>
 
             {/* Info row */}
-            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-3 lg:py-0">
+            <div className="flex items-center gap-3 flex-wrap px-4 lg:px-0 py-1 lg:py-0">
                 {(() => {
                   const url = localVideoUrl;
                   const provider = currentContent.video_provider;
