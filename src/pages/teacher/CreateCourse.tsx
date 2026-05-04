@@ -1771,18 +1771,24 @@ const PackageItemsEditor = ({
                 <span className="text-[11px] font-medium text-muted-foreground w-6 text-center">
                   {String(idx + 1).padStart(2, "0")}
                 </span>
-                <Select
-                  value={it.item_type}
-                  onValueChange={(v) => updateItem(idx, { item_type: v as "image" | "video" })}
-                >
-                  <SelectTrigger className="h-8 w-[100px] rounded-lg text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="image">이미지</SelectItem>
-                    <SelectItem value="video">영상</SelectItem>
-                  </SelectContent>
-                </Select>
+                {imagesOnly ? (
+                  <span className="inline-flex items-center gap-1 px-2 h-8 rounded-lg border border-border text-[11px] text-muted-foreground">
+                    <ImageIcon className="h-3 w-3" /> 이미지
+                  </span>
+                ) : (
+                  <Select
+                    value={it.item_type}
+                    onValueChange={(v) => updateItem(idx, { item_type: v as "image" | "video" })}
+                  >
+                    <SelectTrigger className="h-8 w-[100px] rounded-lg text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="image">이미지</SelectItem>
+                      <SelectItem value="video">영상</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 <Input
                   value={it.media_url}
                   onChange={(e) => {
