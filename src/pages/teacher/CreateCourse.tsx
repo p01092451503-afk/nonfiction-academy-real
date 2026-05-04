@@ -33,7 +33,7 @@ import type { Database } from "@/integrations/supabase/types";
 type ContentType = Database["public"]["Enums"]["content_type"];
 type VideoProvider = Database["public"]["Enums"]["video_provider"];
 
-type ContentSource = "video" | "mangoboard" | "card" | "package";
+type ContentSource = "video" | "mangoboard" | "card" | "package" | "images";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
 export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
