@@ -431,7 +431,7 @@ const CreateCourse = () => {
             updated.video_provider = "custom";
             updated.video_url = "";
             updated.card_image_url = "";
-          } else if (value === "package") {
+          } else if (value === "package" || value === "images") {
             updated.content_type = "media_package" as ContentType;
             updated.video_provider = "";
             updated.video_url = "";
