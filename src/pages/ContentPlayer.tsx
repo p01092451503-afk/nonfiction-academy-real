@@ -635,30 +635,6 @@ const ContentPlayer = () => {
                 </button>
               )}
 
-              {/* Navigation */}
-              <div className="flex items-center justify-between pt-4 border-t border-border">
-                <div>
-                  {prevContent ? (
-                    <Button variant="outline" className="rounded-xl gap-2" onClick={() => navigate(`${routePrefix}/courses/${courseId}/content/${prevContent.id}`)}>
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="text-sm">{t("common.previous")}</span>
-                    </Button>
-                  ) : <div />}
-                </div>
-                <div>
-                  {nextContent ? (() => {
-                    const isSeq = (course as any)?.is_sequential;
-                    const currentDone = currentProgress?.completed;
-                    const locked = isSeq && !currentDone && routePrefix === "/student";
-                    return (
-                      <Button variant="outline" className="rounded-xl gap-2" onClick={() => !locked && navigate(`${routePrefix}/courses/${courseId}/content/${nextContent.id}`)} disabled={locked}>
-                        <span className="text-sm">{locked ? t("course.sequentialLockedShort") : t("common.next")}</span>
-                        {locked ? <LockIcon className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      </Button>
-                    );
-                  })() : <div />}
-                </div>
-              </div>
             </div>
           </div>
         </div>
