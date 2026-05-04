@@ -1165,13 +1165,26 @@ const UnifiedContentEditor = ({
               <Package className="h-3.5 w-3.5" />
               미디어 패키지
             </button>
+            <button
+              type="button"
+              onClick={() => onChange("source", "images")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
+                isImages
+                  ? "bg-accent text-foreground border-border"
+                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
+              }`}
+            >
+              <ImageIcon className="h-3.5 w-3.5" />
+              이미지
+            </button>
           </div>
         </div>
 
-        {isPackage ? (
+        {isPackage || isImages ? (
           <PackageItemsEditor
             items={content.package_items || []}
             onChange={(items) => onChange("package_items", items)}
+            imagesOnly={isImages}
           />
         ) : isMango ? (
           /* ── Mangoboard fields ── */
