@@ -16,6 +16,7 @@ const BUNNY_STORAGE_HOSTS = [
 ];
 
 const isConfigured = (value: string | null) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
+const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -34,12 +35,14 @@ Deno.serve(async (req) => {
       return json({ error: "file required" }, 400);
     }
 
-    const STORAGE_ZONE = Deno.env.get("BUNNY_STORAGE_ZONE");
-    const STORAGE_KEY = Deno.env.get("BUNNY_STORAGE_API_KEY");
+    const STORAGE_ZONE = Deno.env.get("BUNNY_STORAGE_ZONE")?.trim();
+    const STORAGE_KEY = Deno.env.get("BUNNY_STORAGE_API_KEY")?.trim();
     const configuredStorageHost = isConfigured(Deno.env.get("BUNNY_STORAGE_HOSTNAME"))
-      ? Deno.env.get("BUNNY_STORAGE_HOSTNAME")!.trim()
+      ? cleanHost(Deno.env.get("BUNNY_STORAGE_HOSTNAME")!)
       : "storage.bunnycdn.com";
-    const CDN_HOST = Deno.env.get("BUNNY_STORAGE_CDN_HOSTNAME");
+    const CDN_HOST = isConfigured(Deno.env.get("BUNNY_STORAGE_CDN_HOSTNAME"))
+      ? cleanHost(Deno.env.get("BUNNY_STORAGE_CDN_HOSTNAME")!)
+      : null;
 
     const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
     const safeName = `${crypto.randomUUID()}.${ext}`;
