@@ -607,7 +607,7 @@ const CreateCourse = () => {
             course_id: editCourseId!,
             title: c.title || `Lesson ${idx + 1}`,
             description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-            content_type: (c.source === "package" ? "media_package" : c.content_type),
+            content_type: ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type),
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
             duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
@@ -639,7 +639,7 @@ const CreateCourse = () => {
           const pkgRows: any[] = [];
           insertedContents.forEach((ic: any, idx: number) => {
             const c = contents[idx];
-            if (c.source === "package" && c.package_items?.length) {
+            if ((c.source === "package" || c.source === "images") && c.package_items?.length) {
               c.package_items.forEach((it, itIdx) => {
                 if (!it.media_url) return;
                 pkgRows.push({
@@ -720,7 +720,7 @@ const CreateCourse = () => {
             course_id: course.id,
             title: c.title || `Lesson ${idx + 1}`,
             description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-            content_type: (c.source === "package" ? "media_package" : c.content_type),
+            content_type: ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type),
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
             duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
@@ -752,7 +752,7 @@ const CreateCourse = () => {
           const pkgRows: any[] = [];
           insertedContents.forEach((ic: any, idx: number) => {
             const c = contents[idx];
-            if (c.source === "package" && c.package_items?.length) {
+            if ((c.source === "package" || c.source === "images") && c.package_items?.length) {
               c.package_items.forEach((it, itIdx) => {
                 if (!it.media_url) return;
                 pkgRows.push({
