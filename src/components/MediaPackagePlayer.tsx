@@ -184,3 +184,8 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+export default MediaPackagePlayer;
