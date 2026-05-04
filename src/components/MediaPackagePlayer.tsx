@@ -23,8 +23,10 @@ const isImageUrl = (url: string) =>
 
 const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) => {
   const [index, setIndex] = useState(0);
+  const [visited, setVisited] = useState<Set<number>>(new Set([0]));
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const completedRef = useRef(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -45,13 +47,29 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
 
   useEffect(() => {
     setIndex(0);
+    setVisited(new Set([0]));
+    completedRef.current = false;
   }, [contentId]);
 
   useEffect(() => {
-    if (items.length > 0 && index === items.length - 1) {
+    setVisited((prev) => {
+      if (prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
+  }, [index]);
+
+  useEffect(() => {
+    if (
+      items.length > 0 &&
+      visited.size >= items.length &&
+      !completedRef.current
+    ) {
+      completedRef.current = true;
       onComplete?.();
     }
-  }, [index, items.length, onComplete]);
+  }, [visited, items.length, onComplete]);
 
   // Keyboard navigation
   useEffect(() => {
