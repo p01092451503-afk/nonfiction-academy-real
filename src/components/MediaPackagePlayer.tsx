@@ -156,19 +156,11 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         >
           {items.map((it) => renderSlide(it, it.id))}
         </div>
-
       </div>
 
-      {/* Caption */}
-      {current.caption && (
-        <p className="mt-3 text-sm text-foreground/80 px-1 whitespace-pre-wrap">
-          {current.caption}
-        </p>
-      )}
-
-      {/* Step dots */}
+      {/* Step dots – right below image */}
       {items.length > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-1.5">
+        <div className="mt-2 flex items-center justify-center gap-1.5">
           {items.map((_, i) => (
             <button
               key={i}
@@ -183,6 +175,13 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
             />
           ))}
         </div>
+      )}
+
+      {/* Caption */}
+      {current.caption && (
+        <p className="mt-2 text-sm text-foreground/80 px-1 whitespace-pre-wrap">
+          {current.caption}
+        </p>
       )}
     </div>
   );
