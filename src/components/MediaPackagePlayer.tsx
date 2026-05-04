@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
