@@ -219,8 +219,6 @@ const CourseComments = ({ courseId }: Props) => {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      setDraft("");
-      setReplyTo(null);
       // auto-expand replies after posting
       if (vars.parent_id) {
         setExpandedReplies((prev) => new Set(prev).add(vars.parent_id!));
