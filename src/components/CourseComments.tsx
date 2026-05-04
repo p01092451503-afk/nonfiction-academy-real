@@ -219,8 +219,6 @@ const CourseComments = ({ courseId }: Props) => {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      setDraft("");
-      setReplyTo(null);
       // auto-expand replies after posting
       if (vars.parent_id) {
         setExpandedReplies((prev) => new Set(prev).add(vars.parent_id!));
@@ -247,6 +245,7 @@ const CourseComments = ({ courseId }: Props) => {
   });
 
   const handleSubmit = () => {
+    if (submitting || submitMutation.isPending) return;
     if (!user) {
       toast({ title: t("comments.signInRequired", "로그인이 필요합니다"), variant: "destructive" });
       return;
@@ -258,7 +257,11 @@ const CourseComments = ({ courseId }: Props) => {
     if (replyTo && !content.startsWith(`@${replyTo.name}`)) {
       content = `@${replyTo.name} ${content}`;
     }
-    submitMutation.mutate({ content, parent_id: replyTo?.id || null });
+    // Clear draft immediately so subsequent Enter/clicks can't resubmit the same text
+    setDraft("");
+    const parentId = replyTo?.id || null;
+    setReplyTo(null);
+    submitMutation.mutate({ content, parent_id: parentId });
   };
 
   const insertEmoji = (e: string) => {
