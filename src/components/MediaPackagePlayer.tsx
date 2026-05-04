@@ -166,22 +166,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         </p>
       )}
 
-      {/* Controls */}
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          disabled={isFirst}
-          className="gap-1.5"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          이전
-        </Button>
-
-        {/* Step dots */}
-        <div className="flex items-center gap-1.5">
+      {/* Step dots */}
+      {items.length > 1 && (
+        <div className="mt-4 flex items-center justify-center gap-1.5">
           {items.map((_, i) => (
             <button
               key={i}
@@ -196,20 +183,4 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
             />
           ))}
         </div>
-
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}
-          disabled={isLast}
-          className="gap-1.5"
-        >
-          다음
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-export default MediaPackagePlayer;
+      )}
