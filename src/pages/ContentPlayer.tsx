@@ -632,24 +632,8 @@ const ContentPlayer = () => {
         <aside className={`hidden lg:flex flex-col border-l border-border bg-card transition-all duration-300 ${sidebarOpen ? "w-96 mr-4" : "w-0 overflow-hidden"}`}>
           {sidebarOpen && (
             <>
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">{t("course.learningProgress")}</h3>
-                  <div className="mt-1">
-                    {_courseCompletion.isCompleted ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {t("course.completed")}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {t("course.inProgress")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button onClick={() => setSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground">
+              <div className="p-4 border-b border-border flex items-center justify-end">
+                <button onClick={() => setSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground" title={t("common.collapse", "접기")}>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
