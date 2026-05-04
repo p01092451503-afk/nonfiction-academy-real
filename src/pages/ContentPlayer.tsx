@@ -472,7 +472,7 @@ const ContentPlayer = () => {
             {/* Media area */}
             <div className="bg-background lg:bg-foreground/5 rounded-none lg:rounded-2xl overflow-hidden mb-0 lg:mb-6 relative -mx-4 lg:mx-0">
               {currentContent.content_type === "media_package" ? (
-                <div className="p-4">
+                <div className="px-4 pt-2 pb-1">
                   <MediaPackagePlayer contentId={currentContent.id} />
                 </div>
               ) : isCardContent(currentContent.description) ? (() => {
