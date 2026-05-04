@@ -33,7 +33,7 @@ import type { Database } from "@/integrations/supabase/types";
 type ContentType = Database["public"]["Enums"]["content_type"];
 type VideoProvider = Database["public"]["Enums"]["video_provider"];
 
-type ContentSource = "video" | "mangoboard" | "card" | "package";
+type ContentSource = "video" | "mangoboard" | "card" | "package" | "images";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
 export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
@@ -431,7 +431,7 @@ const CreateCourse = () => {
             updated.video_provider = "custom";
             updated.video_url = "";
             updated.card_image_url = "";
-          } else if (value === "package") {
+          } else if (value === "package" || value === "images") {
             updated.content_type = "media_package" as ContentType;
             updated.video_provider = "";
             updated.video_url = "";
@@ -607,7 +607,7 @@ const CreateCourse = () => {
             course_id: editCourseId!,
             title: c.title || `Lesson ${idx + 1}`,
             description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-            content_type: (c.source === "package" ? "media_package" : c.content_type),
+            content_type: ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type),
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
             duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
@@ -639,7 +639,7 @@ const CreateCourse = () => {
           const pkgRows: any[] = [];
           insertedContents.forEach((ic: any, idx: number) => {
             const c = contents[idx];
-            if (c.source === "package" && c.package_items?.length) {
+            if ((c.source === "package" || c.source === "images") && c.package_items?.length) {
               c.package_items.forEach((it, itIdx) => {
                 if (!it.media_url) return;
                 pkgRows.push({
@@ -720,7 +720,7 @@ const CreateCourse = () => {
             course_id: course.id,
             title: c.title || `Lesson ${idx + 1}`,
             description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-            content_type: (c.source === "package" ? "media_package" : c.content_type),
+            content_type: ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type),
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
             duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
@@ -752,7 +752,7 @@ const CreateCourse = () => {
           const pkgRows: any[] = [];
           insertedContents.forEach((ic: any, idx: number) => {
             const c = contents[idx];
-            if (c.source === "package" && c.package_items?.length) {
+            if ((c.source === "package" || c.source === "images") && c.package_items?.length) {
               c.package_items.forEach((it, itIdx) => {
                 if (!it.media_url) return;
                 pkgRows.push({
@@ -1034,8 +1034,9 @@ const UnifiedContentEditor = ({
   const isMango = content.source === "mangoboard";
   const isCard = content.source === "card";
   const isPackage = content.source === "package";
+  const isImages = content.source === "images";
   const isValidMangoboard = isMango && content.video_url.includes("mangoboard.net");
-  const Icon = isPackage ? Package : isCard ? LayoutGrid : isMango ? BookOpen : (contentTypeOptions.find((o) => o.value === content.content_type)?.icon || Video);
+  const Icon = isImages ? ImageIcon : isPackage ? Package : isCard ? LayoutGrid : isMango ? BookOpen : (contentTypeOptions.find((o) => o.value === content.content_type)?.icon || Video);
 
   // Real-time sync KO → EN
   useEffect(() => {
@@ -1164,13 +1165,26 @@ const UnifiedContentEditor = ({
               <Package className="h-3.5 w-3.5" />
               미디어 패키지
             </button>
+            <button
+              type="button"
+              onClick={() => onChange("source", "images")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
+                isImages
+                  ? "bg-accent text-foreground border-border"
+                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
+              }`}
+            >
+              <ImageIcon className="h-3.5 w-3.5" />
+              이미지
+            </button>
           </div>
         </div>
 
-        {isPackage ? (
+        {isPackage || isImages ? (
           <PackageItemsEditor
             items={content.package_items || []}
             onChange={(items) => onChange("package_items", items)}
+            imagesOnly={isImages}
           />
         ) : isMango ? (
           /* ── Mangoboard fields ── */
@@ -1477,9 +1491,11 @@ function normalizeMangoboardUrl(url: string): string {
 const PackageItemsEditor = ({
   items,
   onChange,
+  imagesOnly = false,
 }: {
   items: PackageItemDraft[];
   onChange: (items: PackageItemDraft[]) => void;
+  imagesOnly?: boolean;
 }) => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
@@ -1708,7 +1724,9 @@ const PackageItemsEditor = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-muted-foreground">
-          이미지와 영상을 순서대로 배치하면 학습자가 [다음] 버튼으로 한 장씩 진행합니다. ({items.length}개)
+          {imagesOnly
+            ? `이미지를 순서대로 배치하면 학습자가 좌우로 스와이프하여 한 장씩 넘겨봅니다. (${items.length}개)`
+            : `이미지와 영상을 순서대로 배치하면 학습자가 [다음] 버튼으로 한 장씩 진행합니다. (${items.length}개)`}
         </p>
         {bulkUploading && (
           <p className="text-[10px] text-muted-foreground">
@@ -1753,18 +1771,24 @@ const PackageItemsEditor = ({
                 <span className="text-[11px] font-medium text-muted-foreground w-6 text-center">
                   {String(idx + 1).padStart(2, "0")}
                 </span>
-                <Select
-                  value={it.item_type}
-                  onValueChange={(v) => updateItem(idx, { item_type: v as "image" | "video" })}
-                >
-                  <SelectTrigger className="h-8 w-[100px] rounded-lg text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="image">이미지</SelectItem>
-                    <SelectItem value="video">영상</SelectItem>
-                  </SelectContent>
-                </Select>
+                {imagesOnly ? (
+                  <span className="inline-flex items-center gap-1 px-2 h-8 rounded-lg border border-border text-[11px] text-muted-foreground">
+                    <ImageIcon className="h-3 w-3" /> 이미지
+                  </span>
+                ) : (
+                  <Select
+                    value={it.item_type}
+                    onValueChange={(v) => updateItem(idx, { item_type: v as "image" | "video" })}
+                  >
+                    <SelectTrigger className="h-8 w-[100px] rounded-lg text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="image">이미지</SelectItem>
+                      <SelectItem value="video">영상</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
                 <Input
                   value={it.media_url}
                   onChange={(e) => {
@@ -1867,17 +1891,19 @@ const PackageItemsEditor = ({
           <ImagePlus className="h-3.5 w-3.5" />
           {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "이미지 일괄 업로드"}
         </Button>
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          onClick={() => videoInputRef.current?.click()}
-          disabled={bulkUploading}
-          className="gap-1.5 h-8 text-xs"
-        >
-          <Video className="h-3.5 w-3.5" />
-          {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "동영상 일괄 업로드"}
-        </Button>
+        {!imagesOnly && (
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            onClick={() => videoInputRef.current?.click()}
+            disabled={bulkUploading}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Video className="h-3.5 w-3.5" />
+            {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "동영상 일괄 업로드"}
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
@@ -1887,15 +1913,17 @@ const PackageItemsEditor = ({
         >
           <ImageIcon className="h-3.5 w-3.5" /> URL로 이미지 추가
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => addItem("video")}
-          className="gap-1.5 h-8 text-xs"
-        >
-          <Video className="h-3.5 w-3.5" /> URL로 영상 추가
-        </Button>
+        {!imagesOnly && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addItem("video")}
+            className="gap-1.5 h-8 text-xs"
+          >
+            <Video className="h-3.5 w-3.5" /> URL로 영상 추가
+          </Button>
+        )}
       </div>
     </div>
   );
