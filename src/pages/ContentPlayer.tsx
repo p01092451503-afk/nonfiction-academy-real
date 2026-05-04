@@ -588,15 +588,6 @@ const ContentPlayer = () => {
                 <h2 className="text-lg font-bold text-foreground tracking-tight border-b-2 border-foreground/80 pb-0.5 shrink-0">
                   {localTitle}
                 </h2>
-                <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0">
-                  {contentTypeLabel[currentContent.content_type || "video"]}
-                </Badge>
-                {currentContent.duration_minutes && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground shrink-0">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span className="font-medium">{currentContent.duration_minutes}{t("common.minutes")}</span>
-                  </div>
-                )}
                 <div className="flex items-center gap-2 shrink-0 ml-auto">
                   {currentProgress?.completed ? (
                     <Badge variant="outline" className="text-xs font-semibold px-3 py-1.5 rounded-xl border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1.5">
