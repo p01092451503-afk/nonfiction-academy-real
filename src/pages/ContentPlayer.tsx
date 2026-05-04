@@ -862,7 +862,7 @@ const ContentPlayer = () => {
       ) : courseId && commentsOpen ? (
         <div
           className="fixed inset-x-2 bottom-2 z-[100] flex flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl"
-          style={{ top: "calc(3.5rem + 56.25vw + 0.5rem)" }}
+          style={{ top: "calc(3.5rem + 42.1875vw)" }}
         >
           <button
             type="button"
