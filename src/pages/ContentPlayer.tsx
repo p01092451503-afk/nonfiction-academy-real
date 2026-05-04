@@ -859,17 +859,20 @@ const ContentPlayer = () => {
             </div>
           </SheetContent>
         </Sheet>
-      ) : courseId ? (
-        <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-          <DrawerContent className="h-[25vh] max-h-[25vh] p-0 flex flex-col overflow-hidden rounded-2xl !bottom-2 inset-x-2">
-            <DrawerHeader className="sr-only">
-              <DrawerTitle>{t("comments.title", "댓글")}</DrawerTitle>
-            </DrawerHeader>
-            <div className="flex-1 min-h-0 flex flex-col">
-              <CourseComments courseId={courseId} />
-            </div>
-          </DrawerContent>
-        </Drawer>
+      ) : courseId && commentsOpen ? (
+        <div className="fixed inset-x-2 bottom-2 z-[100] h-[25vh] max-h-[25vh] flex flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl">
+          <button
+            type="button"
+            aria-label={t("common.close", "닫기")}
+            onClick={() => setCommentsOpen(false)}
+            className="absolute right-2 top-2 z-10 rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <CourseComments courseId={courseId} />
+          </div>
+        </div>
       ) : null}
     </div>
   );
