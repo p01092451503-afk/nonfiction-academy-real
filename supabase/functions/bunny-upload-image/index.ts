@@ -3,6 +3,17 @@ import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 const PLACEHOLDER_PATTERN = /placeholder_value_to_be_replaced/i;
 const FALLBACK_BUCKET = "course-thumbnails";
+const BUNNY_STORAGE_HOSTS = [
+  "storage.bunnycdn.com",
+  "ny.storage.bunnycdn.com",
+  "la.storage.bunnycdn.com",
+  "sg.storage.bunnycdn.com",
+  "syd.storage.bunnycdn.com",
+  "uk.storage.bunnycdn.com",
+  "se.storage.bunnycdn.com",
+  "br.storage.bunnycdn.com",
+  "jh.storage.bunnycdn.com",
+];
 
 const isConfigured = (value: string | null) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
 
@@ -25,7 +36,7 @@ Deno.serve(async (req) => {
 
     const STORAGE_ZONE = Deno.env.get("BUNNY_STORAGE_ZONE");
     const STORAGE_KEY = Deno.env.get("BUNNY_STORAGE_API_KEY");
-    const STORAGE_HOST = isConfigured(Deno.env.get("BUNNY_STORAGE_HOSTNAME"))
+    const configuredStorageHost = isConfigured(Deno.env.get("BUNNY_STORAGE_HOSTNAME"))
       ? Deno.env.get("BUNNY_STORAGE_HOSTNAME")!.trim()
       : "storage.bunnycdn.com";
     const CDN_HOST = Deno.env.get("BUNNY_STORAGE_CDN_HOSTNAME");
@@ -51,24 +62,35 @@ Deno.serve(async (req) => {
       return json({ url: data.publicUrl, path, size: buf.byteLength, contentType: file.type, provider: "lovable_storage" });
     }
 
-    const url = `https://${STORAGE_HOST}/${STORAGE_ZONE}/${path}`;
+    const candidateHosts = [
+      configuredStorageHost,
+      ...BUNNY_STORAGE_HOSTS.filter((host) => host !== configuredStorageHost),
+    ];
+    let lastFailure: { host: string; status: number; details: string } | null = null;
 
-    const put = await fetch(url, {
-      method: "PUT",
-      headers: {
-        AccessKey: STORAGE_KEY,
-        "Content-Type": file.type || "application/octet-stream",
-      },
-      body: buf,
-    });
+    for (const host of candidateHosts) {
+      const url = `https://${host}/${STORAGE_ZONE}/${path}`;
+      const put = await fetch(url, {
+        method: "PUT",
+        headers: {
+          AccessKey: STORAGE_KEY,
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: buf,
+      });
 
-    if (!put.ok) {
+      if (put.ok) {
+        const cdnUrl = `https://${CDN_HOST}/${path}`;
+        return json({ url: cdnUrl, path, size: buf.byteLength, contentType: file.type, provider: "bunny", storageHost: host });
+      }
+
       const text = await put.text().catch(() => "");
-      return json({ error: "Bunny storage upload failed", status: put.status, details: text }, put.status);
+      lastFailure = { host, status: put.status, details: text };
+
+      if (put.status !== 401) break;
     }
 
-    const cdnUrl = `https://${CDN_HOST}/${path}`;
-    return json({ url: cdnUrl, path, size: buf.byteLength, contentType: file.type, provider: "bunny" });
+    return json({ error: "Bunny storage upload failed", ...lastFailure }, 200);
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : "unknown" }, 500);
   }
