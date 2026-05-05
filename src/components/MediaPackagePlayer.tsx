@@ -119,12 +119,21 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const isFirst = index === 0;
   const containerWidth = containerRef.current?.clientWidth || 1;
 
+  const triggerPinchHint = () => {
+    if (pinchHintShownRef.current) return;
+    pinchHintShownRef.current = true;
+    setShowPinchHint(true);
+    if (pinchHintTimerRef.current) clearTimeout(pinchHintTimerRef.current);
+    pinchHintTimerRef.current = setTimeout(() => setShowPinchHint(false), 1800);
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       // Pinch start
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       inlinePinchStart.current = { dist: Math.hypot(dx, dy), scale: inlineScale };
+      triggerPinchHint();
       touchStartX.current = null;
       touchStartY.current = null;
       return;
