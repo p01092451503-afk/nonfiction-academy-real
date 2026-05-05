@@ -255,7 +255,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           className={`flex w-full ${isDragging ? "" : "transition-transform duration-300 ease-out"}`}
           style={{ transform: `translateX(calc(${translatePct}% + ${dragPct}%))` }}
         >
-          {items.map((it) => renderSlide(it, it.id))}
+          {items.map((it, i) => renderSlide(it, it.id, i))}
         </div>
       </div>
 
