@@ -70,6 +70,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
       next.add(index);
       return next;
     });
+    // Reset inline zoom when switching slides
+    setInlineScale(1);
+    setInlinePan({ x: 0, y: 0 });
   }, [index]);
 
   useEffect(() => {
