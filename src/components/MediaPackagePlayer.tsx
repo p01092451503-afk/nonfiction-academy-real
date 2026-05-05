@@ -117,12 +117,46 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const containerWidth = containerRef.current?.clientWidth || 1;
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch start
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      inlinePinchStart.current = { dist: Math.hypot(dx, dy), scale: inlineScale };
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
+    if (inlineScale > 1) {
+      // Pan start
+      inlinePanStart.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        px: inlinePan.x,
+        py: inlinePan.y,
+      };
+      return;
+    }
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && inlinePinchStart.current) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const next = (inlinePinchStart.current.scale * dist) / inlinePinchStart.current.dist;
+      setInlineScale(Math.min(5, Math.max(1, +next.toFixed(2))));
+      return;
+    }
+    if (inlinePanStart.current) {
+      setInlinePan({
+        x: inlinePanStart.current.px + (e.touches[0].clientX - inlinePanStart.current.x),
+        y: inlinePanStart.current.py + (e.touches[0].clientY - inlinePanStart.current.y),
+      });
+      return;
+    }
     if (touchStartX.current === null || touchStartY.current === null) return;
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
@@ -132,7 +166,19 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (inlinePinchStart.current && e.touches.length < 2) {
+      inlinePinchStart.current = null;
+      if (inlineScale <= 1.02) {
+        setInlineScale(1);
+        setInlinePan({ x: 0, y: 0 });
+      }
+      return;
+    }
+    if (inlinePanStart.current && e.touches.length === 0) {
+      inlinePanStart.current = null;
+      return;
+    }
     const threshold = Math.min(80, containerWidth * 0.18);
     if (dragOffset < -threshold && !isLast) {
       setIndex((i) => i + 1);
