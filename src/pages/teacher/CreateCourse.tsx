@@ -10,6 +10,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
+import UploadOrderQueueDialog from "@/components/UploadOrderQueueDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
