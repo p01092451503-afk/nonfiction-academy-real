@@ -243,13 +243,18 @@ const CourseDetail = () => {
   const getContentI18n = (contentId: string, lang: string) =>
     contentI18nData.find((i: any) => i.content_id === contentId && i.language_code === lang);
 
-  const stripLessonPrefix = (title: string) =>
-    title
+  const stripLessonPrefix = (title: string) => {
+    if (!title) return "";
+    const stripped = title
       .replace(/^\d+차시\.\s*/, "")
       .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
       .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
       .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
       .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "");
+    // If stripping removed everything (title was just a placeholder like "Lesson 2"),
+    // keep the original title so the row isn't blank.
+    return stripped.trim() ? stripped : title;
+  };
 
   const getLocalizedContentTitle = (content: any) => {
     if (currentLang === "ko") return stripLessonPrefix(content.title);
