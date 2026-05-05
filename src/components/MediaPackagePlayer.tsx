@@ -269,6 +269,11 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         >
           {items.map((it, i) => renderSlide(it, it.id, i))}
         </div>
+        {showPinchHint && (
+          <div className="sm:hidden pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-foreground/80 text-background text-xs px-3 py-1.5 shadow-md animate-fade-in">
+            두 손가락으로 확대/축소
+          </div>
+        )}
       </div>
 
       {/* Step dots – right below image */}
