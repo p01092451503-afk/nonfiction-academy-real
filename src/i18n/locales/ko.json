@@ -576,7 +576,7 @@
     "timezone": "시간대",
     "newSignupNotif": "신규 가입 알림",
     "assignmentSubmitNotif": "과제 제출 알림",
-    "completionNotif": "수료 완료 알림",
+    "completionNotif": "학습 완료 알림",
     "minPasswordLength": "비밀번호 최소 길이",
     "sessionExpiry": "세션 만료 시간",
     "twoFactorAuth": "2단계 인증",
