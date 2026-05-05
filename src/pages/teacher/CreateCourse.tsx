@@ -1604,7 +1604,7 @@ const PackageItemsEditor = ({
     const seenInBatch = new Set<string>();
     const duplicates: string[] = [];
     const unique: File[] = [];
-    for (const f of allowed) {
+    for (const f of orderedFiles) {
       const sig = sigOf(f.name, f.size);
       if (existingSigs.has(sig) || seenInBatch.has(sig)) {
         duplicates.push(f.name);
