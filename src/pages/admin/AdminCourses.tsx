@@ -391,6 +391,30 @@ const AdminCourses = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.deleteCourseTitle", "강의를 삭제하시겠습니까?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.deleteCourseDesc", "이 작업은 되돌릴 수 없습니다. 관련 차시, 수강신청, 평가, 과제 등 연관된 모든 데이터가 함께 삭제됩니다.")}
+              {deleteTarget && (
+                <span className="block mt-2 font-medium text-foreground">"{deleteTarget.title}"</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t("common.cancel", "취소")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? t("common.deleting", "삭제 중...") : t("common.delete", "삭제")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
