@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
               videoCount: Number(streamLib.VideoCount || 0),
             }
           : null,
+        bunnyStreamError: streamError,
         bunnyStreamRange: streamStats
           ? {
               viewsTotal: Number(streamStats.ViewsChart ? Object.values(streamStats.ViewsChart).reduce((a: number, b: any) => a + Number(b), 0) : 0),
