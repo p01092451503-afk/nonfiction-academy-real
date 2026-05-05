@@ -362,6 +362,8 @@
     "courseContentCount": "{{count}}个课时",
     "approxDuration": "大约 {{hours}}小时",
     "enrollProgress": "学习进度",
+    "courseCompleted": "课程学习完成",
+    "learningInProgress": "学习中",
     "courseContents": "课程课时",
     "lessonCount": "{{current}} / {{total}} 课时",
     "learningProgress": "多语言版本",
