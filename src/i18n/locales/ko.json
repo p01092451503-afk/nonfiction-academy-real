@@ -364,7 +364,7 @@
     "courseContentCount": "{{count}}개 차시",
     "approxDuration": "약 {{hours}}시간",
     "enrollProgress": "수강 진행률",
-    "courseCompleted": "강의 학습완료",
+    "courseCompleted": "학습완료",
     "learningInProgress": "학습 진행중",
     "courseContents": "언어별 강의",
     "lessonCount": "{{current}} / {{total}} 차시",
