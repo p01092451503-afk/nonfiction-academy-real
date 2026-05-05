@@ -42,20 +42,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: storageUsage } = await supabase.rpc("get_storage_usage").catch(() => ({ data: null }));
-
-    // Fallback: query storage.objects directly
+    // Query storage.objects via service role
     let bucketUsage: Array<{ bucket: string; bytes: number; count: number }> = [];
-    if (!storageUsage) {
-      const { data } = await supabase
-        .from("objects" as any)
-        .select("bucket_id, metadata")
-        .limit(10000);
+    try {
+      const { data } = await supabase.schema("storage").from("objects").select("bucket_id, metadata").limit(10000);
       if (Array.isArray(data)) {
         const map = new Map<string, { bytes: number; count: number }>();
-        for (const o of data) {
-          const b = (o as any).bucket_id;
-          const sz = Number(((o as any).metadata as any)?.size || 0);
+        for (const o of data as any[]) {
+          const b = o.bucket_id;
+          const sz = Number(o.metadata?.size || 0);
           const cur = map.get(b) || { bytes: 0, count: 0 };
           cur.bytes += sz;
           cur.count += 1;
@@ -63,9 +58,7 @@ Deno.serve(async (req) => {
         }
         bucketUsage = Array.from(map.entries()).map(([bucket, v]) => ({ bucket, ...v }));
       }
-    } else {
-      bucketUsage = storageUsage as any;
-    }
+    } catch (_) { /* ignore */ }
 
     return new Response(
       JSON.stringify({
