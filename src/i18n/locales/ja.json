@@ -362,6 +362,8 @@
     "courseContentCount": "{{count}}チャプター",
     "approxDuration": "約{{hours}}時間",
     "enrollProgress": "受講進捗率",
+    "courseCompleted": "講義の学習完了",
+    "learningInProgress": "学習中",
     "courseContents": "コースのチャプター",
     "lessonCount": "{{current}} / {{total}} チャプター",
     "learningProgress": "言語別レッスン",
