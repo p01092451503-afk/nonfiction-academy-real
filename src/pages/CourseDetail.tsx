@@ -645,7 +645,7 @@ const CourseDetail = () => {
                         onClick={(e) => {
                           // Avoid hijacking clicks on inner action buttons
                           if ((e.target as HTMLElement).closest("button, [role='button'], a")) return;
-                          openEditContent(content);
+                          navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`);
                         }}
                       >
                         <div className="flex shrink-0 flex-col">
