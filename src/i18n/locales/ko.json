@@ -326,7 +326,7 @@
     "courseInfoGuide2": "강의 일수는 수강 시작일로부터 차감됩니다. (강의에 따라 일정시간 후 자동 강의시작이 될수도 있습니다.)",
     "courseInfoGuide3": "진도율이 반영이 안될때는 진도율 반영 버튼을 클릭하시기 바랍니다.",
     "searchCourse": "강의 검색",
-    "completionLabel": "수료 완료",
+    "completionLabel": "학습 완료",
     "duration": "{{hours}}시간",
     "lessonsCount": "{{count}}강",
     "contentType": "유형",
