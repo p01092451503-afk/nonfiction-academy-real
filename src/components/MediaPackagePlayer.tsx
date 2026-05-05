@@ -140,14 +140,31 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const renderSlide = (item: PackageItem, key: string) => {
     const isImage = item.item_type === "image" || isImageUrl(item.media_url);
     return (
-      <div key={key} className="w-full shrink-0 flex items-center justify-center">
+      <div key={key} className="w-full shrink-0 flex items-center justify-center relative">
         {isImage ? (
-          <img
-            src={item.media_url}
-            alt={item.caption || "슬라이드"}
-            className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
-            draggable={false}
-          />
+          <>
+            <img
+              src={item.media_url}
+              alt={item.caption || "슬라이드"}
+              className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
+              draggable={false}
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomUrl(item.media_url);
+                setZoomCaption(item.caption);
+                setScale(1);
+                setPan({ x: 0, y: 0 });
+              }}
+              className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-background/90 hover:bg-background border border-border px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm"
+              aria-label="이미지 확대"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+              확대
+            </button>
+          </>
         ) : (
           <video
             src={item.media_url}
