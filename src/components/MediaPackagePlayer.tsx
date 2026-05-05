@@ -34,6 +34,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   // Inline pinch-zoom state for mobile (applies to currently visible slide)
   const [inlineScale, setInlineScale] = useState(1);
   const [inlinePan, setInlinePan] = useState({ x: 0, y: 0 });
+  const [showPinchHint, setShowPinchHint] = useState(false);
+  const pinchHintShownRef = useRef(false);
+  const pinchHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inlinePinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const inlinePanStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
@@ -116,12 +119,21 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const isFirst = index === 0;
   const containerWidth = containerRef.current?.clientWidth || 1;
 
+  const triggerPinchHint = () => {
+    if (pinchHintShownRef.current) return;
+    pinchHintShownRef.current = true;
+    setShowPinchHint(true);
+    if (pinchHintTimerRef.current) clearTimeout(pinchHintTimerRef.current);
+    pinchHintTimerRef.current = setTimeout(() => setShowPinchHint(false), 1800);
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       // Pinch start
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       inlinePinchStart.current = { dist: Math.hypot(dx, dy), scale: inlineScale };
+      triggerPinchHint();
       touchStartX.current = null;
       touchStartY.current = null;
       return;
@@ -257,6 +269,11 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         >
           {items.map((it, i) => renderSlide(it, it.id, i))}
         </div>
+        {showPinchHint && (
+          <div className="sm:hidden pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-foreground/80 text-background text-xs px-3 py-1.5 shadow-md animate-fade-in">
+            두 손가락으로 확대/축소
+          </div>
+        )}
       </div>
 
       {/* Step dots – right below image */}
