@@ -1,4 +1,5 @@
-import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap } from "lucide-react";
+import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload } from "lucide-react";
+import StaffBulkUploadDialog from "@/components/admin/StaffBulkUploadDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const AdminUsers = () => {
   const [deptFilter, setDeptFilter] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [staffEdit, setStaffEdit] = useState<StaffEditDraft | null>(null);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "student", departmentId: "", branchId: "" });
   const { t, i18n } = useTranslation();
@@ -270,9 +272,14 @@ const AdminUsers = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6" aria-hidden="true" />{t("admin.userManagement")}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("admin.userManagementDesc")}</p>
           </div>
-          <Button className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setAddOpen(true)}>
-            <UserPlus className="h-4 w-4" /> {t("admin.addUser")}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setBulkOpen(true)}>
+              <Upload className="h-4 w-4" /> 일괄 업로드
+            </Button>
+            <Button className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setAddOpen(true)}>
+              <UserPlus className="h-4 w-4" /> {t("admin.addUser")}
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -490,6 +497,14 @@ const AdminUsers = () => {
         isEn={isEn}
         saving={updateStaffMutation.isPending}
         onSave={() => staffEdit && updateStaffMutation.mutate(staffEdit)}
+      />
+      <StaffBulkUploadDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+        }}
       />
     </DashboardLayout>
   );
