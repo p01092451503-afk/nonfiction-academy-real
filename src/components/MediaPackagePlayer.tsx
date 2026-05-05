@@ -225,6 +225,150 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           {current.caption}
         </p>
       )}
+
+      {/* Zoom dialog */}
+      <Dialog
+        open={!!zoomUrl}
+        onOpenChange={(open) => {
+          if (!open) {
+            setZoomUrl(null);
+            setZoomCaption(null);
+            setScale(1);
+            setPan({ x: 0, y: 0 });
+          }
+        }}
+      >
+        <DialogContent className="max-w-[100vw] sm:max-w-[95vw] w-full h-[100dvh] sm:h-[95vh] p-0 bg-background border-0 sm:rounded-2xl overflow-hidden">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Toolbar */}
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-background/95 border border-border shadow-sm px-1.5 py-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setScale((s) => Math.max(1, +(s - 0.5).toFixed(2)))}
+                aria-label="축소"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium tabular-nums w-10 text-center">
+                {Math.round(scale * 100)}%
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setScale((s) => Math.min(5, +(s + 0.5).toFixed(2)))}
+                aria-label="확대"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => {
+                  setScale(1);
+                  setPan({ x: 0, y: 0 });
+                }}
+                aria-label="원래 크기"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setZoomUrl(null)}
+                aria-label="닫기"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Image area */}
+            <div
+              className="flex-1 overflow-hidden flex items-center justify-center bg-foreground/5 select-none"
+              onWheel={(e) => {
+                e.preventDefault();
+                const delta = -e.deltaY * 0.002;
+                setScale((s) => Math.min(5, Math.max(1, +(s + delta).toFixed(2))));
+              }}
+              onDoubleClick={() => {
+                setScale((s) => (s >= 2 ? 1 : 2));
+                setPan({ x: 0, y: 0 });
+              }}
+              onMouseDown={(e) => {
+                if (scale <= 1) return;
+                panStart.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+              }}
+              onMouseMove={(e) => {
+                if (!panStart.current) return;
+                setPan({
+                  x: panStart.current.px + (e.clientX - panStart.current.x),
+                  y: panStart.current.py + (e.clientY - panStart.current.y),
+                });
+              }}
+              onMouseUp={() => (panStart.current = null)}
+              onMouseLeave={() => (panStart.current = null)}
+              onTouchStart={(e) => {
+                if (e.touches.length === 2) {
+                  const dx = e.touches[0].clientX - e.touches[1].clientX;
+                  const dy = e.touches[0].clientY - e.touches[1].clientY;
+                  pinchStart.current = { dist: Math.hypot(dx, dy), scale };
+                } else if (e.touches.length === 1 && scale > 1) {
+                  panStart.current = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY,
+                    px: pan.x,
+                    py: pan.y,
+                  };
+                }
+              }}
+              onTouchMove={(e) => {
+                if (e.touches.length === 2 && pinchStart.current) {
+                  const dx = e.touches[0].clientX - e.touches[1].clientX;
+                  const dy = e.touches[0].clientY - e.touches[1].clientY;
+                  const dist = Math.hypot(dx, dy);
+                  const next = (pinchStart.current.scale * dist) / pinchStart.current.dist;
+                  setScale(Math.min(5, Math.max(1, +next.toFixed(2))));
+                } else if (e.touches.length === 1 && panStart.current) {
+                  setPan({
+                    x: panStart.current.px + (e.touches[0].clientX - panStart.current.x),
+                    y: panStart.current.py + (e.touches[0].clientY - panStart.current.y),
+                  });
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (e.touches.length === 0) {
+                  panStart.current = null;
+                  pinchStart.current = null;
+                }
+              }}
+              style={{ cursor: scale > 1 ? (panStart.current ? "grabbing" : "grab") : "zoom-in" }}
+            >
+              {zoomUrl && (
+                <img
+                  src={zoomUrl}
+                  alt={zoomCaption || "확대 이미지"}
+                  className="max-w-full max-h-full object-contain pointer-events-none transition-transform"
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                    transformOrigin: "center center",
+                  }}
+                  draggable={false}
+                />
+              )}
+            </div>
+
+            {zoomCaption && (
+              <p className="px-4 py-3 text-sm text-foreground/80 border-t border-border bg-background whitespace-pre-wrap">
+                {zoomCaption}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
