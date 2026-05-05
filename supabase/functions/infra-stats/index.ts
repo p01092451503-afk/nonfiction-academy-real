@@ -18,22 +18,26 @@ Deno.serve(async (req) => {
     // ---------- Bunny Stream library info (real storage + traffic) ----------
     let streamLib: any = null;
     let streamStats: any = null;
+    let streamError: string | null = null;
     if (STREAM_LIB && STREAM_KEY) {
       const headers = { AccessKey: STREAM_KEY, accept: "application/json" };
-      const [libRes, statsRes] = await Promise.all([
-        fetch(`https://video.bunnycdn.com/library/${STREAM_LIB}`, { headers }).catch(() => null),
-        (() => {
-          const to = new Date();
-          const from = new Date(to.getTime() - days * 86400_000);
-          const fmt = (d: Date) => d.toISOString().slice(0, 10);
-          return fetch(
-            `https://video.bunnycdn.com/library/${STREAM_LIB}/statistics?dateFrom=${fmt(from)}&dateTo=${fmt(to)}`,
-            { headers },
-          ).catch(() => null);
-        })(),
-      ]);
-      if (libRes?.ok) streamLib = await libRes.json().catch(() => null);
-      if (statsRes?.ok) streamStats = await statsRes.json().catch(() => null);
+      try {
+        const libRes = await fetch(`https://video.bunnycdn.com/library/${STREAM_LIB}`, { headers });
+        if (libRes.ok) streamLib = await libRes.json();
+        else streamError = `lib ${libRes.status}`;
+      } catch (e) { streamError = String(e?.message || e); }
+      try {
+        const to = new Date();
+        const from = new Date(to.getTime() - days * 86400_000);
+        const fmt = (d: Date) => d.toISOString().slice(0, 10);
+        const sRes = await fetch(
+          `https://video.bunnycdn.com/library/${STREAM_LIB}/statistics?dateFrom=${fmt(from)}&dateTo=${fmt(to)}`,
+          { headers },
+        );
+        if (sRes.ok) streamStats = await sRes.json();
+      } catch (_) { /* ignore */ }
+    } else {
+      streamError = "missing env";
     }
 
     // ---------- Supabase Storage real usage ----------
