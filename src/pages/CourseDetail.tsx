@@ -678,7 +678,17 @@ const CourseDetail = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="truncate text-sm font-medium text-foreground">{localizedTitle}</span>
+                            <button
+                              type="button"
+                              className="truncate text-left text-sm font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`);
+                              }}
+                              aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
+                            >
+                              {localizedTitle}
+                            </button>
                             {isUnpublished && <Badge variant="outline" className="h-4 shrink-0 border-dashed text-[9px]">{t("course.draftStatus")}</Badge>}
                             {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
                           </div>
