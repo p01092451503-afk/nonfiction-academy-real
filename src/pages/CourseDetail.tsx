@@ -596,10 +596,6 @@ const CourseDetail = () => {
                 {t("course.content")} <span className="font-semibold text-foreground">{contents.length}</span> | {t("course.publishedStatus")} <span className="font-semibold text-foreground">{publishedCount}</span>
               </li>
               <li className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" aria-hidden="true" />
-                {totalDuration}{t("common.minutes")}
-              </li>
-              <li className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Users className="h-3 w-3" aria-hidden="true" />
                 {enrollmentCount}
               </li>
