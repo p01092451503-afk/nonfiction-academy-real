@@ -258,7 +258,7 @@ const AdminCourses = () => {
                 <tr className="border-b border-border bg-secondary/30">
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t("course.course") || "강의"}</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("course.category") || "카테고리"}</th>
-                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">{t("course.instructor") || "강사"}</th>
+                  
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("teacher.status") || "상태"}</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">{t("common.required") || "필수"}</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("admin.totalStudents") || "수강생"}</th>
@@ -305,9 +305,6 @@ const AdminCourses = () => {
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
                         {cat?.name && <span className="text-xs text-muted-foreground">{cat.name}</span>}
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <span className="text-xs text-muted-foreground">{instructor || "-"}</span>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell text-center">
                         <span className={`inline-flex text-[10px] font-semibold px-2.5 py-1 rounded-lg ${statusColor[course.status || "draft"]}`}>
