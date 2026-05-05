@@ -602,10 +602,19 @@ const CourseDetail = () => {
           </section>
 
           <section className="overflow-hidden rounded-xl border border-border bg-card" aria-labelledby="teacher-content-list-heading">
-            <div className="border-b border-border bg-secondary/30 px-4 py-3">
+            <div className="border-b border-border bg-secondary/30 px-4 py-3 flex items-center justify-between gap-3">
               <h2 id="teacher-content-list-heading" className="text-sm font-semibold text-foreground">
                 {t("course.contentList")} ({contents.length})
               </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`${routePrefix}/courses/${courseId}/edit`)}
+                className="gap-1.5 text-xs h-8"
+              >
+                <Pencil className="h-3 w-3" />
+                {t("course.bulkEditAllContents", "4개 차시 일괄 수정")}
+              </Button>
             </div>
             {contents.length === 0 ? (
               <div className="space-y-3 py-12 text-center" role="status" aria-live="polite">
