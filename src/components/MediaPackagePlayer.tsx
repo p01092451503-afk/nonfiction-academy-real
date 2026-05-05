@@ -191,16 +191,21 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     touchStartY.current = null;
   };
 
-  const renderSlide = (item: PackageItem, key: string) => {
+  const renderSlide = (item: PackageItem, key: string, slideIdx: number) => {
     const isImage = item.item_type === "image" || isImageUrl(item.media_url);
+    const isCurrent = slideIdx === index;
+    const transform = isCurrent && inlineScale > 1
+      ? `translate(${inlinePan.x}px, ${inlinePan.y}px) scale(${inlineScale})`
+      : undefined;
     return (
-      <div key={key} className="w-full shrink-0 flex items-center justify-center relative">
+      <div key={key} className="w-full shrink-0 flex items-center justify-center relative overflow-hidden">
         {isImage ? (
           <>
             <img
               src={item.media_url}
               alt={item.caption || "슬라이드"}
               className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
+              style={transform ? { transform, transformOrigin: "center center", transition: inlinePinchStart.current || inlinePanStart.current ? "none" : "transform 0.15s ease-out" } : undefined}
               draggable={false}
             />
             <button
