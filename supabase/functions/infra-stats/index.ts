@@ -46,21 +46,28 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Query storage.objects via service role
+    // Iterate Supabase storage buckets via Storage API
     let bucketUsage: Array<{ bucket: string; bytes: number; count: number }> = [];
     try {
-      const { data } = await supabase.schema("storage").from("objects").select("bucket_id, metadata").limit(10000);
-      if (Array.isArray(data)) {
-        const map = new Map<string, { bytes: number; count: number }>();
-        for (const o of data as any[]) {
-          const b = o.bucket_id;
-          const sz = Number(o.metadata?.size || 0);
-          const cur = map.get(b) || { bytes: 0, count: 0 };
-          cur.bytes += sz;
-          cur.count += 1;
-          map.set(b, cur);
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (Array.isArray(buckets)) {
+        for (const b of buckets) {
+          let bytes = 0, count = 0;
+          const walk = async (prefix: string) => {
+            const { data: items } = await supabase.storage.from(b.id).list(prefix, { limit: 1000 });
+            if (!items) return;
+            for (const it of items) {
+              if (it.id) {
+                count += 1;
+                bytes += Number((it.metadata as any)?.size || 0);
+              } else {
+                await walk(prefix ? `${prefix}/${it.name}` : it.name);
+              }
+            }
+          };
+          await walk("");
+          bucketUsage.push({ bucket: b.id, bytes, count });
         }
-        bucketUsage = Array.from(map.entries()).map(([bucket, v]) => ({ bucket, ...v }));
       }
     } catch (_) { /* ignore */ }
 
