@@ -222,21 +222,6 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
               style={transform ? { transform, transformOrigin: "center center", transition: inlinePinchStart.current || inlinePanStart.current ? "none" : "transform 0.15s ease-out" } : undefined}
               draggable={false}
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setZoomUrl(item.media_url);
-                setZoomCaption(item.caption);
-                setScale(1);
-                setPan({ x: 0, y: 0 });
-              }}
-              className="hidden sm:inline-flex absolute top-2 right-2 z-10 items-center gap-1 rounded-full bg-background/90 hover:bg-background border border-border px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm"
-              aria-label="이미지 확대"
-            >
-              <ZoomIn className="h-3.5 w-3.5" />
-              확대
-            </button>
           </>
         ) : (
           <video
