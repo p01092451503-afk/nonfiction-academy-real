@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MediaPackagePlayerProps {
@@ -26,6 +27,12 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [zoomUrl, setZoomUrl] = useState<string | null>(null);
+  const [zoomCaption, setZoomCaption] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const panStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const completedRef = useRef(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
@@ -133,14 +140,31 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const renderSlide = (item: PackageItem, key: string) => {
     const isImage = item.item_type === "image" || isImageUrl(item.media_url);
     return (
-      <div key={key} className="w-full shrink-0 flex items-center justify-center">
+      <div key={key} className="w-full shrink-0 flex items-center justify-center relative">
         {isImage ? (
-          <img
-            src={item.media_url}
-            alt={item.caption || "슬라이드"}
-            className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
-            draggable={false}
-          />
+          <>
+            <img
+              src={item.media_url}
+              alt={item.caption || "슬라이드"}
+              className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
+              draggable={false}
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomUrl(item.media_url);
+                setZoomCaption(item.caption);
+                setScale(1);
+                setPan({ x: 0, y: 0 });
+              }}
+              className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-background/90 hover:bg-background border border-border px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm"
+              aria-label="이미지 확대"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+              확대
+            </button>
+          </>
         ) : (
           <video
             src={item.media_url}
@@ -201,6 +225,150 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           {current.caption}
         </p>
       )}
+
+      {/* Zoom dialog */}
+      <Dialog
+        open={!!zoomUrl}
+        onOpenChange={(open) => {
+          if (!open) {
+            setZoomUrl(null);
+            setZoomCaption(null);
+            setScale(1);
+            setPan({ x: 0, y: 0 });
+          }
+        }}
+      >
+        <DialogContent className="max-w-[100vw] sm:max-w-[95vw] w-full h-[100dvh] sm:h-[95vh] p-0 bg-background border-0 sm:rounded-2xl overflow-hidden">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Toolbar */}
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-full bg-background/95 border border-border shadow-sm px-1.5 py-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setScale((s) => Math.max(1, +(s - 0.5).toFixed(2)))}
+                aria-label="축소"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium tabular-nums w-10 text-center">
+                {Math.round(scale * 100)}%
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setScale((s) => Math.min(5, +(s + 0.5).toFixed(2)))}
+                aria-label="확대"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => {
+                  setScale(1);
+                  setPan({ x: 0, y: 0 });
+                }}
+                aria-label="원래 크기"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => setZoomUrl(null)}
+                aria-label="닫기"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Image area */}
+            <div
+              className="flex-1 overflow-hidden flex items-center justify-center bg-foreground/5 select-none"
+              onWheel={(e) => {
+                e.preventDefault();
+                const delta = -e.deltaY * 0.002;
+                setScale((s) => Math.min(5, Math.max(1, +(s + delta).toFixed(2))));
+              }}
+              onDoubleClick={() => {
+                setScale((s) => (s >= 2 ? 1 : 2));
+                setPan({ x: 0, y: 0 });
+              }}
+              onMouseDown={(e) => {
+                if (scale <= 1) return;
+                panStart.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+              }}
+              onMouseMove={(e) => {
+                if (!panStart.current) return;
+                setPan({
+                  x: panStart.current.px + (e.clientX - panStart.current.x),
+                  y: panStart.current.py + (e.clientY - panStart.current.y),
+                });
+              }}
+              onMouseUp={() => (panStart.current = null)}
+              onMouseLeave={() => (panStart.current = null)}
+              onTouchStart={(e) => {
+                if (e.touches.length === 2) {
+                  const dx = e.touches[0].clientX - e.touches[1].clientX;
+                  const dy = e.touches[0].clientY - e.touches[1].clientY;
+                  pinchStart.current = { dist: Math.hypot(dx, dy), scale };
+                } else if (e.touches.length === 1 && scale > 1) {
+                  panStart.current = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY,
+                    px: pan.x,
+                    py: pan.y,
+                  };
+                }
+              }}
+              onTouchMove={(e) => {
+                if (e.touches.length === 2 && pinchStart.current) {
+                  const dx = e.touches[0].clientX - e.touches[1].clientX;
+                  const dy = e.touches[0].clientY - e.touches[1].clientY;
+                  const dist = Math.hypot(dx, dy);
+                  const next = (pinchStart.current.scale * dist) / pinchStart.current.dist;
+                  setScale(Math.min(5, Math.max(1, +next.toFixed(2))));
+                } else if (e.touches.length === 1 && panStart.current) {
+                  setPan({
+                    x: panStart.current.px + (e.touches[0].clientX - panStart.current.x),
+                    y: panStart.current.py + (e.touches[0].clientY - panStart.current.y),
+                  });
+                }
+              }}
+              onTouchEnd={(e) => {
+                if (e.touches.length === 0) {
+                  panStart.current = null;
+                  pinchStart.current = null;
+                }
+              }}
+              style={{ cursor: scale > 1 ? (panStart.current ? "grabbing" : "grab") : "zoom-in" }}
+            >
+              {zoomUrl && (
+                <img
+                  src={zoomUrl}
+                  alt={zoomCaption || "확대 이미지"}
+                  className="max-w-full max-h-full object-contain pointer-events-none transition-transform"
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                    transformOrigin: "center center",
+                  }}
+                  draggable={false}
+                />
+              )}
+            </div>
+
+            {zoomCaption && (
+              <p className="px-4 py-3 text-sm text-foreground/80 border-t border-border bg-background whitespace-pre-wrap">
+                {zoomCaption}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
