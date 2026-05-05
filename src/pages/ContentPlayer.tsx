@@ -791,7 +791,7 @@ const ContentPlayer = () => {
                       </div>
                     )}
                     <span className="truncate flex-1">{getTitle(c)}</span>
-                    {c.duration_minutes && <span className="text-[11px] text-muted-foreground shrink-0">{c.duration_minutes}{t("common.minutes")}</span>}
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
                   </button>
                 );
               })}
