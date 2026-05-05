@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         let totalLength = 0;
         for (;;) {
           const r = await fetch(
-            `https://video.bunnycdn.com/library/${STREAM_LIB}/videos?page=${page}&itemsPerPage=100&orderBy=date`,
+            `https://video.bunnycdn.com/library/${STREAM_LIB}/videos?page=${page}&itemsPerPage=100`,
             { headers },
           );
           if (!r.ok) { streamError = `videos ${r.status}`; break; }
