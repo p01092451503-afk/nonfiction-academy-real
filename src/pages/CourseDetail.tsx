@@ -1573,14 +1573,7 @@ const CourseEditDialog = ({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">{t("createCourse.categoryLabel")}</Label>
-              <Select value={form.category_id} onValueChange={(v) => setForm(f => ({ ...f, category_id: v }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("common.select") || "선택"} /></SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect value={form.category_id} onValueChange={(v) => setForm(f => ({ ...f, category_id: v }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{t("createCourse.difficultyLabel")}</Label>
