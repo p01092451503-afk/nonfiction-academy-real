@@ -303,7 +303,7 @@ const TeacherStudentDetail = () => {
                         <div className="flex-1 min-w-0">
                           <p className={`text-xs truncate ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>{content.title}</p>
                         </div>
-                        <Badge variant="outline" className="text-[9px] shrink-0">{contentTypeLabel[content.content_type || "video"] || content.content_type}</Badge>
+                        <Badge variant="outline" className="text-[9px] shrink-0">{t("course.flip")}</Badge>
                         {content.duration_minutes && (
                           <span className="text-[10px] text-muted-foreground shrink-0">{content.duration_minutes}{t("common.minutes")}</span>
                         )}

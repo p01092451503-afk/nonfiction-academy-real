@@ -570,7 +570,7 @@ const ContentPlayer = () => {
                     <div className="h-16 w-16 rounded-2xl bg-accent mx-auto flex items-center justify-center">
                       {currentContent.content_type === "document" ? <FileText className="h-7 w-7 text-accent-foreground" /> : <Play className="h-7 w-7 text-accent-foreground" />}
                     </div>
-                    <p className="text-base text-muted-foreground">{contentTypeLabel[currentContent.content_type || "video"]}</p>
+                    <p className="text-base text-muted-foreground">{t("course.flip")}</p>
                   </div>
                 </div>
               )}

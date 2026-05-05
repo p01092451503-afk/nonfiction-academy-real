@@ -638,8 +638,8 @@ const CourseDetail = () => {
                   const Icon = contentTypeIcon[content.content_type || "video"] || Video;
                   const isUnpublished = !content.is_published;
                   const localizedTitle = getLocalizedContentTitle(content);
-                  const isFlip = content.video_provider === "custom" || content.content_type === "media_package";
-                  const providerLabel = isFlip ? t("course.flip") : t("course.video");
+                  const isFlip = true;
+                  const providerLabel = t("course.flip");
                   return (
                     <li key={content.id} className={isUnpublished ? "opacity-50" : undefined}>
                       <div
@@ -912,7 +912,7 @@ const CourseDetail = () => {
                 const isAccessible = isSequential ? (seqAccess.accessible && !!enrollment) : (!!enrollment || content.is_preview);
                 const Icon = contentTypeIcon[content.content_type || "video"] || Video;
                 const localizedTitle = getLocalizedContentTitle(content);
-                const providerLabel = content.video_provider === "custom" ? t("course.flip") : t("course.video");
+                const providerLabel = t("course.flip");
                 
                 const langCode = content.language_code || "";
                 const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
