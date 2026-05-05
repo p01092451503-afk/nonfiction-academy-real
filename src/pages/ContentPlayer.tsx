@@ -683,10 +683,13 @@ const ContentPlayer = () => {
 
         {/* Sidebar toggle when closed */}
         {!sidebarOpen && (
-          <button onClick={() => setSidebarOpen(true)} className="hidden lg:flex items-center gap-1 absolute right-4 top-20 z-30 px-3 py-2 bg-primary text-primary-foreground border border-border rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
-            <List className="h-4 w-4" />
-            <span className="text-xs font-medium">{t("course.learningProgress")}</span>
-            <ChevronLeft className="h-3.5 w-3.5" />
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="hidden lg:flex items-center justify-center absolute right-0 top-20 z-30 h-10 w-6 bg-card hover:bg-accent border border-border border-r-0 rounded-l-md text-muted-foreground hover:text-foreground transition-colors"
+            title={t("course.learningProgress")}
+            aria-label={t("course.learningProgress")}
+          >
+            <ChevronLeft className="h-4 w-4" />
           </button>
         )}
       </div>
