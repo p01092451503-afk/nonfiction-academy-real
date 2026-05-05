@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
+import UploadOrderQueueDialog from "@/components/UploadOrderQueueDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -1487,8 +1488,11 @@ const PackageItemsEditor = ({
   imagesOnly?: boolean;
 }) => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [queueFiles, setQueueFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -1555,7 +1559,8 @@ const PackageItemsEditor = ({
       }
     });
 
-  const handleBulkFiles = async (
+  // Step 1: filter + open ordering queue dialog (no upload yet)
+  const handleBulkFiles = (
     fileList: FileList | null,
     mode: "image" | "video" | "auto" = "auto"
   ) => {
@@ -1575,8 +1580,19 @@ const PackageItemsEditor = ({
             : "이미지 또는 동영상 파일만 업로드할 수 있습니다.",
         variant: "destructive",
       });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (videoInputRef.current) videoInputRef.current.value = "";
       return;
     }
+    setQueueFiles(allowed);
+    setQueueOpen(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  };
+
+  // Step 2: actually run upload using user-confirmed order
+  const runUploadInOrder = async (orderedFiles: File[]) => {
+    if (orderedFiles.length === 0) return;
 
     // ── Duplicate detection (filename + size) ──
     const sigOf = (name: string, size: number) => `${name}::${size}`;
@@ -1586,7 +1602,7 @@ const PackageItemsEditor = ({
     const seenInBatch = new Set<string>();
     const duplicates: string[] = [];
     const unique: File[] = [];
-    for (const f of allowed) {
+    for (const f of orderedFiles) {
       const sig = sigOf(f.name, f.size);
       if (existingSigs.has(sig) || seenInBatch.has(sig)) {
         duplicates.push(f.name);
@@ -1739,15 +1755,20 @@ const PackageItemsEditor = ({
               key={it.tempId}
               draggable
               onDragStart={() => setDragIndex(idx)}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => { e.preventDefault(); setOverIndex(idx); }}
+              onDragLeave={() => setOverIndex((v) => (v === idx ? null : v))}
               onDrop={(e) => {
                 e.preventDefault();
                 if (dragIndex !== null) moveItem(dragIndex, idx);
                 setDragIndex(null);
+                setOverIndex(null);
               }}
-              className={`rounded-xl border border-border bg-background p-3 space-y-2 transition-opacity ${
-                dragIndex === idx ? "opacity-50" : ""
-              }`}
+              onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
+              className={[
+                "rounded-xl border bg-background p-3 space-y-2 transition-all",
+                dragIndex === idx ? "opacity-40 border-primary" : "border-border",
+                overIndex === idx && dragIndex !== null && dragIndex !== idx ? "border-primary border-t-4" : "",
+              ].join(" ")}
             >
               <div className="flex items-center gap-2">
                 <button
@@ -1914,6 +1935,13 @@ const PackageItemsEditor = ({
           </Button>
         )}
       </div>
+
+      <UploadOrderQueueDialog
+        open={queueOpen}
+        onOpenChange={setQueueOpen}
+        files={queueFiles}
+        onConfirm={(ordered) => { runUploadInOrder(ordered); }}
+      />
     </div>
   );
 };
