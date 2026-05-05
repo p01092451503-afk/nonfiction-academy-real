@@ -912,7 +912,7 @@ const CourseDetail = () => {
                 const isAccessible = isSequential ? (seqAccess.accessible && !!enrollment) : (!!enrollment || content.is_preview);
                 const Icon = contentTypeIcon[content.content_type || "video"] || Video;
                 const localizedTitle = getLocalizedContentTitle(content);
-                const providerLabel = content.video_provider === "custom" ? t("course.flip") : t("course.video");
+                const providerLabel = t("course.flip");
                 
                 const langCode = content.language_code || "";
                 const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
