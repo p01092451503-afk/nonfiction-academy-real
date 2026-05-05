@@ -1241,14 +1241,18 @@ const ContentDialog = ({
     <div className="grid grid-cols-2 gap-3">
       <div className="space-y-1">
         <Label className="text-xs">{t("course.contentType")}</Label>
-        <Select value={form.content_type} onValueChange={(v) => setForm(f => ({ ...f, content_type: v }))}>
+        <Select
+          value={form.content_type === "media_package" ? "media_package" : "mangoboard"}
+          onValueChange={(v) => setForm(f => ({
+            ...f,
+            content_type: v === "media_package" ? "media_package" : "document",
+            video_provider: v === "media_package" ? "" : "custom",
+          }))}
+        >
           <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="video">{t("course.video")}</SelectItem>
-            <SelectItem value="document">{t("course.document")}</SelectItem>
-            <SelectItem value="quiz">{t("course.quiz")}</SelectItem>
-            <SelectItem value="assignment">{t("course.assignment")}</SelectItem>
-            <SelectItem value="live">{t("course.live")}</SelectItem>
+            <SelectItem value="mangoboard">{t("createCourse.sourceMangoboard", "망고보드")}</SelectItem>
+            <SelectItem value="media_package">{t("course.imageRegister", "이미지 등록")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
