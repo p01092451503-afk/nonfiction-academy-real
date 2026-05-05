@@ -678,7 +678,7 @@ const CourseDetail = () => {
                             {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
                           </div>
                         </div>
-                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${content.video_provider === "custom" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`} aria-label={providerLabel}>
+                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${isFlip ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`} aria-label={providerLabel}>
                           {providerLabel}
                         </span>
                         <span className="w-10 shrink-0 text-right text-[10px] text-muted-foreground">
