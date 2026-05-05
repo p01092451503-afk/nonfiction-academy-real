@@ -845,8 +845,8 @@ const CourseDetail = () => {
               <Progress value={overallProgress} className="h-1.5" aria-label={`${t("course.enrollProgress")} ${overallProgress}%`} />
               <p className="text-[10px] text-muted-foreground">
                 {_courseCompletion.isCompleted
-                  ? (isEn ? "Course completed" : "강의 학습완료")
-                  : (isEn ? "In progress" : "학습 진행중")}
+                  ? t("course.courseCompleted", "강의 학습완료")
+                  : t("course.learningInProgress", "학습 진행중")}
               </p>
             </div>
           ) : (
