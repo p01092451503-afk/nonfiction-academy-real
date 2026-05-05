@@ -675,7 +675,7 @@ const CourseDetail = () => {
                           {content.duration_minutes ? `${content.duration_minutes}${t("common.minutes")}` : "-"}
                         </span>
                         <div
-                          className="flex shrink-0 items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                          className="flex shrink-0 items-center gap-0.5"
                           role="toolbar"
                           aria-label={isEn ? `${localizedTitle} actions` : `${localizedTitle} 작업`}
                         >
