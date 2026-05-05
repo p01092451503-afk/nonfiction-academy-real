@@ -365,7 +365,7 @@
     "enrollProgress": "Enrollment Progress",
     "courseContents": "Course Contents",
     "lessonCount": "{{current}} / {{total}} lessons",
-    "learningProgress": "Learning Progress",
+    "learningProgress": "Language Versions",
     "courseInfo": "Course",
     "lessonInfo": "Lesson",
     "learningStatus": "Status",
