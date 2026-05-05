@@ -364,7 +364,7 @@
     "enrollProgress": "受講進捗率",
     "courseContents": "コースのチャプター",
     "lessonCount": "{{current}} / {{total}} チャプター",
-    "learningProgress": "学習進捗状況",
+    "learningProgress": "言語別レッスン",
     "courseInfo": "コース情報",
     "lessonInfo": "チャプター情報",
     "learningStatus": "学習状況",

@@ -365,7 +365,7 @@
     "enrollProgress": "수강 진행률",
     "courseContents": "언어별 강의",
     "lessonCount": "{{current}} / {{total}} 차시",
-    "learningProgress": "학습 진행 현황",
+    "learningProgress": "언어별 차시",
     "courseInfo": "과정 정보",
     "lessonInfo": "차시 정보",
     "learningStatus": "학습 상태",
