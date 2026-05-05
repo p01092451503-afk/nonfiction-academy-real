@@ -271,6 +271,7 @@
   },
   "course": {
     "course": "강의",
+    "pinchToZoomHint": "두 손가락으로 확대/축소",
     "content": "차시",
     "lesson": "차시",
     "progress": "진행률",

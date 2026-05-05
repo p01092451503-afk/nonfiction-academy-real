@@ -271,6 +271,7 @@
   },
   "course": {
     "course": "Course",
+    "pinchToZoomHint": "Pinch with two fingers to zoom",
     "content": "Content",
     "lesson": "Lesson",
     "progress": "Progress",

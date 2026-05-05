@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const isImageUrl = (url: string) =>
   /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url);
 
 const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) => {
+  const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
   const [dragOffset, setDragOffset] = useState(0);
@@ -271,7 +273,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         </div>
         {showPinchHint && (
           <div className="sm:hidden pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 z-20 rounded-full bg-foreground/80 text-background text-xs px-3 py-1.5 shadow-md animate-fade-in">
-            두 손가락으로 확대/축소
+            {t("course.pinchToZoomHint", "두 손가락으로 확대/축소")}
           </div>
         )}
       </div>

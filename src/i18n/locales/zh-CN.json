@@ -270,6 +270,7 @@
   },
   "course": {
     "course": "课程",
+    "pinchToZoomHint": "用两根手指捏合缩放",
     "content": "课次",
     "lesson": "课次",
     "progress": "进度",
