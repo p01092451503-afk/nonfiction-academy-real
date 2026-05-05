@@ -1937,6 +1937,13 @@ const PackageItemsEditor = ({
           </Button>
         )}
       </div>
+
+      <UploadOrderQueueDialog
+        open={queueOpen}
+        onOpenChange={setQueueOpen}
+        files={queueFiles}
+        onConfirm={(ordered) => { runUploadInOrder(ordered); }}
+      />
     </div>
   );
 };
