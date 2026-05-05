@@ -1757,15 +1757,20 @@ const PackageItemsEditor = ({
               key={it.tempId}
               draggable
               onDragStart={() => setDragIndex(idx)}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => { e.preventDefault(); setOverIndex(idx); }}
+              onDragLeave={() => setOverIndex((v) => (v === idx ? null : v))}
               onDrop={(e) => {
                 e.preventDefault();
                 if (dragIndex !== null) moveItem(dragIndex, idx);
                 setDragIndex(null);
+                setOverIndex(null);
               }}
-              className={`rounded-xl border border-border bg-background p-3 space-y-2 transition-opacity ${
-                dragIndex === idx ? "opacity-50" : ""
-              }`}
+              onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
+              className={[
+                "rounded-xl border bg-background p-3 space-y-2 transition-all",
+                dragIndex === idx ? "opacity-40 border-primary" : "border-border",
+                overIndex === idx && dragIndex !== null && dragIndex !== idx ? "border-primary border-t-4" : "",
+              ].join(" ")}
             >
               <div className="flex items-center gap-2">
                 <button
