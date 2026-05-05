@@ -355,6 +355,12 @@ const AdminCourses = () => {
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); goToCourse(course.id); }}>
                               <Edit className="h-3.5 w-3.5 mr-2" /> {t("common.edit") || "수정"}
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: course.id, title: course.title }); }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" /> {t("common.delete") || "삭제"}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
