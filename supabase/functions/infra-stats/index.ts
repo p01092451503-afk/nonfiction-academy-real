@@ -124,16 +124,18 @@ Deno.serve(async (req) => {
       JSON.stringify({
         bunnyStream: streamLib
           ? {
-              storageBytes: Number(streamLib.StorageUsage || 0),
-              trafficBytes: Number(streamLib.TrafficUsage || 0),
-              videoCount: Number(streamLib.VideoCount || 0),
+              storageBytes: Number(streamLib.storageBytes || 0),
+              videoCount: Number(streamLib.videoCount || 0),
+              totalLengthSec: Number(streamLib.totalLengthSec || 0),
             }
           : null,
         bunnyStreamError: streamError,
+        bunnyStorage,
         bunnyStreamRange: streamStats
           ? {
-              viewsTotal: Number(streamStats.ViewsChart ? Object.values(streamStats.ViewsChart).reduce((a: number, b: any) => a + Number(b), 0) : 0),
-              watchTimeTotalMin: Number(streamStats.WatchTimeChart ? Object.values(streamStats.WatchTimeChart).reduce((a: number, b: any) => a + Number(b), 0) : 0),
+              viewsTotal: streamStats.ViewsChart ? Object.values(streamStats.ViewsChart).reduce((a: number, b: any) => a + Number(b), 0) : 0,
+              watchTimeTotalMin: streamStats.WatchTimeChart ? Object.values(streamStats.WatchTimeChart).reduce((a: number, b: any) => a + Number(b), 0) : 0,
+              trafficBytes: streamStats.TrafficUsageChart ? Object.values(streamStats.TrafficUsageChart).reduce((a: number, b: any) => a + Number(b), 0) : 0,
               days,
             }
           : null,
