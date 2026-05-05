@@ -959,13 +959,7 @@ const CourseDetail = () => {
                           <span className="truncate text-sm font-semibold text-foreground">{localizedTitle}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <span>{providerLabel}</span>
-                          {content.duration_minutes && (
-                            <>
-                              <span className="text-border">·</span>
-                              <span>{content.duration_minutes}{t("common.minutes")}</span>
-                            </>
-                          )}
+                          <span>{t("course.flip")}</span>
                           {!isAccessible && seqAccess.reason && (
                             <>
                               <span className="text-border">·</span>
