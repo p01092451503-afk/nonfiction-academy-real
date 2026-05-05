@@ -628,9 +628,14 @@ const CourseDetail = () => {
                   return (
                     <li key={content.id} className={isUnpublished ? "opacity-50" : undefined}>
                       <div
-                        className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-accent/30"
+                        className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-accent/30 cursor-pointer"
                         role="group"
                         aria-label={`${idx + 1}. ${localizedTitle}`}
+                        onClick={(e) => {
+                          // Avoid hijacking clicks on inner action buttons
+                          if ((e.target as HTMLElement).closest("button, [role='button'], a")) return;
+                          openEditContent(content);
+                        }}
                       >
                         <div className="flex shrink-0 flex-col">
                           <button
