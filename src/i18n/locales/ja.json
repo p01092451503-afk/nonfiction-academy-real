@@ -270,6 +270,7 @@
   },
   "course": {
     "course": "コース",
+    "pinchToZoomHint": "2本指でピンチして拡大/縮小",
     "content": "時限",
     "lesson": "時限",
     "progress": "進捗率",
