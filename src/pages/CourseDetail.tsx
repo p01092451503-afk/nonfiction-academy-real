@@ -1606,18 +1606,6 @@ const CourseEditDialog = ({
             </div>
           </div>
 
-          {/* Duration & Max students */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.estimatedDuration") || "예상 소요시간(h)"}</Label>
-              <Input className="h-9 text-sm" type="number" min={0} value={form.estimated_duration_hours} onChange={(e) => setForm(f => ({ ...f, estimated_duration_hours: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.maxStudents") || "최대 수강인원"}</Label>
-              <Input className="h-9 text-sm" type="number" min={0} value={form.max_students} onChange={(e) => setForm(f => ({ ...f, max_students: e.target.value }))} />
-            </div>
-          </div>
-
           <div className="space-y-1">
             <Label className="text-xs">{t("course.courseStatus")}</Label>
             <Select value={form.status} onValueChange={(v) => setForm(f => ({ ...f, status: v }))}>
