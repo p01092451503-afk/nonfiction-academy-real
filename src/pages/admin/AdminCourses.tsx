@@ -47,7 +47,24 @@ const AdminCourses = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title" | "students">("newest");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("courses").delete().eq("id", deleteTarget.id);
+    setIsDeleting(false);
+    if (error) {
+      toast({ title: t("common.error", "오류"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("admin.courseDeleted", "강의가 삭제되었습니다") });
+    setDeleteTarget(null);
+    queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+  };
 
   const { data: courses = [] } = useQuery({
     queryKey: ["admin-courses"],
