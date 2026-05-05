@@ -633,7 +633,8 @@ const CourseDetail = () => {
                   const Icon = contentTypeIcon[content.content_type || "video"] || Video;
                   const isUnpublished = !content.is_published;
                   const localizedTitle = getLocalizedContentTitle(content);
-                  const providerLabel = content.video_provider === "custom" ? t("course.flip") : t("course.video");
+                  const isFlip = content.video_provider === "custom" || content.content_type === "media_package";
+                  const providerLabel = isFlip ? t("course.flip") : t("course.video");
                   return (
                     <li key={content.id} className={isUnpublished ? "opacity-50" : undefined}>
                       <div
@@ -677,7 +678,7 @@ const CourseDetail = () => {
                             {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
                           </div>
                         </div>
-                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${content.video_provider === "custom" ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`} aria-label={providerLabel}>
+                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${isFlip ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`} aria-label={providerLabel}>
                           {providerLabel}
                         </span>
                         <span className="w-10 shrink-0 text-right text-[10px] text-muted-foreground">
