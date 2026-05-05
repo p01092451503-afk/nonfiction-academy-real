@@ -1561,7 +1561,8 @@ const PackageItemsEditor = ({
       }
     });
 
-  const handleBulkFiles = async (
+  // Step 1: filter + open ordering queue dialog (no upload yet)
+  const handleBulkFiles = (
     fileList: FileList | null,
     mode: "image" | "video" | "auto" = "auto"
   ) => {
@@ -1581,8 +1582,19 @@ const PackageItemsEditor = ({
             : "이미지 또는 동영상 파일만 업로드할 수 있습니다.",
         variant: "destructive",
       });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (videoInputRef.current) videoInputRef.current.value = "";
       return;
     }
+    setQueueFiles(allowed);
+    setQueueOpen(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  };
+
+  // Step 2: actually run upload using user-confirmed order
+  const runUploadInOrder = async (orderedFiles: File[]) => {
+    if (orderedFiles.length === 0) return;
 
     // ── Duplicate detection (filename + size) ──
     const sigOf = (name: string, size: number) => `${name}::${size}`;
