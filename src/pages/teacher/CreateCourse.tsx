@@ -1490,8 +1490,11 @@ const PackageItemsEditor = ({
   imagesOnly?: boolean;
 }) => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [queueFiles, setQueueFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
