@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RankBar } from "@/components/ui/rank-bar";
+import StatCard from "@/components/ui/stat-card";
+import { BookOpen, CheckCircle2, AlertCircle, FileEdit, Users, GraduationCap, TrendingUp, Award } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const CourseStatsCard = () => {
@@ -56,6 +58,9 @@ const CourseStatsCard = () => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
+  const itemUnit = t("common.itemsUnit", "개");
+  const peopleUnit = t("common.people");
+
   return (
     <Card>
       <CardHeader className="pb-2 px-3 sm:px-6">
@@ -63,31 +68,17 @@ const CourseStatsCard = () => {
       </CardHeader>
       <CardContent className="px-3 sm:px-6 space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: t("stats.totalCoursesCount"), value: t("stats.itemCount", { count: totalCourses }) },
-            { label: t("stats.publishedCoursesCount"), value: t("stats.itemCount", { count: published }) },
-            { label: t("stats.mandatoryCoursesCount"), value: t("stats.itemCount", { count: mandatory }) },
-            { label: t("stats.draftCoursesCount"), value: t("stats.itemCount", { count: draft }) },
-          ].map((item) => (
-            <div key={item.label} className="text-center p-2 rounded-lg bg-muted/50">
-              <p className="text-[10px] text-muted-foreground">{item.label}</p>
-              <p className="text-lg font-bold text-foreground">{item.value}</p>
-            </div>
-          ))}
+          <StatCard label={t("stats.totalCoursesCount")} value={totalCourses.toLocaleString()} unit={itemUnit} icon={BookOpen} tone="primary" />
+          <StatCard label={t("stats.publishedCoursesCount")} value={published.toLocaleString()} unit={itemUnit} icon={CheckCircle2} tone="success" />
+          <StatCard label={t("stats.mandatoryCoursesCount")} value={mandatory.toLocaleString()} unit={itemUnit} icon={AlertCircle} tone="warning" />
+          <StatCard label={t("stats.draftCoursesCount")} value={draft.toLocaleString()} unit={itemUnit} icon={FileEdit} tone="neutral" />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: t("stats.totalStudentsCount"), value: `${totalEnrollments}${t("common.people")}` },
-            { label: t("stats.completedStudents"), value: `${completed}${t("common.people")}` },
-            { label: t("stats.avgProgressRate"), value: `${avgProgress}%` },
-            { label: t("stats.completionRateValue"), value: `${completionRate}%` },
-          ].map((item) => (
-            <div key={item.label} className="text-center p-2 rounded-lg bg-muted/50">
-              <p className="text-[10px] text-muted-foreground">{item.label}</p>
-              <p className="text-lg font-bold text-foreground">{item.value}</p>
-            </div>
-          ))}
+          <StatCard label={t("stats.totalStudentsCount")} value={totalEnrollments.toLocaleString()} unit={peopleUnit} icon={Users} tone="info" />
+          <StatCard label={t("stats.completedStudents")} value={completed.toLocaleString()} unit={peopleUnit} icon={GraduationCap} tone="success" />
+          <StatCard label={t("stats.avgProgressRate")} value={`${avgProgress}%`} icon={TrendingUp} tone="primary" />
+          <StatCard label={t("stats.completionRateValue")} value={`${completionRate}%`} icon={Award} tone="success" />
         </div>
 
         <div>
