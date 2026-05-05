@@ -78,6 +78,22 @@ const AdminTraffic = () => {
     },
   });
 
+  const { data: infra } = useQuery({
+    queryKey: ["infra-stats", period],
+    queryFn: async () => {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/infra-stats?days=${period}`;
+      const session = (await supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${session || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      return await res.json();
+    },
+    staleTime: 60_000,
+  });
+
   const totalPageViews = trafficLogs.filter((l) => l.event_type === "page_view").length;
   const totalContentAccess = trafficLogs.filter((l) => l.event_type === "content_access").length;
   const uniqueUsers = new Set(trafficLogs.map((l) => l.user_id)).size;
@@ -86,12 +102,17 @@ const AdminTraffic = () => {
   const externalAccess = contentLogs.filter((l) => (l.metadata as any)?.is_external).length;
   const selfHostedAccess = contentLogs.length - externalAccess;
 
-  const cdnBytes = contentLogs
-    .filter((l) => !(l.metadata as any)?.is_external)
-    .reduce((sum, l) => sum + (Number(l.estimated_bytes) || 0), 0);
-  const webBytes = trafficLogs
-    .filter((l) => l.event_type === "page_view")
-    .reduce((sum, l) => sum + (Number(l.estimated_bytes) || 0), 0);
+  // ---- REAL infrastructure usage ----
+  const bunnyStorageBytes = Number(infra?.bunnyStorage?.bytes || 0);
+  const bunnyStorageCount = Number(infra?.bunnyStorage?.count || 0);
+  const bunnyStreamBytes = Number(infra?.bunnyStream?.storageBytes || 0);
+  const bunnyStreamCount = Number(infra?.bunnyStream?.videoCount || 0);
+  const bunnyStreamTrafficBytes = Number(infra?.bunnyStreamRange?.trafficBytes || 0);
+  const supabaseStorageBytes = Number(infra?.supabaseStorage?.totalBytes || 0);
+  const supabaseStorageCount = Number(infra?.supabaseStorage?.totalObjects || 0);
+
+  const cdnStorageBytes = bunnyStorageBytes + bunnyStreamBytes;
+  const cdnAssetCount = bunnyStorageCount + bunnyStreamCount;
 
   const totalContents = storageData?.length || 0;
   const videoContents = storageData?.filter((c) => c.content_type === "video").length || 0;
@@ -128,10 +149,10 @@ const AdminTraffic = () => {
     .slice(0, 10);
 
   const trafficStats = [
-    { label: t("stats.webTraffic"), value: formatBytes(webBytes), icon: Globe },
-    { label: t("stats.cdnTraffic"), value: formatBytes(cdnBytes), icon: Play },
-    { label: t("stats.totalTraffic"), value: formatBytes(webBytes + cdnBytes), icon: TrendingUp },
-    { label: t("stats.storedLessons"), value: t("stats.itemCount", { count: totalContents }), icon: HardDrive },
+    { label: "Bunny CDN 저장량 (실제)", value: formatBytes(bunnyStorageBytes), icon: HardDrive, hint: `${bunnyStorageCount}개 파일 · zone: ${infra?.bunnyStorage?.zone || "-"}` },
+    { label: "Bunny Stream 저장량 (실제)", value: formatBytes(bunnyStreamBytes), icon: Play, hint: `${bunnyStreamCount}개 영상${infra?.bunnyStreamError ? " · 미설정" : ""}` },
+    { label: `Bunny Stream 전송량 (${period}일)`, value: formatBytes(bunnyStreamTrafficBytes), icon: TrendingUp, hint: infra?.bunnyStreamError ? "Library ID 미설정" : "Bunny API" },
+    { label: "Supabase Storage (실제)", value: formatBytes(supabaseStorageBytes), icon: Globe, hint: `${supabaseStorageCount}개 객체` },
   ];
 
   return (
@@ -202,16 +223,22 @@ const AdminTraffic = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {trafficStats.map((stat) => (
                 <div key={stat.label} className="stat-card !p-3 sm:!p-5">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{stat.label}</p>
                       <p className="text-lg sm:text-xl font-bold text-foreground mt-1 break-words">{stat.value}</p>
+                      {(stat as any).hint && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{(stat as any).hint}</p>
+                      )}
                     </div>
                     <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground opacity-60 shrink-0" />
                   </div>
                 </div>
               ))}
             </div>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              ※ 위 4개 카드는 Bunny CDN/Stream 및 Supabase Storage API 실측치입니다. 아래 페이지뷰·차시재생·일별 추세는 앱 내부 로그(추정 byte) 기준입니다.
+            </p>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               <div className="stat-card !p-3 sm:!p-4">
