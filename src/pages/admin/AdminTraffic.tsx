@@ -227,16 +227,22 @@ const AdminTraffic = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {trafficStats.map((stat) => (
                 <div key={stat.label} className="stat-card !p-3 sm:!p-5">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{stat.label}</p>
                       <p className="text-lg sm:text-xl font-bold text-foreground mt-1 break-words">{stat.value}</p>
+                      {(stat as any).hint && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{(stat as any).hint}</p>
+                      )}
                     </div>
                     <stat.icon className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground opacity-60 shrink-0" />
                   </div>
                 </div>
               ))}
             </div>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              ※ 위 4개 카드는 Bunny CDN/Stream 및 Supabase Storage API 실측치입니다. 아래 페이지뷰·차시재생·일별 추세는 앱 내부 로그(추정 byte) 기준입니다.
+            </p>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               <div className="stat-card !p-3 sm:!p-4">
