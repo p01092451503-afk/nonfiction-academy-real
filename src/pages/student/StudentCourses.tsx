@@ -265,9 +265,9 @@ const StudentCourses = () => {
             ))}
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 min-w-0">
             {/* 수강중인 강의 */}
-            <section className="space-y-3">
+            <section className="space-y-3 min-w-0">
               <h2 className="text-base font-semibold text-foreground">
                 {t("course.inProgressCourses")} ({inProgress.length})
               </h2>
@@ -279,7 +279,7 @@ const StudentCourses = () => {
             </section>
 
             {/* 수강종료 강의 */}
-            <section className="space-y-3">
+            <section className="space-y-3 min-w-0">
               <h2 className="text-base font-semibold text-foreground">
                 {t("course.completedCourses")} ({completed.length})
               </h2>
