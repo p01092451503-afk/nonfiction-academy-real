@@ -708,6 +708,14 @@ const CourseDetail = () => {
                           <button
                             type="button"
                             className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            onClick={() => openEditContent(content)}
+                            aria-label={isEn ? `Edit ${localizedTitle}` : `${localizedTitle} 수정`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             onClick={() => navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`)}
                             aria-label={isEn ? `Open ${localizedTitle}` : `${localizedTitle} 열기`}
                           >
