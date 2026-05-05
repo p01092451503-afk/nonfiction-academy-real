@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
