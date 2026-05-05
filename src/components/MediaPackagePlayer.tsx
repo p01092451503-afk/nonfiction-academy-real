@@ -31,6 +31,11 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const [zoomCaption, setZoomCaption] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  // Inline pinch-zoom state for mobile (applies to currently visible slide)
+  const [inlineScale, setInlineScale] = useState(1);
+  const [inlinePan, setInlinePan] = useState({ x: 0, y: 0 });
+  const inlinePinchStart = useRef<{ dist: number; scale: number } | null>(null);
+  const inlinePanStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const completedRef = useRef(false);
@@ -65,6 +70,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
       next.add(index);
       return next;
     });
+    // Reset inline zoom when switching slides
+    setInlineScale(1);
+    setInlinePan({ x: 0, y: 0 });
   }, [index]);
 
   useEffect(() => {
@@ -109,12 +117,46 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const containerWidth = containerRef.current?.clientWidth || 1;
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Pinch start
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      inlinePinchStart.current = { dist: Math.hypot(dx, dy), scale: inlineScale };
+      touchStartX.current = null;
+      touchStartY.current = null;
+      return;
+    }
+    if (inlineScale > 1) {
+      // Pan start
+      inlinePanStart.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        px: inlinePan.x,
+        py: inlinePan.y,
+      };
+      return;
+    }
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && inlinePinchStart.current) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const next = (inlinePinchStart.current.scale * dist) / inlinePinchStart.current.dist;
+      setInlineScale(Math.min(5, Math.max(1, +next.toFixed(2))));
+      return;
+    }
+    if (inlinePanStart.current) {
+      setInlinePan({
+        x: inlinePanStart.current.px + (e.touches[0].clientX - inlinePanStart.current.x),
+        y: inlinePanStart.current.py + (e.touches[0].clientY - inlinePanStart.current.y),
+      });
+      return;
+    }
     if (touchStartX.current === null || touchStartY.current === null) return;
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
@@ -124,7 +166,19 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (inlinePinchStart.current && e.touches.length < 2) {
+      inlinePinchStart.current = null;
+      if (inlineScale <= 1.02) {
+        setInlineScale(1);
+        setInlinePan({ x: 0, y: 0 });
+      }
+      return;
+    }
+    if (inlinePanStart.current && e.touches.length === 0) {
+      inlinePanStart.current = null;
+      return;
+    }
     const threshold = Math.min(80, containerWidth * 0.18);
     if (dragOffset < -threshold && !isLast) {
       setIndex((i) => i + 1);
@@ -137,16 +191,21 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     touchStartY.current = null;
   };
 
-  const renderSlide = (item: PackageItem, key: string) => {
+  const renderSlide = (item: PackageItem, key: string, slideIdx: number) => {
     const isImage = item.item_type === "image" || isImageUrl(item.media_url);
+    const isCurrent = slideIdx === index;
+    const transform = isCurrent && inlineScale > 1
+      ? `translate(${inlinePan.x}px, ${inlinePan.y}px) scale(${inlineScale})`
+      : undefined;
     return (
-      <div key={key} className="w-full shrink-0 flex items-center justify-center relative">
+      <div key={key} className="w-full shrink-0 flex items-center justify-center relative overflow-hidden">
         {isImage ? (
           <>
             <img
               src={item.media_url}
               alt={item.caption || "슬라이드"}
               className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
+              style={transform ? { transform, transformOrigin: "center center", transition: inlinePinchStart.current || inlinePanStart.current ? "none" : "transform 0.15s ease-out" } : undefined}
               draggable={false}
             />
             <button
@@ -158,7 +217,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
                 setScale(1);
                 setPan({ x: 0, y: 0 });
               }}
-              className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-background/90 hover:bg-background border border-border px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm"
+              className="hidden sm:inline-flex absolute top-2 right-2 z-10 items-center gap-1 rounded-full bg-background/90 hover:bg-background border border-border px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm"
               aria-label="이미지 확대"
             >
               <ZoomIn className="h-3.5 w-3.5" />
@@ -196,7 +255,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           className={`flex w-full ${isDragging ? "" : "transition-transform duration-300 ease-out"}`}
           style={{ transform: `translateX(calc(${translatePct}% + ${dragPct}%))` }}
         >
-          {items.map((it) => renderSlide(it, it.id))}
+          {items.map((it, i) => renderSlide(it, it.id, i))}
         </div>
       </div>
 
