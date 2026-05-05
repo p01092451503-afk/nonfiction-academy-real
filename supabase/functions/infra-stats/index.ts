@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
             `https://video.bunnycdn.com/library/${STREAM_LIB}/videos?page=${page}&itemsPerPage=100`,
             { headers },
           );
-          if (!r.ok) { streamError = `videos ${r.status}`; break; }
+          if (!r.ok) { const txt = await r.text().catch(() => ""); streamError = `videos ${r.status} ${txt.slice(0,200)}`; break; }
           const j = await r.json();
           const items = j.items || [];
           totalCount = j.totalItems ?? totalCount;
