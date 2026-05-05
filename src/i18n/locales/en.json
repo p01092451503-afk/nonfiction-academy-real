@@ -363,6 +363,8 @@
     "courseContentCount": "{{count}} contents",
     "approxDuration": "~{{hours}}h",
     "enrollProgress": "Enrollment Progress",
+    "courseCompleted": "Course completed",
+    "learningInProgress": "In progress",
     "courseContents": "Course Contents",
     "lessonCount": "{{current}} / {{total}} lessons",
     "learningProgress": "Language Versions",
