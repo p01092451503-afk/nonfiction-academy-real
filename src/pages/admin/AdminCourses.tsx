@@ -1,7 +1,12 @@
-import { Plus, Search, MoreHorizontal, Eye, Edit, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +47,24 @@ const AdminCourses = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title" | "students">("newest");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("courses").delete().eq("id", deleteTarget.id);
+    setIsDeleting(false);
+    if (error) {
+      toast({ title: t("common.error", "오류"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("admin.courseDeleted", "강의가 삭제되었습니다") });
+    setDeleteTarget(null);
+    queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+  };
 
   const { data: courses = [] } = useQuery({
     queryKey: ["admin-courses"],
@@ -333,6 +355,12 @@ const AdminCourses = () => {
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); goToCourse(course.id); }}>
                               <Edit className="h-3.5 w-3.5 mr-2" /> {t("common.edit") || "수정"}
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: course.id, title: course.title }); }}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" /> {t("common.delete") || "삭제"}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -363,6 +391,30 @@ const AdminCourses = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.deleteCourseTitle", "강의를 삭제하시겠습니까?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.deleteCourseDesc", "이 작업은 되돌릴 수 없습니다. 관련 차시, 수강신청, 평가, 과제 등 연관된 모든 데이터가 함께 삭제됩니다.")}
+              {deleteTarget && (
+                <span className="block mt-2 font-medium text-foreground">"{deleteTarget.title}"</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t("common.cancel", "취소")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? t("common.deleting", "삭제 중...") : t("common.delete", "삭제")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
