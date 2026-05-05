@@ -81,15 +81,11 @@ const AdminTraffic = () => {
   const { data: infra } = useQuery({
     queryKey: ["infra-stats", period],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("infra-stats", {
-        body: undefined,
-        method: "GET" as any,
-      });
-      // functions.invoke doesn't take query, so call via fetch:
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/infra-stats?days=${period}`;
+      const session = (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
       });
