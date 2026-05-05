@@ -25,6 +25,7 @@ const AdminUsers = () => {
   const [deptFilter, setDeptFilter] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [staffEdit, setStaffEdit] = useState<StaffEditDraft | null>(null);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "student", departmentId: "", branchId: "" });
   const { t, i18n } = useTranslation();
