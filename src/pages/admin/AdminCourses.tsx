@@ -1,7 +1,12 @@
-import { Plus, Search, MoreHorizontal, Eye, Edit, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
