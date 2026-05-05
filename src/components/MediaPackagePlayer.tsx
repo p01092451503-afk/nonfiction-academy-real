@@ -31,6 +31,11 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const [zoomCaption, setZoomCaption] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  // Inline pinch-zoom state for mobile (applies to currently visible slide)
+  const [inlineScale, setInlineScale] = useState(1);
+  const [inlinePan, setInlinePan] = useState({ x: 0, y: 0 });
+  const inlinePinchStart = useRef<{ dist: number; scale: number } | null>(null);
+  const inlinePanStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const completedRef = useRef(false);
