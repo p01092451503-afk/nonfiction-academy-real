@@ -5,7 +5,9 @@ import {
   ArrowLeft, Plus, Trash2, GripVertical, Video, FileText, BarChart3,
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
   Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw,
+  ArrowUpAZ, Upload as UploadIcon,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
