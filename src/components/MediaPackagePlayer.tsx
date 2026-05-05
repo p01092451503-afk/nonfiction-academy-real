@@ -34,6 +34,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   // Inline pinch-zoom state for mobile (applies to currently visible slide)
   const [inlineScale, setInlineScale] = useState(1);
   const [inlinePan, setInlinePan] = useState({ x: 0, y: 0 });
+  const [showPinchHint, setShowPinchHint] = useState(false);
+  const pinchHintShownRef = useRef(false);
+  const pinchHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inlinePinchStart = useRef<{ dist: number; scale: number } | null>(null);
   const inlinePanStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const panStart = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
