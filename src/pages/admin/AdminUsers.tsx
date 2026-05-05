@@ -498,6 +498,14 @@ const AdminUsers = () => {
         saving={updateStaffMutation.isPending}
         onSave={() => staffEdit && updateStaffMutation.mutate(staffEdit)}
       />
+      <StaffBulkUploadDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+        }}
+      />
     </DashboardLayout>
   );
 };
