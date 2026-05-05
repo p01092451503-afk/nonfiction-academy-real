@@ -21,10 +21,29 @@ Deno.serve(async (req) => {
     let streamError: string | null = null;
     if (STREAM_LIB && STREAM_KEY) {
       const headers = { AccessKey: STREAM_KEY, accept: "application/json" };
+      // Aggregate real storage by listing videos
       try {
-        const libRes = await fetch(`https://video.bunnycdn.com/library/${STREAM_LIB}`, { headers });
-        if (libRes.ok) streamLib = await libRes.json();
-        else streamError = `lib ${libRes.status}`;
+        let page = 1;
+        let totalStorage = 0;
+        let totalCount = 0;
+        let totalLength = 0;
+        for (;;) {
+          const r = await fetch(
+            `https://video.bunnycdn.com/library/${STREAM_LIB}/videos?page=${page}&itemsPerPage=100&orderBy=date`,
+            { headers },
+          );
+          if (!r.ok) { streamError = `videos ${r.status}`; break; }
+          const j = await r.json();
+          const items = j.items || [];
+          totalCount = j.totalItems ?? totalCount;
+          for (const v of items) {
+            totalStorage += Number(v.storageSize || 0);
+            totalLength += Number(v.length || 0);
+          }
+          if (items.length < 100) break;
+          if (++page > 50) break;
+        }
+        streamLib = { storageBytes: totalStorage, videoCount: totalCount, totalLengthSec: totalLength };
       } catch (e) { streamError = String(e?.message || e); }
       try {
         const to = new Date();
@@ -38,6 +57,36 @@ Deno.serve(async (req) => {
       } catch (_) { /* ignore */ }
     } else {
       streamError = "missing env";
+    }
+
+    // ---------- Bunny Storage zone (b-cdn.net assets) ----------
+    let bunnyStorage: any = null;
+    const STORAGE_KEY = Deno.env.get("BUNNY_STORAGE_API_KEY");
+    const STORAGE_ZONE = Deno.env.get("BUNNY_STORAGE_ZONE");
+    const STORAGE_HOST = Deno.env.get("BUNNY_STORAGE_HOSTNAME") || "storage.bunnycdn.com";
+    if (STORAGE_KEY && STORAGE_ZONE) {
+      try {
+        const walk = async (path: string): Promise<{ bytes: number; count: number }> => {
+          const r = await fetch(`https://${STORAGE_HOST}/${STORAGE_ZONE}/${path}`, {
+            headers: { AccessKey: STORAGE_KEY, accept: "application/json" },
+          });
+          if (!r.ok) return { bytes: 0, count: 0 };
+          const items = await r.json();
+          let bytes = 0, count = 0;
+          for (const it of items) {
+            if (it.IsDirectory) {
+              const sub = await walk(`${path}${it.ObjectName}/`);
+              bytes += sub.bytes; count += sub.count;
+            } else {
+              bytes += Number(it.Length || 0); count += 1;
+            }
+          }
+          return { bytes, count };
+        };
+        bunnyStorage = { ...(await walk("")), zone: STORAGE_ZONE };
+      } catch (e) {
+        bunnyStorage = { error: String(e?.message || e) };
+      }
     }
 
     // ---------- Supabase Storage real usage ----------
