@@ -103,13 +103,6 @@ const CatalogCourseCard = ({
       {course.description && <p className="line-clamp-2 break-words text-xs leading-relaxed text-muted-foreground">{course.description}</p>}
 
       <div className="flex flex-wrap items-center gap-3">
-        {course.estimated_duration_hours != null && course.estimated_duration_hours > 0 && (
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Clock className="h-3 w-3" aria-hidden="true" />
-            {t("course.duration", { hours: course.estimated_duration_hours })}
-          </span>
-        )}
-
         <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
           <Users className="h-3 w-3" aria-hidden="true" />
           {studentCount}

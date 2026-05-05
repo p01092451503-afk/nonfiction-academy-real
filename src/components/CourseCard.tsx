@@ -59,7 +59,7 @@ const CourseCard = ({ course, categorySlug, categoryName, studentCount, contentC
         <div className="p-3.5 space-y-2.5">
           {course.description && <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{course.description}</p>}
           <div className="flex items-center gap-3 flex-wrap">
-            {course.estimated_duration_hours != null && course.estimated_duration_hours > 0 && <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" aria-hidden="true" /> {t("course.duration", { hours: course.estimated_duration_hours })}</span>}
+            
             {studentCount != null && <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" aria-hidden="true" /> {studentCount}{t("common.people")}</span>}
             {contentCount != null && <span className="text-[10px] text-muted-foreground flex items-center gap-1"><BookOpen className="h-3 w-3" aria-hidden="true" /> {t("course.lessonsCount", { count: contentCount })}</span>}
             {instructorName && <span className="text-[10px] text-muted-foreground">{instructorName}</span>}

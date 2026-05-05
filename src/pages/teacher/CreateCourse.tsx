@@ -901,17 +901,6 @@ const CreateCourse = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.estimatedDurationLabel")}</label>
-              <Input type="number" value={estimatedHours} onChange={(e) => setEstimatedHours(e.target.value)} placeholder={t("createCourse.estimatedDurationExample")} className="h-9 rounded-lg border-border text-sm" min="0" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.maxStudentsLabel")}</label>
-              <Input type="number" value={maxStudents} onChange={(e) => setMaxStudents(e.target.value)} placeholder={t("createCourse.maxStudentsPlaceholder")} className="h-9 rounded-lg border-border text-sm" min="1" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
               <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.deadlineLabelCreate")}</label>
               <Popover>
                 <PopoverTrigger asChild>

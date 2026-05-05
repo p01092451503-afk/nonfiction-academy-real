@@ -836,15 +836,6 @@ const CourseDetail = () => {
             </div>
           </div>
 
-          <ul className="flex flex-wrap items-center gap-4 border-t border-border pt-2 text-xs text-muted-foreground" aria-label={isEn ? "Course details" : "강의 정보"}>
-            {course.estimated_duration_hours && (
-              <li className="flex items-center gap-1">
-                <Clock className="h-3 w-3" aria-hidden="true" />
-                {t("course.approxDuration", { hours: course.estimated_duration_hours })}
-              </li>
-            )}
-          </ul>
-
           {enrollment ? (
             <div className="space-y-1.5" aria-label={isEn ? `Progress ${overallProgress}%` : `진도율 ${overallProgress}%`}>
               <div className="flex items-center justify-between text-xs">
@@ -1603,18 +1594,6 @@ const CourseEditDialog = ({
                   <SelectItem value="advanced">{t("createCourse.advancedLevel")}</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-
-          {/* Duration & Max students */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.estimatedDuration") || "예상 소요시간(h)"}</Label>
-              <Input className="h-9 text-sm" type="number" min={0} value={form.estimated_duration_hours} onChange={(e) => setForm(f => ({ ...f, estimated_duration_hours: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("createCourse.maxStudents") || "최대 수강인원"}</Label>
-              <Input className="h-9 text-sm" type="number" min={0} value={form.max_students} onChange={(e) => setForm(f => ({ ...f, max_students: e.target.value }))} />
             </div>
           </div>
 
