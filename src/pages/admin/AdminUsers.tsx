@@ -272,9 +272,14 @@ const AdminUsers = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6" aria-hidden="true" />{t("admin.userManagement")}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("admin.userManagementDesc")}</p>
           </div>
-          <Button className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setAddOpen(true)}>
-            <UserPlus className="h-4 w-4" /> {t("admin.addUser")}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setBulkOpen(true)}>
+              <Upload className="h-4 w-4" /> 일괄 업로드
+            </Button>
+            <Button className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setAddOpen(true)}>
+              <UserPlus className="h-4 w-4" /> {t("admin.addUser")}
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
