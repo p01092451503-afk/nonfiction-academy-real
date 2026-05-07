@@ -77,18 +77,8 @@ const Auth = () => {
   return (
     <div className="flex min-h-screen">
       {/* Left - Visual Panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ backgroundColor: "#e8ddd0" }}>
-        <img src={loginBg} alt="NONFICTION LMS" className="absolute inset-0 w-full h-full object-cover opacity-60" width={1920} height={1080} fetchPriority="high" loading="eager" decoding="async" />
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div>
-            <h1 className="font-display text-4xl tracking-wider text-foreground">NONFICTION</h1>
-            <p className="mt-1 text-sm tracking-[0.3em] text-foreground/50 uppercase">Learning Management System</p>
-          </div>
-          <div className="space-y-4">
-            <h2 className="font-display text-3xl leading-snug text-foreground whitespace-pre-line">{t("auth.heroTitle")}</h2>
-            <p className="text-sm text-foreground/50 whitespace-nowrap leading-relaxed">{t("auth.heroSubtitle")}</p>
-          </div>
-        </div>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-white items-center justify-center">
+        <img src={loginBg} alt="NONFICTION LMS" className="w-full h-full object-contain" fetchPriority="high" loading="eager" decoding="async" />
       </div>
 
       {/* Right - Form */}
