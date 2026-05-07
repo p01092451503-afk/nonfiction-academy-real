@@ -135,19 +135,61 @@ const PWAStatusCard = () => {
       toast.error("이 브라우저는 Service Worker를 지원하지 않습니다");
       return;
     }
+    if (isInIframe || isPreviewHost) {
+      toast.error("미리보기 환경에서는 동작하지 않습니다. 배포된 도메인에서 시도하세요.");
+      return;
+    }
+    const loadingToast = toast.loading("업데이트 확인 중...");
     try {
       const regs = await navigator.serviceWorker.getRegistrations();
       if (regs.length === 0) {
+        toast.dismiss(loadingToast);
         toast.error("등록된 Service Worker가 없습니다 (배포 환경에서만 동작)");
         return;
       }
+
+      // Trigger update check on all registrations
       await Promise.all(regs.map((r) => r.update()));
       const now = Date.now();
       localStorage.setItem("pwa-last-update-check", String(now));
       setLastUpdateCheck(now);
-      toast.success("업데이트 확인 완료");
+
+      // If a new worker is waiting, activate it and reload
+      const waitingReg = regs.find((r) => r.waiting);
+      const installingReg = regs.find((r) => r.installing);
+
+      if (waitingReg?.waiting) {
+        toast.dismiss(loadingToast);
+        toast.success("새 버전을 적용합니다. 페이지를 새로고침합니다...");
+        waitingReg.waiting.postMessage({ type: "SKIP_WAITING" });
+        // Reload once the new SW takes control
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (reloaded) return;
+          reloaded = true;
+          window.location.reload();
+        });
+        // Safety fallback
+        setTimeout(() => {
+          if (!reloaded) window.location.reload();
+        }, 1500);
+        return;
+      }
+
+      if (installingReg?.installing) {
+        toast.dismiss(loadingToast);
+        toast.message("새 버전 다운로드 중...", {
+          description: "설치가 완료되면 자동으로 업데이트 알림이 표시됩니다.",
+        });
+        refresh();
+        return;
+      }
+
+      toast.dismiss(loadingToast);
+      toast.success("이미 최신 버전입니다");
       refresh();
     } catch (e) {
+      toast.dismiss(loadingToast);
       toast.error("업데이트 확인 실패");
     }
   };
