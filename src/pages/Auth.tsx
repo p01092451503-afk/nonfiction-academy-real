@@ -75,14 +75,14 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Left - Visual Panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-white items-center justify-center">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-white items-center justify-center h-screen">
         <img src={loginBg} alt="NONFICTION LMS" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center px-6 lg:px-16 bg-white relative">
+      <div className="flex-1 flex items-center justify-center px-6 lg:px-16 bg-white relative h-screen overflow-y-auto">
         {/* Language toggle */}
         <div className="absolute top-4 right-4">
           <LanguageToggle />
