@@ -78,7 +78,7 @@ const Auth = () => {
     <div className="flex min-h-screen">
       {/* Left - Visual Panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-white items-center justify-center">
-        <img src={loginBg} alt="NONFICTION LMS" className="w-full h-full object-contain" fetchPriority="high" loading="eager" decoding="async" />
+        <img src={loginBg} alt="NONFICTION LMS" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" />
       </div>
 
       {/* Right - Form */}
