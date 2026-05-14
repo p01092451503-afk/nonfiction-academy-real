@@ -12,6 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
+import CourseThumbnail from "@/components/CourseThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useTranslation } from "react-i18next";
@@ -220,15 +221,13 @@ const TeacherCourses = () => {
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="h-12 w-16 rounded-lg overflow-hidden shrink-0 bg-secondary">
-                              {course.thumbnail_url ? (
-                                <img src={course.thumbnail_url} alt={course.title} className="h-full w-full object-cover" />
-                              ) : (
-                                <div className="h-full w-full flex items-center justify-center" aria-hidden="true">
-                                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                              )}
-                            </div>
+                            <CourseThumbnail
+                              src={course.thumbnail_url}
+                              alt={course.title}
+                              className="max-h-20 w-16 shrink-0 rounded-lg"
+                              fallbackClassName="h-12 w-16 shrink-0 rounded-lg"
+                              iconClassName="h-4 w-4"
+                            />
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-foreground truncate max-w-[180px] sm:max-w-[300px]">
                                 {course.title}
@@ -288,14 +287,14 @@ const TeacherCourses = () => {
                   onClick={() => navigate(`/teacher/courses/${course.id}`)}
                 >
                   {/* Thumbnail */}
-                  <div className="relative h-36 bg-secondary overflow-hidden">
-                    {course.thumbnail_url ? (
-                      <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center" aria-hidden="true">
-                        <BookOpen className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
+                  <div className="relative bg-secondary overflow-hidden">
+                    <CourseThumbnail
+                      src={course.thumbnail_url}
+                      alt={course.title}
+                      className="w-full rounded-none transition-transform duration-300 group-hover:scale-105"
+                      fallbackClassName="flex h-36 w-full items-center justify-center rounded-none"
+                      iconClassName="h-8 w-8"
+                    />
                     <div className="absolute top-2.5 left-2.5">
                       <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-lg ${statusColor[course.status || "draft"]}`}>
                         {statusLabel[course.status || "draft"]}
