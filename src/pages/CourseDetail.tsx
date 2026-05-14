@@ -595,15 +595,15 @@ const CourseDetail = () => {
           <section className="rounded-xl border border-border bg-card p-4" aria-labelledby="course-detail-heading">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               {(autoThumbnailUrl || course.thumbnail_url) ? (
-                <div className="relative h-20 w-full overflow-hidden rounded-lg bg-accent sm:w-32 sm:shrink-0">
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-accent sm:w-32 sm:shrink-0">
                   <img
                     src={autoThumbnailUrl || course.thumbnail_url}
                     alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                    className="absolute inset-0 h-full w-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover object-center"
                   />
                 </div>
               ) : (
-                <div className="flex h-20 w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0" aria-hidden="true">
+                <div className="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0" aria-hidden="true">
                   <BookOpen className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
                 </div>
               )}
