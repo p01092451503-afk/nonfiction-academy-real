@@ -885,14 +885,36 @@ const CreateCourse = () => {
 
           {/* Thumbnail Upload */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.thumbnailLabel")}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.thumbnailLabel")}</label>
+              {lessonImages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setImagePickerOpen(true)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                >
+                  <Images className="h-3 w-3" />
+                  차시 이미지에서 선택 ({lessonImages.length})
+                </button>
+              )}
+            </div>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
             {thumbnailPreview ? (
               <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
                 <img src={thumbnailPreview} alt={t("createCourse.thumbnailAlt")} className="w-full h-full object-cover" />
-                <button type="button" onClick={removeThumbnail} className="absolute top-2 right-2 h-7 w-7 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
-                  <X className="h-4 w-4" />
-                </button>
+                {selectedLessonImageUrl && !thumbnailFile && (
+                  <span className="absolute bottom-2 left-2 text-[10px] px-1.5 py-0.5 rounded bg-background/80 backdrop-blur-sm text-muted-foreground">
+                    차시 이미지 사용 중
+                  </span>
+                )}
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="h-7 px-2 rounded-md bg-background/80 backdrop-blur-sm text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    변경
+                  </button>
+                  <button type="button" onClick={removeThumbnail} className="h-7 w-7 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <button type="button" onClick={() => fileInputRef.current?.click()} onPaste={handlePaste} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}
@@ -901,7 +923,48 @@ const CreateCourse = () => {
                 <span className="text-[11px]">{t("createCourse.thumbnailDropHint")}</span>
               </button>
             )}
+            {!thumbnailManuallySet && lessonImages.length > 0 && (
+              <p className="text-[10px] text-muted-foreground">차시에 등록된 첫 이미지가 자동으로 썸네일로 사용됩니다. 직접 업로드하거나 다른 이미지를 선택할 수 있습니다.</p>
+            )}
           </div>
+
+          {/* Lesson image picker dialog */}
+          <Dialog open={imagePickerOpen} onOpenChange={setImagePickerOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-base">차시 이미지에서 썸네일 선택</DialogTitle>
+              </DialogHeader>
+              {lessonImages.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">차시에 등록된 이미지가 없습니다.</p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+                  {lessonImages.map((url) => {
+                    const isSelected = selectedLessonImageUrl === url;
+                    return (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => pickLessonImage(url)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? "border-primary" : "border-border hover:border-primary/50"}`}
+                      >
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                            <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                              <Check className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setImagePickerOpen(false)}>닫기</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <Tabs defaultValue="ko" className="w-full">
             <TabsList className="w-full h-9">
