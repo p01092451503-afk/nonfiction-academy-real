@@ -185,6 +185,33 @@ const CourseDetail = () => {
     staleTime: 0,
   });
 
+  // Auto-derived thumbnail: first image of the first published media-package content
+  const { data: autoThumbnailUrl } = useQuery({
+    queryKey: ["course-auto-thumbnail", courseId, contents.map(c => c.id).join(",")],
+    queryFn: async () => {
+      const orderedContentIds = contents
+        .filter((c: any) => c.is_published)
+        .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .map((c: any) => c.id);
+      if (orderedContentIds.length === 0) return null;
+      const { data } = await (supabase as any)
+        .from("media_package_items")
+        .select("content_id, media_url, item_type, order_index")
+        .in("content_id", orderedContentIds)
+        .eq("item_type", "image")
+        .order("order_index", { ascending: true });
+      if (!data || data.length === 0) return null;
+      // Pick the earliest content (by orderedContentIds) that has an image
+      for (const cid of orderedContentIds) {
+        const found = data.find((d: any) => d.content_id === cid);
+        if (found?.media_url) return found.media_url as string;
+      }
+      return null;
+    },
+    enabled: contents.length > 0,
+    staleTime: 60_000,
+  });
+
   const { data: enrollment } = useQuery({
     queryKey: ["enrollment", courseId, user?.id],
     queryFn: async () => {
@@ -818,14 +845,14 @@ const CourseDetail = () => {
 
         <section className="space-y-4 rounded-xl border border-border bg-card p-5" aria-labelledby="student-course-detail-heading">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            {course.thumbnail_url ? (
+            {(autoThumbnailUrl || course.thumbnail_url) ? (
               <img
-                src={course.thumbnail_url}
+                src={autoThumbnailUrl || course.thumbnail_url}
                 alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                className="aspect-[3/4] w-full rounded-xl object-contain bg-accent sm:aspect-auto sm:h-16 sm:w-16 sm:object-cover sm:shrink-0"
+                className="aspect-[3/4] w-full rounded-xl object-contain bg-accent sm:aspect-[4/3] sm:w-40 sm:h-auto sm:max-h-48 sm:object-contain sm:shrink-0"
               />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
+              <div className="flex h-16 w-16 sm:h-32 sm:w-40 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
                 <BookOpen className="h-7 w-7 text-accent-foreground" aria-hidden="true" />
               </div>
             )}
