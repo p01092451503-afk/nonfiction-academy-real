@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import CourseCard from "@/components/CourseCard";
+import CourseThumbnail from "@/components/CourseThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import StatCard from "@/components/ui/stat-card";
@@ -282,15 +283,13 @@ const AdminCourses = () => {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                            {course.thumbnail_url ? (
-                              <img src={course.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center">
-                                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
+                          <CourseThumbnail
+                            src={course.thumbnail_url}
+                            alt=""
+                            className="max-h-20 max-w-[4rem] shrink-0 rounded-lg"
+                            fallbackClassName="h-12 w-16 shrink-0 rounded-lg"
+                            iconClassName="h-4 w-4"
+                          />
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-foreground truncate max-w-[180px] lg:max-w-[280px]">
                               {course.title}

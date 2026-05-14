@@ -3,6 +3,7 @@ import { Clock, Users, BookOpen, Star, Sparkles, AlertTriangle, CalendarClock } 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
+import CourseThumbnail from "@/components/CourseThumbnail";
 
 const categoryGradients: Record<string, string> = {
   marketing: "from-orange-500 to-pink-500", sales: "from-blue-500 to-cyan-500",
@@ -34,18 +35,14 @@ const CourseCard = ({ course, categorySlug, categoryName, studentCount, contentC
   return (
     <Link to={linkTo} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-xl" aria-label={course.title}>
       <div className="stat-card !p-0 overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-        <div className={`relative aspect-[16/10] bg-gradient-to-br ${gradient} overflow-hidden`}>
-          {course.thumbnail_url ? (
-            <img
-              src={course.thumbnail_url}
-              alt={course.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <BookOpen className="h-12 w-12 text-white/30" strokeWidth={1.2} aria-hidden="true" />
-            </div>
-          )}
+        <div className={`relative bg-gradient-to-br ${gradient} overflow-hidden`}>
+          <CourseThumbnail
+            src={course.thumbnail_url}
+            alt={course.title}
+            className="w-full rounded-none"
+            fallbackClassName="flex aspect-[16/10] w-full items-center justify-center rounded-none bg-transparent"
+            iconClassName="h-12 w-12 text-primary-foreground/30"
+          />
           <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
             {isDraft && <span className="text-[10px] font-semibold bg-background/90 text-foreground px-2.5 py-1 rounded-lg backdrop-blur-sm">{t("teacher.draft")}</span>}
             {!isDraft && !isPublished && <span className="text-[10px] font-semibold bg-amber-500 text-white px-2.5 py-1 rounded-lg">{t("teacher.openingSoon")}</span>}

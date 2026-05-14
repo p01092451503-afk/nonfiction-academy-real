@@ -11,6 +11,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
+import CourseThumbnail from "@/components/CourseThumbnail";
 
 const categoryGradients: Record<string, string> = {
   marketing: "from-orange-500 to-pink-500",
@@ -62,14 +63,14 @@ const CatalogCourseCard = ({
     aria-label={course.title}
   >
     <Link to={`/student/courses/${course.id}`} className="block">
-      <div className={`relative aspect-[16/10] overflow-hidden bg-gradient-to-br ${gradient}`}>
-        {course.thumbnail_url ? (
-          <img src={course.thumbnail_url} alt={course.title} className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <BookOpen className="h-12 w-12 text-white/30" strokeWidth={1.2} aria-hidden="true" />
-          </div>
-        )}
+      <div className={`relative overflow-hidden bg-gradient-to-br ${gradient}`}>
+        <CourseThumbnail
+          src={course.thumbnail_url}
+          alt={course.title}
+          className="w-full rounded-none"
+          fallbackClassName="flex aspect-[16/10] w-full items-center justify-center rounded-none bg-transparent"
+          iconClassName="h-12 w-12 text-primary-foreground/30"
+        />
 
         <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
           {course.is_mandatory && (
