@@ -595,11 +595,13 @@ const CourseDetail = () => {
           <section className="rounded-xl border border-border bg-card p-4" aria-labelledby="course-detail-heading">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               {(autoThumbnailUrl || course.thumbnail_url) ? (
-                <img
-                  src={autoThumbnailUrl || course.thumbnail_url}
-                  alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                  className="h-20 w-full rounded-lg object-cover bg-accent sm:w-32 sm:shrink-0"
-                />
+                <div className="relative h-20 w-full overflow-hidden rounded-lg bg-accent sm:w-32 sm:shrink-0">
+                  <img
+                    src={autoThumbnailUrl || course.thumbnail_url}
+                    alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className="flex h-20 w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0" aria-hidden="true">
                   <BookOpen className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
@@ -846,11 +848,13 @@ const CourseDetail = () => {
         <section className="space-y-4 rounded-xl border border-border bg-card p-5" aria-labelledby="student-course-detail-heading">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             {(autoThumbnailUrl || course.thumbnail_url) ? (
-              <img
-                src={autoThumbnailUrl || course.thumbnail_url}
-                alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                className="aspect-[3/4] w-full rounded-xl object-cover bg-accent sm:aspect-auto sm:h-48 sm:w-auto sm:max-w-[16rem] sm:object-cover sm:shrink-0"
-              />
+              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-accent sm:h-48 sm:w-32 sm:shrink-0">
+                <img
+                  src={autoThumbnailUrl || course.thumbnail_url}
+                  alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
             ) : (
               <div className="flex h-16 w-16 sm:h-32 sm:w-40 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
                 <BookOpen className="h-7 w-7 text-accent-foreground" aria-hidden="true" />
