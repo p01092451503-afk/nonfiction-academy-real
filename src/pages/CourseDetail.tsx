@@ -598,7 +598,7 @@ const CourseDetail = () => {
               <CourseThumbnail
                 src={autoThumbnailUrl || course.thumbnail_url}
                 alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                className="w-full rounded-lg sm:max-h-56 sm:w-32 sm:shrink-0"
+                className="max-h-[70vh] w-full rounded-lg sm:max-h-56 sm:max-w-32 sm:shrink-0"
                 fallbackClassName="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0"
                 iconClassName="h-6 w-6"
               />
@@ -845,7 +845,7 @@ const CourseDetail = () => {
             <CourseThumbnail
               src={autoThumbnailUrl || course.thumbnail_url}
               alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-              className="w-full rounded-xl sm:max-h-56 sm:w-32 sm:shrink-0"
+              className="max-h-[70vh] w-full rounded-xl sm:max-h-56 sm:max-w-32 sm:shrink-0"
               fallbackClassName="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-accent sm:h-32 sm:w-40"
               iconClassName="h-7 w-7 text-accent-foreground"
             />
