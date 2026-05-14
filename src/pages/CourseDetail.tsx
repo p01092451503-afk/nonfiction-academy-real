@@ -594,12 +594,21 @@ const CourseDetail = () => {
 
           <section className="rounded-xl border border-border bg-card p-4" aria-labelledby="course-detail-heading">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              {course.thumbnail_url ? (
-                <img
-                  src={course.thumbnail_url}
-                  alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                  className="h-20 w-full rounded-lg object-cover sm:w-32 sm:shrink-0"
-                />
+              {(autoThumbnailUrl || course.thumbnail_url) ? (
+                <div className="relative h-20 w-full rounded-lg overflow-hidden bg-accent sm:w-32 sm:shrink-0">
+                  <img
+                    src={autoThumbnailUrl || course.thumbnail_url}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-md opacity-70"
+                  />
+                  <div className="absolute inset-0 bg-black/10" aria-hidden="true" />
+                  <img
+                    src={autoThumbnailUrl || course.thumbnail_url}
+                    alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
+                    className="relative w-full h-full object-contain"
+                  />
+                </div>
               ) : (
                 <div className="flex h-20 w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0" aria-hidden="true">
                   <BookOpen className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
