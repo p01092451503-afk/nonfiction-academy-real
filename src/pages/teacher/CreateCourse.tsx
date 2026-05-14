@@ -138,6 +138,9 @@ const CreateCourse = () => {
   const [status, setStatus] = useState("draft");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [selectedLessonImageUrl, setSelectedLessonImageUrl] = useState<string | null>(null);
+  const [thumbnailManuallySet, setThumbnailManuallySet] = useState(false);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Content items
