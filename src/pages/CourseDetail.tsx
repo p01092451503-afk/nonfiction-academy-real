@@ -185,6 +185,33 @@ const CourseDetail = () => {
     staleTime: 0,
   });
 
+  // Auto-derived thumbnail: first image of the first published media-package content
+  const { data: autoThumbnailUrl } = useQuery({
+    queryKey: ["course-auto-thumbnail", courseId, contents.map(c => c.id).join(",")],
+    queryFn: async () => {
+      const orderedContentIds = contents
+        .filter((c: any) => c.is_published)
+        .sort((a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .map((c: any) => c.id);
+      if (orderedContentIds.length === 0) return null;
+      const { data } = await (supabase as any)
+        .from("media_package_items")
+        .select("content_id, media_url, item_type, order_index")
+        .in("content_id", orderedContentIds)
+        .eq("item_type", "image")
+        .order("order_index", { ascending: true });
+      if (!data || data.length === 0) return null;
+      // Pick the earliest content (by orderedContentIds) that has an image
+      for (const cid of orderedContentIds) {
+        const found = data.find((d: any) => d.content_id === cid);
+        if (found?.media_url) return found.media_url as string;
+      }
+      return null;
+    },
+    enabled: contents.length > 0,
+    staleTime: 60_000,
+  });
+
   const { data: enrollment } = useQuery({
     queryKey: ["enrollment", courseId, user?.id],
     queryFn: async () => {
