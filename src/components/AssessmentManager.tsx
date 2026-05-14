@@ -740,10 +740,16 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
               </p>
             </div>
             {!showResults && (
-              <Button size="sm" className="h-8 text-xs gap-1" onClick={openAddQuestion}>
-                <Plus className="h-3 w-3" />
-                {t("assessment.addQuestion")}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setBulkUploadOpen(true)}>
+                  <FileSpreadsheet className="h-3 w-3" />
+                  엑셀 일괄 등록
+                </Button>
+                <Button size="sm" className="h-8 text-xs gap-1" onClick={openAddQuestion}>
+                  <Plus className="h-3 w-3" />
+                  {t("assessment.addQuestion")}
+                </Button>
+              </div>
             )}
           </div>
 
