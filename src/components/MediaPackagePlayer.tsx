@@ -218,7 +218,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
             <img
               src={item.media_url}
               alt={item.caption || "슬라이드"}
-              className="w-full h-auto max-h-[85vh] object-contain select-none pointer-events-none"
+              className="w-full h-auto block select-none pointer-events-none"
               style={transform ? { transform, transformOrigin: "center center", transition: inlinePinchStart.current || inlinePanStart.current ? "none" : "transform 0.15s ease-out" } : undefined}
               draggable={false}
             />
@@ -245,7 +245,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
       {/* Media display – horizontal slider */}
       <div
         ref={containerRef}
-        className="relative bg-foreground/5 rounded-2xl overflow-hidden touch-pan-y"
+        className="relative overflow-hidden touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
