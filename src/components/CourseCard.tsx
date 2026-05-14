@@ -49,7 +49,7 @@ const CourseCard = ({ course, categorySlug, categoryName, studentCount, contentC
               <img
                 src={course.thumbnail_url}
                 alt={course.title}
-                className="relative z-[1] w-full h-full object-contain"
+                className="relative w-full h-full object-contain"
               />
             </>
           ) : (
