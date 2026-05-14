@@ -1045,12 +1045,21 @@ const CreateCourse = () => {
           </Dialog>
 
           <Tabs defaultValue="ko" className="w-full">
-            <TabsList className="w-full h-9">
-              <TabsTrigger value="ko" className="flex-1 text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
-              <TabsTrigger value="en" className="flex-1 text-xs">{t("course.enTab", "English")}</TabsTrigger>
+            <TabsList className="w-full h-9 grid grid-cols-4">
+              <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
+              <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
+              <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
+              <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">한국어 입력 시 영어/중국어/일본어로 자동 번역됩니다.</p>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateCourse} disabled={translatingCourse || (!title && !description)}>
+                  <Languages className="h-3 w-3" />
+                  {translatingCourse ? "번역 중..." : "전체 재번역"}
+                </Button>
+              </div>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.courseTitleRequired")}</label>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("createCourse.courseTitleExample")} className="h-9 rounded-lg border-border text-sm" />
@@ -1062,20 +1071,38 @@ const CreateCourse = () => {
             </TabsContent>
 
             <TabsContent value="en" className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] text-muted-foreground">{t("course.enOptional", "영어 버전 (선택)")}</p>
-                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateCourse} disabled={translatingCourse || (!title && !description)}>
-                  <Languages className="h-3 w-3" />
-                  {t("course.autoTranslate", "자동 번역")}
-                </Button>
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "번역 중..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">English Title</label>
+                <Input value={enTitle} onChange={(e) => { setEnTitle(e.target.value); setEnTitleManual(true); }} placeholder="English title" className="h-9 rounded-lg border-border text-sm" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("course.enTitle", "영어 제목")}</label>
-                <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)} placeholder="English title" className="h-9 rounded-lg border-border text-sm" />
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">English Description</label>
+                <Textarea value={enDescription} onChange={(e) => { setEnDescription(e.target.value); setEnDescManual(true); }} placeholder="English description" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="zh-CN" className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "翻译中..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">中文标题</label>
+                <Input value={zhTitle} onChange={(e) => { setZhTitle(e.target.value); setZhTitleManual(true); }} placeholder="中文标题" className="h-9 rounded-lg border-border text-sm" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("course.enDescription", "영어 설명")}</label>
-                <Textarea value={enDescription} onChange={(e) => setEnDescription(e.target.value)} placeholder="English description" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">中文描述</label>
+                <Textarea value={zhDescription} onChange={(e) => { setZhDescription(e.target.value); setZhDescManual(true); }} placeholder="中文描述" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ja" className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "翻訳中..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語タイトル</label>
+                <Input value={jaTitle} onChange={(e) => { setJaTitle(e.target.value); setJaTitleManual(true); }} placeholder="日本語タイトル" className="h-9 rounded-lg border-border text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語説明</label>
+                <Textarea value={jaDescription} onChange={(e) => { setJaDescription(e.target.value); setJaDescManual(true); }} placeholder="日本語説明" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
               </div>
             </TabsContent>
           </Tabs>
