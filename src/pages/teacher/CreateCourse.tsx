@@ -840,14 +840,19 @@ const CreateCourse = () => {
         course.thumbnail_url = selectedLessonImageUrl;
       }
 
-      // Save course i18n
-      if (enTitle || enDescription) {
-        await supabase.from("course_i18n").insert({
-          course_id: course.id,
-          language_code: "en",
-          title: enTitle || title,
-          description: enDescription || description || null,
-        });
+      // Save course i18n (en, zh-CN, ja)
+      const courseI18nRows = [
+        { lang: "en", title: enTitle, desc: enDescription },
+        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
+        { lang: "ja", title: jaTitle, desc: jaDescription },
+      ].filter((r) => r.title || r.desc).map((r) => ({
+        course_id: course.id,
+        language_code: r.lang,
+        title: r.title || title,
+        description: r.desc || description || null,
+      }));
+      if (courseI18nRows.length) {
+        await supabase.from("course_i18n").insert(courseI18nRows);
       }
 
       if (contents.length > 0) {
