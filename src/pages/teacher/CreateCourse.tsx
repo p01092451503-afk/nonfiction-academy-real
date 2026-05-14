@@ -333,26 +333,82 @@ const CreateCourse = () => {
     })();
   }, [isEditMode, editCourseId, editDataLoaded]);
 
-  // Real-time sync KO → EN for course (auto-copy when user hasn't manually edited EN)
+  // Debounced auto-translation: when KO title/description changes, translate to EN/ZH-CN/JA
+  // for slots that the user hasn't manually edited.
   useEffect(() => {
-    if (!enTitleManual && title) setEnTitle(title);
-  }, [title, enTitleManual]);
-  useEffect(() => {
-    if (!enDescManual && description) setEnDescription(description);
-  }, [description, enDescManual]);
+    const koTitle = title.trim();
+    const koDesc = description.trim();
+    if (!koTitle && !koDesc) return;
+    const handle = setTimeout(async () => {
+      const targets: { lang: TargetLang; needTitle: boolean; needDesc: boolean }[] = [
+        { lang: "en", needTitle: !enTitleManual && !!koTitle, needDesc: !enDescManual && !!koDesc },
+        { lang: "zh-CN", needTitle: !zhTitleManual && !!koTitle, needDesc: !zhDescManual && !!koDesc },
+        { lang: "ja", needTitle: !jaTitleManual && !!koTitle, needDesc: !jaDescManual && !!koDesc },
+      ];
+      setTranslatingCourse(true);
+      try {
+        await Promise.all(targets.map(async (tgt) => {
+          if (!tgt.needTitle && !tgt.needDesc) return;
+          const inputs: string[] = [];
+          if (tgt.needTitle) inputs.push(koTitle);
+          if (tgt.needDesc) inputs.push(koDesc);
+          try {
+            const out = await translateKoTo(tgt.lang, inputs);
+            let i = 0;
+            if (tgt.needTitle) {
+              const v = out[i++] || "";
+              if (tgt.lang === "en") setEnTitle(v);
+              if (tgt.lang === "zh-CN") setZhTitle(v);
+              if (tgt.lang === "ja") setJaTitle(v);
+            }
+            if (tgt.needDesc) {
+              const v = out[i++] || "";
+              if (tgt.lang === "en") setEnDescription(v);
+              if (tgt.lang === "zh-CN") setZhDescription(v);
+              if (tgt.lang === "ja") setJaDescription(v);
+            }
+          } catch { /* silent per-lang */ }
+        }));
+      } finally {
+        setTranslatingCourse(false);
+      }
+    }, 800);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description]);
 
-  // Auto-translate course info
+  // Manual auto-translate trigger (re-translates all non-manual slots immediately)
   const handleTranslateCourse = async () => {
-    const texts = [title, description].filter(Boolean);
-    if (!texts.length) return;
+    const koTitle = title.trim();
+    const koDesc = description.trim();
+    if (!koTitle && !koDesc) return;
     setTranslatingCourse(true);
     try {
-      const results = await translateKoToEn(texts);
-      let idx = 0;
-      if (title) { setEnTitle(results[idx++] || ""); setEnTitleManual(true); }
-      if (description) { setEnDescription(results[idx++] || ""); setEnDescManual(true); }
-    } catch { /* silent */ }
-    finally { setTranslatingCourse(false); }
+      const langs: TargetLang[] = ["en", "zh-CN", "ja"];
+      await Promise.all(langs.map(async (lang) => {
+        const inputs: string[] = [];
+        if (koTitle) inputs.push(koTitle);
+        if (koDesc) inputs.push(koDesc);
+        try {
+          const out = await translateKoTo(lang, inputs);
+          let i = 0;
+          if (koTitle) {
+            const v = out[i++] || "";
+            if (lang === "en") { setEnTitle(v); setEnTitleManual(true); }
+            if (lang === "zh-CN") { setZhTitle(v); setZhTitleManual(true); }
+            if (lang === "ja") { setJaTitle(v); setJaTitleManual(true); }
+          }
+          if (koDesc) {
+            const v = out[i++] || "";
+            if (lang === "en") { setEnDescription(v); setEnDescManual(true); }
+            if (lang === "zh-CN") { setZhDescription(v); setZhDescManual(true); }
+            if (lang === "ja") { setJaDescription(v); setJaDescManual(true); }
+          }
+        } catch { /* silent */ }
+      }));
+    } finally {
+      setTranslatingCourse(false);
+    }
   };
 
   const buildDraftData = useCallback(() => ({
