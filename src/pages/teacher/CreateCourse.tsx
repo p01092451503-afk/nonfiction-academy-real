@@ -189,17 +189,30 @@ const CreateCourse = () => {
         setThumbnailManuallySet(true);
       }
 
-      // Load course i18n
-      const { data: courseI18n } = await supabase
+      // Load course i18n (en, zh-CN, ja)
+      const { data: courseI18ns } = await supabase
         .from("course_i18n")
         .select("*")
         .eq("course_id", editCourseId)
-        .eq("language_code", "en")
-        .maybeSingle();
-      if (courseI18n) {
-        setEnTitle(courseI18n.title || "");
-        setEnDescription(courseI18n.description || "");
-      }
+        .in("language_code", ["en", "zh-CN", "ja"]);
+      (courseI18ns || []).forEach((row: any) => {
+        if (row.language_code === "en") {
+          setEnTitle(row.title || "");
+          setEnDescription(row.description || "");
+          if (row.title) setEnTitleManual(true);
+          if (row.description) setEnDescManual(true);
+        } else if (row.language_code === "zh-CN") {
+          setZhTitle(row.title || "");
+          setZhDescription(row.description || "");
+          if (row.title) setZhTitleManual(true);
+          if (row.description) setZhDescManual(true);
+        } else if (row.language_code === "ja") {
+          setJaTitle(row.title || "");
+          setJaDescription(row.description || "");
+          if (row.title) setJaTitleManual(true);
+          if (row.description) setJaDescManual(true);
+        }
+      });
 
       // Load contents
       const { data: courseContents } = await supabase
