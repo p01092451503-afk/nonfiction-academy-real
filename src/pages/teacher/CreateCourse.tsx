@@ -753,6 +753,9 @@ const CreateCourse = () => {
           await supabase.from("courses").update({ thumbnail_url: thumbnailUrl }).eq("id", course.id);
           course.thumbnail_url = thumbnailUrl;
         }
+      } else if (selectedLessonImageUrl) {
+        await supabase.from("courses").update({ thumbnail_url: selectedLessonImageUrl }).eq("id", course.id);
+        course.thumbnail_url = selectedLessonImageUrl;
       }
 
       // Save course i18n
