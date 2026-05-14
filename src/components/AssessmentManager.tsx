@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Eye, EyeOff, ClipboardCheck, Users, Languages } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, ClipboardCheck, Users, Languages, FileSpreadsheet } from "lucide-react";
 import AssessmentResults from "@/components/AssessmentResults";
+import BulkQuestionUploadDialog from "@/components/BulkQuestionUploadDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,6 +107,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [questionForm, setQuestionForm] = useState<QuestionForm>(emptyQuestion);
   const [showResults, setShowResults] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
   // Assessment base form (Korean)
   const [assessmentForm, setAssessmentForm] = useState({
@@ -738,10 +740,16 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
               </p>
             </div>
             {!showResults && (
-              <Button size="sm" className="h-8 text-xs gap-1" onClick={openAddQuestion}>
-                <Plus className="h-3 w-3" />
-                {t("assessment.addQuestion")}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setBulkUploadOpen(true)}>
+                  <FileSpreadsheet className="h-3 w-3" />
+                  엑셀 일괄 등록
+                </Button>
+                <Button size="sm" className="h-8 text-xs gap-1" onClick={openAddQuestion}>
+                  <Plus className="h-3 w-3" />
+                  {t("assessment.addQuestion")}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -1100,6 +1108,15 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {assessment && (
+        <BulkQuestionUploadDialog
+          open={bulkUploadOpen}
+          onOpenChange={setBulkUploadOpen}
+          assessmentId={assessment.id}
+          startOrderIndex={questions.length > 0 ? Math.max(...questions.map((q: any) => q.order_index ?? 0)) + 1 : 0}
+        />
+      )}
     </section>
   );
 }
