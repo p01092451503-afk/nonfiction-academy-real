@@ -286,7 +286,7 @@ const AdminCourses = () => {
                           <CourseThumbnail
                             src={course.thumbnail_url}
                             alt=""
-                            className="max-h-20 w-16 shrink-0 rounded-lg"
+                            className="max-h-20 max-w-16 shrink-0 rounded-lg"
                             fallbackClassName="h-12 w-16 shrink-0 rounded-lg"
                             iconClassName="h-4 w-4"
                           />
