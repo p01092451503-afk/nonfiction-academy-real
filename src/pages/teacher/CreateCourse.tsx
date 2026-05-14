@@ -613,6 +613,8 @@ const CreateCourse = () => {
       let thumbnailUrl = existingThumbnailUrl;
       if (thumbnailFile) {
         thumbnailUrl = await uploadThumbnail(editCourseId!);
+      } else if (selectedLessonImageUrl) {
+        thumbnailUrl = selectedLessonImageUrl;
       }
 
       const { error: courseError } = await supabase
