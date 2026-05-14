@@ -1108,6 +1108,15 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {assessment && (
+        <BulkQuestionUploadDialog
+          open={bulkUploadOpen}
+          onOpenChange={setBulkUploadOpen}
+          assessmentId={assessment.id}
+          startOrderIndex={questions.length > 0 ? Math.max(...questions.map((q: any) => q.order_index ?? 0)) + 1 : 0}
+        />
+      )}
     </section>
   );
 }
