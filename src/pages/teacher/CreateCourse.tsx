@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Video, FileText, BarChart3,
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
-  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw,
+  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw, Images, Check,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
 import UploadOrderQueueDialog from "@/components/UploadOrderQueueDialog";
@@ -137,6 +138,9 @@ const CreateCourse = () => {
   const [status, setStatus] = useState("draft");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [selectedLessonImageUrl, setSelectedLessonImageUrl] = useState<string | null>(null);
+  const [thumbnailManuallySet, setThumbnailManuallySet] = useState(false);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Content items
@@ -174,6 +178,7 @@ const CreateCourse = () => {
       if (course.thumbnail_url) {
         setThumbnailPreview(course.thumbnail_url);
         setExistingThumbnailUrl(course.thumbnail_url);
+        setThumbnailManuallySet(true);
       }
 
       // Load course i18n
@@ -526,6 +531,8 @@ const CreateCourse = () => {
     }
     setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
+    setSelectedLessonImageUrl(null);
+    setThumbnailManuallySet(true);
   };
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -553,14 +560,61 @@ const CreateCourse = () => {
   const removeThumbnail = () => {
     setThumbnailFile(null);
     setThumbnailPreview(null);
+    setSelectedLessonImageUrl(null);
+    setExistingThumbnailUrl(null);
+    setThumbnailManuallySet(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const pickLessonImage = (url: string) => {
+    setSelectedLessonImageUrl(url);
+    setThumbnailPreview(url);
+    setThumbnailFile(null);
+    setThumbnailManuallySet(true);
+    setImagePickerOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Collect all image URLs from lesson contents (card images + package items)
+  const lessonImages = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    contents.forEach((c) => {
+      if (c.card_image_url && !seen.has(c.card_image_url)) {
+        seen.add(c.card_image_url);
+        result.push(c.card_image_url);
+      }
+      (c.card_urls || []).forEach((u) => {
+        if (u && !seen.has(u)) { seen.add(u); result.push(u); }
+      });
+      (c.package_items || []).forEach((it) => {
+        if (it.item_type === "image" && it.media_url && !seen.has(it.media_url)) {
+          seen.add(it.media_url);
+          result.push(it.media_url);
+        }
+      });
+    });
+    return result;
+  }, [contents]);
+
+  // Auto-pick first lesson image as thumbnail when nothing manually set
+  useEffect(() => {
+    if (thumbnailManuallySet) return;
+    if (thumbnailFile) return;
+    if (lessonImages.length === 0) return;
+    const first = lessonImages[0];
+    setSelectedLessonImageUrl(first);
+    setThumbnailPreview(first);
+  }, [lessonImages, thumbnailManuallySet, thumbnailFile]);
+
 
   const updateMutation = useMutation({
     mutationFn: async () => {
       let thumbnailUrl = existingThumbnailUrl;
       if (thumbnailFile) {
         thumbnailUrl = await uploadThumbnail(editCourseId!);
+      } else if (selectedLessonImageUrl) {
+        thumbnailUrl = selectedLessonImageUrl;
       }
 
       const { error: courseError } = await supabase
@@ -699,6 +753,9 @@ const CreateCourse = () => {
           await supabase.from("courses").update({ thumbnail_url: thumbnailUrl }).eq("id", course.id);
           course.thumbnail_url = thumbnailUrl;
         }
+      } else if (selectedLessonImageUrl) {
+        await supabase.from("courses").update({ thumbnail_url: selectedLessonImageUrl }).eq("id", course.id);
+        course.thumbnail_url = selectedLessonImageUrl;
       }
 
       // Save course i18n
@@ -828,14 +885,36 @@ const CreateCourse = () => {
 
           {/* Thumbnail Upload */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.thumbnailLabel")}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.thumbnailLabel")}</label>
+              {lessonImages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setImagePickerOpen(true)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                >
+                  <Images className="h-3 w-3" />
+                  차시 이미지에서 선택 ({lessonImages.length})
+                </button>
+              )}
+            </div>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleThumbnailChange} className="hidden" />
             {thumbnailPreview ? (
               <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
                 <img src={thumbnailPreview} alt={t("createCourse.thumbnailAlt")} className="w-full h-full object-cover" />
-                <button type="button" onClick={removeThumbnail} className="absolute top-2 right-2 h-7 w-7 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
-                  <X className="h-4 w-4" />
-                </button>
+                {selectedLessonImageUrl && !thumbnailFile && (
+                  <span className="absolute bottom-2 left-2 text-[10px] px-1.5 py-0.5 rounded bg-background/80 backdrop-blur-sm text-muted-foreground">
+                    차시 이미지 사용 중
+                  </span>
+                )}
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="h-7 px-2 rounded-md bg-background/80 backdrop-blur-sm text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    변경
+                  </button>
+                  <button type="button" onClick={removeThumbnail} className="h-7 w-7 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <button type="button" onClick={() => fileInputRef.current?.click()} onPaste={handlePaste} onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}
@@ -844,7 +923,48 @@ const CreateCourse = () => {
                 <span className="text-[11px]">{t("createCourse.thumbnailDropHint")}</span>
               </button>
             )}
+            {!thumbnailManuallySet && lessonImages.length > 0 && (
+              <p className="text-[10px] text-muted-foreground">차시에 등록된 첫 이미지가 자동으로 썸네일로 사용됩니다. 직접 업로드하거나 다른 이미지를 선택할 수 있습니다.</p>
+            )}
           </div>
+
+          {/* Lesson image picker dialog */}
+          <Dialog open={imagePickerOpen} onOpenChange={setImagePickerOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-base">차시 이미지에서 썸네일 선택</DialogTitle>
+              </DialogHeader>
+              {lessonImages.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">차시에 등록된 이미지가 없습니다.</p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+                  {lessonImages.map((url) => {
+                    const isSelected = selectedLessonImageUrl === url;
+                    return (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => pickLessonImage(url)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? "border-primary" : "border-border hover:border-primary/50"}`}
+                      >
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                            <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                              <Check className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setImagePickerOpen(false)}>닫기</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <Tabs defaultValue="ko" className="w-full">
             <TabsList className="w-full h-9">
