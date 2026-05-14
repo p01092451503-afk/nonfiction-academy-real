@@ -178,6 +178,7 @@ const CreateCourse = () => {
       if (course.thumbnail_url) {
         setThumbnailPreview(course.thumbnail_url);
         setExistingThumbnailUrl(course.thumbnail_url);
+        setThumbnailManuallySet(true);
       }
 
       // Load course i18n
