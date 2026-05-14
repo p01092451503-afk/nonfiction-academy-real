@@ -719,14 +719,19 @@ const CreateCourse = () => {
       );
       await supabase.from("course_contents").delete().eq("course_id", editCourseId!);
 
-      // Save course i18n
-      if (enTitle || enDescription) {
-        await supabase.from("course_i18n").upsert({
-          course_id: editCourseId!,
-          language_code: "en",
-          title: enTitle || title,
-          description: enDescription || description || null,
-        }, { onConflict: "course_id,language_code" });
+      // Save course i18n (en, zh-CN, ja)
+      const courseI18nRows = [
+        { lang: "en", title: enTitle, desc: enDescription },
+        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
+        { lang: "ja", title: jaTitle, desc: jaDescription },
+      ].filter((r) => r.title || r.desc).map((r) => ({
+        course_id: editCourseId!,
+        language_code: r.lang,
+        title: r.title || title,
+        description: r.desc || description || null,
+      }));
+      if (courseI18nRows.length) {
+        await supabase.from("course_i18n").upsert(courseI18nRows, { onConflict: "course_id,language_code" });
       }
 
       if (contents.length > 0) {
