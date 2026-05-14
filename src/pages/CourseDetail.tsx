@@ -845,14 +845,14 @@ const CourseDetail = () => {
 
         <section className="space-y-4 rounded-xl border border-border bg-card p-5" aria-labelledby="student-course-detail-heading">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            {course.thumbnail_url ? (
+            {(autoThumbnailUrl || course.thumbnail_url) ? (
               <img
-                src={course.thumbnail_url}
+                src={autoThumbnailUrl || course.thumbnail_url}
                 alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                className="aspect-[3/4] w-full rounded-xl object-contain bg-accent sm:aspect-auto sm:h-16 sm:w-16 sm:object-cover sm:shrink-0"
+                className="aspect-[3/4] w-full rounded-xl object-contain bg-accent sm:aspect-[4/3] sm:w-40 sm:h-auto sm:max-h-48 sm:object-contain sm:shrink-0"
               />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
+              <div className="flex h-16 w-16 sm:h-32 sm:w-40 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
                 <BookOpen className="h-7 w-7 text-accent-foreground" aria-hidden="true" />
               </div>
             )}
