@@ -30,7 +30,7 @@ export const CourseThumbnail = ({
     <img
       src={src}
       alt={alt}
-      className={cn("block max-w-full rounded-lg object-contain", className, imageClassName)}
+      className={cn("block h-auto max-w-full rounded-lg object-contain", className, imageClassName)}
     />
   );
 };
