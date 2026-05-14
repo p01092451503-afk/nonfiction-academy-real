@@ -166,20 +166,13 @@ const StudentCourses = () => {
         to={`/student/courses/${course.id}?view=learn`}
         className={`group flex items-center gap-4 p-4 hover:shadow-md transition-all border-b-2 border-border/80 last:border-b-0`}
       >
-        {/* Thumbnail - small (blurred backdrop fills gaps, foreground never cropped) */}
+        {/* Thumbnail - fill the frame without side gaps */}
         {course.thumbnail_url ? (
           <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-accent shrink-0">
             <img
               src={course.thumbnail_url}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover scale-110 blur-md opacity-70"
-            />
-            <div className="absolute inset-0 bg-black/10" aria-hidden="true" />
-            <img
-              src={course.thumbnail_url}
               alt={course.title}
-              className="relative w-full h-full object-contain"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           </div>
         ) : (
