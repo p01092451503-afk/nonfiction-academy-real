@@ -245,7 +245,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
       {/* Media display – horizontal slider */}
       <div
         ref={containerRef}
-        className="relative bg-foreground/5 rounded-2xl overflow-hidden touch-pan-y"
+        className="relative overflow-hidden touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
