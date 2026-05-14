@@ -849,7 +849,7 @@ const CourseDetail = () => {
               <img
                 src={autoThumbnailUrl || course.thumbnail_url}
                 alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                className="aspect-[3/4] w-full rounded-xl object-contain bg-accent sm:aspect-auto sm:h-48 sm:w-auto sm:max-w-[16rem] sm:object-cover sm:shrink-0"
+                className="aspect-[3/4] w-full rounded-xl object-cover bg-accent sm:aspect-auto sm:h-48 sm:w-auto sm:max-w-[16rem] sm:object-cover sm:shrink-0"
               />
             ) : (
               <div className="flex h-16 w-16 sm:h-32 sm:w-40 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
