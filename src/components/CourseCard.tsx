@@ -36,22 +36,11 @@ const CourseCard = ({ course, categorySlug, categoryName, studentCount, contentC
       <div className="stat-card !p-0 overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
         <div className={`relative aspect-[16/10] bg-gradient-to-br ${gradient} overflow-hidden`}>
           {course.thumbnail_url ? (
-            <>
-              {/* Blurred backdrop fills left/right empty space without cropping the image */}
-              <img
-                src={course.thumbnail_url}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-70"
-              />
-              <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
-              {/* Foreground: full image, never cropped */}
-              <img
-                src={course.thumbnail_url}
-                alt={course.title}
-                className="relative w-full h-full object-contain"
-              />
-            </>
+            <img
+              src={course.thumbnail_url}
+              alt={course.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <BookOpen className="h-12 w-12 text-white/30" strokeWidth={1.2} aria-hidden="true" />
