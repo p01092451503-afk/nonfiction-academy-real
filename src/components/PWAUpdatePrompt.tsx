@@ -119,8 +119,45 @@ const PWAUpdatePrompt = () => {
   }, []);
 
   const handleUpdate = async () => {
-    if (updateSW) await updateSW(true);
-    else window.location.reload();
+    // Hide the toast immediately to give visual feedback
+    setNeedRefresh(false);
+
+    let reloaded = false;
+    const doReload = () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    };
+
+    try {
+      // 1) Listen for controller change (new SW took over) → reload
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.addEventListener("controllerchange", doReload, { once: true });
+      }
+
+      // 2) Ask vite-plugin-pwa to activate the waiting worker
+      if (updateSW) {
+        // Don't await — some browsers never resolve until reload
+        updateSW(true).catch(() => {});
+      }
+
+      // 3) Belt-and-suspenders: directly post SKIP_WAITING to any waiting worker
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          await reg.update().catch(() => {});
+          const waiting = reg.waiting || reg.installing;
+          waiting?.postMessage({ type: "SKIP_WAITING" });
+        }
+      }
+
+      // 4) Hard fallback: if controllerchange never fires (e.g. no SW listening),
+      //    force a reload after a short delay so the user isn't stuck.
+      setTimeout(doReload, 1500);
+    } catch (err) {
+      console.error("[PWA] update failed, forcing reload", err);
+      doReload();
+    }
   };
 
   const handleInstall = async () => {
