@@ -170,7 +170,7 @@ const StudentCourses = () => {
         <CourseThumbnail
           src={course.thumbnail_url}
           alt={course.title}
-          className="max-h-20 w-14 shrink-0 rounded-lg"
+          className="max-h-20 max-w-14 shrink-0 rounded-lg"
           fallbackClassName="h-14 w-14 shrink-0 rounded-lg"
           iconClassName="h-6 w-6"
         />
