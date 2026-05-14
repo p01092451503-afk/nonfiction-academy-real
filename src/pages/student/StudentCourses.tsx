@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import { normalizeLang } from "@/lib/i18nLang";
+import CourseThumbnail from "@/components/CourseThumbnail";
 
 const StudentCourses = () => {
   const { user } = useUser();
@@ -166,20 +167,13 @@ const StudentCourses = () => {
         to={`/student/courses/${course.id}?view=learn`}
         className={`group flex items-center gap-4 p-4 hover:shadow-md transition-all border-b-2 border-border/80 last:border-b-0`}
       >
-        {/* Thumbnail - fill the frame without side gaps */}
-        {course.thumbnail_url ? (
-          <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-accent shrink-0">
-            <img
-              src={course.thumbnail_url}
-              alt={course.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="h-14 w-14 rounded-lg bg-accent flex items-center justify-center shrink-0" aria-hidden="true">
-            <BookOpen className="h-6 w-6 text-muted-foreground" />
-          </div>
-        )}
+        <CourseThumbnail
+          src={course.thumbnail_url}
+          alt={course.title}
+          className="max-h-20 w-14 shrink-0 rounded-lg"
+          fallbackClassName="h-14 w-14 shrink-0 rounded-lg"
+          iconClassName="h-6 w-6"
+        />
 
         {/* Info */}
         <div className="flex-1 min-w-0 space-y-1.5">
