@@ -531,6 +531,8 @@ const CreateCourse = () => {
     }
     setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
+    setSelectedLessonImageUrl(null);
+    setThumbnailManuallySet(true);
   };
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -558,8 +560,53 @@ const CreateCourse = () => {
   const removeThumbnail = () => {
     setThumbnailFile(null);
     setThumbnailPreview(null);
+    setSelectedLessonImageUrl(null);
+    setExistingThumbnailUrl(null);
+    setThumbnailManuallySet(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const pickLessonImage = (url: string) => {
+    setSelectedLessonImageUrl(url);
+    setThumbnailPreview(url);
+    setThumbnailFile(null);
+    setThumbnailManuallySet(true);
+    setImagePickerOpen(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Collect all image URLs from lesson contents (card images + package items)
+  const lessonImages = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    contents.forEach((c) => {
+      if (c.card_image_url && !seen.has(c.card_image_url)) {
+        seen.add(c.card_image_url);
+        result.push(c.card_image_url);
+      }
+      (c.card_urls || []).forEach((u) => {
+        if (u && !seen.has(u)) { seen.add(u); result.push(u); }
+      });
+      (c.package_items || []).forEach((it) => {
+        if (it.item_type === "image" && it.media_url && !seen.has(it.media_url)) {
+          seen.add(it.media_url);
+          result.push(it.media_url);
+        }
+      });
+    });
+    return result;
+  }, [contents]);
+
+  // Auto-pick first lesson image as thumbnail when nothing manually set
+  useEffect(() => {
+    if (thumbnailManuallySet) return;
+    if (thumbnailFile) return;
+    if (lessonImages.length === 0) return;
+    const first = lessonImages[0];
+    setSelectedLessonImageUrl(first);
+    setThumbnailPreview(first);
+  }, [lessonImages, thumbnailManuallySet, thumbnailFile]);
+
 
   const updateMutation = useMutation({
     mutationFn: async () => {
