@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import PageSkeleton from "@/components/PageSkeleton";
 import CategorySelect from "@/components/CategorySelect";
+import CourseThumbnail from "@/components/CourseThumbnail";
 import { computeCourseProgress } from "@/lib/courseCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -594,19 +595,13 @@ const CourseDetail = () => {
 
           <section className="rounded-xl border border-border bg-card p-4" aria-labelledby="course-detail-heading">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              {(autoThumbnailUrl || course.thumbnail_url) ? (
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-accent sm:w-32 sm:shrink-0">
-                  <img
-                    src={autoThumbnailUrl || course.thumbnail_url}
-                    alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                    className="absolute inset-0 h-full w-full object-cover object-center"
-                  />
-                </div>
-              ) : (
-                <div className="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0" aria-hidden="true">
-                  <BookOpen className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
-                </div>
-              )}
+              <CourseThumbnail
+                src={autoThumbnailUrl || course.thumbnail_url}
+                alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
+                className="w-full rounded-lg sm:max-h-56 sm:w-32 sm:shrink-0"
+                fallbackClassName="flex aspect-[4/5] w-full items-center justify-center rounded-lg bg-accent sm:w-32 sm:shrink-0"
+                iconClassName="h-6 w-6"
+              />
               <div className="flex-1 min-w-0 space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant={course.status === "published" ? "default" : "secondary"} className="text-[10px] h-5">
@@ -847,19 +842,13 @@ const CourseDetail = () => {
 
         <section className="space-y-4 rounded-xl border border-border bg-card p-5" aria-labelledby="student-course-detail-heading">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            {(autoThumbnailUrl || course.thumbnail_url) ? (
-              <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-accent sm:h-48 sm:w-32 sm:shrink-0">
-                <img
-                  src={autoThumbnailUrl || course.thumbnail_url}
-                  alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="flex h-16 w-16 sm:h-32 sm:w-40 shrink-0 items-center justify-center rounded-xl bg-accent" aria-hidden="true">
-                <BookOpen className="h-7 w-7 text-accent-foreground" aria-hidden="true" />
-              </div>
-            )}
+            <CourseThumbnail
+              src={autoThumbnailUrl || course.thumbnail_url}
+              alt={isEn ? `${getCourseTitle()} thumbnail` : `${getCourseTitle()} 썸네일`}
+              className="w-full rounded-xl sm:max-h-56 sm:w-32 sm:shrink-0"
+              fallbackClassName="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-accent sm:h-32 sm:w-40"
+              iconClassName="h-7 w-7 text-accent-foreground"
+            />
             <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
                 {course.is_mandatory && <Badge variant="destructive" className="text-[10px]">{t("course.mandatory")}</Badge>}
