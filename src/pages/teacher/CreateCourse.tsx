@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Video, FileText, BarChart3,
   MonitorPlay, BookOpen, ExternalLink, Link2, Eye, ImagePlus, X, CalendarIcon,
-  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw,
+  Save, Languages, LayoutGrid, Image as ImageIcon, ChevronUp, Package, ChevronDown, Lock, Pencil, RotateCcw, Images, Check,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { translateKoToEn, translateKoTo, type TargetLang } from "@/lib/translate";
 import { Button } from "@/components/ui/button";
 import UploadOrderQueueDialog from "@/components/UploadOrderQueueDialog";
