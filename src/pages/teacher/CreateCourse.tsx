@@ -923,9 +923,10 @@ const CreateCourse = () => {
                 <span className="text-[11px]">{t("createCourse.thumbnailDropHint")}</span>
               </button>
             )}
-            {!thumbnailManuallySet && lessonImages.length > 0 && (
-              <p className="text-[10px] text-muted-foreground">차시에 등록된 첫 이미지가 자동으로 썸네일로 사용됩니다. 직접 업로드하거나 다른 이미지를 선택할 수 있습니다.</p>
-            )}
+            <p className="text-[10px] text-muted-foreground">
+              썸네일 이미지를 입력하지 않을 경우, 강의에 등록된 첫 이미지가 자동으로 썸네일 이미지로 지정되어 업로드됩니다.
+              {lessonImages.length > 0 && " 직접 업로드하거나 차시 이미지 중에서 선택할 수도 있습니다."}
+            </p>
           </div>
 
           {/* Lesson image picker dialog */}
