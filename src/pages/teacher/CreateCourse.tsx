@@ -125,12 +125,20 @@ const CreateCourse = () => {
   const [description, setDescription] = useState("");
   const [enTitle, setEnTitle] = useState("");
   const [enDescription, setEnDescription] = useState("");
+  const [zhTitle, setZhTitle] = useState("");
+  const [zhDescription, setZhDescription] = useState("");
+  const [jaTitle, setJaTitle] = useState("");
+  const [jaDescription, setJaDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [difficultyLevel, setDifficultyLevel] = useState("beginner");
   const [estimatedHours, setEstimatedHours] = useState("");
   const [translatingCourse, setTranslatingCourse] = useState(false);
   const [enTitleManual, setEnTitleManual] = useState(false);
   const [enDescManual, setEnDescManual] = useState(false);
+  const [zhTitleManual, setZhTitleManual] = useState(false);
+  const [zhDescManual, setZhDescManual] = useState(false);
+  const [jaTitleManual, setJaTitleManual] = useState(false);
+  const [jaDescManual, setJaDescManual] = useState(false);
   const [maxStudents, setMaxStudents] = useState("");
   const [isMandatory, setIsMandatory] = useState(false);
   const [isSequential, setIsSequential] = useState(false);
@@ -181,17 +189,30 @@ const CreateCourse = () => {
         setThumbnailManuallySet(true);
       }
 
-      // Load course i18n
-      const { data: courseI18n } = await supabase
+      // Load course i18n (en, zh-CN, ja)
+      const { data: courseI18ns } = await supabase
         .from("course_i18n")
         .select("*")
         .eq("course_id", editCourseId)
-        .eq("language_code", "en")
-        .maybeSingle();
-      if (courseI18n) {
-        setEnTitle(courseI18n.title || "");
-        setEnDescription(courseI18n.description || "");
-      }
+        .in("language_code", ["en", "zh-CN", "ja"]);
+      (courseI18ns || []).forEach((row: any) => {
+        if (row.language_code === "en") {
+          setEnTitle(row.title || "");
+          setEnDescription(row.description || "");
+          if (row.title) setEnTitleManual(true);
+          if (row.description) setEnDescManual(true);
+        } else if (row.language_code === "zh-CN") {
+          setZhTitle(row.title || "");
+          setZhDescription(row.description || "");
+          if (row.title) setZhTitleManual(true);
+          if (row.description) setZhDescManual(true);
+        } else if (row.language_code === "ja") {
+          setJaTitle(row.title || "");
+          setJaDescription(row.description || "");
+          if (row.title) setJaTitleManual(true);
+          if (row.description) setJaDescManual(true);
+        }
+      });
 
       // Load contents
       const { data: courseContents } = await supabase
@@ -312,26 +333,82 @@ const CreateCourse = () => {
     })();
   }, [isEditMode, editCourseId, editDataLoaded]);
 
-  // Real-time sync KO → EN for course (auto-copy when user hasn't manually edited EN)
+  // Debounced auto-translation: when KO title/description changes, translate to EN/ZH-CN/JA
+  // for slots that the user hasn't manually edited.
   useEffect(() => {
-    if (!enTitleManual && title) setEnTitle(title);
-  }, [title, enTitleManual]);
-  useEffect(() => {
-    if (!enDescManual && description) setEnDescription(description);
-  }, [description, enDescManual]);
+    const koTitle = title.trim();
+    const koDesc = description.trim();
+    if (!koTitle && !koDesc) return;
+    const handle = setTimeout(async () => {
+      const targets: { lang: TargetLang; needTitle: boolean; needDesc: boolean }[] = [
+        { lang: "en", needTitle: !enTitleManual && !!koTitle, needDesc: !enDescManual && !!koDesc },
+        { lang: "zh-CN", needTitle: !zhTitleManual && !!koTitle, needDesc: !zhDescManual && !!koDesc },
+        { lang: "ja", needTitle: !jaTitleManual && !!koTitle, needDesc: !jaDescManual && !!koDesc },
+      ];
+      setTranslatingCourse(true);
+      try {
+        await Promise.all(targets.map(async (tgt) => {
+          if (!tgt.needTitle && !tgt.needDesc) return;
+          const inputs: string[] = [];
+          if (tgt.needTitle) inputs.push(koTitle);
+          if (tgt.needDesc) inputs.push(koDesc);
+          try {
+            const out = await translateKoTo(tgt.lang, inputs);
+            let i = 0;
+            if (tgt.needTitle) {
+              const v = out[i++] || "";
+              if (tgt.lang === "en") setEnTitle(v);
+              if (tgt.lang === "zh-CN") setZhTitle(v);
+              if (tgt.lang === "ja") setJaTitle(v);
+            }
+            if (tgt.needDesc) {
+              const v = out[i++] || "";
+              if (tgt.lang === "en") setEnDescription(v);
+              if (tgt.lang === "zh-CN") setZhDescription(v);
+              if (tgt.lang === "ja") setJaDescription(v);
+            }
+          } catch { /* silent per-lang */ }
+        }));
+      } finally {
+        setTranslatingCourse(false);
+      }
+    }, 800);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description]);
 
-  // Auto-translate course info
+  // Manual auto-translate trigger (re-translates all non-manual slots immediately)
   const handleTranslateCourse = async () => {
-    const texts = [title, description].filter(Boolean);
-    if (!texts.length) return;
+    const koTitle = title.trim();
+    const koDesc = description.trim();
+    if (!koTitle && !koDesc) return;
     setTranslatingCourse(true);
     try {
-      const results = await translateKoToEn(texts);
-      let idx = 0;
-      if (title) { setEnTitle(results[idx++] || ""); setEnTitleManual(true); }
-      if (description) { setEnDescription(results[idx++] || ""); setEnDescManual(true); }
-    } catch { /* silent */ }
-    finally { setTranslatingCourse(false); }
+      const langs: TargetLang[] = ["en", "zh-CN", "ja"];
+      await Promise.all(langs.map(async (lang) => {
+        const inputs: string[] = [];
+        if (koTitle) inputs.push(koTitle);
+        if (koDesc) inputs.push(koDesc);
+        try {
+          const out = await translateKoTo(lang, inputs);
+          let i = 0;
+          if (koTitle) {
+            const v = out[i++] || "";
+            if (lang === "en") { setEnTitle(v); setEnTitleManual(true); }
+            if (lang === "zh-CN") { setZhTitle(v); setZhTitleManual(true); }
+            if (lang === "ja") { setJaTitle(v); setJaTitleManual(true); }
+          }
+          if (koDesc) {
+            const v = out[i++] || "";
+            if (lang === "en") { setEnDescription(v); setEnDescManual(true); }
+            if (lang === "zh-CN") { setZhDescription(v); setZhDescManual(true); }
+            if (lang === "ja") { setJaDescription(v); setJaDescManual(true); }
+          }
+        } catch { /* silent */ }
+      }));
+    } finally {
+      setTranslatingCourse(false);
+    }
   };
 
   const buildDraftData = useCallback(() => ({
@@ -642,14 +719,19 @@ const CreateCourse = () => {
       );
       await supabase.from("course_contents").delete().eq("course_id", editCourseId!);
 
-      // Save course i18n
-      if (enTitle || enDescription) {
-        await supabase.from("course_i18n").upsert({
-          course_id: editCourseId!,
-          language_code: "en",
-          title: enTitle || title,
-          description: enDescription || description || null,
-        }, { onConflict: "course_id,language_code" });
+      // Save course i18n (en, zh-CN, ja)
+      const courseI18nRows = [
+        { lang: "en", title: enTitle, desc: enDescription },
+        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
+        { lang: "ja", title: jaTitle, desc: jaDescription },
+      ].filter((r) => r.title || r.desc).map((r) => ({
+        course_id: editCourseId!,
+        language_code: r.lang,
+        title: r.title || title,
+        description: r.desc || description || null,
+      }));
+      if (courseI18nRows.length) {
+        await supabase.from("course_i18n").upsert(courseI18nRows, { onConflict: "course_id,language_code" });
       }
 
       if (contents.length > 0) {
@@ -758,14 +840,19 @@ const CreateCourse = () => {
         course.thumbnail_url = selectedLessonImageUrl;
       }
 
-      // Save course i18n
-      if (enTitle || enDescription) {
-        await supabase.from("course_i18n").insert({
-          course_id: course.id,
-          language_code: "en",
-          title: enTitle || title,
-          description: enDescription || description || null,
-        });
+      // Save course i18n (en, zh-CN, ja)
+      const courseI18nRows = [
+        { lang: "en", title: enTitle, desc: enDescription },
+        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
+        { lang: "ja", title: jaTitle, desc: jaDescription },
+      ].filter((r) => r.title || r.desc).map((r) => ({
+        course_id: course.id,
+        language_code: r.lang,
+        title: r.title || title,
+        description: r.desc || description || null,
+      }));
+      if (courseI18nRows.length) {
+        await supabase.from("course_i18n").insert(courseI18nRows);
       }
 
       if (contents.length > 0) {
@@ -968,12 +1055,21 @@ const CreateCourse = () => {
           </Dialog>
 
           <Tabs defaultValue="ko" className="w-full">
-            <TabsList className="w-full h-9">
-              <TabsTrigger value="ko" className="flex-1 text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
-              <TabsTrigger value="en" className="flex-1 text-xs">{t("course.enTab", "English")}</TabsTrigger>
+            <TabsList className="w-full h-9 grid grid-cols-4">
+              <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
+              <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
+              <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
+              <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">한국어 입력 시 영어/중국어/일본어로 자동 번역됩니다.</p>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateCourse} disabled={translatingCourse || (!title && !description)}>
+                  <Languages className="h-3 w-3" />
+                  {translatingCourse ? "번역 중..." : "전체 재번역"}
+                </Button>
+              </div>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("createCourse.courseTitleRequired")}</label>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("createCourse.courseTitleExample")} className="h-9 rounded-lg border-border text-sm" />
@@ -985,20 +1081,38 @@ const CreateCourse = () => {
             </TabsContent>
 
             <TabsContent value="en" className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] text-muted-foreground">{t("course.enOptional", "영어 버전 (선택)")}</p>
-                <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateCourse} disabled={translatingCourse || (!title && !description)}>
-                  <Languages className="h-3 w-3" />
-                  {t("course.autoTranslate", "자동 번역")}
-                </Button>
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "번역 중..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">English Title</label>
+                <Input value={enTitle} onChange={(e) => { setEnTitle(e.target.value); setEnTitleManual(true); }} placeholder="English title" className="h-9 rounded-lg border-border text-sm" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("course.enTitle", "영어 제목")}</label>
-                <Input value={enTitle} onChange={(e) => setEnTitle(e.target.value)} placeholder="English title" className="h-9 rounded-lg border-border text-sm" />
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">English Description</label>
+                <Textarea value={enDescription} onChange={(e) => { setEnDescription(e.target.value); setEnDescManual(true); }} placeholder="English description" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="zh-CN" className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "翻译中..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">中文标题</label>
+                <Input value={zhTitle} onChange={(e) => { setZhTitle(e.target.value); setZhTitleManual(true); }} placeholder="中文标题" className="h-9 rounded-lg border-border text-sm" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">{t("course.enDescription", "영어 설명")}</label>
-                <Textarea value={enDescription} onChange={(e) => setEnDescription(e.target.value)} placeholder="English description" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">中文描述</label>
+                <Textarea value={zhDescription} onChange={(e) => { setZhDescription(e.target.value); setZhDescManual(true); }} placeholder="中文描述" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ja" className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "翻訳中..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語タイトル</label>
+                <Input value={jaTitle} onChange={(e) => { setJaTitle(e.target.value); setJaTitleManual(true); }} placeholder="日本語タイトル" className="h-9 rounded-lg border-border text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語説明</label>
+                <Textarea value={jaDescription} onChange={(e) => { setJaDescription(e.target.value); setJaDescManual(true); }} placeholder="日本語説明" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
               </div>
             </TabsContent>
           </Tabs>
