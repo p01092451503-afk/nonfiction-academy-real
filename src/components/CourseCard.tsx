@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Clock, Users, Star, Sparkles, AlertTriangle, CalendarClock } from "lucide-react";
+import { Clock, Users, BookOpen, Star, Sparkles, AlertTriangle, CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "react-i18next";
