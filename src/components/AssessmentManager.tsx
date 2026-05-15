@@ -108,6 +108,8 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   const [questionForm, setQuestionForm] = useState<QuestionForm>(emptyQuestion);
   const [showResults, setShowResults] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [keepDialogOpen, setKeepDialogOpen] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
 
   // Assessment base form (Korean)
   const [assessmentForm, setAssessmentForm] = useState({
