@@ -108,6 +108,8 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   const [questionForm, setQuestionForm] = useState<QuestionForm>(emptyQuestion);
   const [showResults, setShowResults] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [keepDialogOpen, setKeepDialogOpen] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
 
   // Assessment base form (Korean)
   const [assessmentForm, setAssessmentForm] = useState({
@@ -368,12 +370,24 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assessment-questions", assessment?.id] });
       queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-all"] });
-      setQuestionDialogOpen(false);
-      setEditingQuestionId(null);
-      setQuestionForm(emptyQuestion);
-      setQuestionI18nForm(emptyQuestionI18n(4));
-      setQuestionManual(emptyQuestionManualFlags());
+      const wasAdding = !editingQuestionId;
       toast({ title: editingQuestionId ? t("assessment.questionUpdated") : t("assessment.questionAdded") });
+      if (keepDialogOpen && wasAdding) {
+        // Reset form for next question, keep dialog open
+        setSavedCount((c) => c + 1);
+        setEditingQuestionId(null);
+        setQuestionForm(emptyQuestion);
+        setQuestionI18nForm(emptyQuestionI18n(4));
+        setQuestionManual(emptyQuestionManualFlags());
+        setKeepDialogOpen(false);
+      } else {
+        setQuestionDialogOpen(false);
+        setEditingQuestionId(null);
+        setQuestionForm(emptyQuestion);
+        setQuestionI18nForm(emptyQuestionI18n(4));
+        setQuestionManual(emptyQuestionManualFlags());
+        setKeepDialogOpen(false);
+      }
     },
     onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
   });
@@ -451,6 +465,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     setQuestionForm(emptyQuestion);
     setQuestionI18nForm(emptyQuestionI18n(4));
     setQuestionManual(emptyQuestionManualFlags());
+    setSavedCount(0);
     setQuestionDialogOpen(true);
   };
 
@@ -1100,9 +1115,26 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
             </Tabs>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2">
+            {!editingQuestionId && savedCount > 0 && (
+              <span className="text-[11px] text-muted-foreground mr-auto self-center">
+                {isEn ? `${savedCount} added in this session` : `이번 세션에서 ${savedCount}개 추가됨`}
+              </span>
+            )}
             <Button variant="outline" size="sm" onClick={() => setQuestionDialogOpen(false)}>{t("common.cancel")}</Button>
-            <Button size="sm" onClick={() => upsertQuestionMutation.mutate()} disabled={!questionForm.question_text.trim() || !questionForm.correct_answer.trim() || upsertQuestionMutation.isPending}>
+            {!editingQuestionId && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => { setKeepDialogOpen(true); upsertQuestionMutation.mutate(); }}
+                disabled={!questionForm.question_text.trim() || !questionForm.correct_answer.trim() || upsertQuestionMutation.isPending}
+                className="gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                {isEn ? "Save & add another" : "저장 후 계속 추가"}
+              </Button>
+            )}
+            <Button size="sm" onClick={() => { setKeepDialogOpen(false); upsertQuestionMutation.mutate(); }} disabled={!questionForm.question_text.trim() || !questionForm.correct_answer.trim() || upsertQuestionMutation.isPending}>
               {upsertQuestionMutation.isPending ? t("common.saving") : editingQuestionId ? t("common.edit") : t("common.add")}
             </Button>
           </DialogFooter>
