@@ -118,6 +118,17 @@ const PWAUpdatePrompt = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Wipe all Cache Storage entries (workbox precache, runtime caches, etc.)
+  const clearAllCaches = async () => {
+    try {
+      if (typeof caches === "undefined") return;
+      const names = await caches.keys();
+      await Promise.all(names.map((n) => caches.delete(n).catch(() => false)));
+    } catch (err) {
+      console.debug("[PWA] cache clear failed", err);
+    }
+  };
+
   const handleUpdate = async () => {
     // Hide the toast immediately to give visual feedback
     setNeedRefresh(false);
@@ -126,10 +137,15 @@ const PWAUpdatePrompt = () => {
     const doReload = () => {
       if (reloaded) return;
       reloaded = true;
-      window.location.reload();
+      // Final safety net: clear caches synchronously-ish before reload.
+      // (clearAllCaches was already called above; this is a best-effort second pass.)
+      clearAllCaches().finally(() => window.location.reload());
     };
 
     try {
+      // 0) Wipe Cache Storage so the next load fetches fresh assets/HTML.
+      await clearAllCaches();
+
       // 1) Listen for controller change (new SW took over) → reload
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.addEventListener("controllerchange", doReload, { once: true });
