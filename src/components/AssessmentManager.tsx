@@ -802,7 +802,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                           <p className="text-[10px] text-green-600 dark:text-green-400">{t("assessment.answer")}: {q.correct_answer}</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-0.5">
                         <button type="button" className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={() => openEditQuestion(q)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
