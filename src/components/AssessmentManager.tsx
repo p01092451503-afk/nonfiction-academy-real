@@ -370,12 +370,24 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assessment-questions", assessment?.id] });
       queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-all"] });
-      setQuestionDialogOpen(false);
-      setEditingQuestionId(null);
-      setQuestionForm(emptyQuestion);
-      setQuestionI18nForm(emptyQuestionI18n(4));
-      setQuestionManual(emptyQuestionManualFlags());
+      const wasAdding = !editingQuestionId;
       toast({ title: editingQuestionId ? t("assessment.questionUpdated") : t("assessment.questionAdded") });
+      if (keepDialogOpen && wasAdding) {
+        // Reset form for next question, keep dialog open
+        setSavedCount((c) => c + 1);
+        setEditingQuestionId(null);
+        setQuestionForm(emptyQuestion);
+        setQuestionI18nForm(emptyQuestionI18n(4));
+        setQuestionManual(emptyQuestionManualFlags());
+        setKeepDialogOpen(false);
+      } else {
+        setQuestionDialogOpen(false);
+        setEditingQuestionId(null);
+        setQuestionForm(emptyQuestion);
+        setQuestionI18nForm(emptyQuestionI18n(4));
+        setQuestionManual(emptyQuestionManualFlags());
+        setKeepDialogOpen(false);
+      }
     },
     onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
   });
