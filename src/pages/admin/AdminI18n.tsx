@@ -114,7 +114,7 @@ async function fetchAllRows(): Promise<Row[]> {
 
   // 2) Course contents
   const { data: contentsData } = await supabase.from("course_contents" as any).select("id, title, description").order("created_at", { ascending: false });
-  const contents = (contentsData ?? []) as Array<{ id: string; title: string | null; description: string | null }>;
+  const contents = ((contentsData as unknown) ?? []) as Array<{ id: string; title: string | null; description: string | null }>;
   const contentIds = contents.map((c) => c.id);
   const { data: contentI18n } = contentIds.length
     ? await supabase.from("course_content_i18n" as any).select("content_id, language_code, title, description").in("content_id", contentIds).in("language_code", TARGET_LANGS)
