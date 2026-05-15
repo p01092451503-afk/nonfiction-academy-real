@@ -161,7 +161,8 @@ function ResultSummary({
   const score = Number(attempt?.score || 0);
   const totalPoints = Number(attempt?.total_points || 0);
   const passed = attempt?.passed;
-  const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+  const answeredCount = correctCount + wrongCount;
+  const percentage = answeredCount > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
   // Identify strong/weak areas
   const correctQuestions = questions.filter(q => answerMap[q.id]?.is_correct === true);
