@@ -375,7 +375,7 @@ const AdminI18n = () => {
       if (needs.length === 0) continue;
       // Skip categories that don't support this language
       const supportsLang = (cat: Category) =>
-        ["course", "content", "assessment", "announcement", "board"].includes(cat) || lc === "en";
+        ["course", "content", "assessment", "announcement", "board", "track", "track_stage"].includes(cat) || lc === "en";
       const supported = needs.filter((r) => supportsLang(r.category));
       const res = await translateRowsForLang(supported, lc);
       ok += res.ok; fail += res.fail;
