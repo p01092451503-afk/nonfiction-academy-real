@@ -227,14 +227,7 @@ const StudentCourses = () => {
             <div className="space-y-1 text-sm text-muted-foreground" role="note">
               <p>{t("course.courseInfoGuide")}</p>
               <p>{t("course.courseInfoGuide2")}</p>
-              <p>{t("course.courseInfoGuide3")}</p>
             </div>
-          </div>
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" className="gap-1.5 rounded-lg text-xs" onClick={() => syncProgressMutation.mutate()} disabled={syncProgressMutation.isPending}>
-              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-              {syncProgressMutation.isPending ? t("course.syncing") : t("course.syncProgress")}
-            </Button>
           </div>
         </div>
 
