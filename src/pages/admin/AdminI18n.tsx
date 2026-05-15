@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
 import { toast } from "sonner";
 
-type Category = "course" | "content" | "assessment" | "announcement" | "board" | "category" | "assignment" | "survey" | "survey_question";
+type Category = "course" | "content" | "assessment" | "announcement" | "board" | "category" | "assignment" | "survey" | "survey_question" | "track" | "track_stage";
 
 const TARGET_LANGS: TargetLang[] = ["en", "zh-CN", "ja"];
 const LANG_LABELS: Record<TargetLang, string> = { en: "EN", "zh-CN": "ZH", ja: "JA" };
