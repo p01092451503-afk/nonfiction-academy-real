@@ -504,7 +504,21 @@ export default function AssessmentPage() {
 
   const questions = useMemo(() => {
     if (!assessment?.randomize_questions) return localizedRawQuestions;
-    return [...localizedRawQuestions].sort(() => Math.random() - 0.5);
+    // Stable shuffle: derive deterministic order from question IDs so the order
+    // doesn't change on every render (was causing question flicker).
+    const ids = localizedRawQuestions.map((q: any) => q.id).join("|");
+    let seed = 0;
+    for (let i = 0; i < ids.length; i++) seed = (seed * 31 + ids.charCodeAt(i)) >>> 0;
+    const rand = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 0xffffffff;
+    };
+    const arr = [...localizedRawQuestions];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }, [localizedRawQuestions, assessment?.randomize_questions]);
 
   const { data: previousAnswers = [] } = useQuery({
