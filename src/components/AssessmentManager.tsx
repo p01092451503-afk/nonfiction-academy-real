@@ -465,6 +465,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     setQuestionForm(emptyQuestion);
     setQuestionI18nForm(emptyQuestionI18n(4));
     setQuestionManual(emptyQuestionManualFlags());
+    setSavedCount(0);
     setQuestionDialogOpen(true);
   };
 
