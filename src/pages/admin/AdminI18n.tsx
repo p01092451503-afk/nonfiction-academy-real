@@ -224,6 +224,32 @@ async function fetchAllRows(): Promise<Row[]> {
     rows.push({ id: q.id, category: "survey_question", ko_title: q.question_text ?? "", ko_body: koBody, langs });
   });
 
+  // 10) Learning tracks
+  const { data: tracksData } = await supabase.from("learning_tracks" as any).select("id, title, description").order("created_at", { ascending: false });
+  const tracks = ((tracksData as unknown) ?? []) as Array<{ id: string; title: string | null; description: string | null }>;
+  const trackIds = tracks.map((t) => t.id);
+  const { data: trackI18n } = trackIds.length
+    ? await supabase.from("learning_tracks_i18n" as any).select("track_id, language_code, title, description").in("track_id", trackIds).in("language_code", TARGET_LANGS)
+    : { data: [] as any[] };
+  const trackMap = groupI18n(trackI18n as any[], "track_id", "title", "description");
+  buildLangMap(
+    tracks.map((t) => ({ id: t.id, ko_title: t.title ?? "", ko_body: t.description ?? "", perLang: trackMap.get(t.id) ?? emptyPerLang() })),
+    "track",
+  );
+
+  // 11) Track stages
+  const { data: stagesData } = await supabase.from("track_stages" as any).select("id, name, description").order("order_index", { ascending: true });
+  const stages = ((stagesData as unknown) ?? []) as Array<{ id: string; name: string | null; description: string | null }>;
+  const stageIds = stages.map((s) => s.id);
+  const { data: stageI18n } = stageIds.length
+    ? await supabase.from("track_stages_i18n" as any).select("stage_id, language_code, name, description").in("stage_id", stageIds).in("language_code", TARGET_LANGS)
+    : { data: [] as any[] };
+  const stageMap = groupI18n(stageI18n as any[], "stage_id", "name", "description");
+  buildLangMap(
+    stages.map((s) => ({ id: s.id, ko_title: s.name ?? "", ko_body: s.description ?? "", perLang: stageMap.get(s.id) ?? emptyPerLang() })),
+    "track_stage",
+  );
+
   return rows;
 }
 
