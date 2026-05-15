@@ -1061,43 +1061,43 @@ const StudentAssessmentSection = ({
   const passed = bestScore !== null ? bestScore >= assessment.passing_score : false;
 
   return (
-    <section className="rounded-xl border border-border bg-card p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <ClipboardCheck className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-semibold">{t("assessment.title")}: {assessment.title}</h2>
-      </div>
-
-      {!meetsThreshold ? (
-        <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-1">
-          <p className="text-xs text-muted-foreground">
-            {t("assessment.progressRequired", { threshold })}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {t("assessment.currentProgress", { progress: overallProgress })}
-          </p>
-          <Progress value={overallProgress} className="h-1.5 mt-1" />
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {bestScore !== null && (
-            <div className={`rounded-lg border p-3 flex items-center gap-2 ${passed ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20"}`}>
-              {passed ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" /> : <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />}
-              <div>
-                <p className="text-xs font-semibold">{passed ? t("assessment.passedResult") : t("assessment.failedResult")}</p>
-                <p className="text-[10px] text-muted-foreground">{t("assessment.bestScore")}: {bestScore}{t("common.points")} ({completedAttempts.length}/{assessment.max_attempts} {isEn ? "attempts" : "회 응시"})</p>
+    <section className="space-y-3" aria-labelledby="student-assessment-heading">
+      <h2 id="student-assessment-heading" className="text-sm font-semibold text-foreground">
+        {t("assessment.title")}: {assessment.title}
+      </h2>
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        {!meetsThreshold ? (
+          <div className="rounded-lg border border-border bg-secondary/30 p-3 space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {t("assessment.progressRequired", { threshold })}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("assessment.currentProgress", { progress: overallProgress })}
+            </p>
+            <Progress value={overallProgress} className="h-1.5 mt-1" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {bestScore !== null && (
+              <div className={`rounded-lg border p-3 flex items-center gap-2 ${passed ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20"}`}>
+                {passed ? <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" /> : <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />}
+                <div>
+                  <p className="text-xs font-semibold">{passed ? t("assessment.passedResult") : t("assessment.failedResult")}</p>
+                  <p className="text-[10px] text-muted-foreground">{t("assessment.bestScore")}: {bestScore}{t("common.points")} ({completedAttempts.length}/{assessment.max_attempts} {isEn ? "attempts" : "회 응시"})</p>
+                </div>
               </div>
-            </div>
-          )}
-          <Button
-            variant={bestScore !== null ? "outline" : "default"}
-            size="sm"
-            className="w-full"
-            onClick={() => navigate(`${routePrefix}/courses/${courseId}/assessment/${assessment.id}${routePrefix === "/student" ? "?view=learn" : ""}`)}
-          >
-            {bestScore !== null ? t("assessment.retakeAssessment") : t("assessment.takeAssessment")}
-          </Button>
-        </div>
-      )}
+            )}
+            <Button
+              variant={bestScore !== null ? "outline" : "default"}
+              size="sm"
+              className="w-full"
+              onClick={() => navigate(`${routePrefix}/courses/${courseId}/assessment/${assessment.id}${routePrefix === "/student" ? "?view=learn" : ""}`)}
+            >
+              {bestScore !== null ? t("assessment.retakeAssessment") : t("assessment.takeAssessment")}
+            </Button>
+          </div>
+        )}
+      </div>
     </section>
   );
 };
