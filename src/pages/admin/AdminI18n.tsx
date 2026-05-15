@@ -284,6 +284,10 @@ async function upsertTranslation(row: Row, lang: TargetLang, tTitle: string, tBo
       if (optionsEn !== null) update.options_en = optionsEn;
       return supabase.from("survey_questions").update(update).eq("id", row.id);
     }
+    case "track":
+      return supabase.from("learning_tracks_i18n" as any).upsert({ track_id: row.id, language_code: lang, title: tTitle, description: tBody || null }, { onConflict: "track_id,language_code" });
+    case "track_stage":
+      return supabase.from("track_stages_i18n" as any).upsert({ stage_id: row.id, language_code: lang, name: tTitle, description: tBody || null }, { onConflict: "stage_id,language_code" });
   }
 }
 
