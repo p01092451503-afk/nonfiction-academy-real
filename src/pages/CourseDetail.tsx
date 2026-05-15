@@ -1000,41 +1000,8 @@ const CourseDetail = () => {
                   </li>
                 );
 
-                
-                // Insert inline assessment gate after this content if one exists
-                const gateAssessment = assessmentGateMap.get(idx);
-                if (gateAssessment && enrollment) {
-                  const passed = isAssessmentPassed(gateAssessment.id);
-                  const completedAttempts = assessmentAttempts.filter(a => a.assessment_id === gateAssessment.id && a.completed_at);
-                  const bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map(a => Number(a.score) || 0)) : null;
-                  const canAccess = isCompleted; // Can only access gate if current content is completed
-                  
-                  elements.push(
-                    <li key={`gate-${gateAssessment.id}`}>
-                      <div className={`flex w-full items-center gap-3 rounded-xl border-2 px-3 py-3 transition-all ${passed ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/10" : "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/10"}`}>
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${passed ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"}`}>
-                          {passed ? <CheckCircle2 className="h-4 w-4" /> : <ClipboardCheck className="h-4 w-4" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{t("course.sequentialAssessmentGate")}: {gateAssessment.title}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {passed ? t("course.sequentialAssessmentPass") : bestScore !== null ? `${t("course.sequentialAssessmentFail")} (${bestScore}${t("common.points")})` : t("course.sequentialAssessmentNotTaken")}
-                          </p>
-                        </div>
-                        {canAccess && !passed && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs shrink-0"
-                            onClick={() => navigate(`${routePrefix}/courses/${courseId}/assessment/${gateAssessment.id}${routePrefix === "/student" ? "?view=learn" : ""}`)}
-                          >
-                            {t("course.sequentialAssessmentTakeNow")}
-                          </Button>
-                        )}
-                      </div>
-                    </li>
-                  );
-                }
+                // Inline assessment gate removed — assessments are listed separately below.
+
               });
               
               return elements;
