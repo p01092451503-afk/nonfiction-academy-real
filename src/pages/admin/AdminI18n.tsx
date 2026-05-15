@@ -43,6 +43,8 @@ const CATEGORY_LABELS: Record<Category, string> = {
   assignment: "과제",
   survey: "설문",
   survey_question: "설문 문항",
+  track: "트랙",
+  track_stage: "트랙 단계",
 };
 
 function computeStatus(koTitle: string, koBody: string, tTitle: string | null, tBody: string | null): LangStatus {
