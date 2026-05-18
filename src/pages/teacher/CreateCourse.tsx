@@ -1722,6 +1722,7 @@ const PackageItemsEditor = ({
   onChange: (items: PackageItemDraft[]) => void;
   imagesOnly?: boolean;
 }) => {
+  const { t } = useTranslation();
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
@@ -1809,10 +1810,10 @@ const PackageItemsEditor = ({
       toast({
         title:
           mode === "video"
-            ? "동영상 파일만 업로드할 수 있습니다."
+            ? t("createCourse.onlyVideoAllowed", "동영상 파일만 업로드할 수 있습니다.")
             : mode === "image"
-            ? "이미지 파일만 업로드할 수 있습니다."
-            : "이미지 또는 동영상 파일만 업로드할 수 있습니다.",
+            ? t("createCourse.onlyImageAllowed", "이미지 파일만 업로드할 수 있습니다.")
+            : t("createCourse.onlyImageOrVideoAllowed", "이미지 또는 동영상 파일만 업로드할 수 있습니다."),
         variant: "destructive",
       });
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1849,8 +1850,8 @@ const PackageItemsEditor = ({
 
     if (duplicates.length > 0) {
       toast({
-        title: `중복 파일 ${duplicates.length}개를 자동 제외했습니다.`,
-        description: `이미 추가된 파일과 동일(파일명+용량): ${duplicates.slice(0, 5).join(", ")}${duplicates.length > 5 ? ` 외 ${duplicates.length - 5}개` : ""}`,
+        title: t("createCourse.duplicatesExcludedTitle", { count: duplicates.length }),
+        description: t("createCourse.duplicatesExcludedDesc", { names: duplicates.slice(0, 5).join(", ") }) + (duplicates.length > 5 ? t("createCourse.duplicatesExcludedMore", { count: duplicates.length - 5 }) : ""),
         variant: "destructive",
       });
     }
@@ -1924,12 +1925,12 @@ const PackageItemsEditor = ({
     setBulkUploading(false);
     if (failed.length > 0) {
       toast({
-        title: `${unique.length - failed.length}개 업로드 완료, ${failed.length}개 실패`,
+        title: t("createCourse.uploadResult", { done: unique.length - failed.length, failed: failed.length }),
         description: failed.join(", "),
         variant: "destructive",
       });
     } else {
-      toast({ title: `${unique.length}개 미디어를 업로드했습니다.` });
+      toast({ title: t("createCourse.uploadedCount", { count: unique.length }) });
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (videoInputRef.current) videoInputRef.current.value = "";
@@ -1965,19 +1966,19 @@ const PackageItemsEditor = ({
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-muted-foreground">
           {imagesOnly
-            ? `이미지를 순서대로 배치하면 학습자가 좌우로 스와이프하여 한 장씩 넘겨봅니다. (${items.length}개)`
-            : `이미지와 영상을 순서대로 배치하면 학습자가 [다음] 버튼으로 한 장씩 진행합니다. (${items.length}개)`}
+            ? t("createCourse.pkgHintImages", { count: items.length })
+            : t("createCourse.pkgHintMixed", { count: items.length })}
         </p>
         {bulkUploading && (
           <p className="text-[10px] text-muted-foreground">
-            업로드 중... {bulkProgress.done}/{bulkProgress.total}
+            {t("createCourse.uploadingProgress", { done: bulkProgress.done, total: bulkProgress.total })}
           </p>
         )}
       </div>
 
       {items.length === 0 && (
         <div className="rounded-xl border border-dashed border-border bg-muted/20 py-6 text-center text-xs text-muted-foreground">
-          항목을 추가하여 패키지를 구성하세요.
+          {t("createCourse.addItemsToCompose", "항목을 추가하여 패키지를 구성하세요.")}
         </div>
       )}
 
@@ -2009,7 +2010,7 @@ const PackageItemsEditor = ({
                 <button
                   type="button"
                   className="cursor-grab text-muted-foreground hover:text-foreground"
-                  title="드래그하여 순서 변경"
+                  title={t("createCourse.dragToReorder", "드래그하여 순서 변경")}
                 >
                   <GripVertical className="h-4 w-4" />
                 </button>
@@ -2018,7 +2019,7 @@ const PackageItemsEditor = ({
                 </span>
                 {imagesOnly ? (
                   <span className="inline-flex items-center gap-1 px-2 h-8 rounded-lg border border-border text-[11px] text-muted-foreground">
-                    <ImageIcon className="h-3 w-3" /> 이미지
+                    <ImageIcon className="h-3 w-3" /> {t("createCourse.image", "이미지")}
                   </span>
                 ) : (
                   <Select
@@ -2029,8 +2030,8 @@ const PackageItemsEditor = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="image">이미지</SelectItem>
-                      <SelectItem value="video">영상</SelectItem>
+                      <SelectItem value="image">{t("createCourse.image", "이미지")}</SelectItem>
+                      <SelectItem value="video">{t("createCourse.video", "영상")}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -2045,8 +2046,8 @@ const PackageItemsEditor = ({
                   }}
                   placeholder={
                     (it as any)._uploadingName
-                      ? `업로드 중: ${(it as any)._uploadingName}`
-                      : "https://... (이미지 또는 영상 URL)"
+                      ? t("createCourse.uploadingName", { name: (it as any)._uploadingName })
+                      : t("createCourse.urlOrVideoPh", "https://... (이미지 또는 영상 URL)")
                   }
                   className="h-8 rounded-lg border-border text-xs flex-1"
                 />
@@ -2055,7 +2056,7 @@ const PackageItemsEditor = ({
                   onClick={() => moveItem(idx, idx - 1)}
                   disabled={idx === 0}
                   className="p-1 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
-                  title="위로"
+                  title={t("createCourse.up", "위로")}
                 >
                   <ChevronUp className="h-3.5 w-3.5" />
                 </button>
@@ -2064,7 +2065,7 @@ const PackageItemsEditor = ({
                   onClick={() => moveItem(idx, idx + 1)}
                   disabled={idx === items.length - 1}
                   className="p-1 rounded hover:bg-accent text-muted-foreground disabled:opacity-30"
-                  title="아래로"
+                  title={t("createCourse.down", "아래로")}
                 >
                   <ChevronDown className="h-3.5 w-3.5" />
                 </button>
@@ -2072,7 +2073,7 @@ const PackageItemsEditor = ({
                   type="button"
                   onClick={() => removeItem(idx)}
                   className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                  title="삭제"
+                  title={t("createCourse.delete", "삭제")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -2084,7 +2085,7 @@ const PackageItemsEditor = ({
                     {isImage ? (
                       <img
                         src={it.media_url}
-                        alt={`항목 ${idx + 1}`}
+                        alt={t("createCourse.itemLabel", { n: idx + 1 })}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -2098,7 +2099,7 @@ const PackageItemsEditor = ({
                 <Textarea
                   value={it.caption}
                   onChange={(e) => updateItem(idx, { caption: e.target.value })}
-                  placeholder="캡션 (선택)"
+                  placeholder={t("createCourse.captionOptional", "캡션 (선택)")}
                   className="min-h-[60px] rounded-lg border-border text-xs flex-1 resize-none"
                   rows={2}
                 />
@@ -2134,7 +2135,7 @@ const PackageItemsEditor = ({
           className="gap-1.5 h-8 text-xs"
         >
           <ImagePlus className="h-3.5 w-3.5" />
-          {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "이미지 일괄 업로드"}
+          {bulkUploading ? t("createCourse.bulkUploadingProgress", { done: bulkProgress.done, total: bulkProgress.total }) : t("createCourse.bulkUploadImages", "이미지 일괄 업로드")}
         </Button>
         {!imagesOnly && (
           <Button
@@ -2146,7 +2147,7 @@ const PackageItemsEditor = ({
             className="gap-1.5 h-8 text-xs"
           >
             <Video className="h-3.5 w-3.5" />
-            {bulkUploading ? `업로드 중 (${bulkProgress.done}/${bulkProgress.total})` : "동영상 일괄 업로드"}
+            {bulkUploading ? t("createCourse.bulkUploadingProgress", { done: bulkProgress.done, total: bulkProgress.total }) : t("createCourse.bulkUploadVideos", "동영상 일괄 업로드")}
           </Button>
         )}
         <Button
@@ -2156,7 +2157,7 @@ const PackageItemsEditor = ({
           onClick={() => addItem("image")}
           className="gap-1.5 h-8 text-xs"
         >
-          <ImageIcon className="h-3.5 w-3.5" /> URL로 이미지 추가
+          <ImageIcon className="h-3.5 w-3.5" /> {t("createCourse.addImageByUrl", "URL로 이미지 추가")}
         </Button>
         {!imagesOnly && (
           <Button
@@ -2166,7 +2167,7 @@ const PackageItemsEditor = ({
             onClick={() => addItem("video")}
             className="gap-1.5 h-8 text-xs"
           >
-            <Video className="h-3.5 w-3.5" /> URL로 영상 추가
+            <Video className="h-3.5 w-3.5" /> {t("createCourse.addVideoByUrl", "URL로 영상 추가")}
           </Button>
         )}
       </div>
