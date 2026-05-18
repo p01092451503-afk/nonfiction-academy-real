@@ -984,7 +984,13 @@
     "certificateManagementDesc": "Download certificates for completed courses.",
     "noCertificates": "No certificates issued yet.",
     "generating": "Generating...",
-    "downloadCert": "Download"
+    "downloadCert": "Download",
+    "legacyTab": "Learning History",
+    "legacyTitle": "Previous Learning History",
+    "legacyDesc": "Course history migrated from the previous LMS. (For reference)",
+    "legacyEmpty": "No previous learning history.",
+    "legacyCompleted": "Completed",
+    "legacyNotCompleted": "Not Completed"
   },
   "assessment": {
     "title": "Assessment",
