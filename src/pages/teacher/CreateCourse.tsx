@@ -981,7 +981,7 @@ const CreateCourse = () => {
                   className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline"
                 >
                   <Images className="h-3 w-3" />
-                  차시 이미지에서 선택 ({lessonImages.length})
+                  {t("createCourse.pickFromLesson", { count: lessonImages.length })}
                 </button>
               )}
             </div>
@@ -991,12 +991,12 @@ const CreateCourse = () => {
                 <img src={thumbnailPreview} alt={t("createCourse.thumbnailAlt")} className="w-full h-full object-cover" />
                 {selectedLessonImageUrl && !thumbnailFile && (
                   <span className="absolute bottom-2 left-2 text-[10px] px-1.5 py-0.5 rounded bg-background/80 backdrop-blur-sm text-muted-foreground">
-                    차시 이미지 사용 중
+                    {t("createCourse.lessonImageInUse", "차시 이미지 사용 중")}
                   </span>
                 )}
                 <div className="absolute top-2 right-2 flex items-center gap-1">
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="h-7 px-2 rounded-md bg-background/80 backdrop-blur-sm text-[11px] text-muted-foreground hover:text-foreground transition-colors">
-                    변경
+                    {t("createCourse.change", "변경")}
                   </button>
                   <button type="button" onClick={removeThumbnail} className="h-7 w-7 rounded-md bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors">
                     <X className="h-4 w-4" />
@@ -1011,8 +1011,8 @@ const CreateCourse = () => {
               </button>
             )}
             <p className="text-[10px] text-muted-foreground">
-              썸네일 이미지를 입력하지 않을 경우, 강의에 등록된 첫 이미지가 자동으로 썸네일 이미지로 지정되어 업로드됩니다.
-              {lessonImages.length > 0 && " 직접 업로드하거나 차시 이미지 중에서 선택할 수도 있습니다."}
+              {t("createCourse.thumbnailHelp", "썸네일 이미지를 입력하지 않을 경우, 강의에 등록된 첫 이미지가 자동으로 썸네일 이미지로 지정되어 업로드됩니다.")}
+              {lessonImages.length > 0 && t("createCourse.thumbnailHelpExtra", " 직접 업로드하거나 차시 이미지 중에서 선택할 수도 있습니다.")}
             </p>
           </div>
 
@@ -1020,10 +1020,10 @@ const CreateCourse = () => {
           <Dialog open={imagePickerOpen} onOpenChange={setImagePickerOpen}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle className="text-base">차시 이미지에서 썸네일 선택</DialogTitle>
+                <DialogTitle className="text-base">{t("createCourse.pickThumbnailFromLesson", "차시 이미지에서 썸네일 선택")}</DialogTitle>
               </DialogHeader>
               {lessonImages.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">차시에 등록된 이미지가 없습니다.</p>
+                <p className="text-sm text-muted-foreground py-8 text-center">{t("createCourse.noLessonImages", "차시에 등록된 이미지가 없습니다.")}</p>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
                   {lessonImages.map((url) => {
@@ -1049,7 +1049,7 @@ const CreateCourse = () => {
                 </div>
               )}
               <DialogFooter>
-                <Button variant="outline" onClick={() => setImagePickerOpen(false)}>닫기</Button>
+                <Button variant="outline" onClick={() => setImagePickerOpen(false)}>{t("createCourse.close", "닫기")}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -1081,7 +1081,7 @@ const CreateCourse = () => {
             </TabsContent>
 
             <TabsContent value="en" className="space-y-3 pt-2">
-              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "번역 중..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? t("createCourse.translating", "번역 중...") : t("createCourse.autoTranslateHint", "한국어 입력 시 자동 번역됩니다. 직접 수정 가능.")}</p>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">English Title</label>
                 <Input value={enTitle} onChange={(e) => { setEnTitle(e.target.value); setEnTitleManual(true); }} placeholder="English title" className="h-9 rounded-lg border-border text-sm" />
@@ -1093,7 +1093,7 @@ const CreateCourse = () => {
             </TabsContent>
 
             <TabsContent value="zh-CN" className="space-y-3 pt-2">
-              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "翻译中..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? t("createCourse.translating", "번역 중...") : t("createCourse.autoTranslateHint", "한국어 입력 시 자동 번역됩니다. 직접 수정 가능.")}</p>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">中文标题</label>
                 <Input value={zhTitle} onChange={(e) => { setZhTitle(e.target.value); setZhTitleManual(true); }} placeholder="中文标题" className="h-9 rounded-lg border-border text-sm" />
@@ -1105,7 +1105,7 @@ const CreateCourse = () => {
             </TabsContent>
 
             <TabsContent value="ja" className="space-y-3 pt-2">
-              <p className="text-[11px] text-muted-foreground">{translatingCourse ? "翻訳中..." : "한국어 입력 시 자동 번역됩니다. 직접 수정 가능."}</p>
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? t("createCourse.translating", "번역 중...") : t("createCourse.autoTranslateHint", "한국어 입력 시 자동 번역됩니다. 직접 수정 가능.")}</p>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語タイトル</label>
                 <Input value={jaTitle} onChange={(e) => { setJaTitle(e.target.value); setJaTitleManual(true); }} placeholder="日本語タイトル" className="h-9 rounded-lg border-border text-sm" />
@@ -1316,13 +1316,13 @@ const UnifiedContentEditor = ({
             }
           }}
           readOnly={!isKo && !content.manual_translation_override}
-          placeholder={isKo ? `${langLabel} 차시 제목` : (isAutoTranslating ? "번역 중..." : "한국어 제목 입력 시 자동 번역")}
+          placeholder={isKo ? t("createCourse.lessonTitlePh", { lang: langLabel }) : (isAutoTranslating ? t("createCourse.translating", "번역 중...") : t("createCourse.lessonTitleAutoPh", "한국어 제목 입력 시 자동 번역"))}
           className={`flex-1 h-9 rounded-lg border-border text-sm ${!isKo && !content.manual_translation_override ? "bg-muted/40 cursor-not-allowed" : ""}`}
-          title={!isKo && !content.manual_translation_override ? "자동 번역됨 — 수정하려면 잠금을 해제하세요" : undefined}
+          title={!isKo && !content.manual_translation_override ? t("createCourse.lockedTooltip", "자동 번역됨 — 수정하려면 잠금을 해제하세요") : undefined}
         />
         {!isKo && isAutoTranslating && (
           <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0 inline-flex items-center gap-1">
-            <Languages className="h-3 w-3 animate-pulse" /> 번역 중
+            <Languages className="h-3 w-3 animate-pulse" /> {t("createCourse.translatingBadge", "번역 중")}
           </span>
         )}
       </div>
@@ -1332,19 +1332,19 @@ const UnifiedContentEditor = ({
           <div className="inline-flex items-center gap-1.5">
             {content.manual_translation_override ? (
               <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
-                <Pencil className="h-2.5 w-2.5" /> 직접 수정됨
+                <Pencil className="h-2.5 w-2.5" /> {t("createCourse.manuallyEdited", "직접 수정됨")}
               </Badge>
             ) : isAutoTranslating ? (
               <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-border bg-muted/40">
-                <Languages className="h-2.5 w-2.5 animate-pulse" /> 자동 번역 중…
+                <Languages className="h-2.5 w-2.5 animate-pulse" /> {t("createCourse.autoTranslating", "자동 번역 중…")}
               </Badge>
             ) : (
               <Badge variant="outline" className="rounded-md text-[10px] font-medium gap-1 border-border bg-muted/40 text-muted-foreground">
-                <Lock className="h-2.5 w-2.5" /> 자동 번역됨 (읽기 전용)
+                <Lock className="h-2.5 w-2.5" /> {t("createCourse.autoTranslatedReadOnly", "자동 번역됨 (읽기 전용)")}
               </Badge>
             )}
             <span className="text-[10px] text-muted-foreground">
-              한국어(1차시) 제목·설명을 자동 번역합니다.
+              {t("createCourse.translateFromKoHint", "한국어(1차시) 제목·설명을 자동 번역합니다.")}
             </span>
           </div>
           <button
@@ -1353,9 +1353,9 @@ const UnifiedContentEditor = ({
             className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
           >
             {content.manual_translation_override ? (
-              <><RotateCcw className="h-3 w-3" /> 자동번역으로 되돌리기</>
+              <><RotateCcw className="h-3 w-3" /> {t("createCourse.revertToAutoTranslate", "자동번역으로 되돌리기")}</>
             ) : (
-              <><Pencil className="h-3 w-3" /> 직접 수정</>
+              <><Pencil className="h-3 w-3" /> {t("createCourse.editManually", "직접 수정")}</>
             )}
           </button>
         </div>
@@ -1376,7 +1376,7 @@ const UnifiedContentEditor = ({
               }`}
             >
               <ImageIcon className="h-3.5 w-3.5" />
-              이미지
+              {t("createCourse.sourceImage", "이미지")}
             </button>
             <button
               type="button"
@@ -1400,7 +1400,7 @@ const UnifiedContentEditor = ({
               }`}
             >
               <Package className="h-3.5 w-3.5" />
-              미디어 패키지
+              {t("createCourse.sourceMediaPackage", "미디어 패키지")}
             </button>
           </div>
         </div>
@@ -1492,10 +1492,10 @@ const UnifiedContentEditor = ({
           <>
             <div className="space-y-2">
               <label className="text-[10px] font-medium text-muted-foreground uppercase flex items-center gap-1">
-                <ImageIcon className="h-3 w-3" /> 카드 이미지/영상 URL 목록
+                <ImageIcon className="h-3 w-3" /> {t("createCourse.cardUrlListLabel", "카드 이미지/영상 URL 목록")}
               </label>
               <p className="text-[10px] text-muted-foreground">
-                세로형 카드 (1080×1920) 사이즈의 이미지 또는 영상 링크를 여러 장 등록할 수 있습니다.
+                {t("createCourse.cardUrlListHint", "세로형 카드 (1080×1920) 사이즈의 이미지 또는 영상 링크를 여러 장 등록할 수 있습니다.")}
               </p>
 
               {/* Existing card URLs */}
@@ -1509,7 +1509,7 @@ const UnifiedContentEditor = ({
                       newUrls[cardIdx] = e.target.value;
                       onChange("card_urls", newUrls);
                     }}
-                    placeholder="이미지 URL 또는 영상 URL"
+                    placeholder={t("createCourse.cardUrlPh", "이미지 URL 또는 영상 URL")}
                     className="h-8 rounded-lg border-border text-xs flex-1"
                   />
                   <button
@@ -1531,7 +1531,7 @@ const UnifiedContentEditor = ({
                         onChange("card_urls", newUrls);
                       }}
                       className="p-1 rounded hover:bg-accent text-muted-foreground transition-colors shrink-0"
-                      title="위로 이동"
+                      title={t("createCourse.moveUp", "위로 이동")}
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
                     </button>
@@ -1549,7 +1549,7 @@ const UnifiedContentEditor = ({
                 className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors py-1"
               >
                 <Plus className="h-3.5 w-3.5" />
-                카드 추가
+                {t("createCourse.addCard", "카드 추가")}
               </button>
             </div>
 
@@ -1563,14 +1563,14 @@ const UnifiedContentEditor = ({
             {/* Card previews */}
             {(content.card_urls || []).filter(u => u).length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase">미리보기 ({(content.card_urls || []).filter(u => u).length}장)</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase">{t("createCourse.previewWithCount", { count: (content.card_urls || []).filter(u => u).length })}</label>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {(content.card_urls || []).filter(u => u).map((url, i) => (
                     <div key={i} className="w-24 rounded-lg border border-border overflow-hidden bg-muted/30 shrink-0" style={{ aspectRatio: "9/16" }}>
                       {url.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i) ? (
-                        <img src={url} alt={`카드 ${i + 1}`} className="w-full h-full object-cover" />
+                        <img src={url} alt={t("createCourse.cardLabel", { n: i + 1 })} className="w-full h-full object-cover" />
                       ) : (
-                        <iframe src={url} className="w-full h-full pointer-events-none" title={`카드 ${i + 1}`} />
+                        <iframe src={url} className="w-full h-full pointer-events-none" title={t("createCourse.cardLabel", { n: i + 1 })} />
                       )}
                     </div>
                   ))}
@@ -1632,15 +1632,15 @@ const UnifiedContentEditor = ({
             {!isKo && (
               content.manual_translation_override ? (
                 <Badge variant="outline" className="rounded-md text-[10px] gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30">
-                  <Pencil className="h-2.5 w-2.5" /> 직접 수정됨
+                  <Pencil className="h-2.5 w-2.5" /> {t("createCourse.manuallyEdited", "직접 수정됨")}
                 </Badge>
               ) : isAutoTranslating ? (
                 <Badge variant="outline" className="rounded-md text-[10px] gap-1">
-                  <Languages className="h-2.5 w-2.5 animate-pulse" /> 자동 번역 중…
+                  <Languages className="h-2.5 w-2.5 animate-pulse" /> {t("createCourse.autoTranslating", "자동 번역 중…")}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="rounded-md text-[10px] gap-1 text-muted-foreground">
-                  <Lock className="h-2.5 w-2.5" /> 자동 번역됨
+                  <Lock className="h-2.5 w-2.5" /> {t("createCourse.autoTranslated", "자동 번역됨")}
                 </Badge>
               )
             )}
@@ -1654,7 +1654,7 @@ const UnifiedContentEditor = ({
             placeholder={
               isKo
                 ? t("createCourse.contentDescPlaceholder")
-                : (isAutoTranslating ? "번역 중..." : "한국어 설명 입력 시 자동 번역됩니다")
+                : (isAutoTranslating ? t("createCourse.translating", "번역 중...") : t("createCourse.descAutoFromKoPh", "한국어 설명 입력 시 자동 번역됩니다"))
             }
             className={`min-h-[60px] rounded-lg border-border text-xs resize-none ${!isKo && !content.manual_translation_override ? "bg-muted/40 cursor-not-allowed" : ""}`}
           />
