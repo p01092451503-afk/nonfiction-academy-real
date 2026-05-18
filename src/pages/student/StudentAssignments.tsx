@@ -97,11 +97,11 @@ const StudentAssignments = () => {
     const selected = Array.from(e.target.files || []);
     const valid = selected.filter((f) => {
       if (f.size > MAX_FILE_SIZE) {
-        toast({ title: `${f.name}: 10MB 초과`, variant: "destructive" });
+        toast({ title: t("assignments.fileTooLarge", { name: f.name }), variant: "destructive" });
         return false;
       }
       if (!ALLOWED_TYPES.includes(f.type)) {
-        toast({ title: `${f.name}: 지원하지 않는 형식`, variant: "destructive" });
+        toast({ title: t("assignments.fileTypeInvalid", { name: f.name }), variant: "destructive" });
         return false;
       }
       return true;
@@ -321,8 +321,8 @@ const StudentAssignments = () => {
               {/* File Upload */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-1.5">
-                  <Paperclip className="h-3.5 w-3.5" /> 파일 첨부
-                  <span className="text-muted-foreground font-normal">(최대 5개, 10MB)</span>
+                  <Paperclip className="h-3.5 w-3.5" /> {t("assignments.attachFiles", "파일 첨부")}
+                  <span className="text-muted-foreground font-normal">{t("assignments.attachFilesHint", "(최대 5개, 10MB)")}</span>
                 </Label>
                 <input
                   ref={fileInputRef}
@@ -340,7 +340,7 @@ const StudentAssignments = () => {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={files.length >= 5}
                 >
-                  <Paperclip className="h-3 w-3" /> 파일 선택
+                  <Paperclip className="h-3 w-3" /> {t("assignments.selectFiles", "파일 선택")}
                 </Button>
                 {files.length > 0 && (
                   <div className="space-y-1.5 mt-2">
@@ -367,7 +367,7 @@ const StudentAssignments = () => {
               className="rounded-xl gap-1.5"
             >
               <Send className="h-3.5 w-3.5" />
-              {uploading ? "업로드 중..." : submitMutation.isPending ? t("assignments.submitting") : t("common.submit")}
+              {uploading ? t("common.uploading", "업로드 중...") : submitMutation.isPending ? t("assignments.submitting") : t("common.submit")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -392,7 +392,7 @@ const StudentAssignments = () => {
               {viewTarget.file_urls && viewTarget.file_urls.length > 0 && (
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium flex items-center gap-1.5">
-                    <Paperclip className="h-3.5 w-3.5" /> 첨부 파일
+                    <Paperclip className="h-3.5 w-3.5" /> {t("assignments.attachments", "첨부 파일")}
                   </Label>
                   {viewTarget.file_urls.map((url: string, i: number) => {
                     const fileName = decodeURIComponent(url.split("/").pop() || "").replace(/^\d+_/, "");
