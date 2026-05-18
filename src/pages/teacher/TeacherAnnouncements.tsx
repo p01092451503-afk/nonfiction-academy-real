@@ -70,12 +70,12 @@ const TeacherAnnouncements = () => {
       }
     },
     onSuccess: () => {
-      toast({ title: editId ? "수정 완료" : "공지사항 등록 완료" });
+      toast({ title: editId ? t("announcements.updated", "수정 완료") : t("announcements.created", "공지사항 등록 완료") });
       queryClient.invalidateQueries({ queryKey: ["teacher-announcements"] });
       setDialogOpen(false);
       resetForm();
     },
-    onError: (err: Error) => toast({ title: "오류", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("common.error", "오류"), description: err.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -84,7 +84,7 @@ const TeacherAnnouncements = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "삭제 완료" });
+      toast({ title: t("announcements.deleted", "삭제 완료") });
       queryClient.invalidateQueries({ queryKey: ["teacher-announcements"] });
       setDeleteId(null);
     },

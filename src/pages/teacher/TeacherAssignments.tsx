@@ -489,7 +489,7 @@ const TeacherAssignments = () => {
                       {sub.file_urls && sub.file_urls.length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
                           <Paperclip className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground">{sub.file_urls.length}개 파일 첨부</span>
+                          <span className="text-[10px] text-muted-foreground">{t("assignments.fileCount", { count: sub.file_urls.length })}</span>
                         </div>
                       )}
                     </div>
@@ -676,7 +676,7 @@ const TeacherAssignments = () => {
               {gradeTarget.file_urls && gradeTarget.file_urls.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-1.5">
-                    <Paperclip className="h-3.5 w-3.5" /> 첨부 파일 ({gradeTarget.file_urls.length})
+                    <Paperclip className="h-3.5 w-3.5" /> {t("assignments.attachmentsWithCount", { count: gradeTarget.file_urls.length })}
                   </Label>
                   <div className="space-y-1.5">
                     {gradeTarget.file_urls.map((url: string, i: number) => {

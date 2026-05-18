@@ -71,7 +71,7 @@ const TeacherNotifications = () => {
     mutationFn: async () => {
       const koTitle = ml.ko.title.trim();
       const koMessage = ml.ko.content.trim();
-      if (!koTitle || !koMessage) throw new Error("한국어 제목/내용을 입력하세요.");
+      if (!koTitle || !koMessage) throw new Error(t("notifications.koRequired", "한국어 제목/내용을 입력하세요."));
 
       let title_i18n: NotificationI18n;
       let message_i18n: NotificationI18n;
@@ -95,23 +95,23 @@ const TeacherNotifications = () => {
       if (target === "all") {
         const ids = students?.map((s) => s.user_id) || [];
         const rows = ids.map((uid) => ({ user_id: uid, title: koTitle, message: koMessage, type: "info", title_i18n, message_i18n }));
-        if (rows.length === 0) throw new Error("발송 대상이 없습니다.");
+        if (rows.length === 0) throw new Error(t("notifications.noRecipients", "발송 대상이 없습니다."));
         const { error } = await supabase.from("notifications").insert(rows);
         if (error) throw error;
       } else {
-        if (!selectedUserId) throw new Error("대상을 선택해주세요.");
+        if (!selectedUserId) throw new Error(t("notifications.selectRecipient", "대상을 선택해주세요."));
         const { error } = await supabase.from("notifications").insert({ user_id: selectedUserId, title: koTitle, message: koMessage, type: "info", title_i18n, message_i18n });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      toast({ title: "알림 발송 완료" });
+      toast({ title: t("notifications.sent", "알림 발송 완료") });
       queryClient.invalidateQueries({ queryKey: ["teacher-recent-notifications"] });
       setOpen(false);
       setMl(EMPTY_MULTILINGUAL);
       setSelectedUserId("");
     },
-    onError: (err: Error) => toast({ title: "오류", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("common.error", "오류"), description: err.message, variant: "destructive" }),
   });
 
   const filteredStudents = students?.filter(
