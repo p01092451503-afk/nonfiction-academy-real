@@ -118,11 +118,11 @@
   },
   "roles": {
     "student": "Student",
-    "teacher": "Teacher",
+    "teacher": "Learning Leader",
     "admin": "Admin",
     "superAdmin": "Super Admin",
     "adminLabel": "Admin",
-    "teacherLabel": "Teacher",
+    "teacherLabel": "Learning Leader",
     "studentLabel": "Learner",
     "superAdminLabel": "Super Admin"
   },
