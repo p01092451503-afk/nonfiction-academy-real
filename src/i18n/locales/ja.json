@@ -112,7 +112,8 @@
     "notificationManagement": "通知管理",
     "announcementManagement": "お知らせ管理",
     "board": "掲示板",
-    "boardManagement": "掲示板管理"
+    "boardManagement": "掲示板管理",
+    "legacyRecords": "学習履歴管理"
   },
   "roles": {
     "student": "Student",
@@ -983,7 +984,13 @@
     "certificateManagementDesc": "修了したコースの修了証をダウンロードできます。",
     "noCertificates": "発行された修了証がありません。",
     "generating": "生成中...",
-    "downloadCert": "ダウンロード"
+    "downloadCert": "ダウンロード",
+    "legacyTab": "学習履歴管理",
+    "legacyTitle": "過去の学習履歴",
+    "legacyDesc": "既存LMSから移行された受講履歴です。(参考用)",
+    "legacyEmpty": "過去の学習履歴はありません。",
+    "legacyCompleted": "修了",
+    "legacyNotCompleted": "未修了"
   },
   "assessment": {
     "title": "評価",

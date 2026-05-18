@@ -396,15 +396,15 @@ const MyPage = () => {
             <TabsContent value="legacy">
               <div className="space-y-6">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold">{t("mypage.legacyTab", "이전 학습 이력")}</h2>
-                  <p className="text-sm text-muted-foreground">기존 LMS에서 이관된 수강 이력입니다. (참고용)</p>
+                  <h2 className="text-lg font-semibold">{t("mypage.legacyTitle")}</h2>
+                  <p className="text-sm text-muted-foreground">{t("mypage.legacyDesc")}</p>
                 </div>
                 {legacyRecords.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 space-y-3">
                     <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center">
                       <Archive className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <p className="text-sm text-muted-foreground">이전 학습 이력이 없습니다.</p>
+                    <p className="text-sm text-muted-foreground">{t("mypage.legacyEmpty")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -418,10 +418,11 @@ const MyPage = () => {
                           </div>
                         </div>
                         {r.is_completed ? (
-                          <span className="text-xs font-semibold px-2 py-1 rounded bg-foreground text-background shrink-0">수료</span>
+                          <span className="text-xs font-semibold px-2 py-1 rounded bg-foreground text-background shrink-0">{t("mypage.legacyCompleted")}</span>
                         ) : (
-                          <span className="text-xs font-medium px-2 py-1 rounded border border-border text-muted-foreground shrink-0">미수료</span>
+                          <span className="text-xs font-medium px-2 py-1 rounded border border-border text-muted-foreground shrink-0">{t("mypage.legacyNotCompleted")}</span>
                         )}
+
                       </div>
                     ))}
                   </div>
