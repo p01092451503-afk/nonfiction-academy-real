@@ -286,9 +286,14 @@ const CourseDetail = () => {
   };
 
   const getLocalizedContentTitle = (content: any) => {
-    if (currentLang === "ko") return stripLessonPrefix(content.title);
     const tr = getContentI18n(content.id, currentLang);
-    return stripLessonPrefix(tr?.title || content.title);
+    const koTr = getContentI18n(content.id, "ko");
+    const picked =
+      (tr?.title && tr.title.trim()) ||
+      (currentLang === "ko" ? (koTr?.title && koTr.title.trim()) : null) ||
+      (koTr?.title && koTr.title.trim()) ||
+      content.title;
+    return stripLessonPrefix(picked || "");
   };
 
   const getCourseTitle = () => {
