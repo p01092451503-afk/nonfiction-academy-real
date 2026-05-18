@@ -46,7 +46,9 @@
     "incomplete": "미완료",
     "overdue": "기한 초과",
     "saving": "저장 중...",
-    "registering": "등록 중..."
+    "registering": "등록 중...",
+    "prev": "이전",
+    "uploading": "업로드 중..."
   },
   "auth": {
     "login": "로그인",
@@ -491,7 +493,15 @@
     "deselectAll": "선택 해제",
     "filterByAssignment": "과제별 필터",
     "allAssignments": "모든 과제",
-    "searchStudent": "학생 검색"
+    "searchStudent": "학생 검색",
+    "attachFiles": "파일 첨부",
+    "attachFilesHint": "(최대 5개, 10MB)",
+    "selectFiles": "파일 선택",
+    "attachments": "첨부 파일",
+    "attachmentsWithCount": "첨부 파일 ({{count}})",
+    "fileCount": "{{count}}개 파일 첨부",
+    "fileTooLarge": "{{name}}: 10MB 초과",
+    "fileTypeInvalid": "{{name}}: 지원하지 않는 형식"
   },
   "achievements": {
     "title": "성취",
@@ -1105,7 +1115,11 @@
     "sentAt": "발송일시",
     "readStatus": "읽음",
     "teacherDesc": "수강생에게 알림을 발송합니다.",
-    "myStudentsNotify": "내 수강생 전체"
+    "myStudentsNotify": "내 수강생 전체",
+    "koRequired": "한국어 제목/내용을 입력하세요.",
+    "noRecipients": "발송 대상이 없습니다.",
+    "selectRecipient": "대상을 선택해주세요.",
+    "sent": "알림 발송 완료"
   },
   "announcements": {
     "title": "공지사항",
@@ -1128,7 +1142,10 @@
     "deleteDesc": "삭제된 공지사항은 복구할 수 없습니다.",
     "noAnnouncements": "등록된 공지사항이 없습니다.",
     "teacherDesc": "수강생에게 공지사항을 등록합니다.",
-    "myAnnouncements": "내 공지사항"
+    "myAnnouncements": "내 공지사항",
+    "updated": "수정 완료",
+    "created": "공지사항 등록 완료",
+    "deleted": "삭제 완료"
   },
   "board": {
     "title": "게시판 관리",

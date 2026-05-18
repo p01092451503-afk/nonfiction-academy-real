@@ -46,7 +46,9 @@
     "incomplete": "未完了",
     "overdue": "期限切れ",
     "saving": "保存中...",
-    "registering": "登録中..."
+    "registering": "登録中...",
+    "prev": "前へ",
+    "uploading": "アップロード中..."
   },
   "auth": {
     "login": "ログイン",
@@ -490,7 +492,15 @@
     "deselectAll": "選択解除",
     "filterByAssignment": "課題別フィルター",
     "allAssignments": "すべての課題",
-    "searchStudent": "学生検索"
+    "searchStudent": "学生検索",
+    "attachFiles": "ファイル添付",
+    "attachFilesHint": "(最大5件、10MB)",
+    "selectFiles": "ファイルを選択",
+    "attachments": "添付ファイル",
+    "attachmentsWithCount": "添付ファイル ({{count}})",
+    "fileCount": "{{count}}件のファイル添付",
+    "fileTooLarge": "{{name}}: 10MB超過",
+    "fileTypeInvalid": "{{name}}: 対応していない形式"
   },
   "achievements": {
     "title": "達成",
@@ -1104,7 +1114,11 @@
     "sentAt": "送信日時",
     "readStatus": "既読",
     "teacherDesc": "受講生に通知を送信します。",
-    "myStudentsNotify": "全ての受講生"
+    "myStudentsNotify": "全ての受講生",
+    "koRequired": "韓国語のタイトル/内容を入力してください。",
+    "noRecipients": "送信対象がありません。",
+    "selectRecipient": "対象を選択してください。",
+    "sent": "通知を送信しました"
   },
   "announcements": {
     "title": "お知らせ",
@@ -1127,7 +1141,10 @@
     "deleteDesc": "削除されたお知らせは復元できません。",
     "noAnnouncements": "登録されたお知らせはありません。",
     "teacherDesc": "受講生にお知らせを登録します。",
-    "myAnnouncements": "自分のお知らせ"
+    "myAnnouncements": "自分のお知らせ",
+    "updated": "更新完了",
+    "created": "お知らせを登録しました",
+    "deleted": "削除完了"
   },
   "board": {
     "title": "掲示板管理",

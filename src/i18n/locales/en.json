@@ -46,7 +46,9 @@
     "incomplete": "Incomplete",
     "overdue": "Overdue",
     "saving": "Saving...",
-    "registering": "Registering..."
+    "registering": "Registering...",
+    "prev": "Previous",
+    "uploading": "Uploading..."
   },
   "auth": {
     "login": "Log In",
@@ -491,7 +493,15 @@
     "deselectAll": "Deselect All",
     "filterByAssignment": "Filter by Assignment",
     "allAssignments": "All Assignments",
-    "searchStudent": "Search student"
+    "searchStudent": "Search student",
+    "attachFiles": "Attach Files",
+    "attachFilesHint": "(max 5, 10MB)",
+    "selectFiles": "Select Files",
+    "attachments": "Attachments",
+    "attachmentsWithCount": "Attachments ({{count}})",
+    "fileCount": "{{count}} file(s) attached",
+    "fileTooLarge": "{{name}}: exceeds 10MB",
+    "fileTypeInvalid": "{{name}}: unsupported format"
   },
   "achievements": {
     "title": "Achievements",
@@ -1105,7 +1115,11 @@
     "sentAt": "Sent At",
     "readStatus": "Read",
     "teacherDesc": "Send notifications to your students.",
-    "myStudentsNotify": "All My Students"
+    "myStudentsNotify": "All My Students",
+    "koRequired": "Please enter the Korean title and content.",
+    "noRecipients": "No recipients to send to.",
+    "selectRecipient": "Please select a recipient.",
+    "sent": "Notification sent"
   },
   "announcements": {
     "title": "Announcements",
@@ -1128,7 +1142,10 @@
     "deleteDesc": "This action cannot be undone.",
     "noAnnouncements": "No announcements yet.",
     "teacherDesc": "Post announcements for your students.",
-    "myAnnouncements": "My Announcements"
+    "myAnnouncements": "My Announcements",
+    "updated": "Updated",
+    "created": "Announcement created",
+    "deleted": "Deleted"
   },
   "board": {
     "title": "Board Management",
