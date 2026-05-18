@@ -844,7 +844,8 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                         </AlertDialog>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ol>
               )}
             </>
