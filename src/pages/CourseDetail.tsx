@@ -1010,7 +1010,7 @@ const CourseDetail = () => {
         </section>
 
         {/* Student Assessment Section */}
-        {courseId && <StudentAssessmentSection courseId={courseId} overallProgress={overallProgress} routePrefix={routePrefix} t={t} isEn={isEn} />}
+        {courseId && <StudentAssessmentSection courseId={courseId} overallProgress={overallProgress} routePrefix={routePrefix} t={t} isEn={isEn} currentLang={currentLang} />}
 
         {/* Survey Section - shown after course completion. Title comes from admin-configured survey. */}
         {courseId && enrollment?.completed_at && (
@@ -1023,13 +1023,14 @@ const CourseDetail = () => {
 
 // --- Student Assessment Section ---
 const StudentAssessmentSection = ({
-  courseId, overallProgress, routePrefix, t, isEn,
+  courseId, overallProgress, routePrefix, t, isEn, currentLang,
 }: {
   courseId: string;
   overallProgress: number;
   routePrefix: string;
   t: any;
   isEn: boolean;
+  currentLang: "ko" | "en" | "ja" | "zh-CN";
 }) => {
   const navigate = useNavigate();
   const { data: assessment } = useQuery({
@@ -1039,6 +1040,20 @@ const StudentAssessmentSection = ({
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: assessmentI18n } = useQuery({
+    queryKey: ["assessment-i18n", assessment?.id, currentLang],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("assessment_i18n" as any)
+        .select("title, description")
+        .eq("assessment_id", assessment!.id)
+        .eq("language_code", currentLang)
+        .maybeSingle();
+      return data as unknown as { title: string | null; description: string | null } | null;
+    },
+    enabled: !!assessment?.id && currentLang !== "ko",
   });
 
   const { user } = useUser();
@@ -1059,11 +1074,12 @@ const StudentAssessmentSection = ({
   const completedAttempts = attempts.filter((a: any) => a.completed_at);
   const bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map((a: any) => Number(a.score) || 0)) : null;
   const passed = bestScore !== null ? bestScore >= assessment.passing_score : false;
+  const displayTitle = (assessmentI18n?.title?.trim()) || assessment.title;
 
   return (
     <section className="space-y-3" aria-labelledby="student-assessment-heading">
       <h2 id="student-assessment-heading" className="text-sm font-semibold text-foreground">
-        {t("assessment.title")}: {assessment.title}
+        {t("assessment.title")}: {displayTitle}
       </h2>
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         {!meetsThreshold ? (
