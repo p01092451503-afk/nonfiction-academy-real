@@ -117,7 +117,7 @@
   },
   "roles": {
     "student": "Student",
-    "teacher": "Teacher",
+    "teacher": "Learning Leader",
     "admin": "Admin",
     "superAdmin": "Super Admin",
     "adminLabel": "管理者",
