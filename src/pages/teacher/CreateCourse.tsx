@@ -1064,10 +1064,10 @@ const CreateCourse = () => {
 
             <TabsContent value="ko" className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] text-muted-foreground">한국어 입력 시 영어/중국어/일본어로 자동 번역됩니다.</p>
+                <p className="text-[11px] text-muted-foreground">{t("createCourse.koAutoTranslateHint", "한국어 입력 시 영어/중국어/일본어로 자동 번역됩니다.")}</p>
                 <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={handleTranslateCourse} disabled={translatingCourse || (!title && !description)}>
                   <Languages className="h-3 w-3" />
-                  {translatingCourse ? "번역 중..." : "전체 재번역"}
+                  {translatingCourse ? t("createCourse.translating", "번역 중...") : t("createCourse.retranslateAll", "전체 재번역")}
                 </Button>
               </div>
               <div className="space-y-1.5">
