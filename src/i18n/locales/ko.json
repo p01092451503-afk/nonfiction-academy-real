@@ -117,9 +117,9 @@
     "legacyRecords": "학습 이력 관리"
   },
   "roles": {
-    "student": "Student",
+    "student": "학습자",
     "teacher": "러닝 리더",
-    "admin": "Admin",
+    "admin": "관리자",
     "superAdmin": "Super Admin",
     "adminLabel": "관리자",
     "teacherLabel": "러닝 리더",
