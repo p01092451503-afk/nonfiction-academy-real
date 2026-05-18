@@ -32,17 +32,20 @@ const categoryGradients: Record<string, string> = {
   "safety-environment": "from-lime-500 to-green-600",
 };
 
-const ScrollArrow = ({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground shadow-md transition-all hover:text-foreground hover:shadow-lg sm:flex"
-    style={{ [direction]: -12 }}
-    aria-label={direction === "left" ? "이전" : "다음"}
-  >
-    {direction === "left" ? <ChevronLeft className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
-  </button>
-);
+const ScrollArrow = ({ direction, onClick }: { direction: "left" | "right"; onClick: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="absolute top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground shadow-md transition-all hover:text-foreground hover:shadow-lg sm:flex"
+      style={{ [direction]: -12 }}
+      aria-label={direction === "left" ? t("common.prev", "이전") : t("common.next", "다음")}
+    >
+      {direction === "left" ? <ChevronLeft className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
+    </button>
+  );
+};
 
 const CatalogCourseCard = ({
   course,
