@@ -122,7 +122,7 @@
     "admin": "Admin",
     "superAdmin": "Super Admin",
     "adminLabel": "관리자",
-    "teacherLabel": "강사",
+    "teacherLabel": "러닝 리더",
     "studentLabel": "학습자",
     "superAdminLabel": "슈퍼관리자"
   },
