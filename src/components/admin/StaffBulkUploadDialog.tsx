@@ -33,48 +33,12 @@ const StaffBulkUploadDialog = ({ open, onOpenChange, onComplete }: Props) => {
   };
 
   const downloadTemplate = () => {
-    const sample = [
-      {
-        email: "user1@example.com",
-        password: "Temp1234!",
-        full_name: "홍길동",
-        role: "student",
-        department_code: "HQ",
-        department_name: "본사",
-        position: "사원",
-      },
-      {
-        email: "teacher1@example.com",
-        password: "Temp1234!",
-        full_name: "김강사",
-        role: "teacher",
-        department_code: "",
-        department_name: "교육팀",
-        position: "강사",
-      },
-    ];
-    const ws = XLSX.utils.json_to_sheet(sample, { header: HEADERS });
-    // Add column widths
-    (ws as any)["!cols"] = HEADERS.map((h) => ({ wch: h === "email" || h === "department_name" ? 24 : 14 }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "staff");
-
-    // Add a guide sheet
-    const guide = [
-      ["필드", "필수", "설명"],
-      ["email", "필수", "로그인 이메일 (중복 시 건너뜀)"],
-      ["password", "필수", "임시 비밀번호 (6자 이상)"],
-      ["full_name", "선택", "이름"],
-      ["role", "선택", "student / teacher / admin (기본: student)"],
-      ["department_code", "선택", "부서/지점 코드 (코드가 우선 적용됨)"],
-      ["department_name", "선택", "부서/지점 이름 (코드가 없을 때 매칭)"],
-      ["position", "선택", "직급"],
-    ];
-    const wsGuide = XLSX.utils.aoa_to_sheet(guide);
-    (wsGuide as any)["!cols"] = [{ wch: 18 }, { wch: 8 }, { wch: 60 }];
-    XLSX.utils.book_append_sheet(wb, wsGuide, "안내");
-
-    XLSX.writeFile(wb, "staff_upload_template.xlsx");
+    const a = document.createElement("a");
+    a.href = "/templates/staff_upload_template.xlsx";
+    a.download = "staff_upload_template.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handleFile = async (file: File) => {
