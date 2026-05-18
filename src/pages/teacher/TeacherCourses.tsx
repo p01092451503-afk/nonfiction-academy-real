@@ -27,7 +27,8 @@ const statusColor: Record<string, string> = {
 const TeacherCourses = () => {
   const { user } = useUser();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = normalizeLang(i18n.language);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -40,7 +41,7 @@ const TeacherCourses = () => {
   };
 
   const { data: courses = [] } = useQuery({
-    queryKey: ["teacher-courses", user?.id],
+    queryKey: ["teacher-courses", user?.id, lang],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
@@ -48,7 +49,26 @@ const TeacherCourses = () => {
         .eq("instructor_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      const rows = data ?? [];
+      if (lang === "ko" || rows.length === 0) return rows;
+      const ids = rows.map((c: any) => c.id);
+      const { data: i18nRows } = await supabase
+        .from("course_i18n" as any)
+        .select("course_id, language_code, title, description")
+        .in("course_id", ids)
+        .eq("language_code", lang);
+      const map = new Map<string, { title: string | null; description: string | null }>();
+      (i18nRows as any[] | null)?.forEach((r) => {
+        map.set(r.course_id, { title: r.title, description: r.description });
+      });
+      return rows.map((c: any) => {
+        const tr = map.get(c.id);
+        return {
+          ...c,
+          title: tr?.title || c.title,
+          description: tr?.description || c.description,
+        };
+      });
     },
     enabled: !!user?.id,
   });
