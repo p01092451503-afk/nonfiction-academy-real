@@ -983,7 +983,13 @@
     "certificateManagementDesc": "您可以下载已完成课程的证书。",
     "noCertificates": "没有已颁发的证书。",
     "generating": "生成中...",
-    "downloadCert": "下载"
+    "downloadCert": "下载",
+    "legacyTab": "学习历史管理",
+    "legacyTitle": "以往学习记录",
+    "legacyDesc": "从原有LMS迁移的学习记录。(仅供参考)",
+    "legacyEmpty": "暂无以往学习记录。",
+    "legacyCompleted": "已完成",
+    "legacyNotCompleted": "未完成"
   },
   "assessment": {
     "title": "评估",
