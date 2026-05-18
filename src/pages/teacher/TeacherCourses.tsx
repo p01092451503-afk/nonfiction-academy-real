@@ -16,6 +16,7 @@ import CourseThumbnail from "@/components/CourseThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useTranslation } from "react-i18next";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const statusColor: Record<string, string> = {
   draft: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
