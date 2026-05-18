@@ -1051,7 +1051,7 @@ const StudentAssessmentSection = ({
         .eq("assessment_id", assessment!.id)
         .eq("language_code", currentLang)
         .maybeSingle();
-      return data as { title: string | null; description: string | null } | null;
+      return data as unknown as { title: string | null; description: string | null } | null;
     },
     enabled: !!assessment?.id && currentLang !== "ko",
   });
