@@ -984,7 +984,13 @@
     "certificateManagementDesc": "수료한 강의의 이수증을 다운로드할 수 있습니다.",
     "noCertificates": "발급된 이수증이 없습니다.",
     "generating": "생성 중...",
-    "downloadCert": "다운로드"
+    "downloadCert": "다운로드",
+    "legacyTab": "학습 이력 관리",
+    "legacyTitle": "이전 학습 이력",
+    "legacyDesc": "기존 LMS에서 이관된 수강 이력입니다. (참고용)",
+    "legacyEmpty": "이전 학습 이력이 없습니다.",
+    "legacyCompleted": "수료",
+    "legacyNotCompleted": "미수료"
   },
   "assessment": {
     "title": "평가",
