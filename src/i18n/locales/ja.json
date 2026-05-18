@@ -112,7 +112,8 @@
     "notificationManagement": "通知管理",
     "announcementManagement": "お知らせ管理",
     "board": "掲示板",
-    "boardManagement": "掲示板管理"
+    "boardManagement": "掲示板管理",
+    "legacyRecords": "学習履歴管理"
   },
   "roles": {
     "student": "Student",

@@ -112,7 +112,8 @@
     "notificationManagement": "通知管理",
     "announcementManagement": "公告管理",
     "board": "公告板",
-    "boardManagement": "公告板管理"
+    "boardManagement": "公告板管理",
+    "legacyRecords": "学习历史管理"
   },
   "roles": {
     "student": "Student",

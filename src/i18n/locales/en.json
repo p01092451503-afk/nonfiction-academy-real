@@ -113,7 +113,8 @@
     "notificationManagement": "Notifications",
     "announcementManagement": "Announcements",
     "board": "Board",
-    "boardManagement": "Board"
+    "boardManagement": "Board",
+    "legacyRecords": "Learning History"
   },
   "roles": {
     "student": "Student",
