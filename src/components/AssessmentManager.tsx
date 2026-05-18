@@ -100,6 +100,13 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
+  const activeLang: "ko" | "en" | "ja" | "zh-CN" = i18n.language?.startsWith("en")
+    ? "en"
+    : i18n.language?.startsWith("ja")
+    ? "ja"
+    : i18n.language?.startsWith("zh")
+    ? "zh-CN"
+    : "ko";
   const queryClient = useQueryClient();
 
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
@@ -778,7 +785,13 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                 <div className="py-8 text-center text-sm text-muted-foreground">{t("assessment.noQuestions")}</div>
               ) : (
                 <ol className="divide-y divide-border">
-                  {questions.map((q: any, idx: number) => (
+                  {questions.map((q: any, idx: number) => {
+                    const tr = activeLang === "ko" ? null : questionI18nMap.get(q.id)?.[activeLang];
+                    const displayText = (tr?.question_text as string | undefined)?.trim() || q.question_text;
+                    const displayOptions = Array.isArray(tr?.options) && tr.options.length
+                      ? (tr.options as string[])
+                      : (q.options as string[] | null);
+                    return (
                     <li key={q.id} className="flex items-start gap-3 px-4 py-3 hover:bg-accent/20 transition-colors group">
                       <span className="mt-0.5 w-6 shrink-0 text-center font-mono text-xs text-muted-foreground">{idx + 1}</span>
                       <div className="flex-1 min-w-0 space-y-1">
@@ -788,17 +801,21 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                           </Badge>
                           <span className="text-[10px] text-muted-foreground">{q.points}{t("common.points")}</span>
                         </div>
-                        <p className="text-sm text-foreground line-clamp-2">{q.question_text}</p>
-                        {q.options && (
+                        <p className="text-sm text-foreground line-clamp-2">{displayText}</p>
+                        {displayOptions && (
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {(q.options as string[]).map((opt: string, i: number) => (
-                              <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${opt === q.correct_answer ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium" : "bg-muted text-muted-foreground"}`}>
+                            {displayOptions.map((opt: string, i: number) => {
+                              const koOpt = (q.options as string[] | null)?.[i];
+                              const isCorrect = koOpt === q.correct_answer;
+                              return (
+                              <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${isCorrect ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium" : "bg-muted text-muted-foreground"}`}>
                                 {opt || `(${i + 1})`}
                               </span>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
-                        {!q.options && q.correct_answer && (
+                        {!displayOptions && q.correct_answer && (
                           <p className="text-[10px] text-green-600 dark:text-green-400">{t("assessment.answer")}: {q.correct_answer}</p>
                         )}
                       </div>
