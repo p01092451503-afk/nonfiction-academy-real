@@ -47,14 +47,23 @@ const CATEGORY_LABELS: Record<Category, string> = {
   track_stage: "트랙 단계",
 };
 
+// Detect Korean Hangul characters. If source has no Hangul, it's already non-Korean
+// (English/Japanese/Chinese product names, codes, "Lesson 2", etc.) and translation
+// returning the same text should NOT be treated as "untranslated".
+const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+const hasHangul = (s: string) => HANGUL_RE.test(s);
+
 function computeStatus(koTitle: string, koBody: string, tTitle: string | null, tBody: string | null): LangStatus {
   const hasTitle = !!tTitle?.trim();
   const hasBody = !!tBody?.trim() || !koBody.trim();
   if (!hasTitle && !tBody?.trim()) return "missing";
-  // Untranslated: target text equals Korean source (just copied)
-  const titleSame = hasTitle && tTitle!.trim() === koTitle.trim() && !!koTitle.trim();
-  const bodySame = !!tBody?.trim() && tBody!.trim() === koBody.trim() && !!koBody.trim();
-  if ((titleSame && (bodySame || !koBody.trim())) || (titleSame && !tBody?.trim() && !!koBody.trim())) {
+  // Untranslated only applies when source actually contains Korean text.
+  const titleSame =
+    hasTitle && tTitle!.trim() === koTitle.trim() && !!koTitle.trim() && hasHangul(koTitle);
+  const bodySame =
+    !!tBody?.trim() && tBody!.trim() === koBody.trim() && !!koBody.trim() && hasHangul(koBody);
+  const koBodyMeaningful = !!koBody.trim() && hasHangul(koBody);
+  if (titleSame && (bodySame || !koBodyMeaningful)) {
     return "untranslated";
   }
   if (hasTitle && hasBody) return "complete";
