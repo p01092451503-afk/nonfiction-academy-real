@@ -189,7 +189,10 @@ const TeacherAnnouncements = () => {
           </DialogHeader>
           <div className="space-y-4">
             <MultilingualTextFields value={ml} onChange={setMl} />
-            <TargetingFields value={target} onChange={setTarget} compact />
+            <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              {t("announcements.scopedToBranch", "이 공지사항은 내 그룹의 수강생에게만 노출됩니다.")}
+              {branch ? ` (${branch.name}${branch.code ? ` · ${branch.code}` : ""})` : ""}
+            </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_pinned} onCheckedChange={(v) => setForm((f) => ({ ...f, is_pinned: v }))} />
