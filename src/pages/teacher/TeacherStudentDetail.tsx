@@ -209,6 +209,11 @@ const TeacherStudentDetail = () => {
 
   const name = profile?.full_name || t("common.user");
 
+  // Department access guard: a Learning Leader can only inspect students within their own branch scope.
+  if (!scopeLoading && profile && profile.department_id && scopeIds.length > 0 && !scopeIds.includes(profile.department_id)) {
+    return <Navigate to="/teacher/students" replace />;
+  }
+
   return (
     <DashboardLayout role="teacher">
       <div className="space-y-6">
