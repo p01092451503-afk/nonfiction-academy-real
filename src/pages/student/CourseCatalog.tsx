@@ -129,29 +129,22 @@ const CatalogCourseCard = ({
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
           </Link>
-        ) : enrollmentStatus === "pending" ? (
-          <Button variant="secondary" size="sm" className="w-full cursor-default gap-1.5 rounded-xl text-xs" disabled>
-            <Hourglass className="h-3.5 w-3.5" aria-hidden="true" />
-            {t("catalog.pendingApproval")}
-          </Button>
-        ) : enrollmentStatus === "rejected" ? (
-          <Button variant="outline" size="sm" className="w-full cursor-default rounded-xl border-destructive/30 text-xs text-destructive" disabled>
-            {t("catalog.rejected")}
-          </Button>
         ) : (
           <Button
             size="sm"
-            className="w-full rounded-xl text-xs"
+            className="w-full gap-1.5 rounded-xl text-xs"
             onClick={(e) => {
               e.preventDefault();
               onEnroll(course.id);
             }}
             disabled={isPending}
           >
-            {t("catalog.enroll")}
+            {t("catalog.startLearning", "학습 시작")}
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         )}
       </div>
+
     </div>
   </article>
 );
@@ -321,18 +314,21 @@ const CourseCatalog = () => {
 
   const enrollMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      const { error } = await supabase.from("enrollments").insert({ course_id: courseId, user_id: user!.id });
+      // Auto-approve every enrollment from the student catalog.
+      const { error } = await supabase
+        .from("enrollments")
+        .insert({ course_id: courseId, user_id: user!.id, status: "approved" });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
       queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
-      toast({ title: t("catalog.enrollRequested") });
     },
     onError: (e: any) => {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     },
   });
+
 
   const enrollmentStatusMap = new Map(enrollments.map((e: any) => [e.course_id, e.status]));
   const countMap = new Map<string, number>();
