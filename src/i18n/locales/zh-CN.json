@@ -125,7 +125,9 @@
     "adminLabel": "管理员",
     "teacherLabel": "Learning Leader",
     "studentLabel": "学员",
-    "superAdminLabel": "超级管理员"
+    "superAdminLabel": "超级管理员",
+    "learnerVersion": "学员视图",
+    "teacherVersion": "讲师视图"
   },
   "dashboard": {
     "learningDashboard": "学习仪表板",
