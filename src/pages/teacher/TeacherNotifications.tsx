@@ -22,6 +22,7 @@ import MultilingualTextFields, { EMPTY_MULTILINGUAL, type MultilingualValue } fr
 const TeacherNotifications = () => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { scopeIds, branch } = useLeaderScope();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<"all" | "individual">("all");
@@ -30,38 +31,34 @@ const TeacherNotifications = () => {
   const [autoTranslate, setAutoTranslate] = useState(true);
   const [searchUser, setSearchUser] = useState("");
 
-  // Fetch students enrolled in teacher's courses
+  // Fetch students belonging to the leader's department/branch (group scope)
   const { data: students } = useQuery({
-    queryKey: ["teacher-students-for-notify", user?.id],
-    enabled: !!user,
+    queryKey: ["teacher-students-for-notify", scopeIds],
+    enabled: scopeIds.length > 0,
     queryFn: async () => {
-      const { data: courses } = await supabase
-        .from("courses")
-        .select("id")
-        .eq("instructor_id", user!.id);
-      if (!courses?.length) return [];
-      const courseIds = courses.map((c) => c.id);
-      const { data: enrollments } = await supabase
-        .from("enrollments")
+      const { data: roleRows } = await supabase
+        .from("user_roles")
         .select("user_id")
-        .in("course_id", courseIds)
-        .eq("status", "approved");
-      if (!enrollments?.length) return [];
-      const uniqueIds = [...new Set(enrollments.map((e) => e.user_id))];
+        .eq("role", "student");
+      const studentIds = new Set((roleRows ?? []).map((r: any) => r.user_id));
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, email, department")
-        .in("user_id", uniqueIds);
-      return profiles || [];
+        .in("department_id", scopeIds);
+      return (profiles || []).filter((p: any) => studentIds.has(p.user_id));
     },
   });
 
+  const studentIds = students?.map((s) => s.user_id) || [];
+
   const { data: recentNotifications } = useQuery({
-    queryKey: ["teacher-recent-notifications"],
+    queryKey: ["teacher-recent-notifications", studentIds],
+    enabled: studentIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("notifications")
         .select("*")
+        .in("user_id", studentIds)
         .order("created_at", { ascending: false })
         .limit(20);
       return data || [];
