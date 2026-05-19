@@ -289,7 +289,7 @@ const AdminBranches = () => {
         <Tabs defaultValue="branches">
           <TabsList>
             <TabsTrigger value="branches">{t("branches.branchList")}</TabsTrigger>
-            <TabsTrigger value="teams">{t("branches.teamList")}</TabsTrigger>
+            
             <TabsTrigger value="staff">{t("branches.staffManagement")}</TabsTrigger>
             <TabsTrigger value="upload">{t("branches.bulkUpload")}</TabsTrigger>
           </TabsList>
@@ -332,46 +332,6 @@ const AdminBranches = () => {
             </div>
           </TabsContent>
 
-          {/* ── Teams Tab ── */}
-          <TabsContent value="teams" className="space-y-4">
-            <div className="flex justify-end">
-              <Button onClick={openAddTeam} size="sm" disabled={branches.length === 0}>
-                <Plus className="h-4 w-4 mr-1" /> {t("branches.addTeam")}
-              </Button>
-            </div>
-            <div className="stat-card !p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("branches.teamName")}</TableHead>
-                    <TableHead>{t("branches.teamNameEn")}</TableHead>
-                    <TableHead>{t("branches.belongsToBranch")}</TableHead>
-                    <TableHead className="text-center">{t("branches.staffCount")}</TableHead>
-                    <TableHead className="text-right">{t("common.manage")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teams.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{t("branches.noTeams")}</TableCell></TableRow>
-                  ) : teams.map((tm: any) => (
-                    <TableRow key={tm.id}>
-                      <TableCell className="font-medium">{tm.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{tm.name_en || "-"}</TableCell>
-                      
-                      <TableCell>{getBranchName(tm.parent_department_id)}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="secondary"><Users className="h-3 w-3 mr-1" />{deptStaffCount(tm.id)}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEditTeam(tm)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleteTarget({ id: tm.id, name: tm.name, type: "team" })}><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
 
           {/* ── Staff Tab ── */}
           <TabsContent value="staff" className="space-y-4">
