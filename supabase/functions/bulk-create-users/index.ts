@@ -9,11 +9,38 @@ type Row = {
   email?: string;
   password?: string;
   full_name?: string;
-  role?: string;
+  // New schema
+  role1?: string;          // primary role: student | teacher | admin
+  role2?: string;          // secondary role label (e.g. "Learning Leader" → teacher)
+  region?: string;         // country code: KR | JP | HK | US ...
   department_code?: string;
   department_name?: string;
+  // Backward compatible
+  role?: string;
   position?: string;
 };
+
+const ROLE_SYNONYMS: Record<string, string> = {
+  "learning leader": "teacher",
+  "leader": "teacher",
+  "러닝리더": "teacher",
+  "러닝 리더": "teacher",
+  "강사": "teacher",
+  "teacher": "teacher",
+  "admin": "admin",
+  "administrator": "admin",
+  "super_admin": "super_admin",
+  "super admin": "super_admin",
+  "student": "student",
+  "학습자": "student",
+};
+
+function normalizeRole(v?: string): string | null {
+  if (!v) return null;
+  const k = String(v).trim().toLowerCase();
+  if (!k) return null;
+  return ROLE_SYNONYMS[k] ?? null;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -49,26 +76,52 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Maximum 500 rows per upload" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { data: depts } = await admin.from("departments").select("id, name, name_en, code");
-    const deptByCode = new Map<string, string>();
-    const deptByName = new Map<string, string>();
+    // Build department lookups: (code, country) -> id, code -> ids[], (name, country) -> id
+    const { data: depts } = await admin.from("departments").select("id, name, name_en, code, country");
+    const byCodeCountry = new Map<string, string>();
+    const byCode = new Map<string, string[]>();
+    const byNameCountry = new Map<string, string>();
+    const byName = new Map<string, string[]>();
     for (const d of depts || []) {
-      if (d.code) deptByCode.set(String(d.code).trim().toLowerCase(), d.id);
-      if (d.name) deptByName.set(String(d.name).trim().toLowerCase(), d.id);
-      if ((d as any).name_en) deptByName.set(String((d as any).name_en).trim().toLowerCase(), d.id);
+      const code = (d.code || "").trim().toLowerCase();
+      const name = (d.name || "").trim().toLowerCase();
+      const nameEn = ((d as any).name_en || "").trim().toLowerCase();
+      const country = ((d as any).country || "").trim().toUpperCase();
+      if (code) {
+        if (country) byCodeCountry.set(`${code}|${country}`, d.id);
+        const arr = byCode.get(code) || [];
+        arr.push(d.id);
+        byCode.set(code, arr);
+      }
+      for (const n of [name, nameEn]) {
+        if (!n) continue;
+        if (country) byNameCountry.set(`${n}|${country}`, d.id);
+        const arr = byName.get(n) || [];
+        arr.push(d.id);
+        byName.set(n, arr);
+      }
     }
 
-    const validRoles = new Set(["student", "teacher", "admin"]);
     const results: Array<{ row: number; email: string; status: "created" | "skipped" | "error"; message?: string }> = [];
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const rowNum = i + 2; // header is row 1
+      const rowNum = i + 2;
       const email = (r.email || "").trim().toLowerCase();
       const password = String(r.password || "").trim();
       const fullName = (r.full_name || "").trim();
-      const role = (r.role || "student").trim().toLowerCase();
       const position = (r.position || "").trim();
+
+      const primary = normalizeRole(r.role1) ?? normalizeRole(r.role) ?? "student";
+      const secondary = normalizeRole(r.role2);
+      const validRoles = new Set(["student", "teacher", "admin", "super_admin"]);
+      if (!validRoles.has(primary)) {
+        results.push({ row: rowNum, email, status: "error", message: `invalid role1: ${r.role1 || r.role}` });
+        continue;
+      }
+      // Build final roles list (dedup)
+      const finalRoles = new Set<string>([primary]);
+      if (secondary && validRoles.has(secondary)) finalRoles.add(secondary);
 
       if (!email || !password) {
         results.push({ row: rowNum, email, status: "error", message: "email/password required" });
@@ -78,18 +131,24 @@ Deno.serve(async (req) => {
         results.push({ row: rowNum, email, status: "error", message: "password must be >= 6 chars" });
         continue;
       }
-      if (!validRoles.has(role)) {
-        results.push({ row: rowNum, email, status: "error", message: `invalid role: ${role}` });
-        continue;
-      }
 
+      // Department resolution
       let departmentId: string | null = null;
       const code = (r.department_code || "").trim().toLowerCase();
       const name = (r.department_name || "").trim().toLowerCase();
-      if (code) departmentId = deptByCode.get(code) || null;
-      if (!departmentId && name) departmentId = deptByName.get(name) || null;
+      const country = (r.region || "").trim().toUpperCase();
+      if (code && country) departmentId = byCodeCountry.get(`${code}|${country}`) || null;
+      if (!departmentId && code) {
+        const arr = byCode.get(code);
+        if (arr && arr.length === 1) departmentId = arr[0];
+      }
+      if (!departmentId && name && country) departmentId = byNameCountry.get(`${name}|${country}`) || null;
+      if (!departmentId && name) {
+        const arr = byName.get(name);
+        if (arr && arr.length === 1) departmentId = arr[0];
+      }
       if ((code || name) && !departmentId) {
-        results.push({ row: rowNum, email, status: "error", message: `department not found: ${r.department_code || r.department_name}` });
+        results.push({ row: rowNum, email, status: "error", message: `department not found: ${r.department_code || r.department_name} (${country || "?"})` });
         continue;
       }
 
@@ -101,31 +160,48 @@ Deno.serve(async (req) => {
           user_metadata: { full_name: fullName, department_id: departmentId },
         });
 
+        let uid: string | undefined = created?.user?.id;
+
         if (error) {
           const msg = error.message || "create failed";
           if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("registered")) {
-            results.push({ row: rowNum, email, status: "skipped", message: "already exists" });
+            // Find existing user and update password + roles + profile
+            const url = `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}`;
+            const resp = await fetch(url, { headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` } });
+            const body = await resp.json();
+            const users = body.users ?? (Array.isArray(body) ? body : []);
+            const found = users.find((u: any) => u.email?.toLowerCase() === email);
+            if (found) {
+              uid = found.id;
+              await admin.auth.admin.updateUserById(uid!, { password, email_confirm: true });
+            } else {
+              results.push({ row: rowNum, email, status: "error", message: msg });
+              continue;
+            }
           } else {
             results.push({ row: rowNum, email, status: "error", message: msg });
+            continue;
           }
-          continue;
         }
 
-        const uid = created.user?.id;
         if (uid) {
-          if (role !== "student") {
-            await admin.from("user_roles").delete().eq("user_id", uid);
-            await admin.from("user_roles").insert({ user_id: uid, role });
-          }
+          // Wipe existing roles and assign final set
+          await admin.from("user_roles").delete().eq("user_id", uid);
+          const roleRows = Array.from(finalRoles).map((role) => ({ user_id: uid, role }));
+          await admin.from("user_roles").insert(roleRows);
+
           await admin
             .from("profiles")
-            .update({
-              full_name: fullName || null,
-              department_id: departmentId,
-              position: position || null,
-              email,
-            })
-            .eq("user_id", uid);
+            .upsert(
+              {
+                user_id: uid,
+                full_name: fullName || null,
+                department_id: departmentId,
+                position: position || null,
+                email,
+              },
+              { onConflict: "user_id" },
+            );
         }
 
         results.push({ row: rowNum, email, status: "created" });

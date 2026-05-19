@@ -15,7 +15,7 @@ interface Props {
   onComplete?: () => void;
 }
 
-const HEADERS = ["email", "password", "full_name", "role", "department_code", "department_name", "position"];
+const HEADERS = ["email", "password", "full_name", "role1", "role2", "department_code", "department_name", "region"];
 
 const StaffBulkUploadDialog = ({ open, onOpenChange, onComplete }: Props) => {
   const { t } = useTranslation();
