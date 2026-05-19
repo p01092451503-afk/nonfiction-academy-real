@@ -71,8 +71,8 @@ const MyPage = () => {
 
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      toast({ title: t("common.error"), description: t("mypage.passwordMinLength"), variant: "destructive" });
+    if (!pwAllValid) {
+      toast({ title: t("common.error"), description: t("mypage.passwordRequirementsNotMet", "비밀번호 요구사항을 모두 충족해야 합니다."), variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -87,7 +87,14 @@ const MyPage = () => {
       setNewPassword("");
       setConfirmPassword("");
     } catch (e: any) {
-      toast({ title: t("common.error"), description: e.message, variant: "destructive" });
+      const raw = (e?.message || "").toLowerCase();
+      let desc = e?.message;
+      if (raw.includes("weak") || raw.includes("pwned") || raw.includes("known to be")) {
+        desc = t("mypage.passwordWeak", "이 비밀번호는 유출된 적이 있거나 너무 단순합니다. 다른 비밀번호를 사용해 주세요.");
+      } else if (raw.includes("should be at least") || raw.includes("at least")) {
+        desc = t("mypage.passwordTooShort", "비밀번호가 너무 짧습니다.");
+      }
+      toast({ title: t("common.error"), description: desc, variant: "destructive" });
     } finally {
       setIsChangingPw(false);
     }
