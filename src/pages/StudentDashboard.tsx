@@ -11,6 +11,7 @@ import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
+import { localizeCourse } from "@/lib/i18nCourse";
 
 const StudentDashboard = () => {
   const { user, profile } = useUser();
@@ -202,10 +203,7 @@ const StudentDashboard = () => {
 
       if (error) throw error;
       return (courses || []).map(c => ({
-        ...c,
-        title: lang === "en"
-          ? ((c as any).course_i18n?.find((x: any) => x.language_code === "en")?.title || c.title)
-          : c.title,
+        ...localizeCourse(c as any, lang),
         progress: enrolledMap.get(c.id) || 0,
         daysLeft: c.deadline ? Math.ceil((new Date(c.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null,
       }));
@@ -238,21 +236,16 @@ const StudentDashboard = () => {
           .not("id", "in", `(${enrolledIds.join(",")})`)
           .limit(3);
         if (error) throw error;
-        return (data || []).map((c: any) => ({
-          ...c,
-          title: lang === "en" ? (c.course_i18n?.find((x: any) => x.language_code === "en")?.title || c.title) : c.title,
-        }));
+        return (data || []).map((c: any) => localizeCourse(c, lang));
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map((c: any) => ({
-        ...c,
-        title: lang === "en" ? (c.course_i18n?.find((x: any) => x.language_code === "en")?.title || c.title) : c.title,
-      }));
+      return (data || []).map((c: any) => localizeCourse(c, lang));
     },
     enabled: !!user?.id,
   });
+
 
   // 추천 강좌 강사 정보
   const recInstructorIds = [...new Set(recommendedCourses.map((c: any) => c.instructor_id).filter(Boolean))];

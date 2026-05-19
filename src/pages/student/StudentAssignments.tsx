@@ -49,22 +49,27 @@ const StudentAssignments = () => {
         .eq("student_id", user!.id)
         .order("submitted_at", { ascending: false });
       if (error) throw error;
-      const isEn = i18n.language?.startsWith("en");
-      if (!isEn) return data;
+      const lang = (i18n.language || "ko").startsWith("en") ? "en"
+        : (i18n.language || "ko").startsWith("ja") ? "ja"
+        : (i18n.language || "ko").startsWith("zh") ? "zh-CN" : "ko";
+      const isEn = lang === "en";
+      if (lang === "ko") return data;
       return (data || []).map((s: any) => {
         if (!s.assignments) return s;
         const a = s.assignments;
-        const courseTr = (a.courses?.course_i18n || []).find((x: any) => x.language_code === "en");
+        const courseTr = (a.courses?.course_i18n || []).find((x: any) => x.language_code === lang);
         return {
           ...s,
           assignments: {
             ...a,
-            title: a.title_en || a.title,
-            instructions: a.instructions_en || a.instructions,
+            // assignments table only has *_en translations; for ja/zh fall back to KO
+            title: isEn ? (a.title_en || a.title) : a.title,
+            instructions: isEn ? (a.instructions_en || a.instructions) : a.instructions,
             courses: a.courses ? { ...a.courses, title: courseTr?.title || a.courses.title } : a.courses,
           },
         };
       });
+
     },
     enabled: !!user?.id,
   });
@@ -78,17 +83,21 @@ const StudentAssignments = () => {
         .eq("status", "published")
         .order("due_date", { ascending: true });
       if (error) throw error;
-      const isEn = i18n.language?.startsWith("en");
-      if (!isEn) return data;
+      const lang = (i18n.language || "ko").startsWith("en") ? "en"
+        : (i18n.language || "ko").startsWith("ja") ? "ja"
+        : (i18n.language || "ko").startsWith("zh") ? "zh-CN" : "ko";
+      const isEn = lang === "en";
+      if (lang === "ko") return data;
       return (data || []).map((a: any) => {
-        const courseTr = (a.courses?.course_i18n || []).find((x: any) => x.language_code === "en");
+        const courseTr = (a.courses?.course_i18n || []).find((x: any) => x.language_code === lang);
         return {
           ...a,
-          title: a.title_en || a.title,
-          instructions: a.instructions_en || a.instructions,
+          title: isEn ? (a.title_en || a.title) : a.title,
+          instructions: isEn ? (a.instructions_en || a.instructions) : a.instructions,
           courses: a.courses ? { ...a.courses, title: courseTr?.title || a.courses.title } : a.courses,
         };
       });
+
     },
     enabled: !!user?.id,
   });

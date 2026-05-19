@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { normalizeLang } from "@/lib/i18nLang";
 import { useVideoProgress } from "@/hooks/useVideoProgress";
 import { logContentAccess } from "@/hooks/useTrafficLogger";
 import {
@@ -76,7 +77,9 @@ const ContentPlayer = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
-  const isEn = i18n.language?.startsWith("en");
+  const lang = normalizeLang(i18n.language);
+  const isLocalized = lang !== "ko";
+  const isEn = lang === "en";
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mangoPopupOpen, setMangoPopupOpen] = useState(false);
   const [mangoElapsed, setMangoElapsed] = useState(0);
@@ -184,7 +187,7 @@ const ContentPlayer = () => {
     enabled: !!user?.id && contents.length > 0,
   });
 
-  const getI18n = (cId: string) => contentI18nData.find((i: any) => i.content_id === cId && i.language_code === "en");
+  const getI18n = (cId: string) => contentI18nData.find((i: any) => i.content_id === cId && i.language_code === lang);
   const stripLessonPrefix = (title: string) =>
     (title || "")
       .replace(/^\d+차시\.\s*/, "")
@@ -192,11 +195,12 @@ const ContentPlayer = () => {
       .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
       .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
       .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "");
-  const getTitle = (c: any) => { if (isEn) { const en = getI18n(c.id); return stripLessonPrefix(en?.title || c.title); } return stripLessonPrefix(c.title); };
-  const getDescription = (c: any) => { if (isEn) { const en = getI18n(c.id); return en?.description || c.description; } return c.description; };
-  const getVideoUrl = (c: any) => { if (isEn) { const en = getI18n(c.id); return en?.video_url || c.video_url; } return c.video_url; };
-  const getVideoProvider = (c: any) => { if (isEn) { const en = getI18n(c.id); return en?.video_provider || c.video_provider; } return c.video_provider; };
-  const getCourseTitle = () => { if (isEn) { const en = courseI18n?.find((i: any) => i.language_code === "en"); return en?.title || course?.title || ""; } return course?.title || ""; };
+  const getTitle = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return stripLessonPrefix(tr?.title || c.title); } return stripLessonPrefix(c.title); };
+  const getDescription = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return tr?.description || c.description; } return c.description; };
+  const getVideoUrl = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return tr?.video_url || c.video_url; } return c.video_url; };
+  const getVideoProvider = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return tr?.video_provider || c.video_provider; } return c.video_provider; };
+  const getCourseTitle = () => { if (isLocalized) { const tr = courseI18n?.find((i: any) => i.language_code === lang); return tr?.title || course?.title || ""; } return course?.title || ""; };
+
 
   const isMangoboard = (url: string | null) => url?.includes("mangoboard.net") ?? false;
   const isCardContent = (desc: string | null) => desc?.startsWith("[card-content]") ?? false;
