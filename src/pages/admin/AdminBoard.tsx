@@ -316,7 +316,7 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={closeDialog}>{t("common.cancel")}</Button>
-            <Button size="sm" onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || !isTargetingValid(target) || saveMutation.isPending}>
+            <Button size="sm" onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || (!isLeader && !isTargetingValid(target)) || saveMutation.isPending}>
               {saveMutation.isPending ? t("common.processing") : editingId ? t("common.edit") : t("common.add")}
             </Button>
           </DialogFooter>
