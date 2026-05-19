@@ -67,15 +67,12 @@ const StudentDashboard = () => {
       if (courseIds.length === 0) return [];
       const { data, error } = await supabase
         .from("course_contents")
-        .select("id, course_id, title, order_index, course_content_i18n(language_code, title)")
+        .select("id, course_id, title, order_index, language_code")
         .in("course_id", courseIds)
         .order("order_index", { ascending: true });
       if (error) throw error;
-      if (lang === "ko") return data;
-      return (data || []).map((c: any) => {
-        const tr = (c.course_content_i18n || []).find((x: any) => x.language_code === lang);
-        return { ...c, title: tr?.title || c.title };
-      });
+      // course_contents 행 자체가 언어별로 분리되어 있음 → title 을 그대로 사용
+      return data || [];
     },
     enabled: courseIds.length > 0,
   });
