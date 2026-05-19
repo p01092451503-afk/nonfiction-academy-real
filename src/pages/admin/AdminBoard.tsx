@@ -178,7 +178,12 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
               <ClipboardList className="h-6 w-6" />
               {t("board.title", "게시판 관리")}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">{t("board.subtitle", "학생에게 자료를 배포하고 안내사항을 게시합니다.")}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isLeader && branch ? `${branch.name}${branch.code ? ` (${branch.code})` : ""} · ` : ""}
+              {isLeader
+                ? t("board.subtitleLeader", "내 그룹의 수강생에게만 게시됩니다.")
+                : t("board.subtitle", "학생에게 자료를 배포하고 안내사항을 게시합니다.")}
+            </p>
           </div>
           <Button onClick={openNew} size="sm" className="gap-1.5">
             <Plus className="h-4 w-4" /> {t("board.newPost", "새 게시글")}
