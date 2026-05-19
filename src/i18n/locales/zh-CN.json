@@ -989,7 +989,8 @@
     "continueLearning": "继续学习",
     "enrolled": "已报名",
     "pendingApproval": "待批准",
-    "rejected": "申请被拒绝"
+    "rejected": "申请被拒绝",
+    "startLearning": "开始学习"
   },
   "enrollment": {
     "management": "报名批准管理",

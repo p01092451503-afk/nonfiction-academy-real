@@ -989,7 +989,8 @@
     "continueLearning": "続けて学習する",
     "enrolled": "受講中",
     "pendingApproval": "承認待ち",
-    "rejected": "申請却下"
+    "rejected": "申請却下",
+    "startLearning": "学習を開始"
   },
   "enrollment": {
     "management": "受講承認管理",
