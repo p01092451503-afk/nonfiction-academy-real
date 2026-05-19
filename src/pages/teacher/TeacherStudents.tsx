@@ -158,7 +158,7 @@ const TeacherStudents = () => {
   });
 
   const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
-  const courseMap = new Map(myCourses.map((c: any) => [c.id, c.title]));
+  const courseMap = new Map(allCourses.map((c: any) => [c.id, c.title]));
 
   const filteredEnrollments = selectedCourseId === "all"
     ? enrollments
