@@ -52,10 +52,12 @@ const TeacherAnnouncements = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Learning leaders can only publish to their own branch (group scope)
+      const enforcedBranchIds = branchId ? [branchId] : target.branchIds;
       const targetPayload = {
-        target_countries: target.countries,
-        target_branch_ids: target.branchIds,
-        target_course_ids: target.courseIds,
+        target_countries: [] as string[],
+        target_branch_ids: enforcedBranchIds,
+        target_course_ids: [] as string[],
       };
       const basePayload = { title: ml.ko.title, content: ml.ko.content, ...form, ...targetPayload };
       let recordId = editId;
