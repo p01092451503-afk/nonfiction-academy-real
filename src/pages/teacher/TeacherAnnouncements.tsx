@@ -203,7 +203,7 @@ const TeacherAnnouncements = () => {
                 <Label>{t("announcements.publish", "게시")}</Label>
               </div>
             </div>
-            <Button onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || !isTargetingValid(target) || saveMutation.isPending} className="w-full">
+            <Button onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || saveMutation.isPending} className="w-full">
               {saveMutation.isPending ? t("common.processing") : t("common.save")}
             </Button>
           </div>
