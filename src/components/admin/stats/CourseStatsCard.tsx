@@ -97,16 +97,6 @@ const CourseStatsCard = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 pt-2 border-t border-border">
-          <div className="text-center flex-1">
-            <p className="text-[10px] text-muted-foreground">{t("enrollment.pending")}</p>
-            <p className="text-sm font-bold text-foreground">{pendingEnrollments}</p>
-          </div>
-          <div className="text-center flex-1">
-            <p className="text-[10px] text-muted-foreground">{t("enrollment.approvedStatus")}</p>
-            <p className="text-sm font-bold text-foreground">{approvedEnrollments}</p>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
