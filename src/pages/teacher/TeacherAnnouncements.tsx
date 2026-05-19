@@ -27,6 +27,7 @@ const EMPTY_TARGET: TargetingValue = { countries: [], branchIds: [], courseIds: 
 const TeacherAnnouncements = () => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { branchId, branch } = useLeaderScope();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
