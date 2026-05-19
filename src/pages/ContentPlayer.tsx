@@ -187,18 +187,25 @@ const ContentPlayer = () => {
     enabled: !!user?.id && contents.length > 0,
   });
 
-  const getI18n = (cId: string) => contentI18nData.find((i: any) => i.content_id === cId && i.language_code === lang);
-  const stripLessonPrefix = (title: string) =>
-    (title || "")
+  // course_contents 행 자체가 언어별로 분리되어 있으므로(language_code 컬럼) 항상 행의 원본 값을 사용.
+  // course_content_i18n 은 레거시/placeholder 데이터가 섞여 있어 신뢰하지 않는다 (행의 값이 비어 있을 때만 보조 fallback).
+  const getI18n = (cId: string, rowLang: string) =>
+    contentI18nData.find((i: any) => i.content_id === cId && i.language_code === rowLang);
+  const stripLessonPrefix = (title: string) => {
+    const s = (title || "")
       .replace(/^\d+차시\.\s*/, "")
       .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
       .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
       .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
-      .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "");
-  const getTitle = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return stripLessonPrefix(tr?.title || c.title); } return stripLessonPrefix(c.title); };
-  const getDescription = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return tr?.description || c.description; } return c.description; };
-  const getVideoUrl = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return tr?.video_url || c.video_url; } return c.video_url; };
-  const getVideoProvider = (c: any) => { if (isLocalized) { const tr = getI18n(c.id); return tr?.video_provider || c.video_provider; } return c.video_provider; };
+      .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "")
+      .trim();
+    // placeholder("Lesson 2" 등)만 있던 경우 빈 문자열이 되면 원본 유지
+    return s || (title || "");
+  };
+  const getTitle = (c: any) => stripLessonPrefix(c.title || getI18n(c.id, c.language_code)?.title || "");
+  const getDescription = (c: any) => c.description || getI18n(c.id, c.language_code)?.description || null;
+  const getVideoUrl = (c: any) => c.video_url || getI18n(c.id, c.language_code)?.video_url || null;
+  const getVideoProvider = (c: any) => c.video_provider || getI18n(c.id, c.language_code)?.video_provider || null;
   const getCourseTitle = () => { if (isLocalized) { const tr = courseI18n?.find((i: any) => i.language_code === lang); return tr?.title || course?.title || ""; } return course?.title || ""; };
 
 

@@ -760,17 +760,8 @@ const CreateCourse = () => {
           .select("id");
         if (contentError) throw contentError;
 
-        // Save content i18n
+        // (legacy) course_content_i18n 저장 제거: course_contents 행 자체가 언어별로 분리되어 있음.
         if (insertedContents?.length) {
-          const i18nRows = insertedContents.map((ic: any, idx: number) => ({
-            content_id: ic.id,
-            language_code: "en",
-            title: contents[idx].enTitle || contents[idx].title,
-            description: contents[idx].enDescription || contents[idx].description || null,
-          })).filter((r: any) => r.title);
-          if (i18nRows.length) {
-            await supabase.from("course_content_i18n").insert(i18nRows);
-          }
 
           // Save media package items
           const pkgRows: any[] = [];
@@ -881,17 +872,8 @@ const CreateCourse = () => {
           .select("id");
         if (contentError) throw contentError;
 
-        // Save content i18n
+        // (legacy) course_content_i18n 저장 제거: course_contents 행 자체가 언어별로 분리되어 있음.
         if (insertedContents?.length) {
-          const i18nRows = insertedContents.map((ic: any, idx: number) => ({
-            content_id: ic.id,
-            language_code: "en",
-            title: contents[idx].enTitle || contents[idx].title,
-            description: contents[idx].enDescription || contents[idx].description || null,
-          })).filter((r: any) => r.title);
-          if (i18nRows.length) {
-            await supabase.from("course_content_i18n").insert(i18nRows);
-          }
 
           // Save media package items
           const pkgRows: any[] = [];
