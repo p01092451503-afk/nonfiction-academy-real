@@ -2340,11 +2340,19 @@ export type Database = {
           question_type: Database["public"]["Enums"]["question_type"]
         }[]
       }
+      get_leader_scope_dept_ids: {
+        Args: { _leader_id: string }
+        Returns: string[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_user_in_leader_scope: {
+        Args: { _leader_id: string; _target_user_id: string }
         Returns: boolean
       }
       submit_and_grade_assessment: {
