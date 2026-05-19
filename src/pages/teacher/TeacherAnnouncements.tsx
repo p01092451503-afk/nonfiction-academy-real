@@ -18,7 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { Megaphone, Plus, Pin, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import TargetingFields, { isTargetingValid, type TargetingValue } from "@/components/admin/TargetingFields";
+import { type TargetingValue } from "@/components/admin/TargetingFields";
 import MultilingualTextFields, { EMPTY_MULTILINGUAL, isMultilingualValid, type MultilingualValue } from "@/components/admin/MultilingualTextFields";
 import { saveContentTranslations, loadContentTranslations } from "@/lib/i18nContent";
 
