@@ -126,7 +126,9 @@
     "adminLabel": "관리자",
     "teacherLabel": "러닝 리더",
     "studentLabel": "학습자",
-    "superAdminLabel": "슈퍼관리자"
+    "superAdminLabel": "슈퍼관리자",
+    "learnerVersion": "학습자 버전",
+    "teacherVersion": "강사 버전"
   },
   "dashboard": {
     "learningDashboard": "학습 대시보드",

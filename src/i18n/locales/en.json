@@ -126,7 +126,9 @@
     "adminLabel": "Admin",
     "teacherLabel": "Learning Leader",
     "studentLabel": "Learner",
-    "superAdminLabel": "Super Admin"
+    "superAdminLabel": "Super Admin",
+    "learnerVersion": "Learner View",
+    "teacherVersion": "Leader View"
   },
   "dashboard": {
     "learningDashboard": "Learning Dashboard",

@@ -125,7 +125,9 @@
     "adminLabel": "管理者",
     "teacherLabel": "Learning Leader",
     "studentLabel": "学習者",
-    "superAdminLabel": "スーパー管理者"
+    "superAdminLabel": "スーパー管理者",
+    "learnerVersion": "学習者ビュー",
+    "teacherVersion": "講師ビュー"
   },
   "dashboard": {
     "learningDashboard": "学習ダッシュボード",
