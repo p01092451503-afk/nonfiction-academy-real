@@ -15,9 +15,15 @@ import { useTranslation } from "react-i18next";
 
 const TeacherDashboard = () => {
   const { user, profile } = useUser();
+  const { scopeIds, branch } = useLeaderScope();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
+
+  const branchLabel = branch
+    ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
+      (branch.code ? ` (${branch.code})` : "")
+    : "";
 
   const { data: courses = [] } = useQuery({
     queryKey: ["teacher-dash-courses", user?.id],
@@ -29,17 +35,43 @@ const TeacherDashboard = () => {
     enabled: !!user?.id,
   });
 
+  // Department-scoped students (members of the leader's branch with student role)
+  const { data: deptStudents = [] } = useQuery({
+    queryKey: ["teacher-dash-dept-students", scopeIds],
+    queryFn: async () => {
+      if (scopeIds.length === 0) return [];
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "student");
+      const idSet = new Set((roleRows ?? []).map((r: any) => r.user_id));
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .in("department_id", scopeIds);
+      if (error) throw error;
+      return (data ?? []).filter((p: any) => idSet.has(p.user_id));
+    },
+    enabled: scopeIds.length > 0,
+  });
+
+  const deptStudentIds = deptStudents.map((p: any) => p.user_id);
+
   const courseIds = courses.map((c: any) => c.id);
 
+  // Enrollments are scoped to department students (across ALL courses they're enrolled in)
   const { data: enrollments = [] } = useQuery({
-    queryKey: ["teacher-dash-enrollments", courseIds],
+    queryKey: ["teacher-dash-enrollments", deptStudentIds],
     queryFn: async () => {
-      if (courseIds.length === 0) return [];
-      const { data, error } = await supabase.from("enrollments").select("course_id, user_id, progress, completed_at").in("course_id", courseIds);
+      if (deptStudentIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("course_id, user_id, progress, completed_at")
+        .in("user_id", deptStudentIds);
       if (error) throw error;
       return data;
     },
-    enabled: courseIds.length > 0,
+    enabled: deptStudentIds.length > 0,
   });
 
   const { data: recentSubmissions = [] } = useQuery({
