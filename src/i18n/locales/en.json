@@ -990,7 +990,8 @@
     "continueLearning": "Continue Learning",
     "enrolled": "Enrolled",
     "pendingApproval": "Pending Approval",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "startLearning": "Start Learning"
   },
   "enrollment": {
     "management": "Enrollment Approvals",

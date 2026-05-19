@@ -990,7 +990,8 @@
     "continueLearning": "이어서 학습하기",
     "enrolled": "수강 중",
     "pendingApproval": "승인 대기중",
-    "rejected": "신청 반려"
+    "rejected": "신청 반려",
+    "startLearning": "학습 시작"
   },
   "enrollment": {
     "management": "수강 승인 관리",
