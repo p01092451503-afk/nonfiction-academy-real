@@ -26,6 +26,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaPackagePlayer from "@/components/MediaPackagePlayer";
 import CourseComments from "@/components/CourseComments";
 import { computeCourseProgress, syncEnrollmentOnContentCompleted } from "@/lib/courseCompletion";
+import {
+  getContentTitle,
+  getContentDescription,
+  getContentVideoUrl,
+  getContentVideoProvider,
+  getCourseTitleByLang,
+} from "@/lib/courseContentI18n";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
