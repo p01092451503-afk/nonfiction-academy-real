@@ -36,6 +36,7 @@ import { useTranslation } from "react-i18next";
 
 const TeacherAssignments = () => {
   const { user } = useUser();
+  const { scopeIds } = useLeaderScope();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
