@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, User, BookOpen, Clock, CheckCircle2, TrendingUp, Calendar } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { formatDistanceToNow, format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,7 @@ import { useTranslation } from "react-i18next";
 const TeacherStudentDetail = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const { user } = useUser();
+  const { scopeIds, isLoading: scopeLoading } = useLeaderScope();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language === "ko" ? ko : enUS;
@@ -42,35 +44,35 @@ const TeacherStudentDetail = () => {
     enabled: !!studentId,
   });
 
-  // Fetch teacher's courses
-  const { data: myCourses = [] } = useQuery({
-    queryKey: ["teacher-courses", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, title, estimated_duration_hours, status")
-        .eq("instructor_id", user!.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const courseIds = myCourses.map((c) => c.id);
-
+  // All enrollments for THIS student (not limited to leader's own courses)
   const { data: enrollments = [] } = useQuery({
-    queryKey: ["student-enrollments", studentId, courseIds],
+    queryKey: ["dept-student-enrollments", studentId],
     queryFn: async () => {
-      if (!courseIds.length) return [];
       const { data, error } = await supabase
         .from("enrollments")
         .select("*")
-        .eq("user_id", studentId!)
-        .in("course_id", courseIds);
+        .eq("user_id", studentId!);
       if (error) throw error;
       return data;
     },
-    enabled: !!studentId && courseIds.length > 0,
+    enabled: !!studentId,
+  });
+
+  const courseIds = [...new Set(enrollments.map((e: any) => e.course_id))];
+
+  // Fetch courses the student is enrolled in
+  const { data: myCourses = [] } = useQuery({
+    queryKey: ["dept-student-courses", courseIds],
+    queryFn: async () => {
+      if (!courseIds.length) return [];
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id, title, estimated_duration_hours, status")
+        .in("id", courseIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: courseIds.length > 0,
   });
 
   const { data: courseContents = [] } = useQuery({
@@ -206,6 +208,11 @@ const TeacherStudentDetail = () => {
   const totalContents = courseDetails.reduce((s, c) => s + c.totalContents, 0);
 
   const name = profile?.full_name || t("common.user");
+
+  // Department access guard: a Learning Leader can only inspect students within their own branch scope.
+  if (!scopeLoading && profile && profile.department_id && scopeIds.length > 0 && !scopeIds.includes(profile.department_id)) {
+    return <Navigate to="/teacher/students" replace />;
+  }
 
   return (
     <DashboardLayout role="teacher">

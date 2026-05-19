@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import { useTranslation } from "react-i18next";
 
 const TeacherStudents = () => {
   const { user } = useUser();
+  const { scopeIds, branch, hasDepartment } = useLeaderScope();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language === "ko" ? ko : enUS;
@@ -65,6 +67,7 @@ const TeacherStudents = () => {
     setMsgOpen(true);
   };
 
+  // My own courses (used only for course filter dropdown)
   const { data: myCourses = [] } = useQuery({
     queryKey: ["teacher-course-ids", user?.id],
     queryFn: async () => {
@@ -78,30 +81,37 @@ const TeacherStudents = () => {
     enabled: !!user?.id,
   });
 
-  const courseIds = myCourses.map((c: any) => c.id);
-
-  const { data: enrollments = [] } = useQuery({
-    queryKey: ["teacher-enrollments", courseIds],
+  // Students = all profiles in the leader's department scope (branch + sub-teams)
+  // who have the 'student' role.
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["dept-student-profiles", scopeIds],
     queryFn: async () => {
-      if (courseIds.length === 0) return [];
+      if (scopeIds.length === 0) return [];
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "student");
+      const studentIdSet = new Set((roleRows ?? []).map((r: any) => r.user_id));
+
       const { data, error } = await supabase
-        .from("enrollments")
+        .from("profiles")
         .select("*")
-        .in("course_id", courseIds);
+        .in("department_id", scopeIds);
       if (error) throw error;
-      return data;
+      return (data ?? []).filter((p: any) => studentIdSet.has(p.user_id));
     },
-    enabled: courseIds.length > 0,
+    enabled: scopeIds.length > 0,
   });
 
-  const studentIds = [...new Set(enrollments.map((e: any) => e.user_id))];
+  const studentIds = profiles.map((p: any) => p.user_id);
 
-  const { data: profiles = [] } = useQuery({
-    queryKey: ["student-profiles", studentIds],
+  // ALL enrollments for those students (regardless of who teaches the course)
+  const { data: enrollments = [] } = useQuery({
+    queryKey: ["dept-enrollments", studentIds],
     queryFn: async () => {
       if (studentIds.length === 0) return [];
       const { data, error } = await supabase
-        .from("profiles")
+        .from("enrollments")
         .select("*")
         .in("user_id", studentIds);
       if (error) throw error;
@@ -110,14 +120,30 @@ const TeacherStudents = () => {
     enabled: studentIds.length > 0,
   });
 
-  const { data: allProgress = [] } = useQuery({
-    queryKey: ["teacher-student-progress", courseIds, studentIds],
+  const enrolledCourseIds = [...new Set(enrollments.map((e: any) => e.course_id))];
+
+  const { data: allCourses = [] } = useQuery({
+    queryKey: ["dept-courses", enrolledCourseIds],
     queryFn: async () => {
-      if (courseIds.length === 0 || studentIds.length === 0) return [];
+      if (enrolledCourseIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id, title")
+        .in("id", enrolledCourseIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: enrolledCourseIds.length > 0,
+  });
+
+  const { data: allProgress = [] } = useQuery({
+    queryKey: ["dept-student-progress", enrolledCourseIds, studentIds],
+    queryFn: async () => {
+      if (enrolledCourseIds.length === 0 || studentIds.length === 0) return [];
       const { data: contents } = await supabase
         .from("course_contents")
         .select("id, course_id")
-        .in("course_id", courseIds)
+        .in("course_id", enrolledCourseIds)
         .eq("is_published", true);
       if (!contents || contents.length === 0) return [];
       const { data, error } = await supabase
@@ -128,11 +154,11 @@ const TeacherStudents = () => {
       if (error) throw error;
       return data || [];
     },
-    enabled: courseIds.length > 0 && studentIds.length > 0,
+    enabled: enrolledCourseIds.length > 0 && studentIds.length > 0,
   });
 
   const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
-  const courseMap = new Map(myCourses.map((c: any) => [c.id, c.title]));
+  const courseMap = new Map(allCourses.map((c: any) => [c.id, c.title]));
 
   const filteredEnrollments = selectedCourseId === "all"
     ? enrollments
@@ -191,10 +217,13 @@ const TeacherStudents = () => {
     s.department.toLowerCase().includes(search.toLowerCase())
   );
 
-  const selectedCourseName = selectedCourseId === "all" ? t("students.allCourses") : (courseMap.get(selectedCourseId) || "");
+  const branchLabel = branch
+    ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
+      (branch.code ? ` (${branch.code})` : "")
+    : "";
 
   const stats = [
-    { label: t("students.totalStudents"), value: totalStudents, sub: selectedCourseId === "all" ? t("students.courses", { count: myCourses.length }) : selectedCourseName, icon: Users },
+    { label: t("students.totalStudents"), value: totalStudents, sub: branchLabel || t("students.studentManagement"), icon: Users },
     { label: t("students.activeStudents"), value: activeStudents, sub: totalStudents > 0 ? t("students.activityRate", { percent: Math.round((activeStudents / totalStudents) * 100) }) : "0%", icon: TrendingUp },
     { label: t("students.averageProgress"), value: `${avgProgressAll}%`, sub: selectedCourseId === "all" ? t("students.allCoursesBasis") : t("students.selectedCourseBasis"), icon: BookOpen },
     { label: t("students.excellentStudents"), value: excellentStudents, sub: t("students.above90"), icon: Award },
@@ -210,7 +239,9 @@ const TeacherStudents = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
               <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" aria-hidden="true" /> {t("students.studentManagement")}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("students.monitorStudents")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {branchLabel ? `${branchLabel} · ` : ""}{t("students.monitorStudents")}
+            </p>
           </div>
           <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
             <SelectTrigger className="w-full sm:w-52 h-9 text-xs">
@@ -218,7 +249,7 @@ const TeacherStudents = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("students.allCourses")}</SelectItem>
-              {myCourses.map((c: any) => (
+              {allCourses.map((c: any) => (
                 <SelectItem key={c.id} value={c.id} className="text-xs">{c.title}</SelectItem>
               ))}
             </SelectContent>

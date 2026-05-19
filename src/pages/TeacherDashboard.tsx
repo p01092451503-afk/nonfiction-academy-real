@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -14,9 +15,15 @@ import { useTranslation } from "react-i18next";
 
 const TeacherDashboard = () => {
   const { user, profile } = useUser();
+  const { scopeIds, branch } = useLeaderScope();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
+
+  const branchLabel = branch
+    ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
+      (branch.code ? ` (${branch.code})` : "")
+    : "";
 
   const { data: courses = [] } = useQuery({
     queryKey: ["teacher-dash-courses", user?.id],
@@ -28,31 +35,60 @@ const TeacherDashboard = () => {
     enabled: !!user?.id,
   });
 
+  // Department-scoped students (members of the leader's branch with student role)
+  const { data: deptStudents = [] } = useQuery({
+    queryKey: ["teacher-dash-dept-students", scopeIds],
+    queryFn: async () => {
+      if (scopeIds.length === 0) return [];
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "student");
+      const idSet = new Set((roleRows ?? []).map((r: any) => r.user_id));
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .in("department_id", scopeIds);
+      if (error) throw error;
+      return (data ?? []).filter((p: any) => idSet.has(p.user_id));
+    },
+    enabled: scopeIds.length > 0,
+  });
+
+  const deptStudentIds = deptStudents.map((p: any) => p.user_id);
+
   const courseIds = courses.map((c: any) => c.id);
 
+  // Enrollments are scoped to department students (across ALL courses they're enrolled in)
   const { data: enrollments = [] } = useQuery({
-    queryKey: ["teacher-dash-enrollments", courseIds],
+    queryKey: ["teacher-dash-enrollments", deptStudentIds],
     queryFn: async () => {
-      if (courseIds.length === 0) return [];
-      const { data, error } = await supabase.from("enrollments").select("course_id, user_id, progress, completed_at").in("course_id", courseIds);
+      if (deptStudentIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("course_id, user_id, progress, completed_at")
+        .in("user_id", deptStudentIds);
       if (error) throw error;
       return data;
     },
-    enabled: courseIds.length > 0,
+    enabled: deptStudentIds.length > 0,
   });
 
+  // Recent submissions from students in the leader's department (across any course)
   const { data: recentSubmissions = [] } = useQuery({
-    queryKey: ["teacher-dash-submissions", user?.id],
+    queryKey: ["teacher-dash-submissions", deptStudentIds],
     queryFn: async () => {
+      if (deptStudentIds.length === 0) return [];
       const { data, error } = await supabase
         .from("assignment_submissions")
-        .select("*, assignments(title, course_id, courses(title, instructor_id))")
+        .select("*, assignments(title, course_id, courses(title))")
+        .in("student_id", deptStudentIds)
         .order("submitted_at", { ascending: false })
         .limit(10);
       if (error) throw error;
-      return (data || []).filter((s: any) => s.assignments?.courses?.instructor_id === user!.id);
+      return data || [];
     },
-    enabled: !!user?.id,
+    enabled: deptStudentIds.length > 0,
   });
 
   const { data: submitterProfiles = [] } = useQuery({
@@ -69,7 +105,7 @@ const TeacherDashboard = () => {
 
   const profileMap = new Map(submitterProfiles.map((p: any) => [p.user_id, p.full_name]));
 
-  const totalStudents = enrollments.length;
+  const totalStudents = deptStudentIds.length;
   const publishedCourses = courses.filter((c: any) => c.status === "published").length;
   const draftCourses = courses.filter((c: any) => c.status !== "published").length;
   const pendingSubmissions = recentSubmissions.filter((s: any) => s.status === "submitted");
@@ -80,7 +116,7 @@ const TeacherDashboard = () => {
   });
 
   const stats = [
-    { label: t("teacher.totalStudents"), value: totalStudents, sub: t("teacher.myStudents"), icon: Users },
+    { label: t("teacher.totalStudents"), value: totalStudents, sub: branchLabel || t("teacher.myStudents"), icon: Users },
     { label: t("teacher.activeCourses"), value: publishedCourses, sub: t("teacher.waitingCount", { count: draftCourses }), icon: BookOpen },
     { label: t("teacher.allCourses"), value: courses.length, sub: t("teacher.registeredCourses"), icon: LayoutDashboard },
     { label: t("teacher.recentSubmissions"), value: pendingSubmissions.length, sub: t("teacher.recentAssignmentSub"), icon: TrendingUp },
@@ -94,7 +130,9 @@ const TeacherDashboard = () => {
             <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <LayoutDashboard className="h-6 w-6 text-primary" aria-hidden="true" /> {t("teacher.teacherDashboard")}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">{t("teacher.manageStudents")}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {branchLabel ? `${branchLabel} · ` : ""}{t("teacher.manageStudents")}
+            </p>
           </div>
         </div>
 
