@@ -27,6 +27,8 @@ const EMPTY_TARGET: TargetingValue = { countries: [], branchIds: [], courseIds: 
 const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { branchId, branch } = useLeaderScope();
+  const isLeader = role === "teacher";
   const qc = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
