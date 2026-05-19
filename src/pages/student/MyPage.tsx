@@ -32,7 +32,17 @@ const MyPage = () => {
   // Password
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPw, setIsChangingPw] = useState(false);
+
+  const pwChecks = useMemo(() => ({
+    length: newPassword.length >= 8,
+    letter: /[A-Za-z]/.test(newPassword),
+    number: /\d/.test(newPassword),
+    special: /[^A-Za-z0-9]/.test(newPassword),
+  }), [newPassword]);
+  const pwAllValid = pwChecks.length && pwChecks.letter && pwChecks.number && pwChecks.special;
 
   const handleSaveProfile = async () => {
     if (!user) return;
