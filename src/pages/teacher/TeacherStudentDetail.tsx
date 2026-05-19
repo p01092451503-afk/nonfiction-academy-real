@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 const TeacherStudentDetail = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const { user } = useUser();
+  const { scopeIds, isLoading: scopeLoading } = useLeaderScope();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language === "ko" ? ko : enUS;
