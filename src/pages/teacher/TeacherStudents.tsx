@@ -217,10 +217,13 @@ const TeacherStudents = () => {
     s.department.toLowerCase().includes(search.toLowerCase())
   );
 
-  const selectedCourseName = selectedCourseId === "all" ? t("students.allCourses") : (courseMap.get(selectedCourseId) || "");
+  const branchLabel = branch
+    ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
+      (branch.code ? ` (${branch.code})` : "")
+    : "";
 
   const stats = [
-    { label: t("students.totalStudents"), value: totalStudents, sub: selectedCourseId === "all" ? t("students.courses", { count: myCourses.length }) : selectedCourseName, icon: Users },
+    { label: t("students.totalStudents"), value: totalStudents, sub: branchLabel || t("students.studentManagement"), icon: Users },
     { label: t("students.activeStudents"), value: activeStudents, sub: totalStudents > 0 ? t("students.activityRate", { percent: Math.round((activeStudents / totalStudents) * 100) }) : "0%", icon: TrendingUp },
     { label: t("students.averageProgress"), value: `${avgProgressAll}%`, sub: selectedCourseId === "all" ? t("students.allCoursesBasis") : t("students.selectedCourseBasis"), icon: BookOpen },
     { label: t("students.excellentStudents"), value: excellentStudents, sub: t("students.above90"), icon: Award },
@@ -236,7 +239,9 @@ const TeacherStudents = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
               <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" aria-hidden="true" /> {t("students.studentManagement")}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("students.monitorStudents")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {branchLabel ? `${branchLabel} · ` : ""}{t("students.monitorStudents")}
+            </p>
           </div>
           <Select value={selectedCourseId} onValueChange={setSelectedCourseId}>
             <SelectTrigger className="w-full sm:w-52 h-9 text-xs">
@@ -244,7 +249,7 @@ const TeacherStudents = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("students.allCourses")}</SelectItem>
-              {myCourses.map((c: any) => (
+              {allCourses.map((c: any) => (
                 <SelectItem key={c.id} value={c.id} className="text-xs">{c.title}</SelectItem>
               ))}
             </SelectContent>
