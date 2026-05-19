@@ -27,7 +27,7 @@ const AdminUsers = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [staffEdit, setStaffEdit] = useState<StaffEditDraft | null>(null);
-  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "student", departmentId: "", branchId: "" });
+  const [newUser, setNewUser] = useState<{ name: string; email: string; password: string; roles: StaffRole[]; departmentId: string; branchId: string }>({ name: "", email: "", password: "", roles: ["student"], departmentId: "", branchId: "" });
   const { t, i18n } = useTranslation();
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -77,7 +77,7 @@ const AdminUsers = () => {
           email: newUser.email,
           password: newUser.password,
           fullName: newUser.name,
-          role: newUser.role,
+          roles: newUser.roles,
           departmentId: effectiveDeptId || undefined,
         },
       });
@@ -88,7 +88,7 @@ const AdminUsers = () => {
     onSuccess: () => {
       toast.success(t("admin.userCreated"), { description: t("admin.userCreatedDesc", { name: newUser.name }) });
       setAddOpen(false);
-      setNewUser({ name: "", email: "", password: "", role: "student", departmentId: "", branchId: "" });
+      setNewUser({ name: "", email: "", password: "", roles: ["student"], departmentId: "", branchId: "" });
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
     },
@@ -452,14 +452,33 @@ const AdminUsers = () => {
             </div>
             <div>
               <Label>{t("admin.selectRole")}</Label>
-              <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v })}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">{t("roles.studentLabel")}</SelectItem>
-                  <SelectItem value="teacher">{t("roles.teacherLabel")}</SelectItem>
-                  <SelectItem value="admin">{t("roles.adminLabel")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {(["student", "teacher", "admin"] as StaffRole[]).map((r) => {
+                  const checked = newUser.roles.includes(r);
+                  return (
+                    <button
+                      type="button"
+                      key={r}
+                      onClick={() => {
+                        const next = checked
+                          ? newUser.roles.filter((x) => x !== r)
+                          : [...newUser.roles, r];
+                        setNewUser({ ...newUser, roles: next.length ? next : ["student"] });
+                      }}
+                      className={`px-3 py-2 rounded-xl border text-sm transition ${
+                        checked
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border text-muted-foreground hover:border-foreground/40"
+                      }`}
+                    >
+                      {t(`roles.${r}Label`)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {t("admin.selectRoleMultiHint", "복수 역할 선택 가능 (예: 학습자 + 러닝리더)")}
+              </p>
             </div>
             <Button className="w-full rounded-xl" onClick={() => createUserMutation.mutate()} disabled={!newUser.name || !newUser.email || !newUser.password || createUserMutation.isPending}>
               {createUserMutation.isPending ? t("common.processing") : t("admin.addUser")}
