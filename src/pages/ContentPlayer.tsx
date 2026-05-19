@@ -76,7 +76,9 @@ const ContentPlayer = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
-  const isEn = i18n.language?.startsWith("en");
+  const lang = normalizeLang(i18n.language);
+  const isLocalized = lang !== "ko";
+  const isEn = lang === "en";
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mangoPopupOpen, setMangoPopupOpen] = useState(false);
   const [mangoElapsed, setMangoElapsed] = useState(0);
