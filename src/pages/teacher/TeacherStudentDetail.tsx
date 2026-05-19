@@ -44,35 +44,35 @@ const TeacherStudentDetail = () => {
     enabled: !!studentId,
   });
 
-  // Fetch teacher's courses
-  const { data: myCourses = [] } = useQuery({
-    queryKey: ["teacher-courses", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, title, estimated_duration_hours, status")
-        .eq("instructor_id", user!.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  const courseIds = myCourses.map((c) => c.id);
-
+  // All enrollments for THIS student (not limited to leader's own courses)
   const { data: enrollments = [] } = useQuery({
-    queryKey: ["student-enrollments", studentId, courseIds],
+    queryKey: ["dept-student-enrollments", studentId],
     queryFn: async () => {
-      if (!courseIds.length) return [];
       const { data, error } = await supabase
         .from("enrollments")
         .select("*")
-        .eq("user_id", studentId!)
-        .in("course_id", courseIds);
+        .eq("user_id", studentId!);
       if (error) throw error;
       return data;
     },
-    enabled: !!studentId && courseIds.length > 0,
+    enabled: !!studentId,
+  });
+
+  const courseIds = [...new Set(enrollments.map((e: any) => e.course_id))];
+
+  // Fetch courses the student is enrolled in
+  const { data: myCourses = [] } = useQuery({
+    queryKey: ["dept-student-courses", courseIds],
+    queryFn: async () => {
+      if (!courseIds.length) return [];
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id, title, estimated_duration_hours, status")
+        .in("id", courseIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: courseIds.length > 0,
   });
 
   const { data: courseContents = [] } = useQuery({
