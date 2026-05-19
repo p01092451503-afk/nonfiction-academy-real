@@ -277,37 +277,13 @@ const CourseDetail = () => {
   const getContentI18n = (contentId: string, lang: string) =>
     contentI18nData.find((i: any) => i.content_id === contentId && i.language_code === lang);
 
-  const stripLessonPrefix = (title: string) => {
-    if (!title) return "";
-    const stripped = title
-      .replace(/^\d+차시\.\s*/, "")
-      .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
-      .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
-      .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
-      .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "");
-    // If stripping removed everything (title was just a placeholder like "Lesson 2"),
-    // keep the original title so the row isn't blank.
-    return stripped.trim() ? stripped : title;
-  };
+  // Shared helpers (see src/lib/courseContentI18n.ts) — covered by regression tests.
+  const getLocalizedContentTitle = (content: any) => pickContentTitle(content, contentI18nData);
 
-  const getLocalizedContentTitle = (content: any) => {
-    // course_contents 행이 이미 언어별로 분리되어 있으므로 행의 원본 title 을 우선 사용.
-    // i18n 테이블은 보조 fallback (행의 title 이 비어 있을 때만 사용).
-    const fallback = getContentI18n(content.id, content.language_code)?.title;
-    return stripLessonPrefix(content.title || fallback || "");
-  };
+  const getCourseTitle = () => getCourseTitleByLang(course, courseI18n, currentLang);
 
-  const getCourseTitle = () => {
-    if (currentLang === "ko") return course?.title || "";
-    const tr = courseI18n?.find((i: any) => i.language_code === currentLang);
-    return tr?.title || course?.title || "";
-  };
+  const getCourseDesc = () => getCourseDescByLang(course, courseI18n, currentLang);
 
-  const getCourseDesc = () => {
-    if (currentLang === "ko") return course?.description || "";
-    const tr = courseI18n?.find((i: any) => i.language_code === currentLang);
-    return tr?.description || course?.description || "";
-  };
 
   // Language-scoped cache invalidation is handled centrally so every page
   // shares the same registry of i18n-dependent query keys.
