@@ -78,9 +78,9 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
         course_id: form.course_id || null,
         file_urls: fileUrls,
         author_id: user!.id,
-        target_countries: target.countries,
-        target_branch_ids: target.branchIds,
-        target_course_ids: target.courseIds,
+        target_countries: isLeader ? [] : target.countries,
+        target_branch_ids: isLeader && branchId ? [branchId] : target.branchIds,
+        target_course_ids: isLeader ? [] : target.courseIds,
       };
       let recordId = editingId;
       if (editingId) {
