@@ -74,18 +74,21 @@ const TeacherDashboard = () => {
     enabled: deptStudentIds.length > 0,
   });
 
+  // Recent submissions from students in the leader's department (across any course)
   const { data: recentSubmissions = [] } = useQuery({
-    queryKey: ["teacher-dash-submissions", user?.id],
+    queryKey: ["teacher-dash-submissions", deptStudentIds],
     queryFn: async () => {
+      if (deptStudentIds.length === 0) return [];
       const { data, error } = await supabase
         .from("assignment_submissions")
-        .select("*, assignments(title, course_id, courses(title, instructor_id))")
+        .select("*, assignments(title, course_id, courses(title))")
+        .in("student_id", deptStudentIds)
         .order("submitted_at", { ascending: false })
         .limit(10);
       if (error) throw error;
-      return (data || []).filter((s: any) => s.assignments?.courses?.instructor_id === user!.id);
+      return data || [];
     },
-    enabled: !!user?.id,
+    enabled: deptStudentIds.length > 0,
   });
 
   const { data: submitterProfiles = [] } = useQuery({
@@ -102,7 +105,7 @@ const TeacherDashboard = () => {
 
   const profileMap = new Map(submitterProfiles.map((p: any) => [p.user_id, p.full_name]));
 
-  const totalStudents = enrollments.length;
+  const totalStudents = deptStudentIds.length;
   const publishedCourses = courses.filter((c: any) => c.status === "published").length;
   const draftCourses = courses.filter((c: any) => c.status !== "published").length;
   const pendingSubmissions = recentSubmissions.filter((s: any) => s.status === "submitted");
@@ -113,7 +116,7 @@ const TeacherDashboard = () => {
   });
 
   const stats = [
-    { label: t("teacher.totalStudents"), value: totalStudents, sub: t("teacher.myStudents"), icon: Users },
+    { label: t("teacher.totalStudents"), value: totalStudents, sub: branchLabel || t("teacher.myStudents"), icon: Users },
     { label: t("teacher.activeCourses"), value: publishedCourses, sub: t("teacher.waitingCount", { count: draftCourses }), icon: BookOpen },
     { label: t("teacher.allCourses"), value: courses.length, sub: t("teacher.registeredCourses"), icon: LayoutDashboard },
     { label: t("teacher.recentSubmissions"), value: pendingSubmissions.length, sub: t("teacher.recentAssignmentSub"), icon: TrendingUp },
