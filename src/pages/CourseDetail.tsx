@@ -1,5 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { translateKoToEn, translateKoTo } from "@/lib/translate";
+import {
+  getContentTitle as pickContentTitle,
+  getCourseTitleByLang,
+  getCourseDescByLang,
+} from "@/lib/courseContentI18n";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
