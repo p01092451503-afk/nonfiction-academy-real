@@ -30,6 +30,7 @@ import { formatDistanceToNow } from "date-fns";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
