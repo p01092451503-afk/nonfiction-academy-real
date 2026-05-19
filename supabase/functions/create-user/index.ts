@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, fullName, role, departmentId } = await req.json();
+    const { email, password, fullName, role, roles, departmentId } = await req.json();
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: "Email and password are required" }), {
@@ -62,10 +62,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update role if not student (trigger defaults to student)
-    if (role && role !== "student" && newUser.user) {
+    // Normalize roles input (supports legacy `role` string + new `roles` array)
+    const rolesList: string[] = Array.from(new Set(
+      (Array.isArray(roles) ? roles : (role ? [role] : ["student"]))
+        .filter((r: string) => ["student", "teacher", "admin"].includes(r))
+    ));
+
+    if (newUser.user && rolesList.length > 0) {
       await adminClient.from("user_roles").delete().eq("user_id", newUser.user.id);
-      await adminClient.from("user_roles").insert({ user_id: newUser.user.id, role });
+      await adminClient.from("user_roles").insert(
+        rolesList.map((r) => ({ user_id: newUser.user!.id, role: r }))
+      );
     }
 
     // Update department if provided
