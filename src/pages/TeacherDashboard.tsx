@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
