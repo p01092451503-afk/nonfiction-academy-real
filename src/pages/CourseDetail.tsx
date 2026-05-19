@@ -286,14 +286,10 @@ const CourseDetail = () => {
   };
 
   const getLocalizedContentTitle = (content: any) => {
-    const tr = getContentI18n(content.id, currentLang);
-    const koTr = getContentI18n(content.id, "ko");
-    const picked =
-      (tr?.title && tr.title.trim()) ||
-      (currentLang === "ko" ? (koTr?.title && koTr.title.trim()) : null) ||
-      (koTr?.title && koTr.title.trim()) ||
-      content.title;
-    return stripLessonPrefix(picked || "");
+    // course_contents 행이 이미 언어별로 분리되어 있으므로 행의 원본 title 을 우선 사용.
+    // i18n 테이블은 보조 fallback (행의 title 이 비어 있을 때만 사용).
+    const fallback = getContentI18n(content.id, content.language_code)?.title;
+    return stripLessonPrefix(content.title || fallback || "");
   };
 
   const getCourseTitle = () => {
