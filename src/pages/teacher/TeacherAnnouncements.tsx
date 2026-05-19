@@ -129,7 +129,10 @@ const TeacherAnnouncements = () => {
               <Megaphone className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
               {t("announcements.management", "공지사항 관리")}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("announcements.teacherDesc", "수강생에게 공지사항을 등록합니다.")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {branch ? `${branch.name}${branch.code ? ` (${branch.code})` : ""} · ` : ""}
+              {t("announcements.teacherDesc", "내 그룹의 수강생에게만 노출됩니다.")}
+            </p>
           </div>
           <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />{t("announcements.create", "공지 등록")}
