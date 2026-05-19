@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,8 @@ const EMPTY_TARGET: TargetingValue = { countries: [], branchIds: [], courseIds: 
 const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { branchId, branch } = useLeaderScope();
+  const isLeader = role === "teacher";
   const qc = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,9 +78,9 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
         course_id: form.course_id || null,
         file_urls: fileUrls,
         author_id: user!.id,
-        target_countries: target.countries,
-        target_branch_ids: target.branchIds,
-        target_course_ids: target.courseIds,
+        target_countries: isLeader ? [] : target.countries,
+        target_branch_ids: isLeader && branchId ? [branchId] : target.branchIds,
+        target_course_ids: isLeader ? [] : target.courseIds,
       };
       let recordId = editingId;
       if (editingId) {
@@ -175,7 +178,12 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
               <ClipboardList className="h-6 w-6" />
               {t("board.title", "게시판 관리")}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">{t("board.subtitle", "학생에게 자료를 배포하고 안내사항을 게시합니다.")}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isLeader && branch ? `${branch.name}${branch.code ? ` (${branch.code})` : ""} · ` : ""}
+              {isLeader
+                ? t("board.subtitleLeader", "내 그룹의 수강생에게만 게시됩니다.")
+                : t("board.subtitle", "학생에게 자료를 배포하고 안내사항을 게시합니다.")}
+            </p>
           </div>
           <Button onClick={openNew} size="sm" className="gap-1.5">
             <Plus className="h-4 w-4" /> {t("board.newPost", "새 게시글")}
@@ -250,7 +258,14 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
           </DialogHeader>
           <div className="space-y-4">
             <MultilingualTextFields value={ml} onChange={setMl} contentRows={5} />
-            <TargetingFields value={target} onChange={setTarget} compact />
+            {isLeader ? (
+              <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {t("board.scopedToBranch", "이 게시글은 내 그룹의 수강생에게만 노출됩니다.")}
+                {branch ? ` (${branch.name}${branch.code ? ` · ${branch.code}` : ""})` : ""}
+              </div>
+            ) : (
+              <TargetingFields value={target} onChange={setTarget} compact />
+            )}
             <div className="space-y-2">
               <Label className="text-xs">{t("board.attachments", "첨부파일")}</Label>
               {existingFiles.length > 0 && (
@@ -301,7 +316,7 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={closeDialog}>{t("common.cancel")}</Button>
-            <Button size="sm" onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || !isTargetingValid(target) || saveMutation.isPending}>
+            <Button size="sm" onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || (!isLeader && !isTargetingValid(target)) || saveMutation.isPending}>
               {saveMutation.isPending ? t("common.processing") : editingId ? t("common.edit") : t("common.add")}
             </Button>
           </DialogFooter>

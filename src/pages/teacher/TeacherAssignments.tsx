@@ -30,11 +30,13 @@ import { formatDistanceToNow } from "date-fns";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
 const TeacherAssignments = () => {
   const { user } = useUser();
+  const { scopeIds } = useLeaderScope();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
@@ -83,11 +85,24 @@ const TeacherAssignments = () => {
   });
 
   const { data: submissions = [] } = useQuery({
-    queryKey: ["teacher-submissions", user?.id],
+    queryKey: ["teacher-submissions", user?.id, scopeIds],
     queryFn: async () => {
+      // Restrict submissions to students in the leader's department (group scope)
+      let deptStudentIds: string[] | null = null;
+      if (scopeIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .in("department_id", scopeIds);
+        deptStudentIds = (profs ?? []).map((p: any) => p.user_id);
+      }
       const { data, error } = await supabase.from("assignment_submissions").select("*, assignments(title, max_score, courses(title, instructor_id))").order("submitted_at", { ascending: false });
       if (error) throw error;
-      return (data || []).filter((s: any) => s.assignments?.courses?.instructor_id === user!.id);
+      return (data || []).filter(
+        (s: any) =>
+          s.assignments?.courses?.instructor_id === user!.id &&
+          (deptStudentIds === null || deptStudentIds.includes(s.student_id))
+      );
     },
     enabled: !!user?.id,
   });

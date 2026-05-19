@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import MultilingualTextFields, { EMPTY_MULTILINGUAL, type MultilingualValue } fr
 const TeacherNotifications = () => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { scopeIds, branch } = useLeaderScope();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<"all" | "individual">("all");
@@ -29,38 +31,34 @@ const TeacherNotifications = () => {
   const [autoTranslate, setAutoTranslate] = useState(true);
   const [searchUser, setSearchUser] = useState("");
 
-  // Fetch students enrolled in teacher's courses
+  // Fetch students belonging to the leader's department/branch (group scope)
   const { data: students } = useQuery({
-    queryKey: ["teacher-students-for-notify", user?.id],
-    enabled: !!user,
+    queryKey: ["teacher-students-for-notify", scopeIds],
+    enabled: scopeIds.length > 0,
     queryFn: async () => {
-      const { data: courses } = await supabase
-        .from("courses")
-        .select("id")
-        .eq("instructor_id", user!.id);
-      if (!courses?.length) return [];
-      const courseIds = courses.map((c) => c.id);
-      const { data: enrollments } = await supabase
-        .from("enrollments")
+      const { data: roleRows } = await supabase
+        .from("user_roles")
         .select("user_id")
-        .in("course_id", courseIds)
-        .eq("status", "approved");
-      if (!enrollments?.length) return [];
-      const uniqueIds = [...new Set(enrollments.map((e) => e.user_id))];
+        .eq("role", "student");
+      const studentIds = new Set((roleRows ?? []).map((r: any) => r.user_id));
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, email, department")
-        .in("user_id", uniqueIds);
-      return profiles || [];
+        .in("department_id", scopeIds);
+      return (profiles || []).filter((p: any) => studentIds.has(p.user_id));
     },
   });
 
+  const studentIds = students?.map((s) => s.user_id) || [];
+
   const { data: recentNotifications } = useQuery({
-    queryKey: ["teacher-recent-notifications"],
+    queryKey: ["teacher-recent-notifications", studentIds],
+    enabled: studentIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("notifications")
         .select("*")
+        .in("user_id", studentIds)
         .order("created_at", { ascending: false })
         .limit(20);
       return data || [];
@@ -127,7 +125,10 @@ const TeacherNotifications = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><Bell className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />{t("notifications.management", "알림 관리")}</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("notifications.teacherDesc", "수강생에게 알림을 발송합니다.")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {branch ? `${branch.name}${branch.code ? ` (${branch.code})` : ""} · ` : ""}
+              {t("notifications.teacherDesc", "수강생에게 알림을 발송합니다.")}
+            </p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { Megaphone, Plus, Pin, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import TargetingFields, { isTargetingValid, type TargetingValue } from "@/components/admin/TargetingFields";
+import { type TargetingValue } from "@/components/admin/TargetingFields";
 import MultilingualTextFields, { EMPTY_MULTILINGUAL, isMultilingualValid, type MultilingualValue } from "@/components/admin/MultilingualTextFields";
 import { saveContentTranslations, loadContentTranslations } from "@/lib/i18nContent";
 
@@ -26,6 +27,7 @@ const EMPTY_TARGET: TargetingValue = { countries: [], branchIds: [], courseIds: 
 const TeacherAnnouncements = () => {
   const { t } = useTranslation();
   const { user } = useUser();
+  const { branchId, branch } = useLeaderScope();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -50,10 +52,12 @@ const TeacherAnnouncements = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Learning leaders can only publish to their own branch (group scope)
+      const enforcedBranchIds = branchId ? [branchId] : target.branchIds;
       const targetPayload = {
-        target_countries: target.countries,
-        target_branch_ids: target.branchIds,
-        target_course_ids: target.courseIds,
+        target_countries: [] as string[],
+        target_branch_ids: enforcedBranchIds,
+        target_course_ids: [] as string[],
       };
       const basePayload = { title: ml.ko.title, content: ml.ko.content, ...form, ...targetPayload };
       let recordId = editId;
@@ -125,7 +129,10 @@ const TeacherAnnouncements = () => {
               <Megaphone className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
               {t("announcements.management", "공지사항 관리")}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("announcements.teacherDesc", "수강생에게 공지사항을 등록합니다.")}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {branch ? `${branch.name}${branch.code ? ` (${branch.code})` : ""} · ` : ""}
+              {t("announcements.teacherDesc", "내 그룹의 수강생에게만 노출됩니다.")}
+            </p>
           </div>
           <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />{t("announcements.create", "공지 등록")}
@@ -182,7 +189,10 @@ const TeacherAnnouncements = () => {
           </DialogHeader>
           <div className="space-y-4">
             <MultilingualTextFields value={ml} onChange={setMl} />
-            <TargetingFields value={target} onChange={setTarget} compact />
+            <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              {t("announcements.scopedToBranch", "이 공지사항은 내 그룹의 수강생에게만 노출됩니다.")}
+              {branch ? ` (${branch.name}${branch.code ? ` · ${branch.code}` : ""})` : ""}
+            </div>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_pinned} onCheckedChange={(v) => setForm((f) => ({ ...f, is_pinned: v }))} />
@@ -193,7 +203,7 @@ const TeacherAnnouncements = () => {
                 <Label>{t("announcements.publish", "게시")}</Label>
               </div>
             </div>
-            <Button onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || !isTargetingValid(target) || saveMutation.isPending} className="w-full">
+            <Button onClick={() => saveMutation.mutate()} disabled={!isMultilingualValid(ml) || saveMutation.isPending} className="w-full">
               {saveMutation.isPending ? t("common.processing") : t("common.save")}
             </Button>
           </div>
