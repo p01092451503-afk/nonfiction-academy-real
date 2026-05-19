@@ -321,18 +321,21 @@ const CourseCatalog = () => {
 
   const enrollMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      const { error } = await supabase.from("enrollments").insert({ course_id: courseId, user_id: user!.id });
+      // Auto-approve every enrollment from the student catalog.
+      const { error } = await supabase
+        .from("enrollments")
+        .insert({ course_id: courseId, user_id: user!.id, status: "approved" });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
       queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
-      toast({ title: t("catalog.enrollRequested") });
     },
     onError: (e: any) => {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     },
   });
+
 
   const enrollmentStatusMap = new Map(enrollments.map((e: any) => [e.course_id, e.status]));
   const countMap = new Map<string, number>();
