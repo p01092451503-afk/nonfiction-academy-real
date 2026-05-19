@@ -11,6 +11,7 @@ import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
+import { localizeCourse } from "@/lib/i18nCourse";
 
 const StudentDashboard = () => {
   const { user, profile } = useUser();
