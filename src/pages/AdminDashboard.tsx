@@ -274,35 +274,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* ② Action Required Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Pending Enrollments */}
-          <button
-            onClick={() => navigate("/admin/enrollments")}
-            className="stat-card !p-4 text-left hover:border-primary/30 transition-colors group cursor-pointer"
-          >
-            <div className="flex items-start justify-between">
-              <div className="rounded-lg bg-primary/10 p-2.5">
-                <ClipboardCheck className="h-5 w-5 text-primary" />
-              </div>
-              {pendingEnrollments > 0 && (
-                <Badge variant="destructive" className="text-xs animate-pulse">
-                  {pendingEnrollments}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm font-medium text-foreground mt-3">
-              {isEn ? "Pending Enrollments" : "승인 대기 수강신청"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {pendingEnrollments > 0
-                ? (isEn ? `${pendingEnrollments} requests waiting` : `${pendingEnrollments}건 처리 필요`)
-                : (isEn ? "All caught up!" : "처리할 항목 없음")
-              }
-            </p>
-            <div className="flex items-center text-xs text-primary mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              {isEn ? "Go to review" : "바로가기"} <ChevronRight className="h-3 w-3 ml-0.5" />
-            </div>
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
 
           {/* Urgent Mandatory Training */}
           <button
