@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { normalizeLang } from "@/lib/i18nLang";
 import { useVideoProgress } from "@/hooks/useVideoProgress";
 import { logContentAccess } from "@/hooks/useTrafficLogger";
 import {
