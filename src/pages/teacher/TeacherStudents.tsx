@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
