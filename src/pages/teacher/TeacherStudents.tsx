@@ -164,7 +164,12 @@ const TeacherStudents = () => {
     ? enrollments
     : enrollments.filter((e: any) => e.course_id === selectedCourseId);
 
-  const filteredStudentIds = [...new Set(filteredEnrollments.map((e: any) => e.user_id))];
+  // When viewing all courses, show every staff member in the leader's scope
+  // (even those with no enrollments). When filtering by course, only show
+  // students enrolled in that course.
+  const filteredStudentIds = selectedCourseId === "all"
+    ? studentIds
+    : [...new Set(filteredEnrollments.map((e: any) => e.user_id))];
 
   const studentData = filteredStudentIds.map((id) => {
     const profile = profileMap.get(id);
