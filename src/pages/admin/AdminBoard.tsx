@@ -258,7 +258,14 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
           </DialogHeader>
           <div className="space-y-4">
             <MultilingualTextFields value={ml} onChange={setMl} contentRows={5} />
-            <TargetingFields value={target} onChange={setTarget} compact />
+            {isLeader ? (
+              <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {t("board.scopedToBranch", "이 게시글은 내 그룹의 수강생에게만 노출됩니다.")}
+                {branch ? ` (${branch.name}${branch.code ? ` · ${branch.code}` : ""})` : ""}
+              </div>
+            ) : (
+              <TargetingFields value={target} onChange={setTarget} compact />
+            )}
             <div className="space-y-2">
               <Label className="text-xs">{t("board.attachments", "첨부파일")}</Label>
               {existingFiles.length > 0 && (
