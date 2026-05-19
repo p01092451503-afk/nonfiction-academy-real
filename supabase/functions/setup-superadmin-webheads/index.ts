@@ -20,27 +20,25 @@ Deno.serve(async (req) => {
     );
 
     let userId: string | null = null;
-    let page = 1;
-    while (page <= 20) {
-      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-      if (error) throw error;
-      const found = data.users.find((u) => u.email?.toLowerCase() === TARGET_EMAIL);
-      if (found) { userId = found.id; break; }
-      if (data.users.length < 200) break;
-      page++;
-    }
-
-    if (!userId) {
-      const { data, error } = await admin.auth.admin.createUser({
-        email: TARGET_EMAIL,
-        password: TARGET_PASSWORD,
-        email_confirm: true,
-        user_metadata: { full_name: "Super Admin" },
-      });
-      if (error) throw error;
-      userId = data.user!.id;
-    } else {
-      await admin.auth.admin.updateUserById(userId, {
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email: TARGET_EMAIL,
+      password: TARGET_PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: "Super Admin" },
+    });
+    if (created?.user) {
+      userId = created.user.id;
+    } else if (createErr) {
+      // Likely already exists — look up via REST admin API with email filter
+      const url = `${Deno.env.get("SUPABASE_URL")!}/auth/v1/admin/users?email=${encodeURIComponent(TARGET_EMAIL)}`;
+      const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const resp = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      const body = await resp.json();
+      const users = body.users ?? (Array.isArray(body) ? body : []);
+      const found = users.find((u: any) => u.email?.toLowerCase() === TARGET_EMAIL);
+      if (!found) throw new Error(`createUser failed and user not found: ${createErr.message}`);
+      userId = found.id;
+      await admin.auth.admin.updateUserById(userId!, {
         password: TARGET_PASSWORD,
         email_confirm: true,
       });
