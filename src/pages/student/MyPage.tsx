@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { User, Lock, Camera, ArrowRight, UserCircle, BookOpen, Trophy, Star, TrendingUp, Award, Download, Archive } from "lucide-react";
+import { useState, useMemo } from "react";
+import { User, Lock, Camera, ArrowRight, UserCircle, BookOpen, Trophy, Star, TrendingUp, Award, Download, Archive, Eye, EyeOff, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,17 @@ const MyPage = () => {
   // Password
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPw, setIsChangingPw] = useState(false);
+
+  const pwChecks = useMemo(() => ({
+    length: newPassword.length >= 8,
+    letter: /[A-Za-z]/.test(newPassword),
+    number: /\d/.test(newPassword),
+    special: /[^A-Za-z0-9]/.test(newPassword),
+  }), [newPassword]);
+  const pwAllValid = pwChecks.length && pwChecks.letter && pwChecks.number && pwChecks.special;
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -61,8 +71,8 @@ const MyPage = () => {
 
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      toast({ title: t("common.error"), description: t("mypage.passwordMinLength"), variant: "destructive" });
+    if (!pwAllValid) {
+      toast({ title: t("common.error"), description: t("mypage.passwordRequirementsNotMet", "비밀번호 요구사항을 모두 충족해야 합니다."), variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -77,7 +87,14 @@ const MyPage = () => {
       setNewPassword("");
       setConfirmPassword("");
     } catch (e: any) {
-      toast({ title: t("common.error"), description: e.message, variant: "destructive" });
+      const raw = (e?.message || "").toLowerCase();
+      let desc = e?.message;
+      if (raw.includes("weak") || raw.includes("pwned") || raw.includes("known to be")) {
+        desc = t("mypage.passwordWeak", "이 비밀번호는 유출된 적이 있거나 너무 단순합니다. 다른 비밀번호를 사용해 주세요.");
+      } else if (raw.includes("should be at least") || raw.includes("at least")) {
+        desc = t("mypage.passwordTooShort", "비밀번호가 너무 짧습니다.");
+      }
+      toast({ title: t("common.error"), description: desc, variant: "destructive" });
     } finally {
       setIsChangingPw(false);
     }
@@ -438,14 +455,68 @@ const MyPage = () => {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("mypage.newPassword")}</label>
-                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t("mypage.newPasswordPlaceholder")} className="h-11 rounded-xl border-border" minLength={6} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder={t("mypage.newPasswordPlaceholder")}
+                        className="h-11 rounded-xl border-border pr-11"
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? t("auth.hidePassword", "비밀번호 숨기기") : t("auth.showPassword", "비밀번호 보이기")}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {/* Password requirements */}
+                    <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-1.5">
+                      <p className="text-xs font-medium text-foreground mb-1.5">{t("mypage.passwordRequirements", "비밀번호 요구사항")}</p>
+                      {[
+                        { ok: pwChecks.length, label: t("mypage.pwReqLength", "최소 8자 이상") },
+                        { ok: pwChecks.letter, label: t("mypage.pwReqLetter", "영문자 포함 (a-z, A-Z)") },
+                        { ok: pwChecks.number, label: t("mypage.pwReqNumber", "숫자 포함 (0-9)") },
+                        { ok: pwChecks.special, label: t("mypage.pwReqSpecial", "특수문자 포함 (!@#$ 등)") },
+                      ].map((r, i) => (
+                        <div key={i} className={`flex items-center gap-2 text-xs ${r.ok ? "text-emerald-600" : "text-muted-foreground"}`}>
+                          {r.ok ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                          <span>{r.label}</span>
+                        </div>
+                      ))}
+                      <p className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/60 mt-2">
+                        {t("mypage.pwReqHint", "유출된 적이 있는 비밀번호(예: password, 12345678 등)는 사용할 수 없습니다.")}
+                      </p>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("mypage.confirmPassword")}</label>
-                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t("mypage.confirmPasswordPlaceholder")} className="h-11 rounded-xl border-border" />
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder={t("mypage.confirmPasswordPlaceholder")}
+                        className="h-11 rounded-xl border-border pr-11"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showConfirmPassword ? t("auth.hidePassword", "비밀번호 숨기기") : t("auth.showPassword", "비밀번호 보이기")}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {confirmPassword && newPassword !== confirmPassword && (
+                      <p className="text-xs text-destructive">{t("mypage.passwordMismatch")}</p>
+                    )}
                   </div>
                 </div>
-                <Button onClick={handleChangePassword} disabled={isChangingPw || !newPassword} className="rounded-xl gap-1.5">
+                <Button onClick={handleChangePassword} disabled={isChangingPw || !pwAllValid || newPassword !== confirmPassword} className="rounded-xl gap-1.5">
                   {isChangingPw ? t("common.processing") : t("mypage.changePassword")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
