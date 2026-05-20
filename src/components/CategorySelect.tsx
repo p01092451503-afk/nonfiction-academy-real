@@ -54,7 +54,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
   });
 
   const invalidateCategoryCaches = () => {
-    queryClient.invalidateQueries({ queryKey: ["categories"] });
+    invalidateCategoryCaches();
     queryClient.invalidateQueries({ queryKey: ["categories", "select-active"] });
     queryClient.invalidateQueries({ queryKey: ["categories", "admin-all"] });
   };
@@ -70,7 +70,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidateCategoryCaches();
       onValueChange(data.id);
       setDialogOpen(false);
       setNewName("");
@@ -90,7 +90,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidateCategoryCaches();
       setEditingId(null);
       setEditingName("");
       toast({ title: "카테고리가 수정되었습니다." });
@@ -115,7 +115,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
       if (error) throw error;
     },
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      invalidateCategoryCaches();
       if (value === id) onValueChange("");
       setDeleteId(null);
       toast({ title: "카테고리가 삭제되었습니다." });
