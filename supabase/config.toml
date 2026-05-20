@@ -1,3 +1,6 @@
 project_id = "jabagvlhgxrwbnxyrmvv"
 [functions.translate-comment]
 verify_jwt = false
+
+[functions.seed-nonfiction-admins]
+verify_jwt = false
