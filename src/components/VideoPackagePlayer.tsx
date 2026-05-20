@@ -296,6 +296,13 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
               {t("common.loading", "불러오는 중...")}
             </div>
+          ) : videoLoadError ? (
+            <div
+              className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
+              role="alert"
+            >
+              {videoLoadError}
+            </div>
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             <iframe
               key={playbackUrl}
@@ -305,14 +312,6 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               allowFullScreen
               title={activeItem?.title || t("course.video", "영상")}
             />
-
-          ) : videoLoadError ? (
-            <div
-              className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
-              role="alert"
-            >
-              {videoLoadError}
-            </div>
           ) : (
             <video
               ref={videoRef}
