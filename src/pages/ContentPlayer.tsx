@@ -275,9 +275,9 @@ const ContentPlayer = () => {
       );
     }
   }, [contentId, user?.id, courseId, currentContent]);
-  const currentIndex = contents.findIndex((c) => c.id === contentId);
-  const prevContent = currentIndex > 0 ? contents[currentIndex - 1] : null;
-  const nextContent = currentIndex < contents.length - 1 ? contents[currentIndex + 1] : null;
+  const currentIndex = visibleContents.findIndex((c) => c.id === contentId);
+  const prevContent = currentIndex > 0 ? visibleContents[currentIndex - 1] : null;
+  const nextContent = currentIndex >= 0 && currentIndex < visibleContents.length - 1 ? visibleContents[currentIndex + 1] : null;
   const progressMap = new Map(progressData.map((p) => [p.content_id, p]));
   const currentProgress = progressMap.get(contentId || "");
   // 차시들은 동일 콘텐츠의 다국어 버전이므로, 어느 한 차시라도 완료되면 강의가 완료로 처리된다.
