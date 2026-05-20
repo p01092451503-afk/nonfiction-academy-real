@@ -5,6 +5,10 @@ const VIDEO_ID_PATTERN = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 const isConfigured = (value: string | null | undefined) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
 const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const extractCdnHost = (value: string, videoId: string) => {
+  const match = value.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/(?:playlist\\.m3u8|thumbnail\\.jpg|original)`, "i"));
+  return match?.[1] ? cleanHost(match[1]) : null;
+};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -60,6 +64,8 @@ Deno.serve(async (req) => {
 
     const configuredCdn = Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME");
     let cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
+    if (!cdnHostname && typeof body.url === "string") cdnHostname = extractCdnHost(body.url, videoId);
+    if (!cdnHostname && typeof body.thumbnailUrl === "string") cdnHostname = extractCdnHost(body.thumbnailUrl, videoId);
 
     // Sign embed URL if token auth key is available
     const tokenAuthKey = Deno.env.get("BUNNY_STREAM_TOKEN_AUTH_KEY")?.trim();
