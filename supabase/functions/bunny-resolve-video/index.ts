@@ -7,7 +7,8 @@ const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").r
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const extractCdnHost = (value: string, videoId: string) => {
   const match = value.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/(?:playlist\\.m3u8|thumbnail\\.jpg|original)`, "i"));
-  return match?.[1] ? cleanHost(match[1]) : null;
+  const host = match?.[1] ? cleanHost(match[1]) : null;
+  return isConfigured(host) ? host : null;
 };
 
 const json = (body: unknown, status = 200) =>
