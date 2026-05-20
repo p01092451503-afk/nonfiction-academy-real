@@ -242,5 +242,6 @@ export function useVideoProgress({
     duration,
     autoCompleted,
     resumePosition,
+    seekTo,
   };
 }
