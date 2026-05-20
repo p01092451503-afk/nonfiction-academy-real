@@ -909,6 +909,10 @@ const CourseDetail = () => {
                   : t("course.learningInProgress", "학습 진행중")}
               </p>
             </div>
+          ) : enrollmentLoading ? (
+            <Button className="w-full sm:w-auto" disabled aria-label={t("common.loading", "불러오는 중")}>
+              {t("common.loading", "불러오는 중...")}
+            </Button>
           ) : (
             <Button className="w-full sm:w-auto" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending} aria-label={t("course.enrollCourse")}>
               {enrollMutation.isPending ? t("common.registering") : t("course.enrollCourse")}
