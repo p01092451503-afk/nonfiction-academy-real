@@ -727,8 +727,11 @@ const CourseDetail = () => {
                 if (v === "media_package") return t("createCourse.sourceMediaPackage", "이미지 패키지");
                 return t("course.flip");
               };
+              const visibleContents = contents.filter((c) =>
+                hasUploadedContent(c as any, mediaPackageContentIds, videoPackageContentIds)
+              );
               const groups = new Map<string, typeof contents>();
-              contents.forEach((c) => {
+              visibleContents.forEach((c) => {
                 const key = (c.language_code || "").toString();
                 if (!groups.has(key)) groups.set(key, [] as any);
                 (groups.get(key) as any).push(c);
