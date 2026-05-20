@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import Hls from "hls.js";
-import { Play, RotateCcw, Video as VideoIcon, CheckCircle2 } from "lucide-react";
+import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
