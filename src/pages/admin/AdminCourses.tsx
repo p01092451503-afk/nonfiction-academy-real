@@ -85,19 +85,24 @@ const AdminCourses = () => {
     },
   });
 
-  const { data: enrollmentCounts = {} } = useQuery({
+  const { data: enrollmentData = { counts: {}, uniqueStudents: 0 } } = useQuery({
     queryKey: ["admin-enrollment-counts", courses.map((c: any) => c.id)],
     queryFn: async () => {
       const ids = courses.map((c: any) => c.id);
-      if (ids.length === 0) return {};
-      const { data, error } = await supabase.from("enrollments").select("course_id").in("course_id", ids);
+      if (ids.length === 0) return { counts: {}, uniqueStudents: 0 };
+      const { data, error } = await supabase.from("enrollments").select("course_id, user_id").in("course_id", ids);
       if (error) throw error;
       const counts: Record<string, number> = {};
-      data.forEach((e: any) => { counts[e.course_id] = (counts[e.course_id] || 0) + 1; });
-      return counts;
+      const userIds = new Set<string>();
+      data.forEach((e: any) => {
+        counts[e.course_id] = (counts[e.course_id] || 0) + 1;
+        if (e.user_id) userIds.add(e.user_id);
+      });
+      return { counts, uniqueStudents: userIds.size };
     },
     enabled: courses.length > 0,
   });
+  const enrollmentCounts = enrollmentData.counts;
 
   const { data: contentCounts = {} } = useQuery({
     queryKey: ["admin-content-counts", courses.map((c: any) => c.id)],
