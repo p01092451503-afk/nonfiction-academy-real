@@ -13,6 +13,7 @@ import { normalizeLang } from "@/lib/i18nLang";
 interface VideoPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
+  title?: string;
 }
 
 interface VPItem {
