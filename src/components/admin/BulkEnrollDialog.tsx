@@ -362,7 +362,12 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
 
             {/* Country */}
-            <TabsContent value="country">
+            <TabsContent value="country" className="space-y-2">
+              <SelectAllRow
+                total={countries.length}
+                selectedCount={selectedCountries.size}
+                onToggleAll={(checked) => setSelectedCountries(checked ? new Set(countries) : new Set())}
+              />
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {countries.map((c) => (
@@ -382,8 +387,15 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
 
             {/* Branch */}
-            <TabsContent value="branch">
-              <p className="text-[11px] text-muted-foreground mb-2">지점을 선택하면 하위 팀의 인원까지 모두 포함됩니다.</p>
+            <TabsContent value="branch" className="space-y-2">
+              <p className="text-[11px] text-muted-foreground">지점을 선택하면 하위 팀의 인원까지 모두 포함됩니다.</p>
+              <SelectAllRow
+                total={branches.length}
+                selectedCount={selectedBranches.size}
+                onToggleAll={(checked) =>
+                  setSelectedBranches(checked ? new Set(branches.map((b: any) => b.id)) : new Set())
+                }
+              />
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {branches.map((b: any) => (
@@ -403,7 +415,14 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
 
             {/* Role */}
-            <TabsContent value="role">
+            <TabsContent value="role" className="space-y-2">
+              <SelectAllRow
+                total={ROLE_OPTIONS.length}
+                selectedCount={selectedRoles.size}
+                onToggleAll={(checked) =>
+                  setSelectedRoles(checked ? new Set(ROLE_OPTIONS.map((r) => r.value)) : new Set())
+                }
+              />
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {ROLE_OPTIONS.map((r) => (
