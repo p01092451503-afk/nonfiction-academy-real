@@ -277,7 +277,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   return (
     <div className="w-full">
       {/* Video player */}
-      <div className="relative bg-black overflow-hidden rounded-none lg:rounded-2xl">
+      <div className="relative bg-black overflow-hidden rounded-2xl">
         <div className="aspect-video w-full">
           {isResolvingUrl ? (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
