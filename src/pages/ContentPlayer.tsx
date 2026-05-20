@@ -446,7 +446,6 @@ const ContentPlayer = () => {
         enablejsapi: "1",
         rel: "0",
         modestbranding: "1",
-        ...(videoProgress.resumePosition > 0 && !currentProgress?.completed ? { start: String(videoProgress.resumePosition) } : {}),
       });
       return `https://www.youtube.com/embed/${resolvedYouTubeId}?${params.toString()}`;
     }
