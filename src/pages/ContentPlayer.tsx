@@ -674,7 +674,7 @@ const ContentPlayer = () => {
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-                {contents.map((c, idx) => {
+                {visibleContents.map((c, idx) => {
                   const isActive = c.id === contentId;
                   const isCompleted = progressMap.get(c.id)?.completed;
                   const langCode = (c as any).language_code || "";
