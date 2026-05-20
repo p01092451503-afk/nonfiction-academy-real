@@ -322,6 +322,11 @@ const CourseDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["course-contents", courseId] });
     queryClient.invalidateQueries({ queryKey: ["content-i18n", courseId] });
     queryClient.invalidateQueries({ queryKey: ["course-i18n", courseId] });
+    // List views that derive category/title from cached courses must refresh too.
+    queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+    queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+    queryClient.invalidateQueries({ queryKey: ["catalog-courses"] });
+    queryClient.invalidateQueries({ queryKey: ["categories"] });
   };
 
   const enrollMutation = useMutation({
