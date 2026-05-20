@@ -32,6 +32,7 @@ import {
   getContentVideoUrl,
   getContentVideoProvider,
   getCourseTitleByLang,
+  hasUploadedContent,
 } from "@/lib/courseContentI18n";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
