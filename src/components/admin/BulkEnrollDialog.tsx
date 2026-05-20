@@ -105,6 +105,23 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
     enabled: open,
   });
 
+  // Already-approved user IDs for the selected course
+  const { data: approvedUserIds = [] } = useQuery({
+    queryKey: ["bulk-enroll-approved", courseId],
+    queryFn: async () => {
+      if (!courseId) return [] as string[];
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("user_id")
+        .eq("course_id", courseId)
+        .eq("status", "approved");
+      if (error) throw error;
+      return (data || []).map((r: any) => r.user_id);
+    },
+    enabled: open && !!courseId,
+  });
+  const approvedSet = useMemo(() => new Set(approvedUserIds), [approvedUserIds]);
+
   // Maps
   const deptMap = useMemo(() => new Map(departments.map((d: any) => [d.id, d])), [departments]);
   const branches = useMemo(() => departments.filter((d: any) => !d.parent_department_id), [departments]);
