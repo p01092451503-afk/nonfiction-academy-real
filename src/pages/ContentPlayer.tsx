@@ -127,7 +127,7 @@ const ContentPlayer = () => {
     enabled: !!courseId,
   });
 
-  const { data: contents = [] } = useQuery({
+  const { data: contents = [], isLoading: contentsLoading, isFetching: contentsFetching } = useQuery({
     queryKey: ["course-contents", courseId],
     queryFn: async () => {
       const { data, error } = await supabase.from("course_contents").select("*").eq("course_id", courseId!).order("order_index", { ascending: true });
