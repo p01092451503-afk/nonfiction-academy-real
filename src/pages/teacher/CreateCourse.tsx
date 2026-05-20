@@ -93,6 +93,7 @@ const buildDefaultLessonSlots = (): ContentItem[] =>
     enTitle: "",
     enDescription: "",
     package_items: [],
+    video_package_items: [],
     language_code: lang,
   }));
 
