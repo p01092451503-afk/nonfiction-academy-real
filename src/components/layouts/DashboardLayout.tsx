@@ -17,6 +17,13 @@ import RoleSwitcher from "@/components/RoleSwitcher";
 import NotificationBell from "@/components/NotificationBell";
 import GuidedTourButton from "@/components/GuidedTourButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavItem {
   key: string;
