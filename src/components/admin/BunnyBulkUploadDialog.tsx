@@ -151,19 +151,37 @@ export default function BunnyBulkUploadDialog({ open, onOpenChange }: Props) {
   const startUpload = async () => {
     if (!items.length) return;
     setUploading(true);
+    let okCount = 0;
+    let errCount = 0;
     for (const item of items) {
-      if (item.status === "done") continue;
+      if (item.status === "done") { okCount++; continue; }
       try {
         if (item.kind === "image") await uploadImage(item);
         else await uploadVideo(item);
+        okCount++;
       } catch (e) {
+        errCount++;
         updateItem(item.id, { status: "error", error: e instanceof Error ? e.message : "upload failed" });
       }
     }
     setUploading(false);
     queryClient.invalidateQueries({ queryKey: ["video-assets"] });
-    const okCount = items.filter((i) => i.status === "done").length;
-    if (okCount > 0) toast({ title: t("bunnyUpload.completed", "업로드 완료") });
+    if (errCount === 0 && okCount > 0) {
+      toast({
+        title: t("bunnyUpload.completed", "업로드 완료"),
+        description: t("bunnyUpload.completedDesc", "{{count}}개 파일이 업로드되었습니다.", { count: okCount }),
+      });
+      reset();
+      onOpenChange(false);
+    } else if (okCount > 0) {
+      toast({
+        title: t("bunnyUpload.partial", "일부 업로드 완료"),
+        description: `${t("common.success", "성공")}: ${okCount} · ${t("common.error", "실패")}: ${errCount}`,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: t("bunnyUpload.failed", "업로드 실패"), variant: "destructive" });
+    }
   };
 
   return (
