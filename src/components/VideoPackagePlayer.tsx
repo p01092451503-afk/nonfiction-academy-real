@@ -41,9 +41,12 @@ const formatTime = (s: number) => {
 const isHls = (url: string) => /\.m3u8(\?|$)/i.test(url);
 const hasPlaceholderHost = (url: string) => /placeholder_value_to_be_replaced/i.test(url);
 const isBunnyIframe = (url: string) => /iframe\.mediadelivery\.net\/(embed|play)\//i.test(url);
-const toBunnyEmbedUrl = (url: string) => url.replace("/play/", "/embed/");
 const getBunnyVideoId = (url: string) =>
   url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] || null;
+const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
+  const raw = url?.trim() || "";
+  return raw && !hasPlaceholderHost(raw) ? raw : null;
+};
 
 const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
@@ -118,7 +121,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     const needsResolve = activeItem.video_provider === "bunny" && (hasPlaceholderHost(rawUrl) || isBunnyIframe(rawUrl));
 
     setVideoLoadError(null);
-    setResolvedPoster(activeItem.thumbnail_url || null);
+    setResolvedPoster(sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
 
     if (!needsResolve) {
       // Non-Bunny direct URL — safe to set immediately
@@ -150,7 +153,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         return;
       }
       setPlaybackUrl(data.playUrl);
-      setResolvedPoster(data.thumbnailUrl || activeItem.thumbnail_url || null);
+      setResolvedPoster(sanitizeBunnyAssetUrl(data.thumbnailUrl) || sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
     })();
 
     return () => {
@@ -169,12 +172,18 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       hlsRef.current = null;
     }
 
+    setVideoLoadError(null);
     const url = playbackUrl;
     if (isHls(url)) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = url;
       } else if (Hls.isSupported()) {
         const hls = new Hls({ enableWorker: true });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) {
+            setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소를 불러오지 못했습니다."));
+          }
+        });
         hls.loadSource(url);
         hls.attachMedia(video);
         hlsRef.current = hls;
@@ -191,7 +200,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         hlsRef.current = null;
       }
     };
-  }, [activeItem?.id, playbackUrl]);
+  }, [activeItem?.id, playbackUrl, t]);
 
   const handleTimeUpdate = () => {
     const v = videoRef.current;
@@ -287,6 +296,13 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
               {t("common.loading", "불러오는 중...")}
             </div>
+          ) : videoLoadError ? (
+            <div
+              className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
+              role="alert"
+            >
+              {videoLoadError}
+            </div>
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             <iframe
               key={playbackUrl}
@@ -296,14 +312,6 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               allowFullScreen
               title={activeItem?.title || t("course.video", "영상")}
             />
-
-          ) : videoLoadError ? (
-            <div
-              className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
-              role="alert"
-            >
-              {videoLoadError}
-            </div>
           ) : (
             <video
               ref={videoRef}

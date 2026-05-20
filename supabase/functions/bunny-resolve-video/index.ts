@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
 
     // Sign embed URL if token auth key is available
     const tokenAuthKey = Deno.env.get("BUNNY_STREAM_TOKEN_AUTH_KEY")?.trim();
+    const cdnTokenAuthKey = (Deno.env.get("BUNNY_STREAM_CDN_TOKEN_AUTH_KEY") || tokenAuthKey)?.trim();
     const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 6; // 6h
     const baseEmbed = `https://iframe.mediadelivery.net/embed/${LIBRARY_ID}/${videoId}`;
     let embedUrl = baseEmbed;
@@ -79,22 +80,22 @@ Deno.serve(async (req) => {
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
-    const playlistUrl = rawPlaylistUrl && isConfigured(tokenAuthKey)
-      ? await signCdnDirectoryUrl(rawPlaylistUrl, tokenAuthKey!, expires)
+    const playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
+      ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
       : rawPlaylistUrl;
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
 
     return json({
       videoId,
       cdnHostname,
-      // Always prefer the signed iframe embed: the Stream CDN pull zone uses a
-      // separate token-auth key, so direct HLS signing with the embed key 403s.
-      // The iframe handles HLS authentication internally.
-      playUrl: embedUrl,
+      // Prefer signed HLS when a CDN token key is configured because the iframe
+      // does not append CDN directory tokens to the internal playlist/segments.
+      playUrl: playlistUrl || embedUrl,
       embedUrl,
       playlistUrl,
       thumbnailUrl,
-      signed: isConfigured(tokenAuthKey),
+      signed: isConfigured(tokenAuthKey) || isConfigured(cdnTokenAuthKey),
+      hlsSigned: Boolean(rawPlaylistUrl && isConfigured(cdnTokenAuthKey)),
     });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : "unknown" }, 500);
