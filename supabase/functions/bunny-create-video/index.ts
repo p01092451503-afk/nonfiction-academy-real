@@ -42,9 +42,7 @@ Deno.serve(async (req) => {
     // Authenticated with AccessKey header (use API_KEY directly from browser via this token)
     const configuredCdn = Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME");
     const cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
-    const playUrl = cdnHostname
-      ? `https://${cdnHostname}/${data.guid}/playlist.m3u8`
-      : `https://iframe.mediadelivery.net/play/${LIBRARY_ID}/${data.guid}`;
+    const playUrl = `https://iframe.mediadelivery.net/play/${LIBRARY_ID}/${data.guid}`;
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${data.guid}/thumbnail.jpg` : null;
 
     return new Response(
