@@ -793,6 +793,8 @@ const CourseDetail = () => {
           t={t}
         />
 
+        <BulkEnrollDialog open={bulkEnrollOpen} onOpenChange={setBulkEnrollOpen} defaultCourseId={courseId} />
+
         <CourseEditDialog
           open={courseEditOpen}
           onOpenChange={setCourseEditOpen}
