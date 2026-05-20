@@ -36,6 +36,8 @@ const formatTime = (s: number) => {
 };
 
 const isHls = (url: string) => /\.m3u8(\?|$)/i.test(url);
+const hasPlaceholderHost = (url: string) => /placeholder_value_to_be_replaced/i.test(url);
+const isBunnyIframe = (url: string) => /iframe\.mediadelivery\.net\/(embed|play)\//i.test(url);
 
 const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
@@ -46,6 +48,10 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
   const [resumePos, setResumePos] = useState(0);
   const [progress, setProgress] = useState({ current: 0, duration: 0 });
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
+  const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
+  const [isResolvingUrl, setIsResolvingUrl] = useState(false);
+  const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
   const completedRef = useRef(false);
 
   // Fetch all items for this content (all languages), then filter by language
