@@ -897,6 +897,7 @@
     "editManually": "Edit manually",
     "sourceImage": "Image",
     "sourceMediaPackage": "Media Package",
+    "sourceVideoPackage": "Video Package",
     "cardUrlListLabel": "Card image/video URL list",
     "cardUrlListHint": "Register multiple vertical card (1080×1920) images or video links.",
     "cardUrlPh": "Image URL or video URL",
