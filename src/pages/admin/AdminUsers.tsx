@@ -245,9 +245,11 @@ const AdminUsers = () => {
         .neq("role", "super_admin");
       if (deleteRoleError) throw deleteRoleError;
 
+      const uniqueRoles = Array.from(new Set(draft.roles));
+      if (uniqueRoles.length === 0) throw new Error("At least one role is required");
       const { error: insertRoleError } = await supabase
         .from("user_roles")
-        .insert({ user_id: draft.userId, role: draft.role as StaffRole });
+        .insert(uniqueRoles.map((r) => ({ user_id: draft.userId, role: r as StaffRole })));
       if (insertRoleError) throw insertRoleError;
     },
     onSuccess: () => {
