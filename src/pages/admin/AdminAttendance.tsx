@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 
@@ -25,15 +26,29 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
   const isTeacher = role === "teacher";
   const isKo = !i18n.language?.startsWith("en");
 
-  // Fetch all profiles
+  // Learning Leader (teacher) scope: only their branch + child teams
+  const { scopeIds: leaderScopeIds, isLoading: scopeLoading } = useLeaderScope();
+
+  // Fetch profiles (scoped to leader's branch when teacher)
   const { data: profiles = [] } = useQuery({
-    queryKey: ["att-profiles"],
+    queryKey: ["att-profiles", isTeacher ? leaderScopeIds : "all"],
+    enabled: !isTeacher || (!scopeLoading && leaderScopeIds.length > 0),
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id, full_name, department, position");
+      let q = supabase.from("profiles").select("user_id, full_name, department, position, department_id");
+      if (isTeacher && leaderScopeIds.length > 0) {
+        q = q.in("department_id", leaderScopeIds);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
+
+  // Set of user_ids visible to current teacher (used to filter sessions/progress)
+  const scopedUserIds = useMemo(
+    () => (isTeacher ? new Set(profiles.map((p: any) => p.user_id)) : null),
+    [isTeacher, profiles]
+  );
 
   // Fetch sessions for the selected date
   const { data: sessions = [] } = useQuery({
@@ -109,8 +124,9 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       completions: number;
     }>();
 
-    // Sessions: first login, last logout
+    // Sessions: first login, last logout (scoped to leader's people when teacher)
     sessions.forEach((s: any) => {
+      if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
       const existing = map.get(s.user_id);
       if (!existing) {
         map.set(s.user_id, {
@@ -128,6 +144,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
     // Progress: completions and learning time
     dailyProgress.forEach((p: any) => {
+      if (scopedUserIds && !scopedUserIds.has(p.user_id)) return;
       const content = contentMap.get(p.content_id);
 
       // If teacher, only count their courses
@@ -149,7 +166,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     });
 
     return Array.from(map.values());
-  }, [sessions, dailyProgress, contentMap, isTeacher, teacherCourseIds]);
+  }, [sessions, dailyProgress, contentMap, isTeacher, teacherCourseIds, scopedUserIds]);
 
   // Filter by name search
   const filteredStats = useMemo(() => {
