@@ -301,7 +301,7 @@ const AdminVideos = () => {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            onClick={() => copyUrl(v.video_url)}
+                            onClick={(e) => { e.stopPropagation(); copyUrl(v.video_url); }}
                             title={t("videoMgmt.copyUrl", "URL 복사")}
                           >
                             <Copy className="h-3.5 w-3.5" />
