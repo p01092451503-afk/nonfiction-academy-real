@@ -372,11 +372,27 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           aria-label={title || t("videoPackage.episodes", "구성된 동영상")}
         >
           <div className="flex items-center justify-between px-1">
-            <h4 className="text-sm font-semibold text-foreground truncate min-w-0">
-              {title || t("videoPackage.episodes", "구성된 동영상")}
-            </h4>
+            <div className="flex items-center gap-2 min-w-0">
+              {(() => {
+                const lc = (items[0]?.language_code || "").toLowerCase();
+                const isEn = lang === "en";
+                const label = lc === "ko" ? (isEn ? "Korean" : "한국어")
+                  : lc === "en" ? (isEn ? "English" : "영어")
+                  : lc === "ja" ? (isEn ? "Japanese" : "일본어")
+                  : lc.startsWith("zh") ? (isEn ? "Chinese" : "중국어")
+                  : "";
+                return label ? (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-foreground text-background whitespace-nowrap shrink-0">
+                    {label}
+                  </span>
+                ) : null;
+              })()}
+              <h4 className="text-lg font-semibold text-foreground truncate min-w-0">
+                {title || t("videoPackage.episodes", "구성된 동영상")}
+              </h4>
+            </div>
             <span
-              className="text-xs text-muted-foreground tabular-nums shrink-0"
+              className="text-xs text-muted-foreground tabular-nums shrink-1"
               aria-label={`${totalEpisodes}${t("videoPackage.episodeSuffix", "차시")} ${t("course.completed", "완료")} ${completedItems.size}`}
             >
               {completedItems.size} / {totalEpisodes}
