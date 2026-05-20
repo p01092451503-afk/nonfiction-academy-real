@@ -366,20 +366,7 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
                       isActive ? "bg-accent" : "hover:bg-accent/50"
                     }`}
                   >
-                    <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                      {it.thumbnail_url ? (
-                        <img
-                          src={it.thumbnail_url}
-                          alt=""
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <VideoIcon className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
+                    <VideoThumbnail src={it.thumbnail_url} className="h-9 w-9 rounded-md shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-muted-foreground tabular-nums">
