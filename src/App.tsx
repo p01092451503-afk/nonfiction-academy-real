@@ -59,6 +59,7 @@ const StudentAnnouncements = lazyWithRetry(() => import("./pages/student/Student
 const AdminBoard = lazyWithRetry(() => import("./pages/admin/AdminBoard"));
 const AdminSurveys = lazyWithRetry(() => import("./pages/admin/AdminSurveys"));
 const AdminVideos = lazyWithRetry(() => import("./pages/admin/AdminVideos"));
+const AdminVideoHealthCheck = lazyWithRetry(() => import("./pages/admin/AdminVideoHealthCheck"));
 const AdminI18n = lazyWithRetry(() => import("./pages/admin/AdminI18n"));
 const AdminSystemInfo = lazyWithRetry(() => import("./pages/admin/AdminSystemInfo"));
 const AdminTracks = lazyWithRetry(() => import("./pages/admin/AdminTracks"));
@@ -140,6 +141,7 @@ const AppRoutes = () => {
           <Route path="/admin/board" element={<AdminRoute><AdminBoard role="admin" /></AdminRoute>} />
           <Route path="/admin/surveys" element={<AdminRoute><AdminSurveys /></AdminRoute>} />
           <Route path="/admin/videos" element={<AdminRoute><AdminVideos /></AdminRoute>} />
+          <Route path="/admin/video-health" element={<AdminRoute><AdminVideoHealthCheck /></AdminRoute>} />
           <Route path="/admin/i18n" element={<AdminRoute><AdminI18n /></AdminRoute>} />
           <Route path="/admin/system-info" element={<AdminRoute><AdminSystemInfo /></AdminRoute>} />
           <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
