@@ -81,8 +81,15 @@ Deno.serve(async (req) => {
     if (!cdnHostname) {
       const embedResponse = await fetch(embedUrl).catch(() => null);
       const embedHtml = embedResponse?.ok ? await embedResponse.text() : "";
-      const match = embedHtml.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/playlist\\.m3u8`, "i"));
-      cdnHostname = match?.[1] ? cleanHost(match[1]) : null;
+      cdnHostname = extractCdnHost(embedHtml, videoId);
+    }
+
+    if (!cdnHostname && isConfigured(Deno.env.get("BUNNY_STREAM_API_KEY"))) {
+      const videoResponse = await fetch(`https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`, {
+        headers: { AccessKey: Deno.env.get("BUNNY_STREAM_API_KEY")!.trim(), accept: "application/json" },
+      }).catch(() => null);
+      const videoJson = videoResponse?.ok ? await videoResponse.json().catch(() => null) : null;
+      cdnHostname = videoJson ? extractCdnHost(JSON.stringify(videoJson), videoId) : null;
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
