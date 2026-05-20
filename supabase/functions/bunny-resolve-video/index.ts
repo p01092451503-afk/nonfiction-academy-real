@@ -5,6 +5,11 @@ const VIDEO_ID_PATTERN = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 const isConfigured = (value: string | null | undefined) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
 const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const extractCdnHost = (value: string, videoId: string) => {
+  const match = value.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/(?:playlist\\.m3u8|thumbnail\\.jpg|original)`, "i"));
+  const host = match?.[1] ? cleanHost(match[1]) : null;
+  return isConfigured(host) ? host : null;
+};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -42,6 +47,10 @@ async function signCdnDirectoryUrl(url: string, authKey: string, expires: number
   return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
 }
 
+async function signProxyToken(authKey: string, videoId: string, cdnHostname: string, expires: number) {
+  return await signBunnyToken(authKey, `${videoId}:${cdnHostname}`, expires);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -60,6 +69,8 @@ Deno.serve(async (req) => {
 
     const configuredCdn = Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME");
     let cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
+    if (!cdnHostname && typeof body.url === "string") cdnHostname = extractCdnHost(body.url, videoId);
+    if (!cdnHostname && typeof body.thumbnailUrl === "string") cdnHostname = extractCdnHost(body.thumbnailUrl, videoId);
 
     // Sign embed URL if token auth key is available
     const tokenAuthKey = Deno.env.get("BUNNY_STREAM_TOKEN_AUTH_KEY")?.trim();
@@ -75,8 +86,15 @@ Deno.serve(async (req) => {
     if (!cdnHostname) {
       const embedResponse = await fetch(embedUrl).catch(() => null);
       const embedHtml = embedResponse?.ok ? await embedResponse.text() : "";
-      const match = embedHtml.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/playlist\\.m3u8`, "i"));
-      cdnHostname = match?.[1] ? cleanHost(match[1]) : null;
+      cdnHostname = extractCdnHost(embedHtml, videoId);
+    }
+
+    if (!cdnHostname && isConfigured(Deno.env.get("BUNNY_STREAM_API_KEY"))) {
+      const videoResponse = await fetch(`https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`, {
+        headers: { AccessKey: Deno.env.get("BUNNY_STREAM_API_KEY")!.trim(), accept: "application/json" },
+      }).catch(() => null);
+      const videoJson = videoResponse?.ok ? await videoResponse.json().catch(() => null) : null;
+      cdnHostname = videoJson ? extractCdnHost(JSON.stringify(videoJson), videoId) : null;
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
@@ -84,15 +102,22 @@ Deno.serve(async (req) => {
       ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
       : rawPlaylistUrl;
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
+    const proxyToken = cdnHostname && isConfigured(cdnTokenAuthKey)
+      ? await signProxyToken(cdnTokenAuthKey!, videoId, cdnHostname, expires)
+      : null;
+    const proxyPlaylistUrl = proxyToken
+      ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/bunny-stream-proxy/${videoId}/playlist.m3u8?token=${proxyToken}&expires=${expires}&cdn=${encodeURIComponent(cdnHostname!)}`
+      : null;
 
     return json({
       videoId,
       cdnHostname,
       // Prefer signed HLS when a CDN token key is configured because the iframe
       // does not append CDN directory tokens to the internal playlist/segments.
-      playUrl: playlistUrl || embedUrl,
+      playUrl: proxyPlaylistUrl || playlistUrl || embedUrl,
       embedUrl,
       playlistUrl,
+      proxyPlaylistUrl,
       thumbnailUrl,
       signed: isConfigured(tokenAuthKey) || isConfigured(cdnTokenAuthKey),
       hlsSigned: Boolean(rawPlaylistUrl && isConfigured(cdnTokenAuthKey)),
