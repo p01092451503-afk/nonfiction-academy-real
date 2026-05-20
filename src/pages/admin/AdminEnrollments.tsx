@@ -24,6 +24,8 @@ const AdminEnrollments = () => {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [bulkOpen, setBulkOpen] = useState(false);
+
 
   // Fetch enrollments with course and profile info
   const { data: enrollments = [], isLoading } = useQuery({
