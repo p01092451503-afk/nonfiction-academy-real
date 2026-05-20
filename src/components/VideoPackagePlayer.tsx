@@ -144,7 +144,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     setIsResolvingUrl(true);
     (async () => {
       const { data, error } = await supabase.functions.invoke("bunny-resolve-video", {
-        body: { videoId, url: rawUrl },
+        body: { videoId, url: rawUrl, thumbnailUrl: activeItem.thumbnail_url },
       });
       if (cancelled) return;
       setIsResolvingUrl(false);
