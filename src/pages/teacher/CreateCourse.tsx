@@ -256,6 +256,33 @@ const CreateCourse = () => {
         });
       }
 
+      // Load video package items for any video_package contents
+      const videoPackageContentIds = (courseContents || [])
+        .filter((c: any) => c.content_type === "video_package")
+        .map((c: any) => c.id);
+      const videoPackageItemsMap = new Map<string, VideoPackageItemDraft[]>();
+      if (videoPackageContentIds.length > 0) {
+        const { data: vpItems } = await (supabase as any)
+          .from("video_package_items")
+          .select("*")
+          .in("content_id", videoPackageContentIds)
+          .order("order_index", { ascending: true });
+        (vpItems || []).forEach((it: any) => {
+          const arr = videoPackageItemsMap.get(it.content_id) || [];
+          arr.push({
+            tempId: it.id,
+            video_asset_id: it.video_asset_id || null,
+            video_url: it.video_url || "",
+            video_provider: it.video_provider || null,
+            thumbnail_url: it.thumbnail_url || null,
+            duration_seconds: it.duration_seconds ?? null,
+            title: it.title || "",
+          });
+          videoPackageItemsMap.set(it.content_id, arr);
+        });
+      }
+
+
       if (courseContents?.length) {
         // Map existing contents into 4 language slots (KO/EN/ZH-CN/JA).
         // Priority: existing language_code → fall back to order_index → fill missing slots empty.
