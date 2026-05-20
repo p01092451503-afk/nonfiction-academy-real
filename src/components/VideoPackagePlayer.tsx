@@ -102,6 +102,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   // Load resume position when active item changes
   useEffect(() => {
     if (!activeItem) return;
+    setIframeStartTime(null);
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
       const t = raw ? parseFloat(raw) : 0;
