@@ -250,10 +250,24 @@ const AdminVideos = () => {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {v.thumbnail_url ? (
-                        <img src={v.thumbnail_url} alt="" className="h-10 w-16 rounded object-cover bg-muted" />
-                      ) : (
-                        <div className="h-10 w-16 rounded bg-muted flex items-center justify-center"><Video className="h-4 w-4 text-muted-foreground" /></div>
-                      )}
+                        <img
+                          src={v.thumbnail_url}
+                          alt=""
+                          className="h-10 w-16 rounded object-cover bg-muted"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            img.style.display = "none";
+                            const fb = img.nextElementSibling as HTMLElement | null;
+                            if (fb) fb.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="h-10 w-16 rounded bg-muted flex items-center justify-center"
+                        style={{ display: v.thumbnail_url ? "none" : "flex" }}
+                      >
+                        <Video className="h-4 w-4 text-muted-foreground" />
+                      </div>
                       <div className="min-w-0">
                         <p className="font-medium truncate">{v.title}</p>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">{v.video_url}</p>
