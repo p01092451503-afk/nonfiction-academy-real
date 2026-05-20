@@ -342,8 +342,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           className="mt-4 space-y-2"
           aria-label={title || t("videoPackage.episodes", "구성된 동영상")}
         >
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center justify-between px-3 gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               {(() => {
                 const lc = (items[0]?.language_code || "").toLowerCase();
                 const code = lc === "ko" ? "KO"
@@ -359,7 +359,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                 };
                 return code ? (
                   <span
-                    className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center text-[9px] font-bold tracking-wider shadow-sm ${styleMap[code]}`}
+                    className={`h-11 w-11 shrink-0 rounded-md flex items-center justify-center text-xs font-bold tracking-wider shadow-sm ${styleMap[code]}`}
                     aria-label={code}
                   >
                     {code}
