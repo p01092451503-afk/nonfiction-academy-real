@@ -133,3 +133,25 @@ export function getCourseDescByLang(
   const tr = i18n?.find((r) => r.language_code === lang);
   return tr?.description || baseDesc;
 }
+
+/**
+ * Returns true when a course-content row has uploaded learning material.
+ * Rules:
+ *   - video / document → requires a non-empty `video_url`
+ *   - media_package    → requires the content id to be in `mediaPackageContentIds`
+ *   - other types (quiz, assignment, live, etc.) → always considered uploaded
+ * Used to hide empty multilingual content rows from the student curriculum list.
+ */
+export function hasUploadedContent(
+  content: { id: string; content_type?: string | null; video_url?: string | null },
+  mediaPackageContentIds: Set<string> | null | undefined,
+): boolean {
+  const type = (content.content_type || "video").toLowerCase();
+  if (type === "video" || type === "document") {
+    return !!(content.video_url && content.video_url.trim());
+  }
+  if (type === "media_package") {
+    return !!mediaPackageContentIds && mediaPackageContentIds.has(content.id);
+  }
+  return true;
+}
