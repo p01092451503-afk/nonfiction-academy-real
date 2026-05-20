@@ -242,6 +242,25 @@ const CourseDetail = () => {
     staleTime: 60_000,
   });
 
+  // Set of content ids that have at least one video_package item uploaded.
+  const { data: videoPackageContentIds } = useQuery({
+    queryKey: ["course-video-package-ids", courseId, contents.map(c => c.id).join(",")],
+    queryFn: async () => {
+      const vpIds = contents
+        .filter((c: any) => (c.content_type || "").toLowerCase() === "video_package")
+        .map((c: any) => c.id);
+      if (vpIds.length === 0) return new Set<string>();
+      const { data } = await (supabase as any)
+        .from("video_package_items")
+        .select("content_id")
+        .in("content_id", vpIds);
+      return new Set<string>((data || []).map((r: any) => r.content_id));
+    },
+    enabled: contents.length > 0,
+    staleTime: 60_000,
+  });
+
+
 
   const { data: enrollment, isLoading: enrollmentLoading } = useQuery({
     queryKey: ["enrollment", courseId, user?.id],
