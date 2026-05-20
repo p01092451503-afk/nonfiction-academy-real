@@ -93,6 +93,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     setActiveIdx(0);
     setCompletedItems(new Set());
     setProgress({ current: 0, duration: 0 });
+    setIframeStartTime(null);
     completedRef.current = false;
   }, [contentId, lang]);
 
