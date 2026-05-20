@@ -351,7 +351,9 @@ const AdminUsers = () => {
             <tbody className="divide-y divide-border">
               {filtered.map((profile: any) => {
                 const currentRole = getPrimaryRole(profile.user_id);
-                const role = roleLabel[currentRole] || roleLabel.student;
+                const assignedRoles = (rolesByUser.get(profile.user_id) ?? []) as StaffRole[];
+                const displayRoles = ROLE_PRIORITY.filter((r) => assignedRoles.includes(r));
+                const rolesToShow = displayRoles.length > 0 ? displayRoles : [currentRole];
                 const deleteDisabledReason = profile.user_id === user?.id
                   ? t("admin.cannotDeleteSelf")
                   : hasProtectedRole(profile.user_id)
@@ -375,7 +377,16 @@ const AdminUsers = () => {
                       <span className="text-sm text-muted-foreground">{getDeptName(profile.department_id)}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-[10px] font-medium px-2 py-1 rounded-full ${role.className}`}>{role.text}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {rolesToShow.map((r) => {
+                          const cfg = roleLabel[r] || roleLabel.student;
+                          return (
+                            <span key={r} className={`text-[10px] font-medium px-2 py-1 rounded-full whitespace-nowrap ${cfg.className}`}>
+                              {cfg.text}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className="text-sm text-muted-foreground">{profile.position || "-"}</span>
