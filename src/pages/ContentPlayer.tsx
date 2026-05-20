@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaPackagePlayer from "@/components/MediaPackagePlayer";
+import VideoPackagePlayer from "@/components/VideoPackagePlayer";
 import CourseComments from "@/components/CourseComments";
 import { computeCourseProgress, syncEnrollmentOnContentCompleted } from "@/lib/courseCompletion";
 import {
@@ -155,8 +156,25 @@ const ContentPlayer = () => {
     staleTime: 60_000,
   });
 
+  const { data: videoPackageContentIds } = useQuery({
+    queryKey: ["course-video-package-ids", courseId, contents.map(c => c.id).join(",")],
+    queryFn: async () => {
+      const vpIds = contents
+        .filter((c: any) => (c.content_type || "").toLowerCase() === "video_package")
+        .map((c: any) => c.id);
+      if (vpIds.length === 0) return new Set<string>();
+      const { data } = await (supabase as any)
+        .from("video_package_items")
+        .select("content_id")
+        .in("content_id", vpIds);
+      return new Set<string>((data || []).map((r: any) => r.content_id));
+    },
+    enabled: contents.length > 0,
+    staleTime: 60_000,
+  });
+
   // Hide multilingual content rows that have no uploaded material from the curriculum list.
-  const visibleContents = contents.filter((c: any) => hasUploadedContent(c, mediaPackageContentIds));
+  const visibleContents = contents.filter((c: any) => hasUploadedContent(c, mediaPackageContentIds, videoPackageContentIds));
 
   const { data: commentCount = 0 } = useQuery({
     queryKey: ["course-comments-count", courseId],
@@ -509,7 +527,16 @@ const ContentPlayer = () => {
           <div className="max-w-5xl mx-auto px-4 pt-0 pb-6 lg:px-8 lg:py-8">
             {/* Media area */}
             <div className="bg-background rounded-none lg:rounded-2xl overflow-hidden mb-0 lg:mb-6 relative -mx-4 lg:mx-0">
-              {currentContent.content_type === "media_package" ? (
+              {currentContent.content_type === "video_package" ? (
+                <VideoPackagePlayer
+                  contentId={currentContent.id}
+                  onComplete={() => {
+                    if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
+                      markCompleteMutation.mutate();
+                    }
+                  }}
+                />
+              ) : currentContent.content_type === "media_package" ? (
                 <MediaPackagePlayer
                   contentId={currentContent.id}
                   onComplete={() => {
