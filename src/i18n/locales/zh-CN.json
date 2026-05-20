@@ -946,7 +946,10 @@
     "autoCompleted": "自动完成",
     "autoCompletedDesc": "已观看 80% 或以上，学习已自动完成",
     "watchProgress": "观看进度",
-    "resumePlayback": "继续播放"
+    "resumePlayback": "继续播放",
+    "fromBeginning": "从头开始",
+    "resumeDialogTitle": "继续观看？",
+    "resumeDialogDesc": "您之前观看到 {{time}}。要继续观看还是从头开始？"
   },
   "notification": {
     "title": "通知",
