@@ -129,9 +129,35 @@ const AdminVideos = () => {
     },
   });
 
-  const copyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast({ title: t("videoMgmt.urlCopied") });
+  const copyUrl = async (url: string) => {
+    if (!url) {
+      toast({ title: t("videoMgmt.urlCopyFailed", "복사할 URL이 없습니다."), variant: "destructive" });
+      return;
+    }
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (!ok) throw new Error("execCommand copy failed");
+      }
+      toast({ title: t("videoMgmt.urlCopied", "URL이 복사되었습니다."), description: url });
+    } catch (err) {
+      console.error("Copy failed:", err);
+      toast({
+        title: t("videoMgmt.urlCopyFailed", "URL 복사에 실패했습니다."),
+        description: url,
+        variant: "destructive",
+      });
+    }
   };
 
   const openEdit = (v: VideoAsset) => {
@@ -275,7 +301,7 @@ const AdminVideos = () => {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            onClick={() => copyUrl(v.video_url)}
+                            onClick={(e) => { e.stopPropagation(); copyUrl(v.video_url); }}
                             title={t("videoMgmt.copyUrl", "URL 복사")}
                           >
                             <Copy className="h-3.5 w-3.5" />
@@ -293,7 +319,7 @@ const AdminVideos = () => {
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{new Date(v.created_at).toLocaleDateString("ko")}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => copyUrl(v.video_url)} title={t("videoMgmt.copyUrl")}>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); copyUrl(v.video_url); }} title={t("videoMgmt.copyUrl")}>
                         <Copy className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" asChild title={t("videoMgmt.open")}>
