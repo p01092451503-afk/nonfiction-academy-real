@@ -43,7 +43,7 @@ const hasPlaceholderHost = (url: string) => /placeholder_value_to_be_replaced/i.
 const isBunnyIframe = (url: string) => /iframe\.mediadelivery\.net\/(embed|play)\//i.test(url);
 const isBunnyProvider = (provider?: string | null) => provider?.toLowerCase() === "bunny";
 const getBunnyVideoId = (url: string) =>
-  url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] || null;
+  url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[/?#]|$)/i)?.[1] || null;
 const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
   const raw = url?.trim() || "";
   return raw && !hasPlaceholderHost(raw) ? raw : null;
