@@ -41,9 +41,12 @@ const formatTime = (s: number) => {
 const isHls = (url: string) => /\.m3u8(\?|$)/i.test(url);
 const hasPlaceholderHost = (url: string) => /placeholder_value_to_be_replaced/i.test(url);
 const isBunnyIframe = (url: string) => /iframe\.mediadelivery\.net\/(embed|play)\//i.test(url);
-const toBunnyEmbedUrl = (url: string) => url.replace("/play/", "/embed/");
 const getBunnyVideoId = (url: string) =>
   url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] || null;
+const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
+  const raw = url?.trim() || "";
+  return raw && !hasPlaceholderHost(raw) ? raw : null;
+};
 
 const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
@@ -118,7 +121,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     const needsResolve = activeItem.video_provider === "bunny" && (hasPlaceholderHost(rawUrl) || isBunnyIframe(rawUrl));
 
     setVideoLoadError(null);
-    setResolvedPoster(activeItem.thumbnail_url || null);
+    setResolvedPoster(sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
 
     if (!needsResolve) {
       // Non-Bunny direct URL — safe to set immediately
