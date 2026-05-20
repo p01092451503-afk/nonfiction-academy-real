@@ -186,7 +186,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       ]);
 
       if (profileRes.data) {
-        setProfile(profileRes.data as UserProfile);
+        const p = profileRes.data as UserProfile;
+        setProfile(p);
+        // Auto-switch language based on the user's branch country
+        applyCountryLanguage(p.department_id);
       }
       if (rolesRes.data) {
         setRoles(rolesRes.data.map((r: { role: string }) => r.role as AppRole));
