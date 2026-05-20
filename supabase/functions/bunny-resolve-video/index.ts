@@ -109,12 +109,16 @@ Deno.serve(async (req) => {
       ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/bunny-stream-proxy/${videoId}/playlist.m3u8?token=${proxyToken}&expires=${expires}&cdn=${encodeURIComponent(cdnHostname!)}`
       : null;
 
+    // Current Bunny settings use Embed view token authentication while CDN token
+    // authentication is disabled and direct file access without an allowed referrer
+    // is blocked. In that setup the only reliable playback URL is the signed
+    // Bunny iframe; direct HLS/CDN/proxy URLs will keep returning 403.
+    const playUrl = embedUrl;
+
     return json({
       videoId,
       cdnHostname,
-      // Prefer signed HLS when a CDN token key is configured because the iframe
-      // does not append CDN directory tokens to the internal playlist/segments.
-      playUrl: proxyPlaylistUrl || playlistUrl || embedUrl,
+      playUrl,
       embedUrl,
       playlistUrl,
       proxyPlaylistUrl,
