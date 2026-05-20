@@ -77,12 +77,18 @@ const AdminCourses = () => {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", "admin-all"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("id, name, slug");
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, slug")
+        .order("display_order", { ascending: true });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const { data: enrollmentData = { counts: {}, uniqueStudents: 0 } } = useQuery({
