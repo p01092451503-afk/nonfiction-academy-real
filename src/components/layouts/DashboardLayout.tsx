@@ -364,7 +364,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleLogout}
+                onClick={handleSignOut}
                 className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />
