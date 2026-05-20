@@ -1492,10 +1492,27 @@ const UnifiedContentEditor = ({
               <Package className="h-3.5 w-3.5" />
               {t("createCourse.sourceMediaPackage", "미디어 패키지")}
             </button>
+            <button
+              type="button"
+              onClick={() => onChange("source", "video_package")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
+                isVideoPackage
+                  ? "bg-accent text-foreground border-border"
+                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
+              }`}
+            >
+              <Video className="h-3.5 w-3.5" />
+              {t("createCourse.sourceVideoPackage", "동영상 패키지")}
+            </button>
           </div>
         </div>
 
-        {isPackage || isImages ? (
+        {isVideoPackage ? (
+          <VideoPackageItemsEditor
+            items={content.video_package_items || []}
+            onChange={(items) => onChange("video_package_items", items)}
+          />
+        ) : isPackage || isImages ? (
           <PackageItemsEditor
             items={content.package_items || []}
             onChange={(items) => onChange("package_items", items)}
