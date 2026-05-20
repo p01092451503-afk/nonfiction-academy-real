@@ -293,7 +293,10 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               title={activeItem?.title || t("course.video", "영상")}
             />
           ) : videoLoadError ? (
-            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center">
+            <div
+              className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
+              role="alert"
+            >
               {videoLoadError}
             </div>
           ) : (
@@ -307,38 +310,56 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
+              aria-label={activeItem?.title || t("course.video", "영상")}
             />
           )}
         </div>
+
+        {/* Overlay progress pill (matches reference image) */}
+        <div className="absolute inset-x-2 bottom-2 lg:inset-x-3 lg:bottom-3 pointer-events-none">
+          <div className="flex items-center gap-2 rounded-full bg-background/90 backdrop-blur px-3 py-1.5 shadow-sm">
+            <span className="text-[11px] text-muted-foreground shrink-0">
+              {t("contentPlayer.watchProgress", "시청 진행률")}
+            </span>
+            <Progress
+              value={pct}
+              className="h-1.5 flex-1 min-w-[80px]"
+              aria-label={t("contentPlayer.watchProgress", "시청 진행률")}
+            />
+            <span
+              className="text-[11px] text-foreground font-semibold shrink-0 tabular-nums"
+              aria-live="polite"
+            >
+              {Math.round(pct)}%
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Progress + resume bar (matches student image) */}
-      <div className="mt-2 px-3 py-2.5 bg-secondary/60 rounded-lg flex items-center gap-3 text-xs flex-wrap">
-        <span className="text-muted-foreground shrink-0">
-          {t("contentPlayer.watchProgress", "시청 진행률")}
-        </span>
-        <Progress value={pct} className="h-1.5 flex-1 min-w-[120px]" />
-        <span className="text-muted-foreground font-medium shrink-0 tabular-nums">
-          {Math.round(pct)}%
-        </span>
+      {/* Resume / auto-complete hint / completion */}
+      <div className="mt-3 px-1 flex items-center gap-2 flex-wrap text-xs">
         {resumePos > 0 && !isItemComplete && (
           <button
             type="button"
             onClick={handleResume}
-            className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 min-h-11 text-xs font-medium hover:bg-accent active:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={t("contentPlayer.resumeFrom", { time: formatTime(resumePos), defaultValue: `${formatTime(resumePos)}부터 이어보기` })}
           >
-            <RotateCcw className="h-3 w-3" />
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             {t("contentPlayer.resumeFrom", { time: formatTime(resumePos), defaultValue: `${formatTime(resumePos)}부터 이어보기` })}
           </button>
         )}
         {!isItemComplete && (
-          <span className="text-[10px] text-muted-foreground/70 shrink-0">
+          <span className="text-[11px] text-muted-foreground">
             {t("contentPlayer.autoCompleteAt80", "80% 이상 시청 시 자동 완료됩니다")}
           </span>
         )}
         {isItemComplete && (
-          <span className="inline-flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400 font-medium">
-            <CheckCircle2 className="h-3 w-3" />
+          <span
+            className="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 font-medium"
+            role="status"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
             {t("course.completed", "완료")}
           </span>
         )}
@@ -346,52 +367,71 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
 
       {/* Episode list (1차시 / 2차시 / 3차시 ...) */}
       {totalEpisodes > 1 && (
-        <div className="mt-4 space-y-2">
+        <section
+          className="mt-4 space-y-2"
+          aria-label={title || t("videoPackage.episodes", "구성된 동영상")}
+        >
           <div className="flex items-center justify-between px-1">
-            <h4 className="text-sm font-semibold text-foreground truncate">
+            <h4 className="text-sm font-semibold text-foreground truncate min-w-0">
               {title || t("videoPackage.episodes", "구성된 동영상")}
             </h4>
-            <span className="text-xs text-muted-foreground">
+            <span
+              className="text-xs text-muted-foreground tabular-nums shrink-0"
+              aria-label={`${totalEpisodes}${t("videoPackage.episodeSuffix", "차시")} ${t("course.completed", "완료")} ${completedItems.size}`}
+            >
               {completedItems.size} / {totalEpisodes}
             </span>
           </div>
-          <ul className="divide-y divide-border/60 border-y border-border/60">
+          <ul
+            className="divide-y divide-border/60 border-y border-border/60"
+            role="list"
+          >
             {items.map((it, idx) => {
               const isActive = idx === activeIdx;
               const isDone = completedItems.has(it.id);
+              const episodeLabel = `${idx + 1}${t("videoPackage.episodeSuffix", "차시")}`;
+              const itemTitle = it.title || `${t("course.video", "영상")} ${idx + 1}`;
               return (
                 <li key={it.id}>
                   <button
                     type="button"
                     onClick={() => setActiveIdx(idx)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-colors ${
-                      isActive ? "bg-accent" : "hover:bg-accent/50"
+                    aria-current={isActive ? "true" : undefined}
+                    aria-label={`${episodeLabel} ${itemTitle}${isDone ? ` (${t("course.completed", "완료")})` : isActive ? ` (${t("course.playing", "재생 중")})` : ""}`}
+                    className={`w-full flex items-center gap-3 px-3 py-3 min-h-14 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+                      isActive ? "bg-accent" : "hover:bg-accent/50 active:bg-accent/50"
                     }`}
                   >
-                    <VideoThumbnail src={it.thumbnail_url} className="h-9 w-9 rounded-md shrink-0" />
+                    <VideoThumbnail
+                      src={it.thumbnail_url}
+                      className="h-11 w-11 rounded-md shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                          {idx + 1}{t("videoPackage.episodeSuffix", "차시")}
+                        <span className="text-xs font-semibold text-muted-foreground tabular-nums shrink-0">
+                          {episodeLabel}
                         </span>
                         <span className="text-sm font-medium text-foreground truncate">
-                          {it.title || `${t("course.video", "영상")} ${idx + 1}`}
+                          {itemTitle}
                         </span>
                       </div>
                       {it.duration_seconds ? (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                        <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
                           {formatTime(it.duration_seconds)}
                         </p>
                       ) : null}
                     </div>
                     {isDone ? (
-                      <Badge variant="outline" className="gap-1 text-[10px] border-green-300 text-green-700 dark:border-green-800 dark:text-green-400 shrink-0">
-                        <CheckCircle2 className="h-3 w-3" />
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-[10px] border-green-300 text-green-700 dark:border-green-800 dark:text-green-400 shrink-0"
+                      >
+                        <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                         {t("course.completed", "완료")}
                       </Badge>
                     ) : isActive ? (
                       <Badge variant="outline" className="gap-1 text-[10px] shrink-0">
-                        <Play className="h-3 w-3" />
+                        <Play className="h-3 w-3" aria-hidden="true" />
                         {t("course.playing", "재생 중")}
                       </Badge>
                     ) : null}
@@ -400,10 +440,11 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               );
             })}
           </ul>
-        </div>
+        </section>
       )}
     </div>
   );
 };
+
 
 export default VideoPackagePlayer;
