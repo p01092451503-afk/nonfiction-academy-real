@@ -4,6 +4,7 @@ import {
   getContentTitle as pickContentTitle,
   getCourseTitleByLang,
   getCourseDescByLang,
+  hasUploadedContent,
 } from "@/lib/courseContentI18n";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
