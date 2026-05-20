@@ -643,11 +643,6 @@ const ContentPlayer = () => {
             {/* Info area */}
             <div className="px-4 lg:px-0 py-1 lg:py-0 space-y-3">
 
-              {/* Title — left aligned, can wrap */}
-              <h2 className="text-xl lg:text-2xl font-bold text-foreground tracking-tight border-b-2 border-foreground/80 pb-1 inline-block max-w-full">
-                {localTitle}
-              </h2>
-
             </div>
 
             <div className="space-y-6 mt-6">
