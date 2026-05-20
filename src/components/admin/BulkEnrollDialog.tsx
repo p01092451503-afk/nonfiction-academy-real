@@ -482,4 +482,27 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
   );
 };
 
+const SelectAllRow = ({
+  total,
+  selectedCount,
+  onToggleAll,
+}: {
+  total: number;
+  selectedCount: number;
+  onToggleAll: (checked: boolean) => void;
+}) => {
+  if (total === 0) return null;
+  const allSelected = selectedCount === total;
+  const someSelected = selectedCount > 0 && !allSelected;
+  return (
+    <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+      <Checkbox
+        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+        onCheckedChange={(v) => onToggleAll(!!v)}
+      />
+      <span className="text-xs text-muted-foreground">전체 선택 ({total})</span>
+    </label>
+  );
+};
+
 export default BulkEnrollDialog;
