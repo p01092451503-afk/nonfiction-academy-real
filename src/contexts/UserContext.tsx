@@ -1,5 +1,47 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
+
+// Country code → supported app language. Used to auto-open the right locale
+// for users whose branch (department) has a country assigned.
+const COUNTRY_TO_LANG: Record<string, "ko" | "en" | "ja" | "zh-CN"> = {
+  KR: "ko",
+  JP: "ja",
+  US: "en",
+  HK: "zh-CN",
+  CN: "zh-CN",
+  TW: "zh-CN",
+};
+
+async function applyCountryLanguage(departmentId: string | null | undefined) {
+  if (!departmentId) return;
+  // Respect explicit user choice: i18next-browser-languagedetector stores it under 'nfl-lang'
+  if (typeof localStorage !== "undefined" && localStorage.getItem("nfl-lang-manual") === "1") return;
+  try {
+    const { data } = await supabase
+      .from("departments")
+      .select("country, parent_department_id")
+      .eq("id", departmentId)
+      .single();
+    let country = data?.country as string | null | undefined;
+    // Fall back to parent branch country if team-level dept has none
+    if (!country && data?.parent_department_id) {
+      const { data: parent } = await supabase
+        .from("departments")
+        .select("country")
+        .eq("id", data.parent_department_id)
+        .single();
+      country = parent?.country;
+    }
+    if (!country) return;
+    const lang = COUNTRY_TO_LANG[country.toUpperCase()];
+    if (lang && i18n.language !== lang) {
+      await i18n.changeLanguage(lang);
+    }
+  } catch (e) {
+    console.warn("Auto-language by country failed:", e);
+  }
+}
 import type { User, Session } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "teacher" | "student" | "super_admin";
@@ -144,7 +186,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       ]);
 
       if (profileRes.data) {
-        setProfile(profileRes.data as UserProfile);
+        const p = profileRes.data as UserProfile;
+        setProfile(p);
+        // Auto-switch language based on the user's branch country
+        applyCountryLanguage(p.department_id);
       }
       if (rolesRes.data) {
         setRoles(rolesRes.data.map((r: { role: string }) => r.role as AppRole));

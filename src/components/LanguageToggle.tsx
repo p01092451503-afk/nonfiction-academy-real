@@ -29,6 +29,8 @@ const LanguageToggle = () => {
   const currentLang = resolveCurrent(i18n.language);
 
   const changeLang = (lang: string) => {
+    // Mark as a manual choice so country-based auto-switch doesn't override on next login
+    try { localStorage.setItem("nfl-lang-manual", "1"); } catch {}
     i18n.changeLanguage(lang);
   };
 
