@@ -318,6 +318,7 @@ const CreateCourse = () => {
           const en = i18nMap.get(c.id);
           const isCard = c.description?.startsWith("[card-content]");
           const isPackage = c.content_type === "media_package";
+          const isVideoPackage = c.content_type === "video_package";
           let cleanDesc = "";
           let cardUrls: string[] = [];
           if (isCard) {
@@ -332,15 +333,21 @@ const CreateCourse = () => {
           } else {
             cleanDesc = c.description || "";
           }
-          // Force source into mangoboard or package only
-          const inferredSource: ContentSource = isPackage
-            ? "package"
-            : "mangoboard";
+          const inferredSource: ContentSource = isVideoPackage
+            ? "video_package"
+            : isPackage
+              ? "package"
+              : "mangoboard";
+          const inferredContentType: ContentType = isVideoPackage
+            ? ("video_package" as ContentType)
+            : isPackage
+              ? ("media_package" as ContentType)
+              : ("document" as ContentType);
           return {
             tempId: c.id,
             title: c.title || "",
             description: cleanDesc,
-            content_type: (isPackage ? "media_package" : "document") as ContentType,
+            content_type: inferredContentType,
             video_url: c.video_url || "",
             video_provider: (c.video_provider || "custom") as VideoProvider,
             duration_minutes: c.duration_minutes,
@@ -351,6 +358,7 @@ const CreateCourse = () => {
             enDescription: en?.description || "",
             card_urls: cardUrls,
             package_items: isPackage ? (packageItemsMap.get(c.id) || []) : [],
+            video_package_items: isVideoPackage ? (videoPackageItemsMap.get(c.id) || []) : [],
             language_code: lang,
           };
         });
