@@ -135,10 +135,16 @@ const AdminEnrollments = () => {
     <DashboardLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6" aria-hidden="true" />{t("enrollment.management")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("enrollment.managementDesc")}</p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6" aria-hidden="true" />{t("enrollment.management")}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("enrollment.managementDesc")}</p>
+          </div>
+          <Button onClick={() => setBulkOpen(true)} className="rounded-xl gap-1.5 w-full sm:w-auto">
+            <UserPlus className="h-4 w-4" /> 일괄 수강 승인
+          </Button>
         </div>
+
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
