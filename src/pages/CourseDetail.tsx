@@ -14,9 +14,10 @@ import {
   FileText, Video, ChevronRight, BarChart3, Plus, Pencil,
   Trash2, Eye, EyeOff, Settings, ChevronUp, ChevronDown,
   GripVertical, ExternalLink, Copy, MoreHorizontal,
-  ClipboardCheck, AlertTriangle, Upload, X, Image, Languages,
+  ClipboardCheck, AlertTriangle, Upload, X, Image, Languages, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,7 @@ const CourseDetail = () => {
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
   const [contentI18nForm, setContentI18nForm] = useState<Record<ContentI18nLang, ContentI18nData>>(emptyI18nAll);
   const [courseEditOpen, setCourseEditOpen] = useState(false);
+  const [bulkEnrollOpen, setBulkEnrollOpen] = useState(false);
   const [courseForm, setCourseForm] = useState({
     title: "", description: "", status: "draft", is_mandatory: false, deadline: "",
     category_id: "", difficulty_level: "beginner", estimated_duration_hours: "", max_students: "",
@@ -562,6 +564,17 @@ const CourseDetail = () => {
                   <Settings className="h-3 w-3" aria-hidden="true" />
                   {t("course.courseSettings")}
                 </Button>
+                {role === "admin" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1.5 text-xs"
+                    onClick={() => setBulkEnrollOpen(true)}
+                  >
+                    <UserPlus className="h-3 w-3" aria-hidden="true" />
+                    일괄 수강 승인
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   className="h-9 gap-1.5 text-xs"
@@ -779,6 +792,8 @@ const CourseDetail = () => {
           isPending={upsertContentMutation.isPending}
           t={t}
         />
+
+        <BulkEnrollDialog open={bulkEnrollOpen} onOpenChange={setBulkEnrollOpen} defaultCourseId={courseId} />
 
         <CourseEditDialog
           open={courseEditOpen}
