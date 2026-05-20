@@ -854,8 +854,8 @@ const ContentPlayer = () => {
       <Drawer open={mobileCurriculumOpen} onOpenChange={setMobileCurriculumOpen} shouldScaleBackground={false}>
         <DrawerContent className="max-h-[80vh] z-[110]">
           <DrawerHeader className="pb-2">
-            <DrawerTitle className="text-base">{t("course.learningProgress")}</DrawerTitle>
-            <div className="mt-1">
+            <div className="flex items-center justify-center gap-2">
+              <DrawerTitle className="text-base">{t("course.learningProgress")}</DrawerTitle>
               {_courseCompletion.isCompleted ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
                   <CheckCircle2 className="h-3 w-3" />
@@ -869,6 +869,7 @@ const ContentPlayer = () => {
               )}
             </div>
           </DrawerHeader>
+
           <ScrollArea className="flex-1 px-4 pb-4 max-h-[55vh]">
             <div className="space-y-1">
               {visibleContents.map((c, idx) => {
