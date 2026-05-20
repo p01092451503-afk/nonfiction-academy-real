@@ -243,7 +243,7 @@ const CourseDetail = () => {
   });
 
 
-  const { data: enrollment } = useQuery({
+  const { data: enrollment, isLoading: enrollmentLoading } = useQuery({
     queryKey: ["enrollment", courseId, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("enrollments").select("*").eq("course_id", courseId!).eq("user_id", user!.id).maybeSingle();
@@ -251,6 +251,8 @@ const CourseDetail = () => {
       return data;
     },
     enabled: !!courseId && !!user?.id,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: enrollmentCount = 0 } = useQuery({
