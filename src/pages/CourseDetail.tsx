@@ -907,7 +907,9 @@ const CourseDetail = () => {
           <ol className="space-y-1.5">
             {(() => {
               const isSequential = (course as any)?.is_sequential || false;
-              const publishedContents = contents.filter(c => c.is_published);
+              const publishedContents = contents
+                .filter(c => c.is_published)
+                .filter(c => hasUploadedContent(c as any, mediaPackageContentIds));
               
               // Build assessment gate map: assessmentOrderIndex -> assessment
               // An assessment with order_index N acts as a gate AFTER content at position N
