@@ -1,7 +1,7 @@
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 const PLACEHOLDER_PATTERN = /placeholder_value_to_be_replaced/i;
-const VIDEO_ID_PATTERN = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
+const VIDEO_ID_PATTERN = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[/?#]|$)/i;
 const isConfigured = (value: string | null | undefined) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
 const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -76,11 +76,11 @@ Deno.serve(async (req) => {
     const tokenAuthKey = Deno.env.get("BUNNY_STREAM_TOKEN_AUTH_KEY")?.trim();
     const cdnTokenAuthKey = (Deno.env.get("BUNNY_STREAM_CDN_TOKEN_AUTH_KEY") || tokenAuthKey)?.trim();
     const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 6; // 6h
-    const baseEmbed = `https://iframe.mediadelivery.net/embed/${LIBRARY_ID}/${videoId}`;
-    let embedUrl = baseEmbed;
+    const basePlayer = `https://iframe.mediadelivery.net/play/${LIBRARY_ID}/${videoId}`;
+    let embedUrl = basePlayer;
     if (isConfigured(tokenAuthKey)) {
       const token = await signBunnyToken(tokenAuthKey!, videoId, expires);
-      embedUrl = `${baseEmbed}?token=${token}&expires=${expires}`;
+      embedUrl = `${basePlayer}?token=${token}&expires=${expires}`;
     }
 
     if (!cdnHostname) {
@@ -109,10 +109,9 @@ Deno.serve(async (req) => {
       ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/bunny-stream-proxy/${videoId}/playlist.m3u8?token=${proxyToken}&expires=${expires}&cdn=${encodeURIComponent(cdnHostname!)}`
       : null;
 
-    // Current Bunny settings use Embed view token authentication while CDN token
-    // authentication is disabled and direct file access without an allowed referrer
-    // is blocked. In that setup the only reliable playback URL is the signed
-    // Bunny iframe; direct HLS/CDN/proxy URLs will keep returning 403.
+    // Current Bunny settings use player view token authentication while direct
+    // file access is blocked. In this setup the reliable playback URL is the
+    // signed Bunny /play iframe; /embed returns a 200 page whose content is 403.
     const playUrl = embedUrl;
 
     return json({
