@@ -281,6 +281,7 @@ const AdminEnrollments = () => {
           </div>
         )}
       </div>
+      <BulkEnrollDialog open={bulkOpen} onOpenChange={setBulkOpen} />
     </DashboardLayout>
   );
 };
