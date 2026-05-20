@@ -62,6 +62,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
   const [isResolvingUrl, setIsResolvingUrl] = useState(false);
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
+  const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const completedRef = useRef(false);
 
   // Fetch all items for this content (all languages), then filter by language
