@@ -103,10 +103,59 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
     }
   }, [contentId, activeItem?.id]);
 
+  useEffect(() => {
+    if (!activeItem) {
+      setPlaybackUrl(null);
+      setResolvedPoster(null);
+      setVideoLoadError(null);
+      return;
+    }
+
+    let cancelled = false;
+    const rawUrl = activeItem.video_url?.trim() || "";
+    const needsResolve = activeItem.video_provider === "bunny" && (hasPlaceholderHost(rawUrl) || isBunnyIframe(rawUrl));
+
+    setVideoLoadError(null);
+    setResolvedPoster(activeItem.thumbnail_url || null);
+    setPlaybackUrl(rawUrl ? (isBunnyIframe(rawUrl) ? toBunnyEmbedUrl(rawUrl) : rawUrl) : null);
+
+    if (!needsResolve) {
+      setIsResolvingUrl(false);
+      return;
+    }
+
+    const videoId = getBunnyVideoId(rawUrl);
+    if (!videoId) {
+      setIsResolvingUrl(false);
+      setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소가 올바르지 않습니다."));
+      return;
+    }
+
+    setIsResolvingUrl(true);
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("bunny-resolve-video", {
+        body: { videoId, url: rawUrl },
+      });
+      if (cancelled) return;
+      setIsResolvingUrl(false);
+      if (error || !data?.playUrl) {
+        setPlaybackUrl(`https://iframe.mediadelivery.net/embed/${data?.libraryId || ""}/${videoId}`);
+        setVideoLoadError(null);
+        return;
+      }
+      setPlaybackUrl(data.playUrl);
+      setResolvedPoster(data.thumbnailUrl || activeItem.thumbnail_url || null);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeItem?.id, activeItem?.video_url, activeItem?.video_provider, activeItem?.thumbnail_url, t]);
+
   // Attach video src via hls.js (HLS) or native
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !activeItem) return;
+    if (!video || !activeItem || !playbackUrl || isBunnyIframe(playbackUrl)) return;
 
     // Cleanup any previous hls instance
     if (hlsRef.current) {
@@ -114,7 +163,7 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
       hlsRef.current = null;
     }
 
-    const url = activeItem.video_url;
+    const url = playbackUrl;
     if (isHls(url)) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = url;
@@ -136,7 +185,7 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
         hlsRef.current = null;
       }
     };
-  }, [activeItem?.id, activeItem?.video_url]);
+  }, [activeItem?.id, playbackUrl]);
 
   const handleTimeUpdate = () => {
     const v = videoRef.current;
