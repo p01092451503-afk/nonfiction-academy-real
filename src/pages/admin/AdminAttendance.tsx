@@ -124,8 +124,9 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       completions: number;
     }>();
 
-    // Sessions: first login, last logout
+    // Sessions: first login, last logout (scoped to leader's people when teacher)
     sessions.forEach((s: any) => {
+      if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
       const existing = map.get(s.user_id);
       if (!existing) {
         map.set(s.user_id, {
@@ -143,6 +144,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
     // Progress: completions and learning time
     dailyProgress.forEach((p: any) => {
+      if (scopedUserIds && !scopedUserIds.has(p.user_id)) return;
       const content = contentMap.get(p.content_id);
 
       // If teacher, only count their courses
