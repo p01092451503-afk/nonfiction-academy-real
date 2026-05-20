@@ -537,16 +537,6 @@ const ContentPlayer = () => {
           >
             <List className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div
-            className="flex items-baseline gap-2 text-sm"
-            aria-label={`${currentIndex + 1} / ${visibleContents.length} ${t("videoPackage.episodeSuffix", "차시")}, ${overallProgress}%`}
-          >
-            <span className="font-bold text-foreground tabular-nums">{currentIndex + 1}</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground tabular-nums">{visibleContents.length}</span>
-            <span className="text-muted-foreground">{t("videoPackage.episodeSuffix", "차시")}</span>
-            <span className="ml-2 font-bold text-foreground tabular-nums">{overallProgress}%</span>
-          </div>
         </div>
       </header>
 
