@@ -47,6 +47,10 @@ async function signCdnDirectoryUrl(url: string, authKey: string, expires: number
   return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
 }
 
+async function signProxyToken(authKey: string, videoId: string, cdnHostname: string, expires: number) {
+  return await signBunnyToken(authKey, `${videoId}:${cdnHostname}`, expires);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -98,15 +102,22 @@ Deno.serve(async (req) => {
       ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
       : rawPlaylistUrl;
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
+    const proxyToken = cdnHostname && isConfigured(cdnTokenAuthKey)
+      ? await signProxyToken(cdnTokenAuthKey!, videoId, cdnHostname, expires)
+      : null;
+    const proxyPlaylistUrl = proxyToken
+      ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/bunny-stream-proxy/${videoId}/playlist.m3u8?token=${proxyToken}&expires=${expires}&cdn=${encodeURIComponent(cdnHostname!)}`
+      : null;
 
     return json({
       videoId,
       cdnHostname,
       // Prefer signed HLS when a CDN token key is configured because the iframe
       // does not append CDN directory tokens to the internal playlist/segments.
-      playUrl: playlistUrl || embedUrl,
+      playUrl: proxyPlaylistUrl || playlistUrl || embedUrl,
       embedUrl,
       playlistUrl,
+      proxyPlaylistUrl,
       thumbnailUrl,
       signed: isConfigured(tokenAuthKey) || isConfigured(cdnTokenAuthKey),
       hlsSigned: Boolean(rawPlaylistUrl && isConfigured(cdnTokenAuthKey)),
