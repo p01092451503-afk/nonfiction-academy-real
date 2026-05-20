@@ -62,6 +62,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
   const [isResolvingUrl, setIsResolvingUrl] = useState(false);
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
+  const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const completedRef = useRef(false);
 
   // Fetch all items for this content (all languages), then filter by language
@@ -92,6 +93,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     setActiveIdx(0);
     setCompletedItems(new Set());
     setProgress({ current: 0, duration: 0 });
+    setIframeStartTime(null);
     completedRef.current = false;
   }, [contentId, lang]);
 
@@ -100,6 +102,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   // Load resume position when active item changes
   useEffect(() => {
     if (!activeItem) return;
+    setIframeStartTime(null);
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
       const t = raw ? parseFloat(raw) : 0;
@@ -309,8 +312,12 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             </div>
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             <iframe
-              key={playbackUrl}
-              src={playbackUrl}
+              key={`${playbackUrl}#${iframeStartTime ?? 0}`}
+              src={
+                iframeStartTime && iframeStartTime > 0
+                  ? `${playbackUrl}${playbackUrl.includes("?") ? "&" : "?"}t=${Math.floor(iframeStartTime)}&autoplay=true`
+                  : playbackUrl
+              }
               className="absolute inset-0 h-full w-full border-0 bg-black"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
@@ -332,23 +339,57 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           )}
         </div>
 
-        {/* Progress strip (attached to bottom of video, matches single-video player) */}
-        <div className="px-4 py-2.5 bg-secondary/60 flex items-center gap-3 text-xs">
+        {/* Progress strip — matches single-video player */}
+        <div className="px-4 py-2.5 bg-secondary/60 flex items-center gap-3 text-xs flex-wrap">
           <span className="text-muted-foreground shrink-0">
             {t("contentPlayer.watchProgress", "시청 진행률")}
           </span>
           <Progress
             value={pct}
-            className="h-1.5 flex-1"
+            className="h-1.5 flex-1 min-w-[80px]"
             aria-label={t("contentPlayer.watchProgress", "시청 진행률")}
           />
           <span
             className="text-muted-foreground font-medium shrink-0 tabular-nums"
             aria-live="polite"
           >
-            {Math.round(pct)}%
+            {progress.duration > 0
+              ? `${formatTime(progress.current)} / ${formatTime(progress.duration)}`
+              : `${Math.round(pct)}%`}
           </span>
+          {resumePos > 0 && !isItemComplete && (
+            <button
+              type="button"
+              onClick={() => {
+                if (playbackUrl && isBunnyIframe(playbackUrl)) {
+                  setIframeStartTime(resumePos);
+                  setResumePos(0);
+                } else {
+                  handleResume();
+                }
+              }}
+              className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-accent transition-colors"
+            >
+              <RotateCcw className="h-3 w-3" />
+              {t("contentPlayer.resumeFrom", {
+                time: formatTime(resumePos),
+                defaultValue: `${formatTime(resumePos)}부터 이어보기`,
+              })}
+            </button>
+          )}
+          {!isItemComplete && (
+            <span className="text-[10px] text-muted-foreground/70 shrink-0">
+              {t("contentPlayer.autoCompleteAt80", "80% 이상 시청 시 자동 완료")}
+            </span>
+          )}
+          {isItemComplete && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 shrink-0">
+              <CheckCircle2 className="h-3 w-3" />
+              {t("videoPackage.itemComplete", "시청 완료")}
+            </span>
+          )}
         </div>
+
       </div>
 
 
