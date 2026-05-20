@@ -290,18 +290,63 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
                   className="pl-9 h-9 rounded-xl"
                 />
               </div>
+              {(() => {
+                const selectableIds = filteredProfiles
+                  .map((p: any) => p.user_id)
+                  .filter((id: string) => !excludeApproved || !approvedSet.has(id));
+                const allSelected = selectableIds.length > 0 && selectableIds.every((id: string) => selectedUsers.has(id));
+                const someSelected = selectableIds.some((id: string) => selectedUsers.has(id));
+                return (
+                  <div className="flex items-center justify-between px-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <Checkbox
+                        checked={allSelected ? true : (someSelected ? "indeterminate" : false)}
+                        onCheckedChange={(v) => {
+                          const next = new Set(selectedUsers);
+                          if (v) selectableIds.forEach((id: string) => next.add(id));
+                          else selectableIds.forEach((id: string) => next.delete(id));
+                          setSelectedUsers(next);
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        전체 선택 ({selectableIds.length}명)
+                      </span>
+                    </label>
+                    {selectedUsers.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUsers(new Set())}
+                        className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                      >
+                        선택 해제
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {filteredProfiles.map((p: any) => {
                     const dept: any = p.department_id ? deptMap.get(p.department_id) : null;
+                    const isApproved = approvedSet.has(p.user_id);
+                    const disabled = excludeApproved && isApproved;
                     return (
-                      <label key={p.user_id} className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-accent/40 cursor-pointer">
+                      <label
+                        key={p.user_id}
+                        className={`flex items-center gap-3 px-2 py-1.5 rounded-lg ${disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-accent/40 cursor-pointer"}`}
+                      >
                         <Checkbox
                           checked={selectedUsers.has(p.user_id)}
-                          onCheckedChange={() => toggle(selectedUsers, setSelectedUsers, p.user_id)}
+                          disabled={disabled}
+                          onCheckedChange={() => !disabled && toggle(selectedUsers, setSelectedUsers, p.user_id)}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground truncate">{p.full_name || "(이름 없음)"}</p>
+                          <p className="text-sm text-foreground truncate flex items-center gap-1.5">
+                            {p.full_name || "(이름 없음)"}
+                            {isApproved && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-green-600 border-green-300 bg-green-50">승인됨</Badge>
+                            )}
+                          </p>
                           <p className="text-[11px] text-muted-foreground truncate">
                             {p.email} {dept ? `· ${dept.name}` : ""}
                           </p>
