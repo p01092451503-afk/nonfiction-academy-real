@@ -4,6 +4,7 @@ const PLACEHOLDER_PATTERN = /placeholder_value_to_be_replaced/i;
 const VIDEO_ID_PATTERN = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
 const isConfigured = (value: string | null | undefined) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
 const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -18,6 +19,27 @@ async function signBunnyToken(authKey: string, videoId: string, expires: number)
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+async function sha256Base64Url(value: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  let binary = "";
+  for (const byte of new Uint8Array(buf)) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+async function signCdnDirectoryUrl(url: string, authKey: string, expires: number) {
+  const parsed = new URL(url);
+  const dirPath = parsed.pathname.slice(0, parsed.pathname.lastIndexOf("/") + 1);
+  const params = new URLSearchParams(parsed.search);
+  params.set("token_path", dirPath);
+  const entries = Array.from(params.entries())
+    .filter(([, value]) => value !== "")
+    .sort(([a], [b]) => a.localeCompare(b));
+  const parameterData = entries.map(([key, value]) => `${key}=${value}`).join("&");
+  const parameterDataUrl = entries.map(([key, value]) => `&${key}=${encodeURIComponent(value)}`).join("");
+  const token = await sha256Base64Url(authKey + dirPath + String(expires) + parameterData);
+  return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
 }
 
 Deno.serve(async (req) => {
@@ -37,7 +59,7 @@ Deno.serve(async (req) => {
     if (!videoId) return json({ error: "videoId required" }, 400);
 
     const configuredCdn = Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME");
-    const cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
+    let cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
 
     // Sign embed URL if token auth key is available
     const tokenAuthKey = Deno.env.get("BUNNY_STREAM_TOKEN_AUTH_KEY")?.trim();
@@ -49,15 +71,24 @@ Deno.serve(async (req) => {
       embedUrl = `${baseEmbed}?token=${token}&expires=${expires}`;
     }
 
-    const playlistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
+    if (!cdnHostname) {
+      const embedResponse = await fetch(embedUrl).catch(() => null);
+      const embedHtml = embedResponse?.ok ? await embedResponse.text() : "";
+      const match = embedHtml.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/playlist\\.m3u8`, "i"));
+      cdnHostname = match?.[1] ? cleanHost(match[1]) : null;
+    }
+
+    const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
+    const playlistUrl = rawPlaylistUrl && isConfigured(tokenAuthKey)
+      ? await signCdnDirectoryUrl(rawPlaylistUrl, tokenAuthKey!, expires)
+      : rawPlaylistUrl;
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
 
     return json({
       videoId,
       cdnHostname,
-      // Prefer signed iframe embed (works with token auth on private videos).
-      // Direct CDN playlist requires the same token query string and is not used here.
-      playUrl: embedUrl,
+      // Prefer signed HLS when the Stream CDN is protected; fallback to signed iframe embed.
+      playUrl: playlistUrl || embedUrl,
       embedUrl,
       playlistUrl,
       thumbnailUrl,
