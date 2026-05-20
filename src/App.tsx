@@ -59,6 +59,7 @@ const StudentAnnouncements = lazyWithRetry(() => import("./pages/student/Student
 const AdminBoard = lazyWithRetry(() => import("./pages/admin/AdminBoard"));
 const AdminSurveys = lazyWithRetry(() => import("./pages/admin/AdminSurveys"));
 const AdminVideos = lazyWithRetry(() => import("./pages/admin/AdminVideos"));
+const AdminVideoHealthCheck = lazyWithRetry(() => import("./pages/admin/AdminVideoHealthCheck"));
 const AdminI18n = lazyWithRetry(() => import("./pages/admin/AdminI18n"));
 const AdminSystemInfo = lazyWithRetry(() => import("./pages/admin/AdminSystemInfo"));
 const AdminTracks = lazyWithRetry(() => import("./pages/admin/AdminTracks"));
