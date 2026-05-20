@@ -339,7 +339,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       {/* Episode list (1차시 / 2차시 / 3차시 ...) */}
       {totalEpisodes > 1 && (
         <section
-          className="mt-4 space-y-2"
+          className="mt-3 space-y-1.5"
           aria-label={title || t("videoPackage.episodes", "구성된 동영상")}
         >
           <div className="flex items-center justify-between px-3 gap-3">
@@ -378,7 +378,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             </span>
           </div>
           <ul
-            className="space-y-2"
+            className="space-y-1"
             role="list"
           >
             {items.map((it, idx) => {
@@ -393,13 +393,13 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                     onClick={() => setActiveIdx(idx)}
                     aria-current={isActive ? "true" : undefined}
                     aria-label={`${episodeLabel} ${itemTitle}${isDone ? ` (${t("course.completed", "완료")})` : isActive ? ` (${t("course.playing", "재생 중")})` : ""}`}
-                    className={`w-full flex items-center gap-3 px-3 py-3 min-h-14 text-left rounded-2xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 min-h-12 text-left rounded-2xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       isActive ? "bg-accent" : "hover:bg-accent/50 active:bg-accent/50"
                     }`}
                   >
                     <VideoThumbnail
                       src={it.thumbnail_url}
-                      className="h-11 w-11 rounded-md shrink-0"
+                      className="h-10 w-10 rounded-md shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
