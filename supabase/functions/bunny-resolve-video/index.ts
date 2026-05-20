@@ -21,15 +21,8 @@ async function signBunnyToken(authKey: string, videoId: string, expires: number)
     .join("");
 }
 
-async function hmacSha256Base64Url(key: string, value: string) {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const buf = await crypto.subtle.sign("HMAC", cryptoKey, new TextEncoder().encode(value));
+async function sha256Base64Url(value: string) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   let binary = "";
   for (const byte of new Uint8Array(buf)) binary += String.fromCharCode(byte);
   return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
@@ -45,8 +38,8 @@ async function signCdnDirectoryUrl(url: string, authKey: string, expires: number
     .sort(([a], [b]) => a.localeCompare(b));
   const parameterData = entries.map(([key, value]) => `${key}=${value}`).join("&");
   const parameterDataUrl = entries.map(([key, value]) => `&${key}=${encodeURIComponent(value)}`).join("");
-  const token = `HS256-${await hmacSha256Base64Url(authKey, `${dirPath}${expires}${parameterData}`)}`;
-  return `${parsed.origin}/bcdn_token=${token}&expires=${expires}${parameterDataUrl}${parsed.pathname}`;
+  const token = await sha256Base64Url(authKey + dirPath + String(expires) + parameterData);
+  return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
 }
 
 Deno.serve(async (req) => {
