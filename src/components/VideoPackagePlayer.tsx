@@ -339,7 +339,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       {/* Episode list (1차시 / 2차시 / 3차시 ...) */}
       {totalEpisodes > 1 && (
         <section
-          className="mt-[18px] space-y-1.5"
+          className="mt-[27px] space-y-1.5"
           aria-label={title || t("videoPackage.episodes", "구성된 동영상")}
         >
           <div className="flex items-center justify-between px-3 gap-3">
