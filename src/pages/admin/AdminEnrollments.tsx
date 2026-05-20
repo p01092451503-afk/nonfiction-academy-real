@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Search, CheckCircle2, XCircle, Clock, Users, BookOpen, Filter } from "lucide-react";
+import { Search, CheckCircle2, XCircle, Clock, Users, BookOpen, Filter, UserPlus } from "lucide-react";
+import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
