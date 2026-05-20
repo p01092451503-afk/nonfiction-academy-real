@@ -153,7 +153,7 @@ const AdminCourses = () => {
     total: courses.length,
     published: courses.filter((c: any) => c.status === "published").length,
     draft: courses.filter((c: any) => c.status === "draft").length,
-    totalStudents: Object.values(enrollmentCounts as Record<string, number>).reduce((a, b) => a + b, 0),
+    totalStudents: enrollmentData.uniqueStudents,
   };
 
   const goToCourse = (courseId: string) => navigate(`/admin/courses/${courseId}`);
