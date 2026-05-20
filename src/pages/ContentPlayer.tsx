@@ -127,7 +127,7 @@ const ContentPlayer = () => {
     enabled: !!courseId,
   });
 
-  const { data: contents = [] } = useQuery({
+  const { data: contents = [], isLoading: contentsLoading, isFetching: contentsFetching } = useQuery({
     queryKey: ["course-contents", courseId],
     queryFn: async () => {
       const { data, error } = await supabase.from("course_contents").select("*").eq("course_id", courseId!).order("order_index", { ascending: true });
@@ -425,6 +425,17 @@ const ContentPlayer = () => {
   };
 
   if (!currentContent) {
+    // 콘텐츠 목록을 아직 불러오는 중이면 "찾을 수 없음" 대신 로딩 UI를 표시한다.
+    if (contentsLoading || contentsFetching || contents.length === 0) {
+      return (
+        <div className="fixed inset-0 z-[60] bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+            <p className="text-sm">{t("common.loading", "불러오는 중...")}</p>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="fixed inset-0 z-[60] bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
