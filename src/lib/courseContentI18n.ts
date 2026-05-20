@@ -145,6 +145,7 @@ export function getCourseDescByLang(
 export function hasUploadedContent(
   content: { id: string; content_type?: string | null; video_url?: string | null },
   mediaPackageContentIds: Set<string> | null | undefined,
+  videoPackageContentIds?: Set<string> | null | undefined,
 ): boolean {
   const type = (content.content_type || "video").toLowerCase();
   if (type === "video" || type === "document") {
@@ -152,6 +153,9 @@ export function hasUploadedContent(
   }
   if (type === "media_package") {
     return !!mediaPackageContentIds && mediaPackageContentIds.has(content.id);
+  }
+  if (type === "video_package") {
+    return !!videoPackageContentIds && videoPackageContentIds.has(content.id);
   }
   return true;
 }
