@@ -319,7 +319,7 @@ const AdminVideos = () => {
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{new Date(v.created_at).toLocaleDateString("ko")}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => copyUrl(v.video_url)} title={t("videoMgmt.copyUrl")}>
+                      <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); copyUrl(v.video_url); }} title={t("videoMgmt.copyUrl")}>
                         <Copy className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" asChild title={t("videoMgmt.open")}>
