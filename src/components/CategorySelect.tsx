@@ -54,7 +54,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
   });
 
   const invalidateCategoryCaches = () => {
-    invalidateCategoryCaches();
+    queryClient.invalidateQueries({ queryKey: ["categories"] });
     queryClient.invalidateQueries({ queryKey: ["categories", "select-active"] });
     queryClient.invalidateQueries({ queryKey: ["categories", "admin-all"] });
   };
