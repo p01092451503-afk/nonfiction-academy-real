@@ -166,7 +166,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     });
 
     return Array.from(map.values());
-  }, [sessions, dailyProgress, contentMap, isTeacher, teacherCourseIds]);
+  }, [sessions, dailyProgress, contentMap, isTeacher, teacherCourseIds, scopedUserIds]);
 
   // Filter by name search
   const filteredStats = useMemo(() => {
