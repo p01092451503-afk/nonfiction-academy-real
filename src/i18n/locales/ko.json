@@ -897,6 +897,7 @@
     "editManually": "직접 수정",
     "sourceImage": "이미지",
     "sourceMediaPackage": "미디어 패키지",
+    "sourceVideoPackage": "동영상 패키지",
     "cardUrlListLabel": "카드 이미지/영상 URL 목록",
     "cardUrlListHint": "세로형 카드 (1080×1920) 사이즈의 이미지 또는 영상 링크를 여러 장 등록할 수 있습니다.",
     "cardUrlPh": "이미지 URL 또는 영상 URL",
