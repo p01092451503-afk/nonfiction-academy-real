@@ -378,7 +378,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             </span>
           </div>
           <ul
-            className="divide-y divide-border/60 border-y border-border/60"
+            className="space-y-2"
             role="list"
           >
             {items.map((it, idx) => {
@@ -393,7 +393,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                     onClick={() => setActiveIdx(idx)}
                     aria-current={isActive ? "true" : undefined}
                     aria-label={`${episodeLabel} ${itemTitle}${isDone ? ` (${t("course.completed", "완료")})` : isActive ? ` (${t("course.playing", "재생 중")})` : ""}`}
-                    className={`w-full flex items-center gap-3 px-3 py-3 min-h-14 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+                    className={`w-full flex items-center gap-3 px-3 py-3 min-h-14 text-left rounded-2xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       isActive ? "bg-accent" : "hover:bg-accent/50 active:bg-accent/50"
                     }`}
                   >
