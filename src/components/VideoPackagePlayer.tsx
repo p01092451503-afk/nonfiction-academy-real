@@ -370,12 +370,6 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                 {title || t("videoPackage.episodes", "구성된 동영상")}
               </h4>
             </div>
-            <span
-              className="text-xs text-muted-foreground tabular-nums shrink-1"
-              aria-label={`${totalEpisodes}${t("videoPackage.episodeSuffix", "차시")} ${t("course.completed", "완료")} ${completedItems.size}`}
-            >
-              {completedItems.size} / {totalEpisodes}
-            </span>
           </div>
           <ul
             className="space-y-1"
