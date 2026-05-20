@@ -947,7 +947,10 @@
     "autoCompleted": "Auto Completed",
     "autoCompletedDesc": "Automatically completed after watching 80% or more",
     "watchProgress": "Watch Progress",
-    "resumePlayback": "Resume"
+    "resumePlayback": "Resume",
+    "fromBeginning": "Start over",
+    "resumeDialogTitle": "Continue watching?",
+    "resumeDialogDesc": "You previously watched up to {{time}}. Would you like to resume or start over?"
   },
   "notification": {
     "title": "Notifications",
