@@ -135,17 +135,26 @@ export function useVideoProgress({
 
       player.ready().then(async () => {
         setPlayerReady(true);
-        if (resumePosition > 0 && !isCompleted) {
-          await player.setCurrentTime(resumePosition);
-        }
+        // 자동 재개하지 않음 — 사용자가 이어보기 다이얼로그에서 선택
       });
 
       player.on("play", () => startPolling("vimeo"));
       player.on("pause", () => stopPolling());
       player.on("ended", () => stopPolling());
     },
-    [resumePosition, isCompleted]
+    []
   );
+
+  // ─── Seek to specific position ───
+  const seekTo = useCallback(async (seconds: number) => {
+    if (ytPlayerRef.current?.seekTo) {
+      try { ytPlayerRef.current.seekTo(seconds, true); } catch {}
+    }
+    if (vimeoPlayerRef.current?.setCurrentTime) {
+      try { await vimeoPlayerRef.current.setCurrentTime(seconds); } catch {}
+    }
+  }, []);
+
 
   // ─── UI update loop (every 1s) ───
   const startUIPolling = useCallback(
@@ -233,5 +242,6 @@ export function useVideoProgress({
     duration,
     autoCompleted,
     resumePosition,
+    seekTo,
   };
 }
