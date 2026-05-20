@@ -410,26 +410,49 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                           {itemTitle}
                         </span>
                       </div>
-                      {it.duration_seconds ? (
-                        <p className="text-[11px] text-muted-foreground mt-0.5 tabular-nums">
-                          {formatTime(it.duration_seconds)}
-                        </p>
-                      ) : null}
                     </div>
-                    {isDone ? (
-                      <Badge
-                        variant="outline"
-                        className="gap-1 text-[10px] border-green-300 text-green-700 dark:border-green-800 dark:text-green-400 shrink-0"
-                      >
-                        <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                        {t("course.completed", "완료")}
-                      </Badge>
-                    ) : isActive ? (
-                      <Badge variant="outline" className="gap-1 text-[10px] shrink-0">
-                        <Play className="h-3 w-3" aria-hidden="true" />
-                        {t("course.playing", "재생 중")}
-                      </Badge>
-                    ) : null}
+                    {(() => {
+                      const total = it.duration_seconds || 0;
+                      let watched = 0;
+                      if (isActive) {
+                        watched = Math.min(progress.current || 0, total || progress.duration || 0);
+                      } else {
+                        try {
+                          const raw = localStorage.getItem(STORAGE_KEY(contentId, it.id));
+                          const v = raw ? parseFloat(raw) : 0;
+                          watched = isFinite(v) ? v : 0;
+                        } catch {
+                          watched = 0;
+                        }
+                      }
+                      if (isDone && total) watched = total;
+                      return (
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          {isDone ? (
+                            <Badge
+                              variant="outline"
+                              className="gap-1 text-[10px] border-green-300 text-green-700 dark:border-green-800 dark:text-green-400"
+                            >
+                              <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+                              {t("course.completed", "완료")}
+                            </Badge>
+                          ) : isActive ? (
+                            <Badge variant="outline" className="gap-1 text-[10px]">
+                              <Play className="h-3 w-3" aria-hidden="true" />
+                              {t("course.playing", "재생 중")}
+                            </Badge>
+                          ) : null}
+                          {total > 0 && (
+                            <span
+                              className="text-[10px] text-muted-foreground tabular-nums"
+                              aria-label={`${t("course.watched", "학습 시간")} ${formatTime(watched)} / ${formatTime(total)}`}
+                            >
+                              {formatTime(watched)} / {formatTime(total)}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </button>
                 </li>
               );
