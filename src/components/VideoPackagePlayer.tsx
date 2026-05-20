@@ -119,12 +119,17 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
 
     setVideoLoadError(null);
     setResolvedPoster(activeItem.thumbnail_url || null);
-    setPlaybackUrl(rawUrl ? (isBunnyIframe(rawUrl) ? toBunnyEmbedUrl(rawUrl) : rawUrl) : null);
 
     if (!needsResolve) {
+      // Non-Bunny direct URL — safe to set immediately
+      setPlaybackUrl(rawUrl || null);
       setIsResolvingUrl(false);
       return;
     }
+
+    // For Bunny: NEVER render the iframe with an unsigned URL (token auth → 403).
+    // Clear playbackUrl and show loading until the signed URL arrives.
+    setPlaybackUrl(null);
 
     const videoId = getBunnyVideoId(rawUrl);
     if (!videoId) {
@@ -141,8 +146,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       if (cancelled) return;
       setIsResolvingUrl(false);
       if (error || !data?.playUrl) {
-        setPlaybackUrl(`https://iframe.mediadelivery.net/embed/${data?.libraryId || ""}/${videoId}`);
-        setVideoLoadError(null);
+        setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소를 불러오지 못했습니다."));
         return;
       }
       setPlaybackUrl(data.playUrl);
@@ -285,13 +289,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             </div>
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             <iframe
-              key={activeItem?.id}
-              src={toBunnyEmbedUrl(playbackUrl)}
+              key={playbackUrl}
+              src={playbackUrl}
               className="h-full w-full border-0 bg-black"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
               title={activeItem?.title || t("course.video", "영상")}
             />
+
           ) : videoLoadError ? (
             <div
               className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
