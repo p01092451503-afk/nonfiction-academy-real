@@ -45,7 +45,7 @@ const toBunnyEmbedUrl = (url: string) => url.replace("/play/", "/embed/");
 const getBunnyVideoId = (url: string) =>
   url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] || null;
 
-const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) => {
+const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
