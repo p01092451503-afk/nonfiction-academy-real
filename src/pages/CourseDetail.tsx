@@ -564,6 +564,17 @@ const CourseDetail = () => {
                   <Settings className="h-3 w-3" aria-hidden="true" />
                   {t("course.courseSettings")}
                 </Button>
+                {role === "admin" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1.5 text-xs"
+                    onClick={() => setBulkEnrollOpen(true)}
+                  >
+                    <UserPlus className="h-3 w-3" aria-hidden="true" />
+                    일괄 수강 승인
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   className="h-9 gap-1.5 text-xs"
