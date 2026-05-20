@@ -149,8 +149,8 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
     return set;
   };
 
-  // Resolve target users based on current mode + selection
-  const targetUserIds = useMemo((): string[] => {
+  // Resolve target users based on current mode + selection (before exclusion)
+  const rawTargetUserIds = useMemo((): string[] => {
     if (mode === "individual") return Array.from(selectedUsers);
 
     const ids = new Set<string>();
@@ -175,6 +175,13 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
     });
     return Array.from(ids);
   }, [mode, selectedUsers, selectedCountries, selectedBranches, selectedRoles, profiles, deptMap, rolesByUser, departments]);
+
+  // After excluding already-approved users (if toggle on)
+  const targetUserIds = useMemo(
+    () => excludeApproved ? rawTargetUserIds.filter((id) => !approvedSet.has(id)) : rawTargetUserIds,
+    [rawTargetUserIds, excludeApproved, approvedSet]
+  );
+  const excludedCount = rawTargetUserIds.length - targetUserIds.length;
 
   // Search-filtered profiles for individual list
   const filteredProfiles = useMemo(() => {
