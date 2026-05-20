@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, BookOpen, ClipboardList, Trophy, Users, Settings, Compass, UserCircle, ClipboardCheck,
-  LogOut, Menu, X, ChevronRight, GraduationCap, CalendarCheck, Activity, Building2, Bell, Megaphone, FileText, BarChart3, Video,
+  LogOut, Menu, X, ChevronRight, ChevronDown, GraduationCap, CalendarCheck, Activity, Building2, Bell, Megaphone, FileText, BarChart3, Video,
   PanelLeftClose, PanelLeftOpen, Languages, Layers, Archive,
   Info, Globe2,
 } from "lucide-react";
@@ -17,6 +17,13 @@ import RoleSwitcher from "@/components/RoleSwitcher";
 import NotificationBell from "@/components/NotificationBell";
 import GuidedTourButton from "@/components/GuidedTourButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavItem {
   key: string;
@@ -318,18 +325,53 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
           )}
           <RoleSwitcher />
           <div data-tour="notification-bell"><NotificationBell /></div>
-          <div className="flex items-center gap-3 pl-3 border-l border-border" data-tour="user-profile">
-            <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-accent-foreground overflow-hidden" role="img" aria-label={profile?.full_name || t("common.user")}>
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile?.full_name || t("common.user")} className="h-full w-full object-cover" fetchPriority="high" decoding="async" />
-              ) : (
-                <span aria-hidden="true">{initials}</span>
-              )}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium text-foreground leading-none">{profile?.full_name || t("common.user")}</p>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 pl-3 border-l border-border outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md py-1 pr-2 hover:bg-accent/40 transition-colors"
+                data-tour="user-profile"
+                aria-label={t("common.userMenu", "사용자 메뉴")}
+              >
+                <div
+                  className="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-xs font-semibold text-accent-foreground overflow-hidden"
+                  role="img"
+                  aria-label={profile?.full_name || t("common.user")}
+                >
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt={profile?.full_name || t("common.user")} className="h-full w-full object-cover" fetchPriority="high" decoding="async" />
+                  ) : (
+                    <span aria-hidden="true">{initials}</span>
+                  )}
+                </div>
+                <span className="hidden sm:inline text-sm font-medium text-foreground leading-none">
+                  {profile?.full_name || t("common.user")}
+                </span>
+                <ChevronDown className="hidden sm:inline h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-2">
+                <p className="text-sm font-semibold text-foreground leading-tight">{profile?.full_name || t("common.user")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+                  {t(`roles.${primaryRole}`, primaryRole || "student")}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/mypage")} className="cursor-pointer gap-2">
+                <UserCircle className="h-4 w-4" aria-hidden="true" />
+                {t("nav.mypage", "마이페이지")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                {t("common.logout", "로그아웃")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <main className={contentClassName || "flex-1 min-w-0 p-6 lg:p-8"} role="main">{children}</main>
       </div>
