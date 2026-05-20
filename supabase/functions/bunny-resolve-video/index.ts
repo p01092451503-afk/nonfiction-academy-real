@@ -87,8 +87,10 @@ Deno.serve(async (req) => {
     return json({
       videoId,
       cdnHostname,
-      // Prefer signed HLS when the Stream CDN is protected; fallback to signed iframe embed.
-      playUrl: playlistUrl || embedUrl,
+      // Always prefer the signed iframe embed: the Stream CDN pull zone uses a
+      // separate token-auth key, so direct HLS signing with the embed key 403s.
+      // The iframe handles HLS authentication internally.
+      playUrl: embedUrl,
       embedUrl,
       playlistUrl,
       thumbnailUrl,
