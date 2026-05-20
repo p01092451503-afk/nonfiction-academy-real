@@ -291,8 +291,11 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   return (
     <div className="w-full">
       {/* Video player */}
-      <div className="relative bg-black overflow-hidden rounded-2xl mx-auto w-full max-h-[calc(100vh-220px)] aspect-video" style={{ maxWidth: "calc((100vh - 220px) * 16 / 9)" }}>
-        <div className="absolute inset-0">
+      <div
+        className="relative bg-black overflow-hidden rounded-2xl mx-auto w-full"
+        style={{ maxWidth: "calc((100vh - 240px) * 16 / 9)" }}
+      >
+        <div className="relative w-full aspect-video max-h-[calc(100vh-240px)]">
           {isResolvingUrl ? (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
               {t("common.loading", "불러오는 중...")}
@@ -308,7 +311,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             <iframe
               key={playbackUrl}
               src={playbackUrl}
-              className="h-full w-full border-0 bg-black"
+              className="absolute inset-0 h-full w-full border-0 bg-black"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
               title={activeItem?.title || t("course.video", "영상")}
@@ -320,7 +323,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               controls
               playsInline
               poster={resolvedPoster || undefined}
-              className="w-full h-full object-contain bg-black"
+              className="absolute inset-0 w-full h-full object-contain bg-black"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
@@ -347,6 +350,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           </span>
         </div>
       </div>
+
 
 
 
