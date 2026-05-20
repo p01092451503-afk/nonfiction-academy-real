@@ -277,17 +277,36 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
       {/* Video player */}
       <div className="relative bg-black overflow-hidden rounded-none lg:rounded-2xl">
         <div className="aspect-video w-full">
-          <video
-            ref={videoRef}
-            key={activeItem?.id}
-            controls
-            playsInline
-            poster={activeItem?.thumbnail_url || undefined}
-            className="w-full h-full object-contain bg-black"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleEnded}
-          />
+          {isResolvingUrl ? (
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
+              {t("common.loading", "불러오는 중...")}
+            </div>
+          ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
+            <iframe
+              key={activeItem?.id}
+              src={toBunnyEmbedUrl(playbackUrl)}
+              className="h-full w-full border-0 bg-black"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+              title={activeItem?.title || t("course.video", "영상")}
+            />
+          ) : videoLoadError ? (
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center">
+              {videoLoadError}
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              key={activeItem?.id}
+              controls
+              playsInline
+              poster={resolvedPoster || undefined}
+              className="w-full h-full object-contain bg-black"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={handleEnded}
+            />
+          )}
         </div>
       </div>
 
