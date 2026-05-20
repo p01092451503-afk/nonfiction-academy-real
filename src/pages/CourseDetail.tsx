@@ -219,6 +219,9 @@ const CourseDetail = () => {
     },
     enabled: contents.length > 0,
     staleTime: 60_000,
+  });
+
+
 
   // Set of content ids that have at least one media_package item uploaded.
   // Used to hide empty multilingual content rows from the student curriculum.
