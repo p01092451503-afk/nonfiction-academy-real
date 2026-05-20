@@ -711,129 +711,178 @@ const CourseDetail = () => {
                   {t("course.addFirstContent")}
                 </Button>
               </div>
-            ) : (
-              <ol className="divide-y divide-border">
-                {contents.map((content, idx) => {
-                  const Icon = contentTypeIcon[content.content_type || "video"] || Video;
-                  const isUnpublished = !content.is_published;
-                  const localizedTitle = getLocalizedContentTitle(content);
-                  const isFlip = true;
-                  const providerLabel = t("course.flip");
-                  return (
-                    <li key={content.id} className={isUnpublished ? "opacity-50" : undefined}>
-                      <div
-                        className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-accent/30 cursor-pointer"
-                        role="group"
-                        aria-label={`${idx + 1}. ${localizedTitle}`}
-                        onClick={(e) => {
-                          // Avoid hijacking clicks on inner action buttons
-                          if ((e.target as HTMLElement).closest("button, [role='button'], a")) return;
-                          navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`);
-                        }}
-                      >
-                        <div className="flex shrink-0 flex-col">
-                          <button
-                            type="button"
-                            className="rounded p-0.5 text-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-20"
-                            disabled={idx === 0}
-                            onClick={() => reorderMutation.mutate({ id: content.id, newIndex: idx - 1 })}
-                            aria-label={isEn ? `Move ${localizedTitle} up` : `${localizedTitle} 위로 이동`}
-                          >
-                            <ChevronUp className="h-3 w-3" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded p-0.5 text-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-20"
-                            disabled={idx === contents.length - 1}
-                            onClick={() => reorderMutation.mutate({ id: content.id, newIndex: idx + 1 })}
-                            aria-label={isEn ? `Move ${localizedTitle} down` : `${localizedTitle} 아래로 이동`}
-                          >
-                            <ChevronDown className="h-3 w-3" aria-hidden="true" />
-                          </button>
+            ) : (() => {
+              const langOrder = ["ko", "en", "ja", "zh-CN", "zh", ""];
+              const langName = (code: string) => {
+                const c = (code || "").toLowerCase();
+                if (c === "ko") return isEn ? "Korean" : "한국어";
+                if (c === "en") return isEn ? "English" : "영어";
+                if (c === "ja") return isEn ? "Japanese" : "일본어";
+                if (c.startsWith("zh")) return isEn ? "Chinese" : "중국어";
+                return isEn ? "Other" : "기타";
+              };
+              const contentTypeLabel = (ct: string) => {
+                const v = (ct || "video").toLowerCase();
+                if (v === "video" || v === "video_package") return t("course.video", "영상");
+                if (v === "media_package") return t("createCourse.sourceMediaPackage", "이미지 패키지");
+                return t("course.flip");
+              };
+              const groups = new Map<string, typeof contents>();
+              contents.forEach((c) => {
+                const key = (c.language_code || "").toString();
+                if (!groups.has(key)) groups.set(key, [] as any);
+                (groups.get(key) as any).push(c);
+              });
+              const orderedKeys = [
+                ...langOrder.filter((k) => groups.has(k)),
+                ...Array.from(groups.keys()).filter((k) => !langOrder.includes(k)),
+              ];
+
+              return (
+                <div className="divide-y divide-border">
+                  {orderedKeys.map((langKey) => {
+                    const list = groups.get(langKey) || [];
+                    return (
+                      <div key={langKey || "none"}>
+                        <div className="bg-secondary/40 px-4 py-2 border-b border-border">
+                          <h3 className="text-xs font-semibold text-foreground">
+                            {langName(langKey)} <span className="text-muted-foreground font-normal">({list.length})</span>
+                          </h3>
                         </div>
-                        <span className="w-5 shrink-0 text-center font-mono text-[10px] text-muted-foreground">{String(idx + 1).padStart(2, "0")}</span>
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent" aria-hidden="true">
-                          <Icon className="h-3.5 w-3.5 text-accent-foreground" aria-hidden="true" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <button
-                              type="button"
-                              className="truncate text-left text-sm font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`);
-                              }}
-                              aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
-                            >
-                              {localizedTitle}
-                            </button>
-                            {isUnpublished && <Badge variant="outline" className="h-4 shrink-0 border-dashed text-[9px]">{t("course.draftStatus")}</Badge>}
-                            {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
-                          </div>
-                        </div>
-                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${isFlip ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"}`} aria-label={providerLabel}>
-                          {providerLabel}
-                        </span>
-                        <div
-                          className="flex shrink-0 items-center gap-0.5"
-                          role="toolbar"
-                          aria-label={isEn ? `${localizedTitle} actions` : `${localizedTitle} 작업`}
-                        >
-                          <button
-                            type="button"
-                            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            onClick={() => togglePublishMutation.mutate({ id: content.id, published: !content.is_published })}
-                            aria-label={content.is_published ? (isEn ? `Hide ${localizedTitle}` : `${localizedTitle} 비공개`) : (isEn ? `Publish ${localizedTitle}` : `${localizedTitle} 공개`)}
-                          >
-                            {content.is_published ? <Eye className="h-3.5 w-3.5" aria-hidden="true" /> : <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />}
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            onClick={() => navigate(`${routePrefix}/courses/${courseId}/edit#content-${content.id}`)}
-                            aria-label={isEn ? `Edit ${localizedTitle}` : `${localizedTitle} 수정`}
-                          >
-                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            onClick={() => navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`)}
-                            aria-label={isEn ? `Open ${localizedTitle}` : `${localizedTitle} 열기`}
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                          </button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <button
-                                type="button"
-                                className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                aria-label={isEn ? `Delete ${localizedTitle}` : `${localizedTitle} 삭제`}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                              </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("course.deleteContent")}</AlertDialogTitle>
-                                <AlertDialogDescription>{t("course.deleteContentConfirm", { title: content.title })}</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteContentMutation.mutate(content.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                  {t("common.delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                        <ol className="divide-y divide-border">
+                          {list.map((content, idx) => {
+                            const globalIdx = contents.findIndex((c) => c.id === content.id);
+                            const Icon = contentTypeIcon[content.content_type || "video"] || Video;
+                            const isUnpublished = !content.is_published;
+                            const localizedTitle = getLocalizedContentTitle(content);
+                            const ct = (content.content_type || "video").toLowerCase();
+                            const isVideo = ct === "video" || ct === "video_package";
+                            const isMedia = ct === "media_package";
+                            const providerLabel = contentTypeLabel(content.content_type || "video");
+                            const badgeClass = isVideo
+                              ? "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+                              : isMedia
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400";
+                            return (
+                              <li key={content.id} className={isUnpublished ? "opacity-50" : undefined}>
+                                <div
+                                  className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-accent/30 cursor-pointer"
+                                  role="group"
+                                  aria-label={`${idx + 1}. ${localizedTitle}`}
+                                  onClick={(e) => {
+                                    if ((e.target as HTMLElement).closest("button, [role='button'], a")) return;
+                                    navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`);
+                                  }}
+                                >
+                                  <div className="flex shrink-0 flex-col">
+                                    <button
+                                      type="button"
+                                      className="rounded p-0.5 text-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-20"
+                                      disabled={globalIdx === 0}
+                                      onClick={() => reorderMutation.mutate({ id: content.id, newIndex: globalIdx - 1 })}
+                                      aria-label={isEn ? `Move ${localizedTitle} up` : `${localizedTitle} 위로 이동`}
+                                    >
+                                      <ChevronUp className="h-3 w-3" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="rounded p-0.5 text-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-20"
+                                      disabled={globalIdx === contents.length - 1}
+                                      onClick={() => reorderMutation.mutate({ id: content.id, newIndex: globalIdx + 1 })}
+                                      aria-label={isEn ? `Move ${localizedTitle} down` : `${localizedTitle} 아래로 이동`}
+                                    >
+                                      <ChevronDown className="h-3 w-3" aria-hidden="true" />
+                                    </button>
+                                  </div>
+                                  <span className="w-5 shrink-0 text-center font-mono text-[10px] text-muted-foreground">{String(idx + 1).padStart(2, "0")}</span>
+                                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent" aria-hidden="true">
+                                    <Icon className="h-3.5 w-3.5 text-accent-foreground" aria-hidden="true" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        className="truncate text-left text-sm font-medium text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`);
+                                        }}
+                                        aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
+                                      >
+                                        {localizedTitle}
+                                      </button>
+                                      {isUnpublished && <Badge variant="outline" className="h-4 shrink-0 border-dashed text-[9px]">{t("course.draftStatus")}</Badge>}
+                                      {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
+                                    </div>
+                                  </div>
+                                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${badgeClass}`} aria-label={providerLabel}>
+                                    {providerLabel}
+                                  </span>
+                                  <div
+                                    className="flex shrink-0 items-center gap-0.5"
+                                    role="toolbar"
+                                    aria-label={isEn ? `${localizedTitle} actions` : `${localizedTitle} 작업`}
+                                  >
+                                    <button
+                                      type="button"
+                                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                      onClick={() => togglePublishMutation.mutate({ id: content.id, published: !content.is_published })}
+                                      aria-label={content.is_published ? (isEn ? `Hide ${localizedTitle}` : `${localizedTitle} 비공개`) : (isEn ? `Publish ${localizedTitle}` : `${localizedTitle} 공개`)}
+                                    >
+                                      {content.is_published ? <Eye className="h-3.5 w-3.5" aria-hidden="true" /> : <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                      onClick={() => navigate(`${routePrefix}/courses/${courseId}/edit#content-${content.id}`)}
+                                      aria-label={isEn ? `Edit ${localizedTitle}` : `${localizedTitle} 수정`}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                      onClick={() => navigate(`${routePrefix}/courses/${courseId}/content/${content.id}${viewParam}`)}
+                                      aria-label={isEn ? `Open ${localizedTitle}` : `${localizedTitle} 열기`}
+                                    >
+                                      <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                                    </button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <button
+                                          type="button"
+                                          className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                          aria-label={isEn ? `Delete ${localizedTitle}` : `${localizedTitle} 삭제`}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                        </button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>{t("course.deleteContent")}</AlertDialogTitle>
+                                          <AlertDialogDescription>{t("course.deleteContentConfirm", { title: content.title })}</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => deleteContentMutation.mutate(content.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                            {t("common.delete")}
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ol>
                       </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </section>
 
           {/* Assessment Management Section */}
