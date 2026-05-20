@@ -1134,8 +1134,19 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-2">
+            {!editingQuestionId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 mr-auto"
+                onClick={() => { setQuestionDialogOpen(false); setBulkUploadOpen(true); }}
+              >
+                <FileSpreadsheet className="h-3 w-3" />
+                {isEn ? "Bulk upload (Excel)" : "엑셀 일괄 등록"}
+              </Button>
+            )}
             {!editingQuestionId && savedCount > 0 && (
-              <span className="text-[11px] text-muted-foreground mr-auto self-center">
+              <span className="text-[11px] text-muted-foreground self-center">
                 {isEn ? `${savedCount} added in this session` : `이번 세션에서 ${savedCount}개 추가됨`}
               </span>
             )}
