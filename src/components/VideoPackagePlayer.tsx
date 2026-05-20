@@ -13,6 +13,7 @@ import { normalizeLang } from "@/lib/i18nLang";
 interface VideoPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
+  title?: string;
 }
 
 interface VPItem {
@@ -44,7 +45,7 @@ const toBunnyEmbedUrl = (url: string) => url.replace("/play/", "/embed/");
 const getBunnyVideoId = (url: string) =>
   url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] || null;
 
-const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) => {
+const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -347,22 +348,8 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
       {totalEpisodes > 1 && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-between px-1">
-            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              {t("videoPackage.episodes", "구성된 동영상")}
-              {(() => {
-                const lc = (items[0]?.language_code || "").toLowerCase();
-                const isEn = lang === "en";
-                const label = lc === "ko" ? (isEn ? "Korean" : "한국어")
-                  : lc === "en" ? (isEn ? "English" : "영어")
-                  : lc === "ja" ? (isEn ? "Japanese" : "일본어")
-                  : lc.startsWith("zh") ? (isEn ? "Chinese" : "중국어")
-                  : "";
-                return label ? (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-foreground text-background">
-                    {label}
-                  </span>
-                ) : null;
-              })()}
+            <h4 className="text-sm font-semibold text-foreground truncate">
+              {title || t("videoPackage.episodes", "구성된 동영상")}
             </h4>
             <span className="text-xs text-muted-foreground">
               {completedItems.size} / {totalEpisodes}

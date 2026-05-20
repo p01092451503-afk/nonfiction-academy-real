@@ -530,6 +530,7 @@ const ContentPlayer = () => {
               {currentContent.content_type === "video_package" ? (
                 <VideoPackagePlayer
                   contentId={currentContent.id}
+                  title={getTitle(currentContent)}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
                       markCompleteMutation.mutate();
