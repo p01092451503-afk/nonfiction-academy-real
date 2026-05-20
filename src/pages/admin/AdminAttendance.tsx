@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@/contexts/UserContext";
+import { useLeaderScope } from "@/hooks/useLeaderScope";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 
