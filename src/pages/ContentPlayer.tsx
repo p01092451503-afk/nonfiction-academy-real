@@ -794,7 +794,7 @@ const ContentPlayer = () => {
           </DrawerHeader>
           <ScrollArea className="flex-1 px-4 pb-4 max-h-[55vh]">
             <div className="space-y-1">
-              {contents.map((c, idx) => {
+              {visibleContents.map((c, idx) => {
                 const isActive = c.id === contentId;
                 const isCompleted = progressMap.get(c.id)?.completed;
                 const langCode = (c as any).language_code || "";
