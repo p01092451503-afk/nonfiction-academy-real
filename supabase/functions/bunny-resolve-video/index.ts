@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     if (!videoId) return json({ error: "videoId required" }, 400);
 
     const configuredCdn = Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME");
-    const cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
+    let cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
 
     // Sign embed URL if token auth key is available
     const tokenAuthKey = Deno.env.get("BUNNY_STREAM_TOKEN_AUTH_KEY")?.trim();
@@ -71,15 +71,24 @@ Deno.serve(async (req) => {
       embedUrl = `${baseEmbed}?token=${token}&expires=${expires}`;
     }
 
-    const playlistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
+    if (!cdnHostname) {
+      const embedResponse = await fetch(embedUrl).catch(() => null);
+      const embedHtml = embedResponse?.ok ? await embedResponse.text() : "";
+      const match = embedHtml.match(new RegExp(`https://([^/"']+)/${escapeRegExp(videoId)}/playlist\\.m3u8`, "i"));
+      cdnHostname = match?.[1] ? cleanHost(match[1]) : null;
+    }
+
+    const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
+    const playlistUrl = rawPlaylistUrl && isConfigured(tokenAuthKey)
+      ? await signCdnDirectoryUrl(rawPlaylistUrl, tokenAuthKey!, expires)
+      : rawPlaylistUrl;
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
 
     return json({
       videoId,
       cdnHostname,
-      // Prefer signed iframe embed (works with token auth on private videos).
-      // Direct CDN playlist requires the same token query string and is not used here.
-      playUrl: embedUrl,
+      // Prefer signed HLS when the Stream CDN is protected; fallback to signed iframe embed.
+      playUrl: playlistUrl || embedUrl,
       embedUrl,
       playlistUrl,
       thumbnailUrl,
