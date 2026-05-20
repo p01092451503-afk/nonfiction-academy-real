@@ -243,7 +243,7 @@ const CourseDetail = () => {
   });
 
 
-  const { data: enrollment } = useQuery({
+  const { data: enrollment, isLoading: enrollmentLoading } = useQuery({
     queryKey: ["enrollment", courseId, user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("enrollments").select("*").eq("course_id", courseId!).eq("user_id", user!.id).maybeSingle();
@@ -251,6 +251,8 @@ const CourseDetail = () => {
       return data;
     },
     enabled: !!courseId && !!user?.id,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: enrollmentCount = 0 } = useQuery({
@@ -324,8 +326,22 @@ const CourseDetail = () => {
 
   const enrollMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("enrollments").insert({ user_id: user!.id, course_id: courseId! });
-      if (error) throw error;
+      // If admin already approved (or any row exists), do nothing — the user is already enrolled.
+      const { data: existing, error: selErr } = await supabase
+        .from("enrollments")
+        .select("id, status")
+        .eq("course_id", courseId!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (selErr) throw selErr;
+      if (existing) return { alreadyEnrolled: true };
+
+      const { error } = await supabase
+        .from("enrollments")
+        .insert({ user_id: user!.id, course_id: courseId!, status: "approved" });
+      // Ignore duplicate-key races silently — another tab / admin approval may have created it.
+      if (error && !String(error.message || "").toLowerCase().includes("duplicate")) throw error;
+      return { alreadyEnrolled: false };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
@@ -893,6 +909,10 @@ const CourseDetail = () => {
                   : t("course.learningInProgress", "학습 진행중")}
               </p>
             </div>
+          ) : enrollmentLoading ? (
+            <Button className="w-full sm:w-auto" disabled aria-label={t("common.loading", "불러오는 중")}>
+              {t("common.loading", "불러오는 중...")}
+            </Button>
           ) : (
             <Button className="w-full sm:w-auto" onClick={() => enrollMutation.mutate()} disabled={enrollMutation.isPending} aria-label={t("course.enrollCourse")}>
               {enrollMutation.isPending ? t("common.registering") : t("course.enrollCourse")}
