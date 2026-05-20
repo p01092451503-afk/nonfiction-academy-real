@@ -20,6 +20,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
@@ -275,25 +276,7 @@ const AdminVideos = () => {
                 <TableRow key={v.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {v.thumbnail_url ? (
-                        <img
-                          src={v.thumbnail_url}
-                          alt=""
-                          className="h-10 w-16 rounded object-cover bg-muted"
-                          onError={(e) => {
-                            const img = e.currentTarget;
-                            img.style.display = "none";
-                            const fb = img.nextElementSibling as HTMLElement | null;
-                            if (fb) fb.style.display = "flex";
-                          }}
-                        />
-                      ) : null}
-                      <div
-                        className="h-10 w-16 rounded bg-muted flex items-center justify-center"
-                        style={{ display: v.thumbnail_url ? "none" : "flex" }}
-                      >
-                        <Video className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <VideoThumbnail src={v.thumbnail_url} className="h-10 w-16 rounded shrink-0" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-medium truncate">{v.title}</p>

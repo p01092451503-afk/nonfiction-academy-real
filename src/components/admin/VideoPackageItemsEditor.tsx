@@ -11,6 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import type { VideoPackageItemDraft } from "@/lib/videoPackageTypes";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 interface Props {
   items: VideoPackageItemDraft[];
@@ -129,13 +130,7 @@ const VideoPackageItemsEditor = ({ items, onChange }: Props) => {
                 <button type="button" onClick={() => move(idx, 1)} disabled={idx === items.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30 leading-none">▼</button>
               </div>
               <span className="text-xs font-semibold text-muted-foreground w-6 text-center tabular-nums">{idx + 1}</span>
-              <div className="h-9 w-12 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
-                {it.thumbnail_url ? (
-                  <img src={it.thumbnail_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                ) : (
-                  <VideoIcon className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
+              <VideoThumbnail src={it.thumbnail_url} className="h-9 w-12 rounded shrink-0" />
               <div className="flex-1 min-w-0 space-y-1">
                 <Input
                   value={it.title || ""}
@@ -200,13 +195,7 @@ const VideoPackageItemsEditor = ({ items, onChange }: Props) => {
                         <div className={`h-5 w-5 rounded border flex items-center justify-center ${isSel ? "bg-primary border-primary text-primary-foreground" : "border-border"}`}>
                           {isSel && <Check className="h-3 w-3" />}
                         </div>
-                        <div className="h-9 w-14 rounded bg-muted overflow-hidden shrink-0 flex items-center justify-center">
-                          {a.thumbnail_url ? (
-                            <img src={a.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <VideoIcon className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
+                        <VideoThumbnail src={a.thumbnail_url} className="h-9 w-14 rounded shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{a.title}</p>
                           <p className="text-[11px] text-muted-foreground truncate">{a.video_url}</p>
