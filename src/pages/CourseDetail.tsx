@@ -110,6 +110,7 @@ const CourseDetail = () => {
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
   const [contentI18nForm, setContentI18nForm] = useState<Record<ContentI18nLang, ContentI18nData>>(emptyI18nAll);
   const [courseEditOpen, setCourseEditOpen] = useState(false);
+  const [bulkEnrollOpen, setBulkEnrollOpen] = useState(false);
   const [courseForm, setCourseForm] = useState({
     title: "", description: "", status: "draft", is_mandatory: false, deadline: "",
     category_id: "", difficulty_level: "beginner", estimated_duration_hours: "", max_students: "",
