@@ -772,6 +772,45 @@ const ContentPlayer = () => {
         )}
       </div>
 
+      {/* 이어보기 다이얼로그 */}
+      {resumeDialogOpen && (
+        <div className="fixed inset-0 z-[120] bg-black/40 flex items-center justify-center p-4 animate-in fade-in-0">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {t("contentPlayer.resumeDialogTitle", "이어보시겠어요?")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              {t("contentPlayer.resumeDialogDesc", {
+                time: formatTime(videoProgress.resumePosition),
+                defaultValue: "이전에 {{time}} 지점까지 학습한 기록이 있어요. 이어서 보시겠어요, 처음부터 다시 시작하시겠어요?",
+              })}
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                className="rounded-full"
+                onClick={async () => {
+                  await videoProgress.seekTo(0);
+                  setResumeDialogOpen(false);
+                }}
+              >
+                {t("contentPlayer.fromBeginning", "처음부터")}
+              </Button>
+              <Button
+                className="rounded-full"
+                onClick={async () => {
+                  await videoProgress.seekTo(videoProgress.resumePosition);
+                  setResumeDialogOpen(false);
+                }}
+              >
+                {t("contentPlayer.resumePlayback", "이어보기")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Mangoboard Popup */}
       {mangoPopupOpen && currentContent && isMangoboard(localVideoUrl) && embedUrl && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center">
