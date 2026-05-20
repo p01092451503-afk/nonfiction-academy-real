@@ -42,6 +42,7 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
   const [courseId, setCourseId] = useState<string>(defaultCourseId || "");
   const [mode, setMode] = useState<Mode>("individual");
   const [search, setSearch] = useState("");
+  const [excludeApproved, setExcludeApproved] = useState(true);
 
   // selections per mode
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
@@ -104,6 +105,23 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
     enabled: open,
   });
 
+  // Already-approved user IDs for the selected course
+  const { data: approvedUserIds = [] } = useQuery({
+    queryKey: ["bulk-enroll-approved", courseId],
+    queryFn: async () => {
+      if (!courseId) return [] as string[];
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("user_id")
+        .eq("course_id", courseId)
+        .eq("status", "approved");
+      if (error) throw error;
+      return (data || []).map((r: any) => r.user_id);
+    },
+    enabled: open && !!courseId,
+  });
+  const approvedSet = useMemo(() => new Set(approvedUserIds), [approvedUserIds]);
+
   // Maps
   const deptMap = useMemo(() => new Map(departments.map((d: any) => [d.id, d])), [departments]);
   const branches = useMemo(() => departments.filter((d: any) => !d.parent_department_id), [departments]);
@@ -131,8 +149,8 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
     return set;
   };
 
-  // Resolve target users based on current mode + selection
-  const targetUserIds = useMemo((): string[] => {
+  // Resolve target users based on current mode + selection (before exclusion)
+  const rawTargetUserIds = useMemo((): string[] => {
     if (mode === "individual") return Array.from(selectedUsers);
 
     const ids = new Set<string>();
@@ -157,6 +175,13 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
     });
     return Array.from(ids);
   }, [mode, selectedUsers, selectedCountries, selectedBranches, selectedRoles, profiles, deptMap, rolesByUser, departments]);
+
+  // After excluding already-approved users (if toggle on)
+  const targetUserIds = useMemo(
+    () => excludeApproved ? rawTargetUserIds.filter((id) => !approvedSet.has(id)) : rawTargetUserIds,
+    [rawTargetUserIds, excludeApproved, approvedSet]
+  );
+  const excludedCount = rawTargetUserIds.length - targetUserIds.length;
 
   // Search-filtered profiles for individual list
   const filteredProfiles = useMemo(() => {
@@ -265,18 +290,63 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
                   className="pl-9 h-9 rounded-xl"
                 />
               </div>
+              {(() => {
+                const selectableIds = filteredProfiles
+                  .map((p: any) => p.user_id)
+                  .filter((id: string) => !excludeApproved || !approvedSet.has(id));
+                const allSelected = selectableIds.length > 0 && selectableIds.every((id: string) => selectedUsers.has(id));
+                const someSelected = selectableIds.some((id: string) => selectedUsers.has(id));
+                return (
+                  <div className="flex items-center justify-between px-1">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <Checkbox
+                        checked={allSelected ? true : (someSelected ? "indeterminate" : false)}
+                        onCheckedChange={(v) => {
+                          const next = new Set(selectedUsers);
+                          if (v) selectableIds.forEach((id: string) => next.add(id));
+                          else selectableIds.forEach((id: string) => next.delete(id));
+                          setSelectedUsers(next);
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        전체 선택 ({selectableIds.length}명)
+                      </span>
+                    </label>
+                    {selectedUsers.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUsers(new Set())}
+                        className="text-[11px] text-muted-foreground hover:text-foreground underline"
+                      >
+                        선택 해제
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {filteredProfiles.map((p: any) => {
                     const dept: any = p.department_id ? deptMap.get(p.department_id) : null;
+                    const isApproved = approvedSet.has(p.user_id);
+                    const disabled = excludeApproved && isApproved;
                     return (
-                      <label key={p.user_id} className="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-accent/40 cursor-pointer">
+                      <label
+                        key={p.user_id}
+                        className={`flex items-center gap-3 px-2 py-1.5 rounded-lg ${disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-accent/40 cursor-pointer"}`}
+                      >
                         <Checkbox
                           checked={selectedUsers.has(p.user_id)}
-                          onCheckedChange={() => toggle(selectedUsers, setSelectedUsers, p.user_id)}
+                          disabled={disabled}
+                          onCheckedChange={() => !disabled && toggle(selectedUsers, setSelectedUsers, p.user_id)}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground truncate">{p.full_name || "(이름 없음)"}</p>
+                          <p className="text-sm text-foreground truncate flex items-center gap-1.5">
+                            {p.full_name || "(이름 없음)"}
+                            {isApproved && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-green-600 border-green-300 bg-green-50">승인됨</Badge>
+                            )}
+                          </p>
                           <p className="text-[11px] text-muted-foreground truncate">
                             {p.email} {dept ? `· ${dept.name}` : ""}
                           </p>
@@ -292,7 +362,12 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
 
             {/* Country */}
-            <TabsContent value="country">
+            <TabsContent value="country" className="space-y-2">
+              <SelectAllRow
+                total={countries.length}
+                selectedCount={selectedCountries.size}
+                onToggleAll={(checked) => setSelectedCountries(checked ? new Set(countries) : new Set())}
+              />
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {countries.map((c) => (
@@ -312,8 +387,15 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
 
             {/* Branch */}
-            <TabsContent value="branch">
-              <p className="text-[11px] text-muted-foreground mb-2">지점을 선택하면 하위 팀의 인원까지 모두 포함됩니다.</p>
+            <TabsContent value="branch" className="space-y-2">
+              <p className="text-[11px] text-muted-foreground">지점을 선택하면 하위 팀의 인원까지 모두 포함됩니다.</p>
+              <SelectAllRow
+                total={branches.length}
+                selectedCount={selectedBranches.size}
+                onToggleAll={(checked) =>
+                  setSelectedBranches(checked ? new Set(branches.map((b: any) => b.id)) : new Set())
+                }
+              />
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {branches.map((b: any) => (
@@ -333,7 +415,14 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
 
             {/* Role */}
-            <TabsContent value="role">
+            <TabsContent value="role" className="space-y-2">
+              <SelectAllRow
+                total={ROLE_OPTIONS.length}
+                selectedCount={selectedRoles.size}
+                onToggleAll={(checked) =>
+                  setSelectedRoles(checked ? new Set(ROLE_OPTIONS.map((r) => r.value)) : new Set())
+                }
+              />
               <ScrollArea className="h-64 border rounded-xl">
                 <div className="p-2 space-y-1">
                   {ROLE_OPTIONS.map((r) => (
@@ -350,11 +439,28 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
           </Tabs>
 
+          {/* Exclude approved toggle */}
+          <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+            <Checkbox
+              checked={excludeApproved}
+              onCheckedChange={(v) => setExcludeApproved(!!v)}
+            />
+            <span className="text-xs text-foreground">이미 승인된 사용자 제외</span>
+            {courseId && excludeApproved && approvedUserIds.length > 0 && (
+              <span className="text-[11px] text-muted-foreground">
+                · 이 강의 기승인 {approvedUserIds.length}명
+              </span>
+            )}
+          </label>
+
           {/* Preview */}
           <div className="flex items-center justify-between p-3 bg-accent/40 rounded-xl">
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">대상 인원</span>
+              {excludedCount > 0 && (
+                <span className="text-[11px] text-muted-foreground">(제외 {excludedCount}명)</span>
+              )}
             </div>
             <Badge variant="secondary" className="text-sm font-semibold">{targetUserIds.length}명</Badge>
           </div>
@@ -373,6 +479,29 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+};
+
+const SelectAllRow = ({
+  total,
+  selectedCount,
+  onToggleAll,
+}: {
+  total: number;
+  selectedCount: number;
+  onToggleAll: (checked: boolean) => void;
+}) => {
+  if (total === 0) return null;
+  const allSelected = selectedCount === total;
+  const someSelected = selectedCount > 0 && !allSelected;
+  return (
+    <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+      <Checkbox
+        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+        onCheckedChange={(v) => onToggleAll(!!v)}
+      />
+      <span className="text-xs text-muted-foreground">전체 선택 ({total})</span>
+    </label>
   );
 };
 
