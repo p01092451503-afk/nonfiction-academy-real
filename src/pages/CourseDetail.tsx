@@ -1049,7 +1049,12 @@ const CourseDetail = () => {
                           <span className="truncate text-sm font-semibold text-foreground">{localizedTitle}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <span>{t("course.flip")}</span>
+                          <span>{(() => {
+                            const ct = (content.content_type || "video").toLowerCase();
+                            if (ct === "video" || ct === "video_package") return t("course.video", "영상");
+                            if (ct === "media_package") return t("createCourse.sourceMediaPackage", "이미지 패키지");
+                            return t("course.flip");
+                          })()}</span>
                           {!isAccessible && seqAccess.reason && (
                             <>
                               <span className="text-border">·</span>
