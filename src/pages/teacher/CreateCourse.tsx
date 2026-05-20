@@ -31,11 +31,13 @@ import CategorySelect from "@/components/CategorySelect";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/integrations/supabase/types";
+import type { VideoPackageItemDraft } from "@/lib/videoPackageTypes";
+import VideoPackageItemsEditor from "@/components/admin/VideoPackageItemsEditor";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
 type VideoProvider = Database["public"]["Enums"]["video_provider"];
 
-type ContentSource = "video" | "mangoboard" | "card" | "package" | "images";
+type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "video_package";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
 export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
