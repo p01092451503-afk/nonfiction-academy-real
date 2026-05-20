@@ -259,6 +259,8 @@ const ContentPlayer = () => {
   const [cardIndex, setCardIndex] = useState(0);
   const [kollusEmbedUrl, setKollusEmbedUrl] = useState<string | null>(null);
   const [kollusLoading, setKollusLoading] = useState(false);
+  const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
+  const resumePromptedRef = useRef<string | null>(null);
 
   const currentContent = contents.find((c) => c.id === contentId);
 
