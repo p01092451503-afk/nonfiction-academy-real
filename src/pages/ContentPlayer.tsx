@@ -494,29 +494,41 @@ const ContentPlayer = () => {
   return (
     <div className="fixed inset-0 z-[60] bg-background flex flex-col">
       {/* Top header */}
-      <header className="flex items-center gap-3 sm:gap-4 px-4 lg:px-6 h-14 border-b border-border bg-background shrink-0">
-        <button onClick={handleClose} className="p-2 rounded-lg hover:bg-accent text-muted-foreground transition-colors" title={t("common.close")}>
-          <X className="h-5 w-5" />
+      <header className="flex items-center gap-3 px-4 lg:px-6 h-14 border-b border-border bg-background shrink-0">
+        <button
+          onClick={handleClose}
+          className="p-2 -ml-2 rounded-lg hover:bg-accent text-foreground transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
+          aria-label={t("common.close", "닫기")}
+        >
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
-        <div className="h-6 w-px bg-border hidden sm:block" />
-        <Badge variant="secondary" className="text-sm font-bold px-3 py-1 truncate max-w-[40%] sm:max-w-[50%]">
+        <Badge
+          variant="secondary"
+          className="text-sm font-semibold px-3 py-1 rounded-full truncate max-w-[40%] sm:max-w-[50%]"
+        >
           {getCourseTitle()}
         </Badge>
-        <div className="flex items-center gap-3 ml-auto shrink-0">
-          <button onClick={() => setMobileCurriculumOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-accent text-muted-foreground transition-colors" title={t("course.learningProgress")}>
-            <List className="h-5 w-5" />
+        <div className="flex items-center gap-2 ml-auto shrink-0">
+          <button
+            onClick={() => {
+              if (isLgUp) setSidebarOpen((v) => !v);
+              else setMobileCurriculumOpen(true);
+            }}
+            className="p-2 rounded-lg hover:bg-accent text-muted-foreground transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
+            aria-label={t("course.learningProgress", "학습 진행률")}
+          >
+            <List className="h-5 w-5" aria-hidden="true" />
           </button>
-          {_courseCompletion.isCompleted ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {t("course.completed")}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              {t("course.inProgress")}
-            </span>
-          )}
+          <div
+            className="flex items-baseline gap-2 text-sm"
+            aria-label={`${currentIndex + 1} / ${contents.length} ${t("videoPackage.episodeSuffix", "차시")}, ${overallProgress}%`}
+          >
+            <span className="font-bold text-foreground tabular-nums">{currentIndex + 1}</span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-muted-foreground tabular-nums">{contents.length}</span>
+            <span className="text-muted-foreground">{t("videoPackage.episodeSuffix", "차시")}</span>
+            <span className="ml-2 font-bold text-foreground tabular-nums">{overallProgress}%</span>
+          </div>
         </div>
       </header>
 
