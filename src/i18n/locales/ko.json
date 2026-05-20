@@ -947,7 +947,10 @@
     "autoCompleted": "자동 완료",
     "autoCompletedDesc": "80% 이상 시청하여 학습이 자동 완료되었습니다",
     "watchProgress": "시청 진행률",
-    "resumePlayback": "이어보기"
+    "resumePlayback": "이어보기",
+    "fromBeginning": "처음부터",
+    "resumeDialogTitle": "이어보시겠어요?",
+    "resumeDialogDesc": "이전에 {{time}} 지점까지 학습한 기록이 있어요. 이어서 보시겠어요, 처음부터 다시 시작하시겠어요?"
   },
   "notification": {
     "title": "알림",
