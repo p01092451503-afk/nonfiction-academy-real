@@ -421,15 +421,23 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             <div className="flex items-center gap-2 min-w-0">
               {(() => {
                 const lc = (items[0]?.language_code || "").toLowerCase();
-                const isEn = lang === "en";
-                const label = lc === "ko" ? (isEn ? "Korean" : "한국어")
-                  : lc === "en" ? (isEn ? "English" : "영어")
-                  : lc === "ja" ? (isEn ? "Japanese" : "일본어")
-                  : lc.startsWith("zh") ? (isEn ? "Chinese" : "중국어")
+                const code = lc === "ko" ? "KO"
+                  : lc === "en" ? "EN"
+                  : lc === "ja" ? "JA"
+                  : lc.startsWith("zh") ? "ZH"
                   : "";
-                return label ? (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-foreground text-background whitespace-nowrap shrink-0">
-                    {label}
+                const styleMap: Record<string, string> = {
+                  KO: "bg-foreground text-background",
+                  EN: "bg-blue-600 text-white dark:bg-blue-500",
+                  JA: "bg-rose-600 text-white dark:bg-rose-500",
+                  ZH: "bg-amber-600 text-white dark:bg-amber-500",
+                };
+                return code ? (
+                  <span
+                    className={`h-6 w-6 shrink-0 rounded-md flex items-center justify-center text-[9px] font-bold tracking-wider shadow-sm ${styleMap[code]}`}
+                    aria-label={code}
+                  >
+                    {code}
                   </span>
                 ) : null;
               })()}
