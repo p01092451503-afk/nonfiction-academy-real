@@ -1876,10 +1876,10 @@ const PackageItemsEditor = ({
         xhr.onload = async () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             const cdn = token.cdnHostname as string | null;
-            const playUrl = cdn
+            const playUrl = token.playUrl || (cdn
               ? `https://${cdn}/${token.videoId}/playlist.m3u8`
-              : `https://iframe.mediadelivery.net/play/${token.libraryId}/${token.videoId}`;
-            const thumb = cdn ? `https://${cdn}/${token.videoId}/thumbnail.jpg` : null;
+              : `https://iframe.mediadelivery.net/play/${token.libraryId}/${token.videoId}`);
+            const thumb = token.thumbnailUrl || (cdn ? `https://${cdn}/${token.videoId}/thumbnail.jpg` : null);
             // Best-effort registration to video_assets (non-blocking)
             try {
               await supabase.from("video_assets").insert({

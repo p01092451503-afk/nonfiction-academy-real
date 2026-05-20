@@ -17,6 +17,7 @@ interface VideoPackagePlayerProps {
 interface VPItem {
   id: string;
   content_id: string;
+  video_asset_id: string | null;
   language_code: string;
   order_index: number;
   video_url: string;
@@ -36,6 +37,11 @@ const formatTime = (s: number) => {
 };
 
 const isHls = (url: string) => /\.m3u8(\?|$)/i.test(url);
+const hasPlaceholderHost = (url: string) => /placeholder_value_to_be_replaced/i.test(url);
+const isBunnyIframe = (url: string) => /iframe\.mediadelivery\.net\/(embed|play)\//i.test(url);
+const toBunnyEmbedUrl = (url: string) => url.replace("/play/", "/embed/");
+const getBunnyVideoId = (url: string) =>
+  url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i)?.[1] || null;
 
 const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
@@ -46,6 +52,10 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
   const [resumePos, setResumePos] = useState(0);
   const [progress, setProgress] = useState({ current: 0, duration: 0 });
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
+  const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
+  const [isResolvingUrl, setIsResolvingUrl] = useState(false);
+  const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
   const completedRef = useRef(false);
 
   // Fetch all items for this content (all languages), then filter by language
@@ -93,10 +103,59 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
     }
   }, [contentId, activeItem?.id]);
 
+  useEffect(() => {
+    if (!activeItem) {
+      setPlaybackUrl(null);
+      setResolvedPoster(null);
+      setVideoLoadError(null);
+      return;
+    }
+
+    let cancelled = false;
+    const rawUrl = activeItem.video_url?.trim() || "";
+    const needsResolve = activeItem.video_provider === "bunny" && (hasPlaceholderHost(rawUrl) || isBunnyIframe(rawUrl));
+
+    setVideoLoadError(null);
+    setResolvedPoster(activeItem.thumbnail_url || null);
+    setPlaybackUrl(rawUrl ? (isBunnyIframe(rawUrl) ? toBunnyEmbedUrl(rawUrl) : rawUrl) : null);
+
+    if (!needsResolve) {
+      setIsResolvingUrl(false);
+      return;
+    }
+
+    const videoId = getBunnyVideoId(rawUrl);
+    if (!videoId) {
+      setIsResolvingUrl(false);
+      setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소가 올바르지 않습니다."));
+      return;
+    }
+
+    setIsResolvingUrl(true);
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("bunny-resolve-video", {
+        body: { videoId, url: rawUrl },
+      });
+      if (cancelled) return;
+      setIsResolvingUrl(false);
+      if (error || !data?.playUrl) {
+        setPlaybackUrl(`https://iframe.mediadelivery.net/embed/${data?.libraryId || ""}/${videoId}`);
+        setVideoLoadError(null);
+        return;
+      }
+      setPlaybackUrl(data.playUrl);
+      setResolvedPoster(data.thumbnailUrl || activeItem.thumbnail_url || null);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeItem?.id, activeItem?.video_url, activeItem?.video_provider, activeItem?.thumbnail_url, t]);
+
   // Attach video src via hls.js (HLS) or native
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !activeItem) return;
+    if (!video || !activeItem || !playbackUrl || isBunnyIframe(playbackUrl)) return;
 
     // Cleanup any previous hls instance
     if (hlsRef.current) {
@@ -104,7 +163,7 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
       hlsRef.current = null;
     }
 
-    const url = activeItem.video_url;
+    const url = playbackUrl;
     if (isHls(url)) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = url;
@@ -126,7 +185,7 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
         hlsRef.current = null;
       }
     };
-  }, [activeItem?.id, activeItem?.video_url]);
+  }, [activeItem?.id, playbackUrl]);
 
   const handleTimeUpdate = () => {
     const v = videoRef.current;
@@ -218,17 +277,36 @@ const VideoPackagePlayer = ({ contentId, onComplete }: VideoPackagePlayerProps) 
       {/* Video player */}
       <div className="relative bg-black overflow-hidden rounded-none lg:rounded-2xl">
         <div className="aspect-video w-full">
-          <video
-            ref={videoRef}
-            key={activeItem?.id}
-            controls
-            playsInline
-            poster={activeItem?.thumbnail_url || undefined}
-            className="w-full h-full object-contain bg-black"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleEnded}
-          />
+          {isResolvingUrl ? (
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
+              {t("common.loading", "불러오는 중...")}
+            </div>
+          ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
+            <iframe
+              key={activeItem?.id}
+              src={toBunnyEmbedUrl(playbackUrl)}
+              className="h-full w-full border-0 bg-black"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+              title={activeItem?.title || t("course.video", "영상")}
+            />
+          ) : videoLoadError ? (
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center">
+              {videoLoadError}
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              key={activeItem?.id}
+              controls
+              playsInline
+              poster={resolvedPoster || undefined}
+              className="w-full h-full object-contain bg-black"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={handleEnded}
+            />
+          )}
         </div>
       </div>
 
