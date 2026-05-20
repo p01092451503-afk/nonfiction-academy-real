@@ -42,6 +42,7 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
   const [courseId, setCourseId] = useState<string>(defaultCourseId || "");
   const [mode, setMode] = useState<Mode>("individual");
   const [search, setSearch] = useState("");
+  const [excludeApproved, setExcludeApproved] = useState(true);
 
   // selections per mode
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
