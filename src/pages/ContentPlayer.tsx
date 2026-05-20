@@ -275,9 +275,9 @@ const ContentPlayer = () => {
       );
     }
   }, [contentId, user?.id, courseId, currentContent]);
-  const currentIndex = contents.findIndex((c) => c.id === contentId);
-  const prevContent = currentIndex > 0 ? contents[currentIndex - 1] : null;
-  const nextContent = currentIndex < contents.length - 1 ? contents[currentIndex + 1] : null;
+  const currentIndex = visibleContents.findIndex((c) => c.id === contentId);
+  const prevContent = currentIndex > 0 ? visibleContents[currentIndex - 1] : null;
+  const nextContent = currentIndex >= 0 && currentIndex < visibleContents.length - 1 ? visibleContents[currentIndex + 1] : null;
   const progressMap = new Map(progressData.map((p) => [p.content_id, p]));
   const currentProgress = progressMap.get(contentId || "");
   // 차시들은 동일 콘텐츠의 다국어 버전이므로, 어느 한 차시라도 완료되면 강의가 완료로 처리된다.
@@ -539,11 +539,11 @@ const ContentPlayer = () => {
           </button>
           <div
             className="flex items-baseline gap-2 text-sm"
-            aria-label={`${currentIndex + 1} / ${contents.length} ${t("videoPackage.episodeSuffix", "차시")}, ${overallProgress}%`}
+            aria-label={`${currentIndex + 1} / ${visibleContents.length} ${t("videoPackage.episodeSuffix", "차시")}, ${overallProgress}%`}
           >
             <span className="font-bold text-foreground tabular-nums">{currentIndex + 1}</span>
             <span className="text-muted-foreground">/</span>
-            <span className="text-muted-foreground tabular-nums">{contents.length}</span>
+            <span className="text-muted-foreground tabular-nums">{visibleContents.length}</span>
             <span className="text-muted-foreground">{t("videoPackage.episodeSuffix", "차시")}</span>
             <span className="ml-2 font-bold text-foreground tabular-nums">{overallProgress}%</span>
           </div>
