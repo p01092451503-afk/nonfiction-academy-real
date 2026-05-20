@@ -197,13 +197,20 @@ const AdminUsers = () => {
       }
     }
 
+    const assigned = (rolesByUser.get(profile.user_id) ?? []).filter(
+      (r): r is "admin" | "teacher" | "student" => r === "admin" || r === "teacher" || r === "student",
+    );
+    const initialRoles = assigned.length > 0
+      ? assigned
+      : [primaryRole === "super_admin" ? "admin" : primaryRole] as ("admin" | "teacher" | "student")[];
+
     setStaffEdit({
       userId: profile.user_id,
       name: profile.full_name || "-",
       branchId,
       departmentId,
       position: profile.position || "",
-      role: primaryRole === "super_admin" ? "admin" : primaryRole,
+      roles: initialRoles,
       roleLocked: hasProtectedRole(profile.user_id) || profile.user_id === user?.id,
     });
   };
@@ -238,9 +245,11 @@ const AdminUsers = () => {
         .neq("role", "super_admin");
       if (deleteRoleError) throw deleteRoleError;
 
+      const uniqueRoles = Array.from(new Set(draft.roles));
+      if (uniqueRoles.length === 0) throw new Error("At least one role is required");
       const { error: insertRoleError } = await supabase
         .from("user_roles")
-        .insert({ user_id: draft.userId, role: draft.role as StaffRole });
+        .insert(uniqueRoles.map((r) => ({ user_id: draft.userId, role: r as StaffRole })));
       if (insertRoleError) throw insertRoleError;
     },
     onSuccess: () => {

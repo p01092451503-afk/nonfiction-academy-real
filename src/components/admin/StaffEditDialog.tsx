@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -15,11 +16,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export type StaffRole = "admin" | "teacher" | "student" | "super_admin";
+export type AssignableStaffRole = Exclude<StaffRole, "super_admin">;
 
 export interface StaffEditDraft {
   userId: string;
   name: string;
-  role: Exclude<StaffRole, "super_admin">;
+  roles: AssignableStaffRole[];
   departmentId: string;
   branchId: string;
   position: string;
@@ -43,6 +45,8 @@ interface StaffEditDialogProps {
   onSave: () => void;
   saving: boolean;
 }
+
+const ASSIGNABLE_ROLES: AssignableStaffRole[] = ["student", "teacher", "admin"];
 
 const StaffEditDialog = ({
   open,
@@ -68,6 +72,21 @@ const StaffEditDialog = ({
   const getDeptLabel = (d: DepartmentOption) => (isEn ? d.name_en || d.name : d.name);
 
   const selectedBranch = branches.find((b) => b.id === draft.branchId);
+
+  const roleLabel = (role: AssignableStaffRole) => {
+    if (role === "student") return t("roles.studentLabel", "학습자");
+    if (role === "teacher") return t("roles.teacherLabel", "강사");
+    return t("roles.adminLabel", "관리자");
+  };
+
+  const toggleRole = (role: AssignableStaffRole, checked: boolean) => {
+    const current = new Set(draft.roles);
+    if (checked) current.add(role);
+    else current.delete(role);
+    // Always keep at least one role; default back to student if empty
+    const next = current.size === 0 ? (["student"] as AssignableStaffRole[]) : Array.from(current);
+    onDraftChange({ ...draft, roles: next });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -122,21 +141,28 @@ const StaffEditDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label>{t("admin.roleColumn")}</Label>
-            <Select
-              disabled={draft.roleLocked}
-              value={draft.role}
-              onValueChange={(role) => onDraftChange({ ...draft, role: role as StaffEditDraft["role"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="student">{t("roles.studentLabel")}</SelectItem>
-                <SelectItem value="teacher">{t("roles.teacherLabel")}</SelectItem>
-                <SelectItem value="admin">{t("roles.adminLabel")}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label>{t("admin.roleColumn")}</Label>
+              <span className="text-xs text-muted-foreground">{t("admin.rolesMultiHint", "여러 역할을 동시에 지정할 수 있습니다")}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 rounded-md border border-border p-3">
+              {ASSIGNABLE_ROLES.map((role) => {
+                const checked = draft.roles.includes(role);
+                return (
+                  <label
+                    key={role}
+                    className={`flex items-center gap-2 text-sm ${draft.roleLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <Checkbox
+                      checked={checked}
+                      disabled={draft.roleLocked}
+                      onCheckedChange={(v) => toggleRole(role, v === true)}
+                    />
+                    <span>{roleLabel(role)}</span>
+                  </label>
+                );
+              })}
+            </div>
             {draft.roleLocked && <p className="text-xs text-muted-foreground">{t("admin.roleLockedHint")}</p>}
           </div>
 
@@ -154,7 +180,7 @@ const StaffEditDialog = ({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}
           </Button>
-          <Button type="button" onClick={onSave} disabled={saving}>
+          <Button type="button" onClick={onSave} disabled={saving || draft.roles.length === 0}>
             {saving ? t("common.processing") : t("common.save")}
           </Button>
         </DialogFooter>
