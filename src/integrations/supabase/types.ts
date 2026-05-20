@@ -2284,6 +2284,66 @@ export type Database = {
         }
         Relationships: []
       }
+      video_package_items: {
+        Row: {
+          content_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          language_code: string
+          order_index: number
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          video_asset_id: string | null
+          video_provider: string | null
+          video_url: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          language_code?: string
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_asset_id?: string | null
+          video_provider?: string | null
+          video_url: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          language_code?: string
+          order_index?: number
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          video_asset_id?: string | null
+          video_provider?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_package_items_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "course_contents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_package_items_video_asset_id_fkey"
+            columns: ["video_asset_id"]
+            isOneToOne: false
+            referencedRelation: "video_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2381,6 +2441,7 @@ export type Database = {
         | "assignment"
         | "live"
         | "media_package"
+        | "video_package"
       enrollment_status: "pending" | "approved" | "rejected"
       question_type:
         | "multiple_choice_4"
@@ -2528,6 +2589,7 @@ export const Constants = {
         "assignment",
         "live",
         "media_package",
+        "video_package",
       ],
       enrollment_status: ["pending", "approved", "rejected"],
       question_type: [
