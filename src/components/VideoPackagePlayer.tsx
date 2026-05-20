@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { normalizeLang } from "@/lib/i18nLang";
 
 interface VideoPackagePlayerProps {
