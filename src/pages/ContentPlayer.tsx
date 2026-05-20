@@ -641,21 +641,6 @@ const ContentPlayer = () => {
 
             {/* Info area */}
             <div className="px-4 lg:px-0 py-1 lg:py-0 space-y-3">
-              {/* Source badge (above title) */}
-              {(() => {
-                const url = localVideoUrl;
-                const provider = currentContent.video_provider;
-                let sourceLabel = "";
-                let sourceColor = "";
-                if (isMangoboard(url)) { sourceLabel = "Mangoboard"; sourceColor = "bg-blue-500 text-white"; }
-                else if (provider === "youtube" || url?.includes("youtube.com") || url?.includes("youtu.be")) { sourceLabel = "YouTube"; sourceColor = "bg-rose-500 text-white"; }
-                else if (provider === "vimeo" || url?.includes("vimeo.com")) { sourceLabel = "Vimeo"; sourceColor = "bg-sky-500 text-white"; }
-                else if (provider === "upload") { sourceLabel = "CDN"; sourceColor = "bg-emerald-500 text-white"; }
-                else if (provider === "custom" && !isMangoboard(url)) { sourceLabel = t("createCourse.customInput"); sourceColor = "bg-amber-500 text-white"; }
-                return sourceLabel ? (
-                  <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-md ${sourceColor}`}>{sourceLabel}</span>
-                ) : null;
-              })()}
 
               {/* Title — left aligned, can wrap */}
               <h2 className="text-xl lg:text-2xl font-bold text-foreground tracking-tight border-b-2 border-foreground/80 pb-1 inline-block max-w-full">
