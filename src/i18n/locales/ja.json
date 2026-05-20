@@ -946,7 +946,10 @@
     "autoCompleted": "自動完了",
     "autoCompletedDesc": "80%以上視聴したため、学習が自動完了しました",
     "watchProgress": "視聴進捗率",
-    "resumePlayback": "再生を再開"
+    "resumePlayback": "再生を再開",
+    "fromBeginning": "最初から",
+    "resumeDialogTitle": "続きから再生しますか？",
+    "resumeDialogDesc": "以前に {{time}} まで視聴した記録があります。続きから再生しますか、最初から再生しますか？"
   },
   "notification": {
     "title": "通知",
