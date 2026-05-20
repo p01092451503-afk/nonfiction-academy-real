@@ -4,6 +4,7 @@ import {
   getContentTitle as pickContentTitle,
   getCourseTitleByLang,
   getCourseDescByLang,
+  hasUploadedContent,
 } from "@/lib/courseContentI18n";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
@@ -219,6 +220,28 @@ const CourseDetail = () => {
     enabled: contents.length > 0,
     staleTime: 60_000,
   });
+
+
+
+  // Set of content ids that have at least one media_package item uploaded.
+  // Used to hide empty multilingual content rows from the student curriculum.
+  const { data: mediaPackageContentIds } = useQuery({
+    queryKey: ["course-media-package-ids", courseId, contents.map(c => c.id).join(",")],
+    queryFn: async () => {
+      const mpIds = contents
+        .filter((c: any) => (c.content_type || "").toLowerCase() === "media_package")
+        .map((c: any) => c.id);
+      if (mpIds.length === 0) return new Set<string>();
+      const { data } = await (supabase as any)
+        .from("media_package_items")
+        .select("content_id")
+        .in("content_id", mpIds);
+      return new Set<string>((data || []).map((r: any) => r.content_id));
+    },
+    enabled: contents.length > 0,
+    staleTime: 60_000,
+  });
+
 
   const { data: enrollment } = useQuery({
     queryKey: ["enrollment", courseId, user?.id],
@@ -884,7 +907,9 @@ const CourseDetail = () => {
           <ol className="space-y-1.5">
             {(() => {
               const isSequential = (course as any)?.is_sequential || false;
-              const publishedContents = contents.filter(c => c.is_published);
+              const publishedContents = contents
+                .filter(c => c.is_published)
+                .filter(c => hasUploadedContent(c as any, mediaPackageContentIds));
               
               // Build assessment gate map: assessmentOrderIndex -> assessment
               // An assessment with order_index N acts as a gate AFTER content at position N

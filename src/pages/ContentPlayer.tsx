@@ -32,6 +32,7 @@ import {
   getContentVideoUrl,
   getContentVideoProvider,
   getCourseTitleByLang,
+  hasUploadedContent,
 } from "@/lib/courseContentI18n";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
@@ -136,6 +137,26 @@ const ContentPlayer = () => {
     },
     enabled: !!courseId,
   });
+
+  const { data: mediaPackageContentIds } = useQuery({
+    queryKey: ["course-media-package-ids", courseId, contents.map(c => c.id).join(",")],
+    queryFn: async () => {
+      const mpIds = contents
+        .filter((c: any) => (c.content_type || "").toLowerCase() === "media_package")
+        .map((c: any) => c.id);
+      if (mpIds.length === 0) return new Set<string>();
+      const { data } = await (supabase as any)
+        .from("media_package_items")
+        .select("content_id")
+        .in("content_id", mpIds);
+      return new Set<string>((data || []).map((r: any) => r.content_id));
+    },
+    enabled: contents.length > 0,
+    staleTime: 60_000,
+  });
+
+  // Hide multilingual content rows that have no uploaded material from the curriculum list.
+  const visibleContents = contents.filter((c: any) => hasUploadedContent(c, mediaPackageContentIds));
 
   const { data: commentCount = 0 } = useQuery({
     queryKey: ["course-comments-count", courseId],
@@ -653,7 +674,7 @@ const ContentPlayer = () => {
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-                {contents.map((c, idx) => {
+                {visibleContents.map((c, idx) => {
                   const isActive = c.id === contentId;
                   const isCompleted = progressMap.get(c.id)?.completed;
                   const langCode = (c as any).language_code || "";
@@ -773,7 +794,7 @@ const ContentPlayer = () => {
           </DrawerHeader>
           <ScrollArea className="flex-1 px-4 pb-4 max-h-[55vh]">
             <div className="space-y-1">
-              {contents.map((c, idx) => {
+              {visibleContents.map((c, idx) => {
                 const isActive = c.id === contentId;
                 const isCompleted = progressMap.get(c.id)?.completed;
                 const langCode = (c as any).language_code || "";
