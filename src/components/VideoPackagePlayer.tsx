@@ -289,13 +289,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
             </div>
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             <iframe
-              key={activeItem?.id}
-              src={toBunnyEmbedUrl(playbackUrl)}
+              key={playbackUrl}
+              src={playbackUrl}
               className="h-full w-full border-0 bg-black"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
               allowFullScreen
               title={activeItem?.title || t("course.video", "영상")}
             />
+
           ) : videoLoadError ? (
             <div
               className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black px-4 text-center"
