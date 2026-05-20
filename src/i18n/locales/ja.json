@@ -896,6 +896,7 @@
     "editManually": "手動で修正",
     "sourceImage": "画像",
     "sourceMediaPackage": "メディアパッケージ",
+    "sourceVideoPackage": "ビデオパッケージ",
     "cardUrlListLabel": "カード画像/動画URLリスト",
     "cardUrlListHint": "縦型カード (1080×1920) サイズの画像または動画リンクを複数登録できます。",
     "cardUrlPh": "画像URLまたは動画URL",

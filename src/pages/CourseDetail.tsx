@@ -1296,17 +1296,18 @@ const ContentDialog = ({
       <div className="space-y-1">
         <Label className="text-xs">{t("course.contentType")}</Label>
         <Select
-          value={form.content_type === "media_package" ? "media_package" : "mangoboard"}
+          value={form.content_type === "media_package" ? "media_package" : form.content_type === "video_package" ? "video_package" : "mangoboard"}
           onValueChange={(v) => setForm(f => ({
             ...f,
-            content_type: v === "media_package" ? "media_package" : "document",
-            video_provider: v === "media_package" ? "" : "custom",
+            content_type: v === "media_package" ? "media_package" : v === "video_package" ? "video_package" : "document",
+            video_provider: (v === "media_package" || v === "video_package") ? "" : "custom",
           }))}
         >
           <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="mangoboard">{t("createCourse.sourceMangoboard", "망고보드")}</SelectItem>
             <SelectItem value="media_package">{t("course.imageRegister", "이미지 등록")}</SelectItem>
+            <SelectItem value="video_package">{t("createCourse.sourceVideoPackage", "동영상 패키지")}</SelectItem>
           </SelectContent>
         </Select>
       </div>

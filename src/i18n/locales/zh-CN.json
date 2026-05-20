@@ -896,6 +896,7 @@
     "editManually": "手动修改",
     "sourceImage": "图片",
     "sourceMediaPackage": "媒体包",
+    "sourceVideoPackage": "视频包",
     "cardUrlListLabel": "卡片图片/视频URL列表",
     "cardUrlListHint": "可以注册多张竖向卡片 (1080×1920) 尺寸的图片或视频链接。",
     "cardUrlPh": "图片URL或视频URL",

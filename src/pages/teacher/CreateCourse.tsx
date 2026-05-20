@@ -31,11 +31,13 @@ import CategorySelect from "@/components/CategorySelect";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/integrations/supabase/types";
+import type { VideoPackageItemDraft } from "@/lib/videoPackageTypes";
+import VideoPackageItemsEditor from "@/components/admin/VideoPackageItemsEditor";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
 type VideoProvider = Database["public"]["Enums"]["video_provider"];
 
-type ContentSource = "video" | "mangoboard" | "card" | "package" | "images";
+type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "video_package";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
 export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
@@ -70,6 +72,7 @@ interface ContentItem {
   card_image_url?: string;
   card_urls?: string[];
   package_items?: PackageItemDraft[];
+  video_package_items?: VideoPackageItemDraft[];
   language_code: LessonLang;
   manual_translation_override?: boolean; // true: 관리자가 직접 수정한 번역 (자동번역 덮어쓰기 방지)
 }
@@ -90,6 +93,7 @@ const buildDefaultLessonSlots = (): ContentItem[] =>
     enTitle: "",
     enDescription: "",
     package_items: [],
+    video_package_items: [],
     language_code: lang,
   }));
 
@@ -252,6 +256,33 @@ const CreateCourse = () => {
         });
       }
 
+      // Load video package items for any video_package contents
+      const videoPackageContentIds = (courseContents || [])
+        .filter((c: any) => c.content_type === "video_package")
+        .map((c: any) => c.id);
+      const videoPackageItemsMap = new Map<string, VideoPackageItemDraft[]>();
+      if (videoPackageContentIds.length > 0) {
+        const { data: vpItems } = await (supabase as any)
+          .from("video_package_items")
+          .select("*")
+          .in("content_id", videoPackageContentIds)
+          .order("order_index", { ascending: true });
+        (vpItems || []).forEach((it: any) => {
+          const arr = videoPackageItemsMap.get(it.content_id) || [];
+          arr.push({
+            tempId: it.id,
+            video_asset_id: it.video_asset_id || null,
+            video_url: it.video_url || "",
+            video_provider: it.video_provider || null,
+            thumbnail_url: it.thumbnail_url || null,
+            duration_seconds: it.duration_seconds ?? null,
+            title: it.title || "",
+          });
+          videoPackageItemsMap.set(it.content_id, arr);
+        });
+      }
+
+
       if (courseContents?.length) {
         // Map existing contents into 4 language slots (KO/EN/ZH-CN/JA).
         // Priority: existing language_code → fall back to order_index → fill missing slots empty.
@@ -287,6 +318,7 @@ const CreateCourse = () => {
           const en = i18nMap.get(c.id);
           const isCard = c.description?.startsWith("[card-content]");
           const isPackage = c.content_type === "media_package";
+          const isVideoPackage = c.content_type === "video_package";
           let cleanDesc = "";
           let cardUrls: string[] = [];
           if (isCard) {
@@ -301,15 +333,21 @@ const CreateCourse = () => {
           } else {
             cleanDesc = c.description || "";
           }
-          // Force source into mangoboard or package only
-          const inferredSource: ContentSource = isPackage
-            ? "package"
-            : "mangoboard";
+          const inferredSource: ContentSource = isVideoPackage
+            ? "video_package"
+            : isPackage
+              ? "package"
+              : "mangoboard";
+          const inferredContentType: ContentType = isVideoPackage
+            ? ("video_package" as ContentType)
+            : isPackage
+              ? ("media_package" as ContentType)
+              : ("document" as ContentType);
           return {
             tempId: c.id,
             title: c.title || "",
             description: cleanDesc,
-            content_type: (isPackage ? "media_package" : "document") as ContentType,
+            content_type: inferredContentType,
             video_url: c.video_url || "",
             video_provider: (c.video_provider || "custom") as VideoProvider,
             duration_minutes: c.duration_minutes,
@@ -320,6 +358,7 @@ const CreateCourse = () => {
             enDescription: en?.description || "",
             card_urls: cardUrls,
             package_items: isPackage ? (packageItemsMap.get(c.id) || []) : [],
+            video_package_items: isVideoPackage ? (videoPackageItemsMap.get(c.id) || []) : [],
             language_code: lang,
           };
         });
@@ -464,14 +503,22 @@ const CreateCourse = () => {
             const base = buildDefaultLessonSlots().find((s) => s.language_code === lang)!;
             if (!existing) return base;
             const src: ContentSource =
-              existing.source === "package" || existing.content_type === "media_package"
-                ? "package"
-                : "mangoboard";
+              existing.source === "video_package" || existing.content_type === "video_package"
+                ? "video_package"
+                : existing.source === "package" || existing.content_type === "media_package"
+                  ? "package"
+                  : "mangoboard";
+            const ct: ContentType =
+              src === "video_package"
+                ? ("video_package" as ContentType)
+                : src === "package"
+                  ? ("media_package" as ContentType)
+                  : ("document" as ContentType);
             return {
               ...base,
               ...existing,
               source: src,
-              content_type: src === "package" ? ("media_package" as ContentType) : ("document" as ContentType),
+              content_type: ct,
               language_code: lang,
             } as ContentItem;
           });
@@ -520,6 +567,12 @@ const CreateCourse = () => {
             updated.video_url = "";
             updated.card_image_url = "";
             if (!updated.package_items) updated.package_items = [];
+          } else if (value === "video_package") {
+            updated.content_type = "video_package" as ContentType;
+            updated.video_provider = "";
+            updated.video_url = "";
+            updated.card_image_url = "";
+            if (!updated.video_package_items) updated.video_package_items = [];
           } else {
             updated.content_type = "video";
             updated.video_provider = "";
@@ -744,7 +797,9 @@ const CreateCourse = () => {
             course_id: editCourseId!,
             title: c.title || `Lesson ${idx + 1}`,
             description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-            content_type: ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type),
+            content_type: (c.source === "video_package"
+              ? "video_package"
+              : ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type)),
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
             duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
@@ -782,6 +837,31 @@ const CreateCourse = () => {
           });
           if (pkgRows.length) {
             await (supabase as any).from("media_package_items").insert(pkgRows);
+          }
+
+          // Save video package items
+          const vpRows: any[] = [];
+          insertedContents.forEach((ic: any, idx: number) => {
+            const c = contents[idx];
+            if (c.source === "video_package" && c.video_package_items?.length) {
+              c.video_package_items.forEach((it, itIdx) => {
+                if (!it.video_url && !it.video_asset_id) return;
+                vpRows.push({
+                  content_id: ic.id,
+                  language_code: c.language_code,
+                  order_index: itIdx,
+                  video_asset_id: it.video_asset_id || null,
+                  video_url: it.video_url || null,
+                  video_provider: it.video_provider || null,
+                  thumbnail_url: it.thumbnail_url || null,
+                  duration_seconds: it.duration_seconds ?? null,
+                  title: it.title || null,
+                });
+              });
+            }
+          });
+          if (vpRows.length) {
+            await (supabase as any).from("video_package_items").insert(vpRows);
           }
         }
       }
@@ -856,7 +936,9 @@ const CreateCourse = () => {
             course_id: course.id,
             title: c.title || `Lesson ${idx + 1}`,
             description: c.source === "card" ? `[card-content]${JSON.stringify({ urls: c.card_urls || [], desc: c.description || "" })}` : (c.description || null),
-            content_type: ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type),
+            content_type: (c.source === "video_package"
+              ? "video_package"
+              : ((c.source === "package" || c.source === "images") ? "media_package" : c.content_type)),
             video_url: c.source === "card" ? (c.card_urls?.[0] || c.video_url || null) : (c.video_url || null),
             video_provider: c.video_provider || null,
             duration_minutes: isKoRow ? c.duration_minutes : (koContent?.duration_minutes ?? c.duration_minutes),
@@ -894,6 +976,31 @@ const CreateCourse = () => {
           });
           if (pkgRows.length) {
             await (supabase as any).from("media_package_items").insert(pkgRows);
+          }
+
+          // Save video package items
+          const vpRows: any[] = [];
+          insertedContents.forEach((ic: any, idx: number) => {
+            const c = contents[idx];
+            if (c.source === "video_package" && c.video_package_items?.length) {
+              c.video_package_items.forEach((it, itIdx) => {
+                if (!it.video_url && !it.video_asset_id) return;
+                vpRows.push({
+                  content_id: ic.id,
+                  language_code: c.language_code,
+                  order_index: itIdx,
+                  video_asset_id: it.video_asset_id || null,
+                  video_url: it.video_url || null,
+                  video_provider: it.video_provider || null,
+                  thumbnail_url: it.thumbnail_url || null,
+                  duration_seconds: it.duration_seconds ?? null,
+                  title: it.title || null,
+                });
+              });
+            }
+          });
+          if (vpRows.length) {
+            await (supabase as any).from("video_package_items").insert(vpRows);
           }
         }
       }
@@ -1242,8 +1349,9 @@ const UnifiedContentEditor = ({
   const isCard = content.source === "card";
   const isPackage = content.source === "package";
   const isImages = content.source === "images";
+  const isVideoPackage = content.source === "video_package";
   const isValidMangoboard = isMango && content.video_url.includes("mangoboard.net");
-  const Icon = isImages ? ImageIcon : isPackage ? Package : isCard ? LayoutGrid : isMango ? BookOpen : (contentTypeOptions.find((o) => o.value === content.content_type)?.icon || Video);
+  const Icon = isVideoPackage ? Video : isImages ? ImageIcon : isPackage ? Package : isCard ? LayoutGrid : isMango ? BookOpen : (contentTypeOptions.find((o) => o.value === content.content_type)?.icon || Video);
 
   // Real-time sync KO → EN
   useEffect(() => {
@@ -1384,10 +1492,27 @@ const UnifiedContentEditor = ({
               <Package className="h-3.5 w-3.5" />
               {t("createCourse.sourceMediaPackage", "미디어 패키지")}
             </button>
+            <button
+              type="button"
+              onClick={() => onChange("source", "video_package")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all border ${
+                isVideoPackage
+                  ? "bg-accent text-foreground border-border"
+                  : "bg-transparent text-muted-foreground border-transparent hover:bg-accent/50"
+              }`}
+            >
+              <Video className="h-3.5 w-3.5" />
+              {t("createCourse.sourceVideoPackage", "동영상 패키지")}
+            </button>
           </div>
         </div>
 
-        {isPackage || isImages ? (
+        {isVideoPackage ? (
+          <VideoPackageItemsEditor
+            items={content.video_package_items || []}
+            onChange={(items) => onChange("video_package_items", items)}
+          />
+        ) : isPackage || isImages ? (
           <PackageItemsEditor
             items={content.package_items || []}
             onChange={(items) => onChange("package_items", items)}
