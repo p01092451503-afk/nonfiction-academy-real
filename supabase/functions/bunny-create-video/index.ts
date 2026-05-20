@@ -1,5 +1,9 @@
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
+const PLACEHOLDER_PATTERN = /placeholder_value_to_be_replaced/i;
+const isConfigured = (value: string | null) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
+const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -36,13 +40,22 @@ Deno.serve(async (req) => {
 
     // Upload URL: PUT https://video.bunnycdn.com/library/{libId}/videos/{videoId}
     // Authenticated with AccessKey header (use API_KEY directly from browser via this token)
+    const configuredCdn = Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME");
+    const cdnHostname = isConfigured(configuredCdn) ? cleanHost(configuredCdn!) : null;
+    const playUrl = cdnHostname
+      ? `https://${cdnHostname}/${data.guid}/playlist.m3u8`
+      : `https://iframe.mediadelivery.net/play/${LIBRARY_ID}/${data.guid}`;
+    const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${data.guid}/thumbnail.jpg` : null;
+
     return new Response(
       JSON.stringify({
         videoId: data.guid,
         libraryId: LIBRARY_ID,
         uploadUrl: `https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${data.guid}`,
         accessKey: API_KEY,
-        cdnHostname: Deno.env.get("BUNNY_STREAM_CDN_HOSTNAME") || null,
+        cdnHostname,
+        playUrl,
+        thumbnailUrl,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
