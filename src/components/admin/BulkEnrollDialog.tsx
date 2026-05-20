@@ -439,11 +439,28 @@ const BulkEnrollDialog = ({ open, onOpenChange, defaultCourseId }: Props) => {
             </TabsContent>
           </Tabs>
 
+          {/* Exclude approved toggle */}
+          <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+            <Checkbox
+              checked={excludeApproved}
+              onCheckedChange={(v) => setExcludeApproved(!!v)}
+            />
+            <span className="text-xs text-foreground">이미 승인된 사용자 제외</span>
+            {courseId && excludeApproved && approvedUserIds.length > 0 && (
+              <span className="text-[11px] text-muted-foreground">
+                · 이 강의 기승인 {approvedUserIds.length}명
+              </span>
+            )}
+          </label>
+
           {/* Preview */}
           <div className="flex items-center justify-between p-3 bg-accent/40 rounded-xl">
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">대상 인원</span>
+              {excludedCount > 0 && (
+                <span className="text-[11px] text-muted-foreground">(제외 {excludedCount}명)</span>
+              )}
             </div>
             <Badge variant="secondary" className="text-sm font-semibold">{targetUserIds.length}명</Badge>
           </div>
