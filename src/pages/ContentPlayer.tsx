@@ -320,6 +320,23 @@ const ContentPlayer = () => {
     }
   }, [videoProgress.autoCompleted]);
 
+  // 이어보기 다이얼로그: 플레이어 준비되고 저장된 위치가 있으면 한 번 표시
+  useEffect(() => {
+    if (!contentId) return;
+    if (!videoProgress.playerReady) return;
+    if (resumePromptedRef.current === contentId) return;
+    if (videoProgress.resumePosition > 0 && !currentProgress?.completed) {
+      resumePromptedRef.current = contentId;
+      setResumeDialogOpen(true);
+    }
+  }, [videoProgress.playerReady, videoProgress.resumePosition, currentProgress?.completed, contentId]);
+
+  // 콘텐츠 변경 시 다이얼로그 상태 리셋
+  useEffect(() => {
+    setResumeDialogOpen(false);
+  }, [contentId]);
+
+
   const videoIframeCallback = useCallback(
     (el: HTMLElement | null) => {
       if (!el || !currentContent || !isTrackableVideo) return;
