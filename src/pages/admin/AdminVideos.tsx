@@ -269,7 +269,18 @@ const AdminVideos = () => {
                         <Video className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{v.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium truncate">{v.title}</p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => copyUrl(v.video_url)}
+                            title={t("videoMgmt.copyUrl", "URL 복사")}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">{v.video_url}</p>
                       </div>
                     </div>
