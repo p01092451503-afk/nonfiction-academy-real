@@ -359,7 +359,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                 };
                 return code ? (
                   <span
-                    className={`h-11 w-11 shrink-0 rounded-md flex items-center justify-center text-xs font-bold tracking-wider shadow-sm ${styleMap[code]}`}
+                    className={`h-8 w-8 shrink-0 rounded-md flex items-center justify-center text-[10px] font-bold tracking-wider shadow-sm ${styleMap[code]}`}
                     aria-label={code}
                   >
                     {code}
