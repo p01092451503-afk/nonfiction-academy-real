@@ -291,8 +291,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   return (
     <div className="w-full">
       {/* Video player */}
-      <div className="relative bg-black overflow-hidden rounded-2xl">
-        <div className="aspect-video w-full">
+      <div className="relative bg-black overflow-hidden rounded-2xl mx-auto w-full max-h-[calc(100vh-220px)] aspect-video" style={{ maxWidth: "calc((100vh - 220px) * 16 / 9)" }}>
+        <div className="absolute inset-0">
           {isResolvingUrl ? (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
               {t("common.loading", "불러오는 중...")}
