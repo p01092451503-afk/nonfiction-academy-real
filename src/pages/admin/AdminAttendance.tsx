@@ -26,15 +26,29 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
   const isTeacher = role === "teacher";
   const isKo = !i18n.language?.startsWith("en");
 
-  // Fetch all profiles
+  // Learning Leader (teacher) scope: only their branch + child teams
+  const { scopeIds: leaderScopeIds, isLoading: scopeLoading } = useLeaderScope();
+
+  // Fetch profiles (scoped to leader's branch when teacher)
   const { data: profiles = [] } = useQuery({
-    queryKey: ["att-profiles"],
+    queryKey: ["att-profiles", isTeacher ? leaderScopeIds : "all"],
+    enabled: !isTeacher || (!scopeLoading && leaderScopeIds.length > 0),
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id, full_name, department, position");
+      let q = supabase.from("profiles").select("user_id, full_name, department, position, department_id");
+      if (isTeacher && leaderScopeIds.length > 0) {
+        q = q.in("department_id", leaderScopeIds);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
+
+  // Set of user_ids visible to current teacher (used to filter sessions/progress)
+  const scopedUserIds = useMemo(
+    () => (isTeacher ? new Set(profiles.map((p: any) => p.user_id)) : null),
+    [isTeacher, profiles]
+  );
 
   // Fetch sessions for the selected date
   const { data: sessions = [] } = useQuery({
