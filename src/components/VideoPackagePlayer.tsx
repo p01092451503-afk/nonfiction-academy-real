@@ -153,7 +153,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         return;
       }
       setPlaybackUrl(data.playUrl);
-      setResolvedPoster(data.thumbnailUrl || activeItem.thumbnail_url || null);
+      setResolvedPoster(sanitizeBunnyAssetUrl(data.thumbnailUrl) || sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
     })();
 
     return () => {
@@ -172,12 +172,18 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       hlsRef.current = null;
     }
 
+    setVideoLoadError(null);
     const url = playbackUrl;
     if (isHls(url)) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = url;
       } else if (Hls.isSupported()) {
         const hls = new Hls({ enableWorker: true });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) {
+            setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소를 불러오지 못했습니다."));
+          }
+        });
         hls.loadSource(url);
         hls.attachMedia(video);
         hlsRef.current = hls;
@@ -194,7 +200,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         hlsRef.current = null;
       }
     };
-  }, [activeItem?.id, playbackUrl]);
+  }, [activeItem?.id, playbackUrl, t]);
 
   const handleTimeUpdate = () => {
     const v = videoRef.current;
