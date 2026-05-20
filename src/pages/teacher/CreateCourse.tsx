@@ -503,14 +503,22 @@ const CreateCourse = () => {
             const base = buildDefaultLessonSlots().find((s) => s.language_code === lang)!;
             if (!existing) return base;
             const src: ContentSource =
-              existing.source === "package" || existing.content_type === "media_package"
-                ? "package"
-                : "mangoboard";
+              existing.source === "video_package" || existing.content_type === "video_package"
+                ? "video_package"
+                : existing.source === "package" || existing.content_type === "media_package"
+                  ? "package"
+                  : "mangoboard";
+            const ct: ContentType =
+              src === "video_package"
+                ? ("video_package" as ContentType)
+                : src === "package"
+                  ? ("media_package" as ContentType)
+                  : ("document" as ContentType);
             return {
               ...base,
               ...existing,
               source: src,
-              content_type: src === "package" ? ("media_package" as ContentType) : ("document" as ContentType),
+              content_type: ct,
               language_code: lang,
             } as ContentItem;
           });
