@@ -1230,11 +1230,14 @@
     "myAnnouncements": "我的公告",
     "updated": "已更新",
     "created": "公告已创建",
-    "deleted": "已删除"
+    "deleted": "已删除",
+    "scopedToBranch": "此公告仅对我所在小组的学员可见。"
   },
   "board": {
     "title": "公告板管理",
     "subtitle": "向学员分发资料并发布通知。",
+    "subtitleLeader": "仅向我所在小组的学员发布。",
+    "scopedToBranch": "此帖子仅对我所在小组的学员可见。",
     "studentTitle": "公告板",
     "studentSubtitle": "查看教学资料和通知。",
     "newPost": "新帖子",
