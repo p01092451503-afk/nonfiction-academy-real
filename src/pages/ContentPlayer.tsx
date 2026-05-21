@@ -918,7 +918,7 @@ const ContentPlayer = () => {
                     ) : isActive ? (
                       <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                         <Play className="h-2.5 w-2.5" aria-hidden="true" />
-                        {tItem("contentPlayer.nowPlaying", "재생 중")}
+                        Now Playing
                       </span>
                     ) : (
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
