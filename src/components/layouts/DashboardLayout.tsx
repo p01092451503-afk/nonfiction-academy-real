@@ -139,7 +139,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     { key: "dashboard", label: t("nav.dashboard"), href: "/student", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
     { key: "catalog", label: t("nav.courseCatalog"), href: "/catalog", icon: Compass, tourId: "nav-catalog" },
     { key: "myCourses", label: t("nav.myCourses"), href: "/dashboard/courses", icon: BookOpen, tourId: "nav-courses" },
-    { key: "myTracks", label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers },
+    ...(hasAssignedTracks ? [{ key: "myTracks", label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers } as NavItem] : []),
     { key: "assignments", label: t("nav.assignments"), href: "/dashboard/assignments", icon: ClipboardList, tourId: "nav-assignments" },
     { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
     { key: "announcements", label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
