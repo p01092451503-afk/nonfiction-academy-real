@@ -127,7 +127,7 @@ const Auth = () => {
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 rounded border-border text-foreground focus:ring-foreground/20" />
                 <span className="text-sm text-muted-foreground">{t("auth.rememberMe")}</span>
               </label>
-              <button type="button" onClick={() => { setShowForgotPassword(true); setResetEmail(email); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <button type="button" hidden onClick={() => { setShowForgotPassword(true); setResetEmail(email); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 {t("auth.forgotPassword")}
               </button>
             </div>
