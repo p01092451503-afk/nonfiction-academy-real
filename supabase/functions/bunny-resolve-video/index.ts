@@ -10,6 +10,20 @@ const extractCdnHost = (value: string, videoId: string) => {
   const host = match?.[1] ? cleanHost(match[1]) : null;
   return isConfigured(host) ? host : null;
 };
+const hostnameFromHeader = (value: string | null) => {
+  if (!value) return null;
+  try {
+    return cleanHost(new URL(value).hostname);
+  } catch {
+    return null;
+  }
+};
+const defaultAllowedReferrers = [
+  "32613697-36d8-44de-a44f-4b31fe45576b.lovableproject.com",
+  "id-preview--32613697-36d8-44de-a44f-4b31fe45576b.lovable.app",
+  "nonfiction-academy.lovable.app",
+  "nonfiction-academy.webheads.co.kr",
+];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -51,12 +65,30 @@ async function signProxyToken(authKey: string, videoId: string, cdnHostname: str
   return await signBunnyToken(authKey, `${videoId}:${cdnHostname}`, expires);
 }
 
+async function ensureAllowedReferrers(libraryId: string, apiKey: string | undefined, hostnames: Array<string | null>) {
+  if (!isConfigured(apiKey)) return;
+  const uniqueHosts = [...new Set(hostnames.filter((host): host is string => isConfigured(host)))] ;
+  await Promise.all(uniqueHosts.map(async (host) => {
+    await fetch(`https://api.bunny.net/videolibrary/${libraryId}/addAllowedReferrer`, {
+      method: "POST",
+      headers: { AccessKey: apiKey!, "Content-Type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ Hostname: host }),
+    }).catch(() => null);
+  }));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const LIBRARY_ID = Deno.env.get("BUNNY_STREAM_LIBRARY_ID")?.trim();
     if (!isConfigured(LIBRARY_ID)) return json({ error: "Bunny Stream library is not configured" }, 500);
+    const API_KEY = Deno.env.get("BUNNY_STREAM_API_KEY")?.trim();
+    await ensureAllowedReferrers(LIBRARY_ID!, API_KEY, [
+      hostnameFromHeader(req.headers.get("origin")),
+      hostnameFromHeader(req.headers.get("referer")),
+      ...defaultAllowedReferrers,
+    ]);
 
     const body = await req.json().catch(() => ({}));
     const videoId = typeof body.videoId === "string" && body.videoId.trim()
@@ -90,9 +122,9 @@ Deno.serve(async (req) => {
       cdnHostname = extractCdnHost(embedHtml, videoId);
     }
 
-    if (!cdnHostname && isConfigured(Deno.env.get("BUNNY_STREAM_API_KEY"))) {
+    if (!cdnHostname && isConfigured(API_KEY)) {
       const videoResponse = await fetch(`https://video.bunnycdn.com/library/${LIBRARY_ID}/videos/${videoId}`, {
-        headers: { AccessKey: Deno.env.get("BUNNY_STREAM_API_KEY")!.trim(), accept: "application/json" },
+        headers: { AccessKey: API_KEY!, accept: "application/json" },
       }).catch(() => null);
       const videoJson = videoResponse?.ok ? await videoResponse.json().catch(() => null) : null;
       cdnHostname = videoJson ? extractCdnHost(JSON.stringify(videoJson), videoId) : null;
