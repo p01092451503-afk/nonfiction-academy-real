@@ -106,8 +106,10 @@ const VideoFrame = ({ target, onMeasured }: VideoFrameProps) => {
         setError("signed URL 발급 실패");
         return;
       }
-      const sep = data.playUrl.includes("?") ? "&" : "?";
-      setPlayUrl(`${data.playUrl}${sep}preload=true&responsive=true`);
+      const resolvedUrl = data.proxyPlaylistUrl || data.playlistUrl || data.playUrl;
+      const sep = resolvedUrl.includes("?") ? "&" : "?";
+      const needsPlayerParams = /iframe\.mediadelivery\.net/i.test(resolvedUrl);
+      setPlayUrl(needsPlayerParams ? `${resolvedUrl}${sep}preload=true&responsive=true` : resolvedUrl);
     })();
     return () => { cancelled = true; };
   }, [target.url, target.provider]);
