@@ -156,7 +156,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소를 불러오지 못했습니다."));
         return;
       }
-      setPlaybackUrl(data.playUrl);
+      setPlaybackUrl(data.proxyPlaylistUrl || data.playlistUrl || data.playUrl);
       setResolvedPoster(sanitizeBunnyAssetUrl(data.thumbnailUrl) || sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
     })();
 
@@ -295,10 +295,9 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     <div className="w-full">
       {/* Video player */}
       <div
-        className="relative bg-black overflow-hidden rounded-2xl mx-auto w-full"
-        style={{ maxWidth: "calc((100vh - 240px) * 16 / 9)" }}
+        className="relative bg-black overflow-hidden rounded-2xl w-full"
       >
-        <div className="relative w-full aspect-video max-h-[calc(100vh-240px)]">
+        <div className="relative w-full aspect-video">
           {isResolvingUrl ? (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground bg-black">
               {t("common.loading", "불러오는 중...")}
@@ -339,7 +338,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               controls
               playsInline
               poster={resolvedPoster || undefined}
-              className="absolute inset-0 w-full h-full object-contain bg-black"
+              preload="metadata"
+              className="absolute inset-0 h-full w-full bg-black object-contain"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
