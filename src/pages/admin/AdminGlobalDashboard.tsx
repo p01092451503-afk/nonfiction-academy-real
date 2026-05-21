@@ -46,6 +46,34 @@ const flag = (cc: string | null) => {
   return String.fromCodePoint(...cc.toUpperCase().split("").map((c) => 127397 + c.charCodeAt(0)));
 };
 
+// Country code → display name
+const COUNTRY_NAMES: Record<string, { ko: string; en: string }> = {
+  KR: { ko: "대한민국", en: "Korea" },
+  JP: { ko: "일본", en: "Japan" },
+  US: { ko: "미국", en: "United States" },
+  HK: { ko: "홍콩", en: "Hong Kong" },
+  CN: { ko: "중국", en: "China" },
+  TW: { ko: "대만", en: "Taiwan" },
+  SG: { ko: "싱가포르", en: "Singapore" },
+  VN: { ko: "베트남", en: "Vietnam" },
+  TH: { ko: "태국", en: "Thailand" },
+  MY: { ko: "말레이시아", en: "Malaysia" },
+  ID: { ko: "인도네시아", en: "Indonesia" },
+  PH: { ko: "필리핀", en: "Philippines" },
+  GB: { ko: "영국", en: "United Kingdom" },
+  FR: { ko: "프랑스", en: "France" },
+  DE: { ko: "독일", en: "Germany" },
+};
+
+interface CountryGroup {
+  id: string;          // country code (e.g. "KR")
+  code: string;
+  country: string;
+  name: string;
+  name_en: string | null;
+  branches: Department[];
+}
+
 // Color scale based on completion rate (0-100)
 const heatColor = (pct: number): string => {
   if (pct >= 80) return "bg-emerald-500";
@@ -209,30 +237,31 @@ export default function AdminGlobalDashboard() {
     };
   };
 
-  // Country = top-level departments (parent_department_id is null) with a country code
-  const countries = useMemo(() => {
-    const list = departments.filter((d) => !d.parent_department_id);
-    const seen = new Map<string, Department>();
-    for (const d of list) {
-      const key = (d.country || d.code || d.id).toUpperCase();
-      if (!seen.has(key)) seen.set(key, d);
+  // Group all active branches by country code → 1 entry per country
+  const countries = useMemo<CountryGroup[]>(() => {
+    const map = new Map<string, CountryGroup>();
+    for (const d of departments) {
+      const cc = (d.country || "").toUpperCase();
+      if (!cc) continue;
+      if (!map.has(cc)) {
+        const localized = COUNTRY_NAMES[cc];
+        map.set(cc, {
+          id: cc,
+          code: cc,
+          country: cc,
+          name: localized?.ko || cc,
+          name_en: localized?.en || cc,
+          branches: [],
+        });
+      }
+      map.get(cc)!.branches.push(d);
     }
-    return Array.from(seen.values());
+    return Array.from(map.values()).sort((a, b) => b.branches.length - a.branches.length);
   }, [departments]);
 
-  // Get all department IDs that belong to a country (country dept + all descendants)
-  const getCountryDeptIds = (country: Department): Set<string> => {
-    const ids = new Set<string>([country.id]);
-    const queue = [country.id];
-    while (queue.length > 0) {
-      const parent = queue.shift()!;
-      for (const d of departments) {
-        if (d.parent_department_id === parent && !ids.has(d.id)) {
-          ids.add(d.id); queue.push(d.id);
-        }
-      }
-    }
-    return ids;
+  // Get all department IDs that belong to a country (every branch sharing the country code)
+  const getCountryDeptIds = (country: CountryGroup): Set<string> => {
+    return new Set(country.branches.map((b) => b.id));
   };
 
   // Per-user track completion: user is "completed" if all required courses have progress >= 100
@@ -268,13 +297,12 @@ export default function AdminGlobalDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countries, profiles, activeTracks, enrollments, trackRequiredCourseIds, userBestScoreMap, assessments]);
 
-  // Drill-down: entities under selected country
+  // Drill-down: every branch within the selected country
   const drilledEntities = useMemo(() => {
     if (!drillCountry) return [];
     const country = countries.find((c) => c.id === drillCountry);
     if (!country) return [];
-    const directChildren = departments.filter((d) => d.parent_department_id === country.id);
-    const entities = directChildren.length > 0 ? directChildren : [country];
+    const entities = country.branches;
 
     return entities.map((ent) => {
       const entUsers = profiles.filter((p) => p.department_id === ent.id);
@@ -314,8 +342,7 @@ export default function AdminGlobalDashboard() {
     ]);
     for (const cs of countryStats) {
       const country = cs.country;
-      const entities = departments.filter((d) => d.parent_department_id === country.id);
-      const list = entities.length > 0 ? entities : [country];
+      const list = country.branches;
       for (const ent of list) {
         const entUsers = profiles.filter((p) => p.department_id === ent.id);
         let comp = 0, poss = 0;
