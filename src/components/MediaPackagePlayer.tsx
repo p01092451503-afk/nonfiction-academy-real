@@ -241,11 +241,11 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const dragPct = (dragOffset / containerWidth) * 100;
 
   return (
-    <div className="w-full">
+    <div className="w-full px-3 sm:px-6 py-3 sm:py-4">
       {/* Media display – horizontal slider */}
       <div
         ref={containerRef}
-        className="relative overflow-hidden touch-pan-y"
+        className="relative overflow-hidden touch-pan-y rounded-2xl border border-border/60 bg-muted/30 shadow-sm"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
