@@ -11,7 +11,10 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "i18n:check": "node ./scripts/i18n-check-keys.mjs"
+    "i18n:check": "node ./scripts/i18n-check-keys.mjs",
+    "i18n:report": "node ./scripts/i18n-missing-report.mjs --md /mnt/documents/i18n-missing.md --json /mnt/documents/i18n-missing.json",
+    "i18n:sync": "node ./scripts/i18n-sync.mjs",
+    "i18n:sync:dry": "node ./scripts/i18n-sync.mjs --dry"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

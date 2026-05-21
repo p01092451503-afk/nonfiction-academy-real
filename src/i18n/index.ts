@@ -16,8 +16,24 @@ i18n
       ja: { translation: ja },
       'zh-CN': { translation: zhCN },
     },
-    fallbackLng: 'ko',
+    // KO를 모든 비KO 로케일의 폴백으로 사용 — 새 키가 EN/JA/ZH에 아직 없어도 한국어로라도 표시됨
+    fallbackLng: { 'en': ['ko'], 'ja': ['ko'], 'zh-CN': ['ko'], default: ['ko'] },
     supportedLngs: ['ko', 'en', 'ja', 'zh-CN'],
+    // 빈 문자열도 "값 없음"으로 보고 폴백을 타도록
+    returnEmptyString: false,
+    returnNull: false,
+    // 개발 모드에서 누락 키를 콘솔에 경고 — 새 키 추가 시 즉시 알림
+    saveMissing: import.meta.env?.DEV ?? false,
+    missingKeyHandler: (lngs, _ns, key, fallbackValue) => {
+      if (import.meta.env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[i18n] missing key "${key}" in [${(lngs || []).join(', ')}] — KO 폴백 사용. ` +
+          `다음 명령으로 자동 채우기: npm run i18n:sync`,
+          fallbackValue ? `(fallback: "${fallbackValue}")` : ''
+        );
+      }
+    },
     // Keep region codes intact (zh-CN must NOT be truncated to zh)
     load: 'currentOnly',
     nonExplicitSupportedLngs: false,
