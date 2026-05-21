@@ -328,7 +328,7 @@ const AdminVideoMobileCheck = () => {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout role="admin">
       <div className="space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
