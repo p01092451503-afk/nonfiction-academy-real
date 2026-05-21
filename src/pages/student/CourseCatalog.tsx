@@ -325,17 +325,20 @@ const CourseCatalog = () => {
           { onConflict: "user_id,course_id", ignoreDuplicates: true }
         );
       if (error) throw error;
+      return courseId;
     },
-    onSuccess: () => {
+    onSuccess: (courseId) => {
       queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
       queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
+      navigate(`/student/courses/${courseId}?view=learn`);
     },
-    onError: (e: any) => {
+    onError: (e: any, courseId) => {
       // Silently ignore duplicate-enrollment races — the user is already enrolled,
-      // so just refresh the cache and let the UI move them into the course.
+      // so just refresh the cache and move them into the course.
       if (e?.code === "23505" || /duplicate key/i.test(e?.message || "")) {
         queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
         queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
+        navigate(`/student/courses/${courseId}?view=learn`);
         return;
       }
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
