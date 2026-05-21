@@ -180,7 +180,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
   const formatTime = (d: string | null) => {
     if (!d) return "-";
-    return new Date(d).toLocaleTimeString(isKo ? "ko-KR" : "en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return new Date(d).toLocaleTimeString(i18n.language || "ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   };
 
   const formatMinutes = (m: number) => {
