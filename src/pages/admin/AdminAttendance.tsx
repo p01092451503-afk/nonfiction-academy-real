@@ -271,7 +271,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
             className="w-full sm:w-44 h-10 rounded-xl"
           />
           <Input
-            placeholder={isKo ? "이름 검색..." : "Search name..."}
+            placeholder={t("admin.searchNamePlaceholder")}
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
             className="w-full sm:w-56 h-10 rounded-xl"
