@@ -227,7 +227,7 @@ export function useVideoProgress({
         }
       }, 1000);
     },
-    [isCompleted, autoCompleted, saveProgress]
+    [isCompleted, autoCompleted, saveProgress, warnSeekBlocked]
   );
 
   // ─── DB save loop (every 10s) ───
