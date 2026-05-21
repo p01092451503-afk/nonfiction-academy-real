@@ -58,6 +58,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
