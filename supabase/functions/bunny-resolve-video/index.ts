@@ -20,6 +20,7 @@ const hostnameFromHeader = (value: string | null) => {
 };
 const defaultAllowedReferrers = [
   "32613697-36d8-44de-a44f-4b31fe45576b.lovableproject.com",
+  "32613697-36d8-44de-a44f-4b31fe45576b.lovableproject.com",
   "id-preview--32613697-36d8-44de-a44f-4b31fe45576b.lovable.app",
   "nonfiction-academy.lovable.app",
   "nonfiction-academy.webheads.co.kr",
@@ -69,11 +70,12 @@ async function ensureAllowedReferrers(libraryId: string, apiKey: string | undefi
   if (!isConfigured(apiKey)) return;
   const uniqueHosts = [...new Set(hostnames.filter((host): host is string => isConfigured(host)))] ;
   await Promise.all(uniqueHosts.map(async (host) => {
-    await fetch(`https://api.bunny.net/videolibrary/${libraryId}/addAllowedReferrer`, {
+    const res = await fetch(`https://api.bunny.net/videolibrary/${libraryId}/addAllowedReferrer`, {
       method: "POST",
       headers: { AccessKey: apiKey!, "Content-Type": "application/json", accept: "application/json" },
       body: JSON.stringify({ Hostname: host }),
     }).catch(() => null);
+    if (res && !res.ok) console.error(`Failed to add Bunny allowed referrer: ${host} (${res.status})`);
   }));
 }
 
