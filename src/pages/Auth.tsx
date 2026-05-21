@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import LanguageToggle from "@/components/LanguageToggle";
 import loginBg from "@/assets/login-bg.jpg";
+import nonfictionLogo from "@/assets/nonfiction-logo.png";
 
 // Preload the image as early as possible
 const preloadLink = document.createElement("link");
@@ -89,11 +90,11 @@ const Auth = () => {
         </div>
 
         <div className="w-full max-w-md space-y-10">
-          <div className="lg:hidden text-center">
-            <h1 className="font-display text-2xl tracking-wider text-foreground">NONFICTION</h1>
+          <div className="lg:hidden flex justify-center">
+            <img src={nonfictionLogo} alt="NONFICTION" className="h-7 w-auto" draggable={false} />
           </div>
           <div className="hidden lg:block">
-            <p className="tracking-[0.2em] uppercase font-serif text-[2.7rem] text-black">NONFICTION</p>
+            <img src={nonfictionLogo} alt="NONFICTION" className="h-12 w-auto" draggable={false} />
           </div>
 
           <div className="space-y-2">
