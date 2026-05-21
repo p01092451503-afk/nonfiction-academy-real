@@ -333,6 +333,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     if (!v) return;
     v.currentTime = resumePos;
     if (resumePos > maxWatchedRef.current) maxWatchedRef.current = resumePos;
+    lastTimeRef.current = resumePos;
     setResumePos(0);
     v.play().catch(() => {});
   };
