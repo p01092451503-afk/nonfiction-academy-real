@@ -52,7 +52,9 @@ const isBunnyProvider = (provider?: string | null) => provider?.toLowerCase() ==
 const getBunnyVideoId = (url: string) =>
   url.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[/?#]|$)/i)?.[1] || null;
 const toBunnyEmbedUrl = (url: string) =>
-  url.replace("iframe.mediadelivery.net/play/", "player.mediadelivery.net/embed/");
+  url
+    .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
+    .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
 const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
   const raw = url?.trim() || "";
   return raw && !hasPlaceholderHost(raw) ? raw : null;
