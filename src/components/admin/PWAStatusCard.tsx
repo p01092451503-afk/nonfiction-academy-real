@@ -41,8 +41,9 @@ const PWAStatusCard = () => {
   const [loading, setLoading] = useState(true);
   const [iosBannerStatus, setIosBannerStatus] = useState<string>("—");
 
-  const refresh = async () => {
+  const refresh = async (showToast = false) => {
     setLoading(true);
+    const loadingToast = showToast ? toast.loading("상태 새로고침 중...") : null;
     try {
       // standalone detection
       // @ts-ignore
