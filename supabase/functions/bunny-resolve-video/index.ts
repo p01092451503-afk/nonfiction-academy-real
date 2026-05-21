@@ -89,7 +89,7 @@ async function signCdnDirectoryUrl(url: string, authKey: string, expires: number
   const parameterData = entries.map(([key, value]) => `${key}=${value}`).join("&");
   const parameterDataUrl = entries.map(([key, value]) => `&${key}=${encodeURIComponent(value)}`).join("");
   const token = `HS256-${await hmacSha256Base64Url(authKey, dirPath + String(expires) + parameterData)}`;
-  return `${parsed.origin}/bcdn_token=${token}&expires=${expires}${parameterDataUrl}${parsed.pathname}`;
+  return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
 }
 
 async function signProxyToken(authKey: string, videoId: string, cdnHostname: string, expires: number) {
@@ -163,12 +163,21 @@ Deno.serve(async (req) => {
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
-    let playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
-      ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
-      : rawPlaylistUrl;
-    if (playlistUrl) {
-      const playlistCheck = await fetch(playlistUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).catch(() => null);
-      if (!playlistCheck?.ok) playlistUrl = null;
+    let playlistUrl: string | null = null;
+    if (rawPlaylistUrl) {
+      const playlistCandidates = isConfigured(cdnTokenAuthKey)
+        ? [
+            await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
+            await signCdnFileUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
+          ]
+        : [rawPlaylistUrl];
+      for (const candidate of playlistCandidates) {
+        const playlistCheck = await fetch(candidate, { headers: { "User-Agent": "Mozilla/5.0" } }).catch(() => null);
+        if (playlistCheck?.ok) {
+          playlistUrl = candidate;
+          break;
+        }
+      }
     }
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
     const proxyToken = playlistUrl && cdnHostname && isConfigured(cdnTokenAuthKey)

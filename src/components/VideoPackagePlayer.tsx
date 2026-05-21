@@ -533,7 +533,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
                   style={{ aspectRatio: "16 / 9" }}
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                   allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
+                  referrerPolicy="no-referrer"
                   tabIndex={-1}
                   title={activeItem?.title || t("course.video", "영상")}
                 />
