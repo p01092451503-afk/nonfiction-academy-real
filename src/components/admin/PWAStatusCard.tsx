@@ -248,7 +248,7 @@ const PWAStatusCard = () => {
         <div className="flex items-start gap-2 px-5 py-3 bg-muted/40 border-b-2 border-border/80">
           <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            현재 미리보기(iframe) 환경입니다. PWA Service Worker는 배포된 도메인(<span className="font-medium">nonfiction.webheads.co.kr</span>)에서만 동작합니다.
+            현재 미리보기(iframe) 환경입니다. PWA Service Worker는 배포된 도메인(<span className="font-medium">nonfiction-academy.webheads.co.kr</span> · <span className="font-medium">academy.biz-nonfiction.com</span>)에서만 동작합니다.
           </p>
         </div>
       )}
