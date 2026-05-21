@@ -265,10 +265,6 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     if (!v || !activeItem) return;
     const cur = v.currentTime;
     const dur = v.duration || 0;
-    // Track furthest watched position for seek-forward prevention
-    if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
-    // Track last natural playback position (used to block any drag-seek)
-    if (!seekGuardRef.current) lastTimeRef.current = cur;
     setProgress({ current: cur, duration: dur });
     // Save position every ~5s
     if (Math.floor(cur) % 5 === 0) {
@@ -286,24 +282,6 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     }
   };
 
-  const handleSeeking = () => {
-    const v = videoRef.current;
-    if (!v || !activeItem) return;
-    // Allow seeks freely after completion (re-watching)
-    if (completedItems.has(activeItem.id)) return;
-    if (seekGuardRef.current) return;
-    const target = v.currentTime;
-    // Block ANY manual seek (forward or backward) — pin to natural playback position
-    if (Math.abs(target - lastTimeRef.current) > SEEK_TOLERANCE) {
-      seekGuardRef.current = true;
-      try {
-        v.currentTime = lastTimeRef.current;
-      } catch {}
-      warnSeekBlocked();
-      setTimeout(() => { seekGuardRef.current = false; }, 50);
-    }
-  };
-
   const handleLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
@@ -314,11 +292,10 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = resumePos;
-    if (resumePos > maxWatchedRef.current) maxWatchedRef.current = resumePos;
-    lastTimeRef.current = resumePos;
     setResumePos(0);
     v.play().catch(() => {});
   };
+
 
   const handleEnded = () => {
     const v = videoRef.current;
