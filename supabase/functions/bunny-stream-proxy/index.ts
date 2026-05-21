@@ -13,6 +13,13 @@ async function sha256Base64Url(value: string) {
   return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
+async function md5Base64Url(value: string) {
+  const hash = await crypto.subtle.digest("MD5", new TextEncoder().encode(value));
+  let binary = "";
+  for (const byte of new Uint8Array(hash)) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
 async function hmacSha256Base64Url(secret: string, value: string) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -36,6 +43,12 @@ async function signBunnyToken(authKey: string, value: string, expires: number) {
 async function signCdnFileUrl(url: string, authKey: string, expires: number) {
   const parsed = new URL(url);
   const token = `HS256-${await hmacSha256Base64Url(authKey, parsed.pathname + String(expires))}`;
+  return `${parsed.origin}${parsed.pathname}?token=${token}&expires=${expires}`;
+}
+
+async function signBasicCdnFileUrl(url: string, authKey: string, expires: number) {
+  const parsed = new URL(url);
+  const token = await md5Base64Url(authKey + parsed.pathname + String(expires));
   return `${parsed.origin}${parsed.pathname}?token=${token}&expires=${expires}`;
 }
 
