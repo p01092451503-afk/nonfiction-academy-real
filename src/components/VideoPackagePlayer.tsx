@@ -20,6 +20,7 @@ interface VideoPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
   title?: string;
+  isAlreadyCompleted?: boolean;
 }
 
 interface VPItem {
