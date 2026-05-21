@@ -1,4 +1,4 @@
-import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound } from "lucide-react";
+import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import StaffBulkUploadDialog from "@/components/admin/StaffBulkUploadDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
