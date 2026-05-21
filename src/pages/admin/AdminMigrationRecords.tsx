@@ -517,6 +517,9 @@ export default function AdminMigrationRecords() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={downloadSampleXlsx} className="gap-1.5">
+              <Download className="h-4 w-4" /> 엑셀 샘플
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)} className="gap-1.5">
               <Upload className="h-4 w-4" /> CSV 업로드
             </Button>
