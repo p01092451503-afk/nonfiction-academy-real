@@ -46,6 +46,7 @@ import { useInvalidateI18nQueriesOnLangChange } from "@/lib/i18nQueryCache";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
+  video_package: Video, media_package: Images,
 };
 
 type ContentFormData = {
