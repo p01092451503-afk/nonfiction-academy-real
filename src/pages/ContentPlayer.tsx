@@ -744,7 +744,7 @@ const ContentPlayer = () => {
                       {isCompleted ? (
                         <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                           <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
-                          {tItem("contentPlayer.completed", "완료")}
+                          Completed
                         </span>
                       ) : isActive ? (
                         <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
@@ -913,7 +913,7 @@ const ContentPlayer = () => {
                     {isCompleted ? (
                       <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                         <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
-                        {tItem("contentPlayer.completed", "완료")}
+                        Completed
                       </span>
                     ) : isActive ? (
                       <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
