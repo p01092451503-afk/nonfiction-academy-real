@@ -110,6 +110,23 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     checkNewBoard();
   }, []);
 
+  // Show "내 학습 트랙" only when the student has at least one assigned track
+  useEffect(() => {
+    if (activeRole !== "student" || !profile?.user_id) {
+      setHasAssignedTracks(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("track_enrollments")
+        .select("track_id", { count: "exact", head: true })
+        .eq("user_id", profile.user_id);
+      if (!cancelled) setHasAssignedTracks((count ?? 0) > 0);
+    })();
+    return () => { cancelled = true; };
+  }, [activeRole, profile?.user_id]);
+
   // Preload user avatar for instant rendering
   useEffect(() => {
     if (profile?.avatar_url) {
