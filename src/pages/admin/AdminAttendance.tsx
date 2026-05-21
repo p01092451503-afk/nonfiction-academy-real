@@ -208,12 +208,12 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
   const exportCsv = () => {
     const header = [
-      isKo ? "이름" : "Name",
-      isKo ? "부서" : "Department",
-      isKo ? "로그인" : "Login",
-      isKo ? "로그아웃" : "Logout",
-      isKo ? "학습시간" : "Learning Time",
-      isKo ? "완료 수" : "Completions",
+      t("admin.attName"),
+      t("admin.attDepartment"),
+      t("admin.attLogin"),
+      t("admin.attLogout"),
+      t("admin.attLearningTime"),
+      t("admin.attCompletionsCount"),
     ];
     const rows = filteredStats.map((s) => {
       const p = profileMap.get(s.userId);
