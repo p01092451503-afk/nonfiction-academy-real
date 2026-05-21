@@ -23,6 +23,8 @@ const ROLE_PRIORITY = ["super_admin", "admin", "teacher", "student"] as const;
 const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [sortKey, setSortKey] = useState<"name" | "dept" | "role" | "position" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
