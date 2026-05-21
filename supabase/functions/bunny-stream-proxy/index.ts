@@ -68,7 +68,6 @@ Deno.serve(async (req) => {
     const upstreamExpires = Math.min(expires, Math.floor(Date.now() / 1000) + 60 * 10);
     const upstreamCandidates = [
       await signCdnFileUrl(`https://${cdnHostname}/${relativePath}`, authKey!, upstreamExpires),
-      await signBasicCdnFileUrl(`https://${cdnHostname}/${relativePath}`, authKey!, upstreamExpires),
       `https://${cdnHostname}/${relativePath}`,
     ];
     let upstream: Response | null = null;
