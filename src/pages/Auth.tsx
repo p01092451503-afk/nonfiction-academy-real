@@ -89,7 +89,7 @@ const Auth = () => {
           <LanguageToggle />
         </div>
 
-        <div className="w-full max-w-md space-y-10">
+        <div className="w-full max-w-md space-y-10 mx-0 my-[1500px]">
           <div className="lg:hidden flex justify-center mb-[60rem]">
             <img src={nonfictionLogo} alt="NONFICTION" className="h-5 w-auto" draggable={false} />
           </div>
