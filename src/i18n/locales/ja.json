@@ -1230,11 +1230,14 @@
     "myAnnouncements": "自分のお知らせ",
     "updated": "更新完了",
     "created": "お知らせを登録しました",
-    "deleted": "削除完了"
+    "deleted": "削除完了",
+    "scopedToBranch": "このお知らせは自分のグループの受講生にのみ表示されます。"
   },
   "board": {
     "title": "掲示板管理",
     "subtitle": "受講生に資料を配布し、案内事項を投稿します。",
+    "subtitleLeader": "自分のグループの受講生にのみ掲載されます。",
+    "scopedToBranch": "この投稿は自分のグループの受講生にのみ表示されます。",
     "studentTitle": "掲示板",
     "studentSubtitle": "教育資料と案内事項を確認してください。",
     "newPost": "新しい投稿",
