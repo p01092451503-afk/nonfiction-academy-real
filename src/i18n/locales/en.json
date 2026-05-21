@@ -1231,11 +1231,14 @@
     "myAnnouncements": "My Announcements",
     "updated": "Updated",
     "created": "Announcement created",
-    "deleted": "Deleted"
+    "deleted": "Deleted",
+    "scopedToBranch": "This announcement is only visible to students in my group."
   },
   "board": {
     "title": "Board Management",
     "subtitle": "Distribute materials and post announcements for students.",
+    "subtitleLeader": "Posts are only visible to students in my group.",
+    "scopedToBranch": "This post is only visible to students in my group.",
     "studentTitle": "Board",
     "studentSubtitle": "Check educational materials and announcements.",
     "newPost": "New Post",
