@@ -161,7 +161,7 @@ const AppRoutes = () => {
 
           {/* Course Detail & Content Player (role-based) */}
           <Route path="/admin/courses/:courseId" element={<AdminRoute><CourseDetail /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+          <Route path="/teacher/courses/:courseId" element={<TeacherRoute><CourseDetail /></TeacherRoute>} />
           <Route path="/student/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
           <Route path="/admin/courses/:courseId/content/:contentId" element={<AdminRoute><ContentPlayer /></AdminRoute>} />
           <Route path="/teacher/courses/:courseId/content/:contentId" element={<ProtectedRoute><ContentPlayer /></ProtectedRoute>} />
