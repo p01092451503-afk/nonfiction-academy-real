@@ -1117,7 +1117,12 @@ const CourseDetail = () => {
                         </div>
                       </div>
 
-                      {isAccessible && (
+                      {isCompleted ? (
+                        <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
+                          <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
+                          {t("contentPlayer.completed", "완료")}
+                        </span>
+                      ) : isAccessible && (
                         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" aria-hidden="true" />
                       )}
                     </button>
