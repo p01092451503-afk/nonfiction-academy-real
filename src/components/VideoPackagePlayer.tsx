@@ -293,17 +293,52 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
 
   // Bunny iframe progress tracking via Player.js postMessage protocol
   useEffect(() => {
-    if (!activeItem || !playbackUrl || !isBunnyIframe(playbackUrl)) return;
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!activeItem || !playbackUrl || !isBunnyIframe(playbackUrl) || !iframe) return;
 
     let cancelled = false;
     let player: any = null;
     let durationCache = 0;
     let lastSavedSec = -1;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     let PlayerCtor: any = null;
     let attachTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const updateProgress = (curRaw: number, durRaw?: number) => {
+      if (cancelled) return;
+      const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
+      const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
+      if (dur > 0) durationCache = dur;
+      setProgress({ current: cur, duration: dur });
+      const sec = Math.floor(cur);
+      if (sec > 0 && sec !== lastSavedSec && sec % 5 === 0) {
+        lastSavedSec = sec;
+        try {
+          localStorage.setItem(STORAGE_KEY(contentId, activeItem.id), String(cur));
+        } catch {}
+      }
+      if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
+        setCompletedItems((prev) => {
+          const next = new Set(prev);
+          next.add(activeItem.id);
+          return next;
+        });
+      }
+    };
+
+    const pollBunnyProgress = () => {
+      if (!player) return;
+      try {
+        player.getCurrentTime((cur: number) => {
+          if (durationCache > 0) {
+            updateProgress(cur, durationCache);
+            return;
+          }
+          player.getDuration((dur: number) => updateProgress(cur, dur));
+        });
+      } catch {}
+    };
 
     const attach = async () => {
       try {
@@ -319,26 +354,11 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               setProgress((p) => ({ current: p.current, duration: d }));
             }
           });
+          pollBunnyProgress();
+          pollTimer = setInterval(pollBunnyProgress, 1000);
         });
         player.on("timeupdate", (data: { seconds: number; duration: number }) => {
-          const cur = data?.seconds ?? 0;
-          const dur = data?.duration ?? durationCache ?? 0;
-          if (dur > 0) durationCache = dur;
-          setProgress({ current: cur, duration: dur });
-          const sec = Math.floor(cur);
-          if (sec !== lastSavedSec && sec % 5 === 0) {
-            lastSavedSec = sec;
-            try {
-              localStorage.setItem(STORAGE_KEY(contentId, activeItem.id), String(cur));
-            } catch {}
-          }
-          if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
-            setCompletedItems((prev) => {
-              const next = new Set(prev);
-              next.add(activeItem.id);
-              return next;
-            });
-          }
+          updateProgress(data?.seconds ?? 0, data?.duration ?? durationCache);
         });
         player.on("ended", () => {
           setCompletedItems((prev) => {
@@ -365,13 +385,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     return () => {
       cancelled = true;
       if (attachTimer) clearTimeout(attachTimer);
+      if (pollTimer) clearInterval(pollTimer);
       try {
         player?.off?.("timeupdate");
         player?.off?.("ended");
         player?.off?.("ready");
       } catch {}
     };
-  }, [activeItem?.id, playbackUrl, contentId, items.length, activeIdx, completedItems]);
+  }, [activeItem?.id, playbackUrl, iframeInstanceKey, contentId, items.length, activeIdx, completedItems]);
 
   if (isLoading) {
     return (
