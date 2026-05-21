@@ -62,11 +62,14 @@ const TodayOperationsCard = () => {
   return (
     <div className="stat-card !p-4 sm:!p-5 space-y-3">
       <h3 className="text-sm font-semibold text-foreground">{t("stats.todayOps")}</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
         {items.map((item) => (
           <div key={item.label} className="p-2.5 rounded-lg border border-border min-w-0">
-            <p className="text-[10px] text-muted-foreground truncate">{item.label}</p>
+            <p className="text-[10px] text-muted-foreground truncate" title={item.hint || item.label}>{item.label}</p>
             <p className={`text-xl font-bold mt-0.5 tabular-nums ${item.color}`}>{item.value}</p>
+            {item.hint && (
+              <p className="text-[9px] text-muted-foreground/70 truncate mt-0.5">{item.hint}</p>
+            )}
             {item.trend.length > 1 && (
               <div className="mt-1 h-5">
                 <Sparkline data={item.trend} color={item.chart} height={20} showLastDot={false} strokeWidth={1.25} />
