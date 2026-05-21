@@ -522,10 +522,11 @@ const ContentPlayer = () => {
         </button>
         <Badge
           variant="secondary"
-          className="text-sm font-semibold px-3 py-1 rounded-full truncate max-w-[40%] sm:max-w-[50%]"
+          className="text-sm font-semibold px-3 py-1 rounded-full truncate flex-1 min-w-0 block"
         >
           {getCourseTitle()}
         </Badge>
+
         <div className="flex items-center gap-2 ml-auto shrink-0">
           <button
             onClick={() => {
