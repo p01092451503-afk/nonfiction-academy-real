@@ -194,14 +194,17 @@ const CourseComments = ({ courseId }: Props) => {
         childMap.set(c.parent_id, arr);
       }
     });
-    // 정렬: 내 댓글을 최상단(최신순) → 나머지는 최신순
-    const sortedTop = [...top].sort((a, b) => {
-      const aMine = user && a.user_id === user.id ? 1 : 0;
-      const bMine = user && b.user_id === user.id ? 1 : 0;
-      if (aMine !== bMine) return bMine - aMine;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-    return sortedTop.map((p) => ({ ...p, replies: childMap.get(p.id) || [] }));
+    // 정렬: 작성 시간 오름차순(오래된 → 최신). 대댓글은 부모 아래에 그대로 노출되며,
+    // 새 댓글/대댓글이 무조건 상단에 올라가지 않도록 한다.
+    const sortedTop = [...top].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    return sortedTop.map((p) => ({
+      ...p,
+      replies: (childMap.get(p.id) || []).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ),
+    }));
   }, [comments, user]);
 
   const totalCount = comments.filter((c) => !c.is_deleted).length;
