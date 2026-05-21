@@ -131,18 +131,23 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     completedRef.current = false;
   }, [contentId, lang]);
 
-  // Once content was completed previously, mark all items as completed permanently
-  // (replay mode — keep showing "완료" and skip seek-forward restriction)
+  // Hydrate per-item completion from localStorage (permanent "완료" badge across replays)
+  // and merge with content-level isAlreadyCompleted flag.
   useEffect(() => {
-    if (isAlreadyCompleted && items.length > 0) {
-      setCompletedItems((prev) => {
-        if (prev.size >= items.length && items.every((it) => prev.has(it.id))) return prev;
-        const next = new Set(prev);
-        items.forEach((it) => next.add(it.id));
-        return next;
+    if (items.length === 0) return;
+    setCompletedItems((prev) => {
+      const next = new Set(prev);
+      items.forEach((it) => {
+        try {
+          if (localStorage.getItem(DONE_KEY(contentId, it.id)) === "1") next.add(it.id);
+        } catch {}
+        if (isAlreadyCompleted) next.add(it.id);
       });
-    }
-  }, [isAlreadyCompleted, items]);
+      if (next.size === prev.size && items.every((it) => prev.has(it.id) === next.has(it.id))) return prev;
+      return next;
+    });
+  }, [isAlreadyCompleted, items, contentId]);
+
 
   const activeItem = items[activeIdx];
 
