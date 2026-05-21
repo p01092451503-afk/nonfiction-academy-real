@@ -575,52 +575,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
           )}
         </div>
 
-        {/* Progress strip — matches single-video player */}
-        <div className="px-4 py-2.5 bg-foreground/90 text-background flex items-center gap-3 text-xs flex-wrap">
-          <span className="shrink-0 font-medium">
-            {t("contentPlayer.watchProgress", "시청 진행률")}
-          </span>
-          <Progress
-            value={pct}
-            className="h-1.5 flex-1 min-w-[80px] bg-background/20"
-            aria-label={t("contentPlayer.watchProgress", "시청 진행률")}
-          />
-          <span
-            className="font-medium shrink-0 tabular-nums"
-            aria-live="polite"
-          >
-
-            {progress.duration > 0
-              ? `${formatTime(progress.current)} / ${formatTime(progress.duration)}`
-              : `${Math.round(pct)}%`}
-          </span>
-          {resumePos > 0 && !isItemComplete && (
-            <button
-              type="button"
-              onClick={() => {
-                if (playbackUrl && isBunnyIframe(playbackUrl)) {
-                  setIframeStartTime(resumePos);
-                  setResumePos(0);
-                } else {
-                  handleResume();
-                }
-              }}
-              className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-accent transition-colors"
-            >
-              <RotateCcw className="h-3 w-3" />
-              {t("contentPlayer.resumeFrom", {
-                time: formatTime(resumePos),
-                defaultValue: `${formatTime(resumePos)}부터 이어보기`,
-              })}
-            </button>
-          )}
-          {isItemComplete && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 shrink-0">
-              <CheckCircle2 className="h-3 w-3" />
-              {t("videoPackage.itemComplete", "시청 완료")}
-            </span>
-          )}
-        </div>
+        {/* Progress strip hidden — Bunny player exposes its own controls */}
 
       </div>
 
