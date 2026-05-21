@@ -331,20 +331,20 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-secondary/30">
-                  <TableHead className="text-xs">{isKo ? "이름" : "Name"}</TableHead>
-                  <TableHead className="text-xs">{isKo ? "부서" : "Department"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "로그인" : "Login"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "로그아웃" : "Logout"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "상태" : "Status"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "학습시간" : "Learning Time"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "학습 완료 수" : "Completions"}</TableHead>
+                  <TableHead className="text-xs">{t("admin.attName")}</TableHead>
+                  <TableHead className="text-xs">{t("admin.attDepartment")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attLogin")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attLogout")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attStatus")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attLearningTime")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attCompletionsCount")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStats.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                      {isKo ? "해당 날짜에 기록이 없습니다." : "No records for this date."}
+                      {t("admin.noRecordsForDate")}
                     </TableCell>
                   </TableRow>
                 ) : (
