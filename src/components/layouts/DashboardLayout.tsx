@@ -57,6 +57,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
   });
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
   const [hasNewBoardPost, setHasNewBoardPost] = useState(false);
+  const [hasAssignedTracks, setHasAssignedTracks] = useState(false);
   const { profile, signOut } = useUser();
   const { primaryRole } = useUserRole();
   const { t, i18n } = useTranslation();
@@ -109,6 +110,23 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     checkNewBoard();
   }, []);
 
+  // Show "내 학습 트랙" only when the student has at least one assigned track
+  useEffect(() => {
+    if (activeRole !== "student" || !profile?.user_id) {
+      setHasAssignedTracks(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("track_enrollments")
+        .select("track_id", { count: "exact", head: true })
+        .eq("user_id", profile.user_id);
+      if (!cancelled) setHasAssignedTracks((count ?? 0) > 0);
+    })();
+    return () => { cancelled = true; };
+  }, [activeRole, profile?.user_id]);
+
   // Preload user avatar for instant rendering
   useEffect(() => {
     if (profile?.avatar_url) {
@@ -121,7 +139,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     { key: "dashboard", label: t("nav.dashboard"), href: "/student", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
     { key: "catalog", label: t("nav.courseCatalog"), href: "/catalog", icon: Compass, tourId: "nav-catalog" },
     { key: "myCourses", label: t("nav.myCourses"), href: "/dashboard/courses", icon: BookOpen, tourId: "nav-courses" },
-    { key: "myTracks", label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers },
+    ...(hasAssignedTracks ? [{ key: "myTracks", label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers } as NavItem] : []),
     { key: "assignments", label: t("nav.assignments"), href: "/dashboard/assignments", icon: ClipboardList, tourId: "nav-assignments" },
     { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
     { key: "announcements", label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
