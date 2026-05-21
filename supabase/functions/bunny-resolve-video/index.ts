@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
       const token = await signBunnyToken(tokenAuthKey!, videoId, expires);
       embedUrl = `${basePlayer}?token=${token}&expires=${expires}`;
     }
+    const playerUrl = embedUrl.replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/");
 
     if (!cdnHostname) {
       const embedResponse = await fetch(embedUrl).catch(() => null);
@@ -112,13 +113,13 @@ Deno.serve(async (req) => {
     // Current Bunny settings use player view token authentication while direct
     // file access is blocked. In this setup the reliable playback URL is the
     // signed Bunny /play iframe; /embed returns a 200 page whose content is 403.
-    const playUrl = embedUrl;
+    const playUrl = playerUrl;
 
     return json({
       videoId,
       cdnHostname,
       playUrl,
-      embedUrl,
+      embedUrl: playerUrl,
       playlistUrl,
       proxyPlaylistUrl,
       thumbnailUrl,
