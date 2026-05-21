@@ -206,7 +206,7 @@ const LoginErrorDialog = ({
     too_many: "auth.loginFailedTooMany",
     generic: "auth.loginFailedGeneric",
   } as const;
-  const showForgot = errorType === "invalid";
+  const showForgot = false;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 animate-in fade-in" onClick={onClose}>
       <div className="bg-background rounded-2xl p-6 sm:p-8 w-full max-w-md space-y-5 shadow-xl animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
