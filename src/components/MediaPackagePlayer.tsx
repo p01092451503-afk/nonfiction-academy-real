@@ -1,11 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+
+const STORAGE_KEY = (cid: string) => `mp-progress:${cid}`;
+type StoredProgress = { index: number; visited: number[] };
+
+const loadProgress = (cid: string): StoredProgress | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(cid));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.index !== "number" || !Array.isArray(parsed?.visited)) return null;
+    return parsed as StoredProgress;
+  } catch {
+    return null;
+  }
+};
+
 
 interface MediaPackagePlayerProps {
   contentId: string;
@@ -27,6 +44,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
+  const [resumeIndex, setResumeIndex] = useState<number | null>(null);
+  const restoredRef = useRef(false);
+
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [zoomUrl, setZoomUrl] = useState<string | null>(null);
@@ -62,11 +82,32 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     enabled: !!contentId,
   });
 
+  // Reset state when content changes
   useEffect(() => {
     setIndex(0);
     setVisited(new Set([0]));
+    setResumeIndex(null);
     completedRef.current = false;
+    restoredRef.current = false;
   }, [contentId]);
+
+  // Restore saved progress once items are loaded
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (!contentId || items.length === 0) return;
+    restoredRef.current = true;
+    const saved = loadProgress(contentId);
+    if (!saved) return;
+    const validVisited = saved.visited.filter((n) => n >= 0 && n < items.length);
+    if (validVisited.length > 0) {
+      setVisited(new Set([0, ...validVisited]));
+    }
+    const savedIdx = Math.min(Math.max(0, saved.index), items.length - 1);
+    // Only suggest resume if not already completed and not at start
+    if (savedIdx > 0 && validVisited.length < items.length) {
+      setResumeIndex(savedIdx);
+    }
+  }, [contentId, items.length]);
 
   useEffect(() => {
     setVisited((prev) => {
@@ -80,6 +121,17 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     setInlinePan({ x: 0, y: 0 });
   }, [index]);
 
+  // Persist progress
+  useEffect(() => {
+    if (!contentId || items.length === 0) return;
+    try {
+      const payload: StoredProgress = { index, visited: Array.from(visited) };
+      localStorage.setItem(STORAGE_KEY(contentId), JSON.stringify(payload));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [contentId, index, visited, items.length]);
+
   useEffect(() => {
     if (
       items.length > 0 &&
@@ -90,6 +142,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
       onComplete?.();
     }
   }, [visited, items.length, onComplete]);
+
 
   // Keyboard navigation
   useEffect(() => {
@@ -263,6 +316,36 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         )}
       </div>
 
+      {/* Progress strip — visited slides / total + percentage */}
+      {items.length > 0 && (
+        <div className="mt-3 flex items-center gap-3 rounded-xl bg-foreground/90 text-background px-4 py-2.5 text-xs flex-wrap">
+          <span className="shrink-0 font-medium">
+            {t("contentPlayer.watchProgress", "시청 진행률")}
+          </span>
+          <Progress
+            value={(visited.size / items.length) * 100}
+            className="h-1.5 flex-1 min-w-[80px] bg-background/20"
+            aria-label={t("contentPlayer.watchProgress", "시청 진행률")}
+          />
+          <span className="font-medium shrink-0 tabular-nums" aria-live="polite">
+            {visited.size} / {items.length} ({Math.round((visited.size / items.length) * 100)}%)
+          </span>
+          {resumeIndex !== null && resumeIndex !== index && (
+            <button
+              type="button"
+              onClick={() => {
+                setIndex(resumeIndex);
+                setResumeIndex(null);
+              }}
+              className="inline-flex items-center gap-1 rounded-full bg-background text-foreground px-3 py-1 text-[11px] font-semibold shadow-sm hover:bg-background/90 transition-colors"
+            >
+              <Play className="h-3 w-3" aria-hidden="true" />
+              {t("contentPlayer.resume", "이어보기")} ({resumeIndex + 1})
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Step dots – right below image */}
       {items.length > 1 && (
         <div className="mt-2 flex items-center justify-center gap-1.5">
@@ -274,6 +357,8 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
               className={`h-2 rounded-full transition-all ${
                 i === index
                   ? "w-6 bg-primary"
+                  : visited.has(i)
+                  ? "w-2 bg-primary/40 hover:bg-primary/60"
                   : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
               }`}
               aria-label={`슬라이드 ${i + 1}로 이동`}
@@ -281,6 +366,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           ))}
         </div>
       )}
+
 
       {/* Caption */}
       {current.caption && (
