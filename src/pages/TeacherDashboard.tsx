@@ -27,12 +27,18 @@ const TeacherDashboard = () => {
       (branch.code ? ` (${branch.code})` : "")
     : "";
 
+  const lang = normalizeLang(i18n.language);
+
   const { data: courses = [] } = useQuery({
-    queryKey: ["teacher-dash-courses", user?.id],
+    queryKey: ["teacher-dash-courses", user?.id, lang],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("*").eq("instructor_id", user!.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*, course_i18n(language_code, title, description)")
+        .eq("instructor_id", user!.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data ?? []).map((c: any) => localizeCourse(c, lang));
     },
     enabled: !!user?.id,
   });
