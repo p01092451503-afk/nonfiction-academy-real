@@ -303,6 +303,185 @@ export default function AdminMigrationRecords() {
     return { rows, assigned: assigned.length, completed, rate };
   }, [selectedEmp, completions, courseMap]);
 
+  // Reset edit state on selection change
+  useEffect(() => { setEditStatusMap({}); }, [selectedEmp?.employee_id]);
+
+  const refetchAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["mig-employees"] });
+    queryClient.invalidateQueries({ queryKey: ["mig-completions"] });
+  };
+
+  // === Add Employee ===
+  const handleAddEmployee = async () => {
+    if (!newEmp.name.trim() || !newEmp.email.trim() || !newEmp.country) {
+      toast({ title: "필수 항목 누락", description: "이름·이메일·국가는 필수입니다.", variant: "destructive" });
+      return;
+    }
+    setAddSaving(true);
+    try {
+      const { data: maxRow, error: maxErr } = await supabase
+        .from("migration_employees")
+        .select("employee_id")
+        .order("employee_id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (maxErr) throw maxErr;
+      const nextId = (maxRow?.employee_id ?? 0) + 1;
+      const { error } = await supabase.from("migration_employees").insert({
+        employee_id: nextId,
+        country: newEmp.country,
+        store: newEmp.store || null,
+        name: newEmp.name.trim(),
+        email: newEmp.email.trim().toLowerCase(),
+        position: newEmp.position || null,
+        start_date: newEmp.start_date || null,
+      });
+      if (error) throw error;
+      toast({ title: "직원 추가 완료", description: `#${nextId} ${newEmp.name}` });
+      setAddOpen(false);
+      setNewEmp({ country: "KR", store: "", name: "", email: "", position: "Staff", start_date: "" });
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "추가 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
+  // === Save inline status edits ===
+  const handleSaveStatusEdits = async () => {
+    if (!selectedEmp || Object.keys(editStatusMap).length === 0) return;
+    setSaving(true);
+    try {
+      const rows = Object.entries(editStatusMap).map(([course_id, status]) => ({
+        employee_id: selectedEmp.employee_id,
+        course_id: Number(course_id),
+        status,
+      }));
+      const { error } = await supabase
+        .from("migration_completions")
+        .upsert(rows, { onConflict: "employee_id,course_id" });
+      if (error) throw error;
+      toast({ title: "저장 완료", description: `${rows.length}건 업데이트` });
+      setEditStatusMap({});
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "저장 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // === CSV Upload ===
+  const handleEmployeesCsv = async (file: File) => {
+    setUploading(true);
+    setUploadResult(null);
+    try {
+      const text = await file.text();
+      const rows = parseCSV(text);
+      if (rows.length === 0) throw new Error("CSV에 데이터가 없습니다");
+
+      // existing employee_ids → know add vs update
+      const { data: existing } = await supabase.from("migration_employees").select("employee_id");
+      const existingIds = new Set((existing || []).map((e: any) => e.employee_id));
+      const { data: maxRow } = await supabase
+        .from("migration_employees")
+        .select("employee_id")
+        .order("employee_id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      let nextId = (maxRow?.employee_id ?? 0) + 1;
+
+      const errors: string[] = [];
+      const payload: any[] = [];
+      let added = 0, updated = 0;
+      rows.forEach((r, idx) => {
+        const name = r.name?.trim();
+        const email = r.email?.trim().toLowerCase();
+        const country = (r.country || "").toUpperCase();
+        if (!name || !email || !["KR", "JP", "HK", "US"].includes(country)) {
+          errors.push(`${idx + 2}행: 필수값 누락 (name/email/country)`);
+          return;
+        }
+        let employee_id: number;
+        if (r.employee_id && /^\d+$/.test(r.employee_id)) {
+          employee_id = Number(r.employee_id);
+          if (existingIds.has(employee_id)) updated++; else added++;
+        } else {
+          employee_id = nextId++;
+          added++;
+        }
+        payload.push({
+          employee_id,
+          country,
+          store: r.store || null,
+          name,
+          email,
+          position: r.position || null,
+          start_date: r.start_date || null,
+        });
+      });
+
+      if (payload.length > 0) {
+        const { error } = await supabase
+          .from("migration_employees")
+          .upsert(payload, { onConflict: "employee_id" });
+        if (error) throw error;
+      }
+      setUploadResult({ type: "직원", added, updated, errors });
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "업로드 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCompletionsCsv = async (file: File) => {
+    setUploading(true);
+    setUploadResult(null);
+    try {
+      const text = await file.text();
+      const rows = parseCSV(text);
+      if (rows.length === 0) throw new Error("CSV에 데이터가 없습니다");
+
+      const { data: existing } = await supabase
+        .from("migration_completions")
+        .select("employee_id,course_id");
+      const existingKeys = new Set((existing || []).map((e: any) => `${e.employee_id}-${e.course_id}`));
+
+      const errors: string[] = [];
+      const payload: any[] = [];
+      let added = 0, updated = 0;
+      rows.forEach((r, idx) => {
+        const employee_id = Number(r.employee_id);
+        const course_id = Number(r.course_id);
+        const status = r.status as CompletionStatus;
+        if (!employee_id || !course_id || !STATUS_KEYS.includes(status)) {
+          errors.push(`${idx + 2}행: 잘못된 값 (employee_id/course_id/status)`);
+          return;
+        }
+        const key = `${employee_id}-${course_id}`;
+        if (existingKeys.has(key)) updated++; else added++;
+        payload.push({ employee_id, course_id, status });
+      });
+
+      if (payload.length > 0) {
+        const { error } = await supabase
+          .from("migration_completions")
+          .upsert(payload, { onConflict: "employee_id,course_id" });
+        if (error) throw error;
+      }
+      setUploadResult({ type: "수료 이력", added, updated, errors });
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "업로드 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+
   const exportExcel = () => {
     const data = sortedRows.map((r) => ({
       이름: r.employee.name,
