@@ -16,6 +16,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import NotificationBell from "@/components/NotificationBell";
 import GuidedTourButton from "@/components/GuidedTourButton";
+import nonfictionLogo from "@/assets/nonfiction-logo.png";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
