@@ -102,8 +102,28 @@ export default function AdminMigrationRecords() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortAsc, setSortAsc] = useState(true);
   const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [editStatusMap, setEditStatusMap] = useState<Record<number, CompletionStatus>>({});
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
-  const debouncedSearch = useDebounced(search, 300);
+  // Add Employee form
+  const [newEmp, setNewEmp] = useState({
+    country: "KR" as Employee["country"],
+    store: "",
+    name: "",
+    email: "",
+    position: "Staff",
+    start_date: "",
+  });
+  const [addSaving, setAddSaving] = useState(false);
+
+  // CSV Upload state
+  const empCsvRef = useRef<HTMLInputElement>(null);
+  const cmpCsvRef = useRef<HTMLInputElement>(null);
+  const [uploadResult, setUploadResult] = useState<{ type: string; added: number; updated: number; errors: string[] } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const { data: employees = [], isLoading: empLoading } = useQuery({
     queryKey: ["mig-employees"],
