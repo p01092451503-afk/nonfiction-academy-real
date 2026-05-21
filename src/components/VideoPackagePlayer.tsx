@@ -76,6 +76,23 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
+  const maxWatchedRef = useRef<number>(0);
+  const seekGuardRef = useRef<boolean>(false);
+  const lastSeekWarnRef = useRef<number>(0);
+
+  const warnSeekBlocked = () => {
+    const now = Date.now();
+    if (now - lastSeekWarnRef.current < 2500) return;
+    lastSeekWarnRef.current = now;
+    toast({
+      title: t("videoPackage.seekBlockedTitle", "앞으로 건너뛸 수 없습니다"),
+      description: t(
+        "videoPackage.seekBlockedDesc",
+        "정확한 학습을 위해 시청하지 않은 구간으로 이동할 수 없습니다."
+      ),
+    });
+  };
+
 
 
   // Fetch all items for this content (all languages), then filter by language
