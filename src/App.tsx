@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserProvider } from "@/contexts/UserContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
+import TeacherRoute from "@/components/TeacherRoute";
 import RoleBasedRedirect from "@/components/RoleBasedRedirect";
 import Auth from "./pages/Auth"; // keep eager: first paint
 import TrafficLogger from "./components/TrafficLogger";
@@ -114,18 +115,18 @@ const AppRoutes = () => {
           <Route path="/student/board" element={<ProtectedRoute><StudentBoard /></ProtectedRoute>} />
           <Route path="/student/tracks" element={<ProtectedRoute><StudentTracks /></ProtectedRoute>} />
 
-          {/* Teacher */}
-          <Route path="/teacher" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
-          <Route path="/teacher/courses" element={<ProtectedRoute><TeacherCourses /></ProtectedRoute>} />
-          <Route path="/teacher/assignments" element={<ProtectedRoute><TeacherAssignments /></ProtectedRoute>} />
-          <Route path="/teacher/courses/new" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
-          <Route path="/teacher/courses/:courseId/edit" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
-          <Route path="/teacher/students" element={<ProtectedRoute><TeacherStudents /></ProtectedRoute>} />
-          <Route path="/teacher/students/:studentId" element={<ProtectedRoute><TeacherStudentDetail /></ProtectedRoute>} />
-          <Route path="/teacher/notifications" element={<ProtectedRoute><TeacherNotifications /></ProtectedRoute>} />
-          <Route path="/teacher/announcements" element={<ProtectedRoute><TeacherAnnouncements /></ProtectedRoute>} />
-          <Route path="/teacher/board" element={<ProtectedRoute><AdminBoard role="teacher" /></ProtectedRoute>} />
-          <Route path="/teacher/attendance" element={<ProtectedRoute><AdminAttendance role="teacher" /></ProtectedRoute>} />
+          {/* Teacher (requires teacher/admin role) */}
+          <Route path="/teacher" element={<TeacherRoute><TeacherDashboard /></TeacherRoute>} />
+          <Route path="/teacher/courses" element={<TeacherRoute><TeacherCourses /></TeacherRoute>} />
+          <Route path="/teacher/assignments" element={<TeacherRoute><TeacherAssignments /></TeacherRoute>} />
+          <Route path="/teacher/courses/new" element={<TeacherRoute><CreateCourse /></TeacherRoute>} />
+          <Route path="/teacher/courses/:courseId/edit" element={<TeacherRoute><CreateCourse /></TeacherRoute>} />
+          <Route path="/teacher/students" element={<TeacherRoute><TeacherStudents /></TeacherRoute>} />
+          <Route path="/teacher/students/:studentId" element={<TeacherRoute><TeacherStudentDetail /></TeacherRoute>} />
+          <Route path="/teacher/notifications" element={<TeacherRoute><TeacherNotifications /></TeacherRoute>} />
+          <Route path="/teacher/announcements" element={<TeacherRoute><TeacherAnnouncements /></TeacherRoute>} />
+          <Route path="/teacher/board" element={<TeacherRoute><AdminBoard role="teacher" /></TeacherRoute>} />
+          <Route path="/teacher/attendance" element={<TeacherRoute><AdminAttendance role="teacher" /></TeacherRoute>} />
 
           {/* Admin */}
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -160,13 +161,13 @@ const AppRoutes = () => {
 
           {/* Course Detail & Content Player (role-based) */}
           <Route path="/admin/courses/:courseId" element={<AdminRoute><CourseDetail /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+          <Route path="/teacher/courses/:courseId" element={<TeacherRoute><CourseDetail /></TeacherRoute>} />
           <Route path="/student/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
           <Route path="/admin/courses/:courseId/content/:contentId" element={<AdminRoute><ContentPlayer /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId/content/:contentId" element={<ProtectedRoute><ContentPlayer /></ProtectedRoute>} />
+          <Route path="/teacher/courses/:courseId/content/:contentId" element={<TeacherRoute><ContentPlayer /></TeacherRoute>} />
           <Route path="/student/courses/:courseId/content/:contentId" element={<ProtectedRoute><ContentPlayer /></ProtectedRoute>} />
           <Route path="/admin/courses/:courseId/assessment/:assessmentId" element={<AdminRoute><AssessmentPage /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId/assessment/:assessmentId" element={<ProtectedRoute><AssessmentPage /></ProtectedRoute>} />
+          <Route path="/teacher/courses/:courseId/assessment/:assessmentId" element={<TeacherRoute><AssessmentPage /></TeacherRoute>} />
           <Route path="/student/courses/:courseId/assessment/:assessmentId" element={<ProtectedRoute><AssessmentPage /></ProtectedRoute>} />
 
           {/* Legacy generic routes → redirect to role-based paths */}
