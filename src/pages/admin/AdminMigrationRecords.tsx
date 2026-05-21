@@ -766,24 +766,54 @@ export default function AdminMigrationRecords() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-semibold mb-2">학습 이력</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold">학습 이력</h3>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveStatusEdits}
+                        disabled={Object.keys(editStatusMap).length === 0 || saving}
+                        className="gap-1.5"
+                      >
+                        <Save className="h-3.5 w-3.5" />
+                        {saving ? "저장 중..." : `저장 (${Object.keys(editStatusMap).length})`}
+                      </Button>
+                    </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>과정명</TableHead>
                           <TableHead className="w-16">연도</TableHead>
-                          <TableHead className="w-24 text-center">상태</TableHead>
+                          <TableHead className="w-36 text-center">상태</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {empSummary.rows.map((r) => {
-                          const meta = STATUS_META[r.status];
+                          const currentStatus = editStatusMap[r.course_id] ?? r.status;
                           return (
                             <TableRow key={r.course_id}>
                               <TableCell className="text-sm">{r.course!.course_name}</TableCell>
                               <TableCell className="text-sm">{r.course!.year}</TableCell>
                               <TableCell className="text-center">
-                                <Badge variant="outline" className={`text-xs ${meta.cls}`}>{meta.label}</Badge>
+                                <Select
+                                  value={currentStatus}
+                                  onValueChange={(v) => {
+                                    if (v === r.status) {
+                                      const { [r.course_id]: _, ...rest } = editStatusMap;
+                                      setEditStatusMap(rest);
+                                    } else {
+                                      setEditStatusMap({ ...editStatusMap, [r.course_id]: v as CompletionStatus });
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {STATUS_KEYS.map((k) => (
+                                      <SelectItem key={k} value={k}>{STATUS_META[k].label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </TableCell>
                             </TableRow>
                           );
@@ -796,6 +826,118 @@ export default function AdminMigrationRecords() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* Add Employee Dialog */}
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>직원 추가</DialogTitle>
+              <DialogDescription>신규 직원 정보를 입력하세요. ID는 자동 생성됩니다.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">국가 *</Label>
+                  <Select value={newEmp.country} onValueChange={(v) => setNewEmp({ ...newEmp, country: v as Employee["country"] })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">매장</Label>
+                  <Input value={newEmp.store} onChange={(e) => setNewEmp({ ...newEmp, store: e.target.value })} placeholder="매장명" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">이름 *</Label>
+                <Input value={newEmp.name} onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">이메일 *</Label>
+                <Input type="email" value={newEmp.email} onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">직급</Label>
+                  <Select value={newEmp.position} onValueChange={(v) => setNewEmp({ ...newEmp, position: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {POSITIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">입사일</Label>
+                  <Input type="date" value={newEmp.start_date} onChange={(e) => setNewEmp({ ...newEmp, start_date: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)} disabled={addSaving}>취소</Button>
+              <Button onClick={handleAddEmployee} disabled={addSaving}>{addSaving ? "추가 중..." : "추가"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* CSV Upload Dialog */}
+        <Dialog open={uploadOpen} onOpenChange={(o) => { setUploadOpen(o); if (!o) setUploadResult(null); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>CSV 일괄 업로드</DialogTitle>
+              <DialogDescription>
+                직원 또는 수료 이력 CSV를 업로드합니다. employee_id 기준 중복은 자동 갱신됩니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center cursor-pointer hover:bg-accent/30 transition"
+                onClick={() => empCsvRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleEmployeesCsv(f); }}
+              >
+                <Users className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                <p className="text-sm font-medium">employees.csv</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  컬럼: employee_id(선택)·country·store·name·email·position·start_date
+                </p>
+                <input ref={empCsvRef} type="file" accept=".csv" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEmployeesCsv(f); e.target.value = ""; }} />
+              </div>
+
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center cursor-pointer hover:bg-accent/30 transition"
+                onClick={() => cmpCsvRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleCompletionsCsv(f); }}
+              >
+                <CheckCircle2 className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                <p className="text-sm font-medium">completions.csv</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  컬럼: employee_id·course_id·status (completed/not_completed/in_progress/not_assigned/on_leave)
+                </p>
+                <input ref={cmpCsvRef} type="file" accept=".csv" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCompletionsCsv(f); e.target.value = ""; }} />
+              </div>
+
+              {uploading && <p className="text-sm text-center text-muted-foreground">처리 중...</p>}
+
+              {uploadResult && (
+                <div className="rounded-lg border border-border p-3 bg-muted/30 text-sm space-y-1">
+                  <p className="font-medium">{uploadResult.type} 업로드 결과</p>
+                  <p>추가: <strong className="text-emerald-600">{uploadResult.added}건</strong> · 수정: <strong className="text-amber-600">{uploadResult.updated}건</strong> · 오류: <strong className="text-rose-600">{uploadResult.errors.length}건</strong></p>
+                  {uploadResult.errors.length > 0 && (
+                    <ul className="text-xs text-muted-foreground mt-2 max-h-24 overflow-y-auto list-disc pl-4">
+                      {uploadResult.errors.slice(0, 10).map((e, i) => <li key={i}>{e}</li>)}
+                      {uploadResult.errors.length > 10 && <li>... 외 {uploadResult.errors.length - 10}건</li>}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
