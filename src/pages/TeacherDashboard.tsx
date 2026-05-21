@@ -84,17 +84,25 @@ const TeacherDashboard = () => {
 
   // Recent submissions from students in the leader's department (across any course)
   const { data: recentSubmissions = [] } = useQuery({
-    queryKey: ["teacher-dash-submissions", deptStudentIds],
+    queryKey: ["teacher-dash-submissions", deptStudentIds, lang],
     queryFn: async () => {
       if (deptStudentIds.length === 0) return [];
       const { data, error } = await supabase
         .from("assignment_submissions")
-        .select("*, assignments(title, course_id, courses(title))")
+        .select("*, assignments(title, course_id, courses(title, course_i18n(language_code, title, description)))")
         .in("student_id", deptStudentIds)
         .order("submitted_at", { ascending: false })
         .limit(10);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((s: any) => ({
+        ...s,
+        assignments: s.assignments
+          ? {
+              ...s.assignments,
+              courses: s.assignments.courses ? localizeCourse(s.assignments.courses, lang) : s.assignments.courses,
+            }
+          : s.assignments,
+      }));
     },
     enabled: deptStudentIds.length > 0,
   });
