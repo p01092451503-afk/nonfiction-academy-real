@@ -545,9 +545,9 @@ const ContentPlayer = () => {
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="w-full mx-auto pt-0 pb-6 lg:max-w-5xl lg:px-8 lg:py-8">
+          <div className="w-full mx-auto px-4 pt-4 pb-6 lg:max-w-5xl lg:px-8 lg:py-8">
             {/* Media area */}
-            <div className="bg-background overflow-hidden mb-6 relative lg:rounded-2xl">
+            <div className="bg-background overflow-hidden mb-6 relative rounded-2xl">
               {currentContent.content_type === "video_package" ? (
                 <VideoPackagePlayer
                   contentId={currentContent.id}
