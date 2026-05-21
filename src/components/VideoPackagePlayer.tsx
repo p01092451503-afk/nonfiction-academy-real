@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
-import { toast } from "@/hooks/use-toast";
 import { normalizeLang } from "@/lib/i18nLang";
 
-const SEEK_TOLERANCE = 2; // seconds — natural playback drift allowance
+
 
 
 interface VideoPackagePlayerProps {
