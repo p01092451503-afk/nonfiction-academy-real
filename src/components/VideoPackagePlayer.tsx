@@ -80,23 +80,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
-  const maxWatchedRef = useRef<number>(0);
-  const lastTimeRef = useRef<number>(0);
-  const seekGuardRef = useRef<boolean>(false);
-  const lastSeekWarnRef = useRef<number>(0);
 
-  const warnSeekBlocked = () => {
-    const now = Date.now();
-    if (now - lastSeekWarnRef.current < 2500) return;
-    lastSeekWarnRef.current = now;
-    toast({
-      title: t("videoPackage.seekBlockedTitle", "건너뛸 수 없습니다"),
-      description: t(
-        "videoPackage.seekBlockedDesc",
-        "정확한 진도율 측정을 위해 진행 바를 임의로 이동할 수 없습니다."
-      ),
-    });
-  };
 
 
 
