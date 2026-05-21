@@ -301,25 +301,8 @@ const AdminVideoMobileCheck = () => {
     return targets.filter((t) => results[t.key]?.status === filter);
   }, [targets, results, filter]);
 
-  // Lazy-mount frames: only activate when in viewport, to avoid hammering 100+ iframes
-  useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>("[data-mobile-check-key]");
-    if (els.length === 0) return;
-    const io = new IntersectionObserver((entries) => {
-      setActiveKeys((prev) => {
-        const next = new Set(prev);
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const k = (e.target as HTMLElement).dataset.mobileCheckKey;
-            if (k) next.add(k);
-          }
-        }
-        return next;
-      });
-    }, { rootMargin: "200px 0px" });
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [filtered]);
+  // Auto-activation on scroll is disabled.
+  // Iframes only mount when the user explicitly clicks the "전체 점검" button (runAll).
 
   const runAll = () => {
     // Force activation of all currently filtered items at once
