@@ -403,15 +403,31 @@ const AdminUsers = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t("admin.nameColumn")}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("admin.departmentColumn")}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t("admin.roleColumn")}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("admin.positionColumn")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">
+                  <button type="button" onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.nameColumn")} <SortIcon k="name" />
+                  </button>
+                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
+                  <button type="button" onClick={() => toggleSort("dept")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.departmentColumn")} <SortIcon k="dept" />
+                  </button>
+                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">
+                  <button type="button" onClick={() => toggleSort("role")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.roleColumn")} <SortIcon k="role" />
+                  </button>
+                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
+                  <button type="button" onClick={() => toggleSort("position")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.positionColumn")} <SortIcon k="position" />
+                  </button>
+                </th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((profile: any) => {
+              {sorted.map((profile: any) => {
                 const currentRole = getPrimaryRole(profile.user_id);
                 const assignedRoles = (rolesByUser.get(profile.user_id) ?? []) as StaffRole[];
                 const displayRoles = ROLE_PRIORITY.filter((r) => assignedRoles.includes(r));
