@@ -12,7 +12,9 @@ type CourseStats = {
   draft: number;
   mandatory: number;
   total_enrollments: number;
+  unique_students: number;
   completed: number;
+  completed_students: number;
   avg_progress: number;
   top_courses: Array<{ id: string; title: string; count: number; completions: number }>;
 };
@@ -32,7 +34,9 @@ const CourseStatsCard = () => {
 
   const stats: CourseStats = data || {
     total_courses: 0, published: 0, draft: 0, mandatory: 0,
-    total_enrollments: 0, completed: 0, avg_progress: 0, top_courses: [],
+    total_enrollments: 0, unique_students: 0,
+    completed: 0, completed_students: 0,
+    avg_progress: 0, top_courses: [],
   };
 
   const completionRate = stats.total_enrollments > 0
@@ -62,8 +66,8 @@ const CourseStatsCard = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label={t("stats.totalStudentsCount")} value={stats.total_enrollments.toLocaleString()} unit={peopleUnit} icon={Users} tone="info" />
-          <StatCard label={t("stats.completedStudents")} value={stats.completed.toLocaleString()} unit={peopleUnit} icon={GraduationCap} tone="success" />
+          <StatCard label={t("stats.totalStudentsCount")} value={stats.unique_students.toLocaleString()} unit={peopleUnit} icon={Users} tone="info" />
+          <StatCard label={t("stats.completedStudents")} value={stats.completed_students.toLocaleString()} unit={peopleUnit} icon={GraduationCap} tone="success" />
           <StatCard label={t("stats.avgProgressRate")} value={`${stats.avg_progress}%`} icon={TrendingUp} tone="primary" />
           <StatCard label={t("stats.completionRateValue")} value={`${completionRate}%`} icon={Award} tone="success" />
         </div>
