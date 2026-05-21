@@ -692,12 +692,12 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
                               className="gap-1 text-[11px] font-semibold rounded-full px-3 py-1 border-0 bg-emerald-500 text-white hover:bg-emerald-500 shadow-sm"
                             >
                               <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                              {t("course.completed", "완료")}
+                              {tDone}
                             </Badge>
                           ) : isActive ? (
                             <Badge className="gap-1 text-[11px] font-semibold rounded-full px-3 py-1 border-0 bg-orange-500 text-white hover:bg-orange-500 shadow-sm">
                               <Play className="h-3 w-3" aria-hidden="true" />
-                              {t("course.playing", "재생 중")}
+                              {tPlaying}
                             </Badge>
                           ) : null}
                           {total > 0 && (
