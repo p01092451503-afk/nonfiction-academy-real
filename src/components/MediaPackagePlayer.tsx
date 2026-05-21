@@ -1,11 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+
+const STORAGE_KEY = (cid: string) => `mp-progress:${cid}`;
+type StoredProgress = { index: number; visited: number[] };
+
+const loadProgress = (cid: string): StoredProgress | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(cid));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.index !== "number" || !Array.isArray(parsed?.visited)) return null;
+    return parsed as StoredProgress;
+  } catch {
+    return null;
+  }
+};
+
 
 interface MediaPackagePlayerProps {
   contentId: string;
