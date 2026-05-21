@@ -44,6 +44,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
+  const [resumeIndex, setResumeIndex] = useState<number | null>(null);
+  const restoredRef = useRef(false);
+
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [zoomUrl, setZoomUrl] = useState<string | null>(null);
