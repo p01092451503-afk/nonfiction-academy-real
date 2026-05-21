@@ -207,6 +207,7 @@ const AdminTraffic = () => {
           </TabsContent>
 
           <TabsContent value="traffic" className="space-y-4">
+            <CapacityMonitorCard />
             <div className="flex w-full sm:w-auto items-center gap-2 self-start">
               <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
               <Select value={period} onValueChange={setPeriod}>
