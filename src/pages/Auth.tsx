@@ -108,14 +108,14 @@ const Auth = () => {
                 <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.email")}</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" placeholder="name@nonfiction.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 pl-11 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required />
+                  <Input id="login-email" name="email" type="email" autoComplete="username" placeholder="name@nonfiction.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 pl-11 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.password")}</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type={showPassword ? "text" : "password"} placeholder={t("auth.passwordPlaceholder")} value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 pl-11 pr-11 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required minLength={6} />
+                  <Input id="login-password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder={t("auth.passwordPlaceholder")} value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 pl-11 pr-11 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required minLength={6} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
