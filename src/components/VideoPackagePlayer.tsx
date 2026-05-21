@@ -53,6 +53,7 @@ const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
   const raw = url?.trim() || "";
   return raw && !hasPlaceholderHost(raw) ? raw : null;
 };
+const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
@@ -70,6 +71,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [isResolvingUrl, setIsResolvingUrl] = useState(false);
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
+  const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
 
 
@@ -122,6 +124,12 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       setResumePos(0);
     }
   }, [contentId, activeItem?.id]);
+
+  useEffect(() => {
+    if (activeItem && playbackUrl && isBunnyIframe(playbackUrl)) {
+      setIframeInstanceKey(getFrameNonce());
+    }
+  }, [activeItem?.id, playbackUrl, iframeStartTime]);
 
 
   useEffect(() => {
