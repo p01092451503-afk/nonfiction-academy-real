@@ -246,7 +246,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
               {t("admin.attendanceManagement")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              {isKo ? "사용자 로그인/로그아웃 및 일일 학습 현황을 자동으로 추적합니다." : "Automatically tracks user login/logout and daily learning activity."}
+              {t("admin.attendanceDesc")}
             </p>
           </div>
           <Button onClick={exportCsv} variant="outline" className="rounded-xl gap-2 text-sm">
