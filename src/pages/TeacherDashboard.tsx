@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
+import { localizeCourse } from "@/lib/i18nCourse";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const TeacherDashboard = () => {
   const { user, profile } = useUser();
@@ -25,12 +27,18 @@ const TeacherDashboard = () => {
       (branch.code ? ` (${branch.code})` : "")
     : "";
 
+  const lang = normalizeLang(i18n.language);
+
   const { data: courses = [] } = useQuery({
-    queryKey: ["teacher-dash-courses", user?.id],
+    queryKey: ["teacher-dash-courses", user?.id, lang],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("*").eq("instructor_id", user!.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*, course_i18n(language_code, title, description)")
+        .eq("instructor_id", user!.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data ?? []).map((c: any) => localizeCourse(c, lang));
     },
     enabled: !!user?.id,
   });
@@ -76,17 +84,25 @@ const TeacherDashboard = () => {
 
   // Recent submissions from students in the leader's department (across any course)
   const { data: recentSubmissions = [] } = useQuery({
-    queryKey: ["teacher-dash-submissions", deptStudentIds],
+    queryKey: ["teacher-dash-submissions", deptStudentIds, lang],
     queryFn: async () => {
       if (deptStudentIds.length === 0) return [];
       const { data, error } = await supabase
         .from("assignment_submissions")
-        .select("*, assignments(title, course_id, courses(title))")
+        .select("*, assignments(title, course_id, courses(title, course_i18n(language_code, title, description)))")
         .in("student_id", deptStudentIds)
         .order("submitted_at", { ascending: false })
         .limit(10);
       if (error) throw error;
-      return data || [];
+      return (data || []).map((s: any) => ({
+        ...s,
+        assignments: s.assignments
+          ? {
+              ...s.assignments,
+              courses: s.assignments.courses ? localizeCourse(s.assignments.courses, lang) : s.assignments.courses,
+            }
+          : s.assignments,
+      }));
     },
     enabled: deptStudentIds.length > 0,
   });
