@@ -81,6 +81,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
   const maxWatchedRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
   const seekGuardRef = useRef<boolean>(false);
   const lastSeekWarnRef = useRef<number>(0);
 
