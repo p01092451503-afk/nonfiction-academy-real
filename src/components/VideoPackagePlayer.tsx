@@ -256,6 +256,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     if (!v || !activeItem) return;
     const cur = v.currentTime;
     const dur = v.duration || 0;
+    // Track furthest watched position for seek-forward prevention
+    if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
     setProgress({ current: cur, duration: dur });
     // Save position every ~5s
     if (Math.floor(cur) % 5 === 0) {
@@ -272,6 +274,24 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     }
   };
 
+  const handleSeeking = () => {
+    const v = videoRef.current;
+    if (!v || !activeItem) return;
+    // Allow seeks after completion (re-watching freely)
+    if (completedItems.has(activeItem.id)) return;
+    if (seekGuardRef.current) return;
+    const target = v.currentTime;
+    const limit = maxWatchedRef.current + SEEK_TOLERANCE;
+    if (target > limit) {
+      seekGuardRef.current = true;
+      try {
+        v.currentTime = Math.max(0, maxWatchedRef.current);
+      } catch {}
+      warnSeekBlocked();
+      setTimeout(() => { seekGuardRef.current = false; }, 50);
+    }
+  };
+
   const handleLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
@@ -282,6 +302,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = resumePos;
+    if (resumePos > maxWatchedRef.current) maxWatchedRef.current = resumePos;
     setResumePos(0);
     v.play().catch(() => {});
   };
