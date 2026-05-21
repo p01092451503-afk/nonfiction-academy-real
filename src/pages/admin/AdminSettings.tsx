@@ -61,6 +61,8 @@ const MENU_CATALOG: Record<MenuRole, { groupLabel?: string; items: { key: string
       { key: "courseManagement", label: "강의 관리" },
       { key: "trackManagement", label: "학습 트랙 관리" },
       { key: "videoManagement", label: "동영상 관리" },
+      { key: "videoHealthCheck", label: "영상 자동 점검" },
+      { key: "videoMobileCheck", label: "모바일 영상 점검" },
       { key: "i18nManagement", label: "다국어 관리" },
     ]},
     { groupLabel: "학습 운영", items: [
