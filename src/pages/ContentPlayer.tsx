@@ -623,7 +623,7 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "video" && embedUrl ? (
                 <div className="relative">
                   <div className="aspect-video w-full">
-                    <iframe key={`video-${contentId}`} ref={isTrackableVideo ? videoIframeCallback : undefined} id={`video-player-${contentId}`} src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowFullScreen referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" title={localTitle} />
+                    <iframe key={`video-${contentId}`} ref={isTrackableVideo ? videoIframeCallback : undefined} id={`video-player-${contentId}`} src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; web-share; fullscreen" allowFullScreen referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" title={localTitle} />
                   </div>
                   {isTrackableVideo && (
                     <div className="px-4 py-2.5 bg-secondary/60 flex items-center gap-3 text-xs">
@@ -841,7 +841,7 @@ const ContentPlayer = () => {
               src={embedUrl}
               className="w-full h-full border-0 rounded-lg"
               allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; fullscreen"
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
               referrerPolicy="no-referrer-when-downgrade"
               title={localTitle}
