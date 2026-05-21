@@ -69,6 +69,7 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
       toast.error(t("multilingual.koEmpty", "한국어 내용을 먼저 입력하세요."));
       return;
     }
+    const toastId = toast.loading(t("multilingual.translating", "자동 번역 진행 중입니다..."));
     try {
       setTranslating(true);
       const results = await Promise.all(
@@ -80,9 +81,9 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
         next[lc] = { title: tt || value[lc].title, content: tc || value[lc].content };
       });
       onChange(next);
-      toast.success(t("multilingual.translatedAll", "3개 언어로 자동 번역되었습니다."));
+      toast.success(t("multilingual.translatedAll", "3개 언어로 자동 번역되었습니다."), { id: toastId });
     } catch {
-      toast.error(t("multilingual.translateFailed", "번역에 실패했습니다."));
+      toast.error(t("multilingual.translateFailed", "번역에 실패했습니다."), { id: toastId });
     } finally {
       setTranslating(false);
     }
