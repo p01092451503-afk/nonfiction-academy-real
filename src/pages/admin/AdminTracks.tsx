@@ -890,15 +890,26 @@ const TrackEditorDialog = ({
 
 /* ────────────── Assign Dialog ────────────── */
 
+type AssignMode = "users" | "branch" | "country" | "role" | "all";
+
+const ROLE_OPTIONS: { value: "student" | "teacher" | "admin" | "super_admin"; labelKo: string }[] = [
+  { value: "student", labelKo: "학생" },
+  { value: "teacher", labelKo: "강사" },
+  { value: "admin", labelKo: "관리자" },
+  { value: "super_admin", labelKo: "최고 관리자" },
+];
+
 const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const [mode, setMode] = useState<"users" | "branch">("users");
+  const [mode, setMode] = useState<AssignMode>("users");
   const [search, setSearch] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [selectedBranch, setSelectedBranch] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<string>("student");
   const [assigning, setAssigning] = useState(false);
 
   const { data: users = [] } = useQuery({
@@ -917,11 +928,17 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
   const { data: branches = [] } = useQuery({
     queryKey: ["assign-branches"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("departments").select("id, name, team_name").eq("is_active", true).order("display_order");
+      const { data, error } = await supabase.from("departments").select("id, name, team_name, country").eq("is_active", true).order("display_order");
       if (error) throw error;
       return (data as any[]) || [];
     },
   });
+
+  const countries = useMemo(() => {
+    const set = new Set<string>();
+    (branches as any[]).forEach((b) => { if (b.country) set.add(b.country); });
+    return Array.from(set).sort();
+  }, [branches]);
 
   const { data: existingAssignments = [] } = useQuery({
     queryKey: ["existing-track-enrollments", track.id],
@@ -935,29 +952,42 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
     },
   });
 
+  const resolveTargetUserIds = async (): Promise<string[]> => {
+    if (mode === "users") return Array.from(selectedUsers);
+
+    if (mode === "branch") {
+      if (!selectedBranch) return [];
+      const { data, error } = await supabase.from("profiles").select("user_id").eq("department_id", selectedBranch);
+      if (error) throw error;
+      return (data as any[]).map((r) => r.user_id);
+    }
+
+    if (mode === "country") {
+      if (!selectedCountry) return [];
+      const deptIds = (branches as any[]).filter((b) => b.country === selectedCountry).map((b) => b.id);
+      if (deptIds.length === 0) return [];
+      const { data, error } = await supabase.from("profiles").select("user_id").in("department_id", deptIds);
+      if (error) throw error;
+      return (data as any[]).map((r) => r.user_id);
+    }
+
+    if (mode === "role") {
+      const { data, error } = await supabase.from("user_roles").select("user_id").eq("role", selectedRole as any);
+      if (error) throw error;
+      return Array.from(new Set((data as any[]).map((r) => r.user_id)));
+    }
+
+    // all
+    const { data, error } = await supabase.from("profiles").select("user_id");
+    if (error) throw error;
+    return (data as any[]).map((r) => r.user_id);
+  };
+
   const handleAssign = async () => {
     setAssigning(true);
     try {
-      let totalUsers = 0;
-      let totalCourses = 0;
-
-      if (mode === "users") {
-        if (selectedUsers.size === 0) {
-          toast({ title: t("track.selectUsers", "학생을 선택해주세요"), variant: "destructive" });
-          setAssigning(false);
-          return;
-        }
-        for (const uid of selectedUsers) {
-          const { data, error } = await supabase.rpc("assign_track_to_user" as any, {
-            p_track_id: track.id,
-            p_user_id: uid,
-          });
-          if (error) throw error;
-          totalUsers += 1;
-          const result = data as { courses_enrolled?: number } | null;
-          totalCourses += result?.courses_enrolled ?? 0;
-        }
-      } else {
+      // Branch mode keeps the optimized RPC
+      if (mode === "branch") {
         if (!selectedBranch) {
           toast({ title: t("track.selectBranch", "지점/팀을 선택해주세요"), variant: "destructive" });
           setAssigning(false);
@@ -969,17 +999,41 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
         });
         if (error) throw error;
         const result = data as { users_assigned?: number } | null;
-        totalUsers = result?.users_assigned ?? 0;
+        toast({
+          title: t("track.assignedSuccess", "트랙이 배정되었습니다"),
+          description: `학생 ${result?.users_assigned ?? 0}명에게 배정 완료`,
+        });
+      } else {
+        const targetIds = await resolveTargetUserIds();
+        if (targetIds.length === 0) {
+          toast({ title: t("track.noTargets", "배정 대상이 없습니다"), variant: "destructive" });
+          setAssigning(false);
+          return;
+        }
+        const toAssign = targetIds.filter((id) => !existingAssignments.includes(id));
+        let totalUsers = 0;
+        let totalCourses = 0;
+        let failed = 0;
+        for (const uid of toAssign) {
+          try {
+            const { data, error } = await supabase.rpc("assign_track_to_user" as any, {
+              p_track_id: track.id,
+              p_user_id: uid,
+            });
+            if (error) throw error;
+            totalUsers += 1;
+            const result = data as { courses_enrolled?: number } | null;
+            totalCourses += result?.courses_enrolled ?? 0;
+          } catch {
+            failed += 1;
+          }
+        }
+        toast({
+          title: t("track.assignedSuccess", "트랙이 배정되었습니다"),
+          description: `학생 ${totalUsers}명에게 배정 완료${totalCourses ? ` · 강의 ${totalCourses}건 수강 처리` : ""}${failed ? ` (실패 ${failed}건)` : ""}`,
+        });
       }
 
-      toast({
-        title: t("track.assignedSuccess", "트랙이 배정되었습니다"),
-        description: t("track.assignedSummary", {
-          users: totalUsers,
-          courses: totalCourses,
-          defaultValue: `학생 ${totalUsers}명에게 배정 완료${totalCourses ? ` · 강의 ${totalCourses}건 수강 처리` : ""}`,
-        }),
-      });
       qc.invalidateQueries({ queryKey: ["existing-track-enrollments", track.id] });
       qc.invalidateQueries({ queryKey: ["admin-tracks"] });
       onClose();
@@ -990,7 +1044,15 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
     }
   };
 
-  const filteredUsers = users.filter((u: any) => !existingAssignments.includes(u.user_id) || true); // show all but mark assigned
+  const filteredUsers = users;
+
+  const modeButtons: { key: AssignMode; icon: any; label: string }[] = [
+    { key: "users", icon: UserPlus, label: t("track.byUser", "직원 개별") },
+    { key: "branch", icon: Building2, label: t("track.byBranch", "지점/팀") },
+    { key: "country", icon: Building2, label: t("track.byCountry", "국가") },
+    { key: "role", icon: UserPlus, label: t("track.byRole", "역할") },
+    { key: "all", icon: Sparkles, label: t("track.byAll", "전체") },
+  ];
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -1007,26 +1069,21 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
 
         <div className="space-y-3 mt-2">
           {/* Mode toggle */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setMode("users")}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${mode === "users" ? "bg-accent text-foreground border-border" : "border-border text-muted-foreground hover:bg-accent/50"}`}
-            >
-              <UserPlus className="h-3.5 w-3.5 inline mr-1.5" />
-              {t("track.byUser", "학생 개별 선택")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("branch")}
-              className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${mode === "branch" ? "bg-accent text-foreground border-border" : "border-border text-muted-foreground hover:bg-accent/50"}`}
-            >
-              <Building2 className="h-3.5 w-3.5 inline mr-1.5" />
-              {t("track.byBranch", "지점/팀 일괄")}
-            </button>
+          <div className="grid grid-cols-5 gap-1.5">
+            {modeButtons.map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMode(key)}
+                className={`px-2 py-2 rounded-lg text-[11px] font-medium border transition-all min-w-0 ${mode === key ? "bg-accent text-foreground border-border" : "border-border text-muted-foreground hover:bg-accent/50"}`}
+              >
+                <Icon className="h-3.5 w-3.5 inline mr-1" />
+                <span className="whitespace-nowrap">{label}</span>
+              </button>
+            ))}
           </div>
 
-          {mode === "users" ? (
+          {mode === "users" && (
             <div className="space-y-2">
               <Input
                 value={search}
@@ -1044,7 +1101,7 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
                     return (
                       <label
                         key={u.user_id}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer ${already ? "opacity-60" : "hover:bg-accent/40"}`}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer min-w-0 ${already ? "opacity-60" : "hover:bg-accent/40"}`}
                       >
                         <Checkbox
                           checked={checked}
@@ -1058,7 +1115,7 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
                             });
                           }}
                         />
-                        <span className="font-medium truncate flex-1">{u.full_name || u.email}</span>
+                        <span className="font-medium truncate flex-1 min-w-0">{u.full_name || u.email}</span>
                         {u.email && <span className="text-muted-foreground truncate text-[10px]">{u.email}</span>}
                         {already && (
                           <Badge variant="outline" className="text-[9px] shrink-0">{t("track.alreadyAssigned", "배정됨")}</Badge>
@@ -1069,12 +1126,12 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
                 )}
               </div>
               {selectedUsers.size > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t("track.selectedCount", { count: selectedUsers.size, defaultValue: `${selectedUsers.size}명 선택됨` })}
-                </p>
+                <p className="text-xs text-muted-foreground">{selectedUsers.size}명 선택됨</p>
               )}
             </div>
-          ) : (
+          )}
+
+          {mode === "branch" && (
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">{t("track.selectBranchLabel", "배정 대상 지점/팀")}</label>
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
@@ -1089,10 +1146,49 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex items-start gap-2 text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-2">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>{t("track.branchAssignNote", "선택한 지점/팀에 소속된 모든 학생에게 트랙이 배정되며, 포함 강의가 자동 수강 승인 처리됩니다.")}</span>
-              </div>
+              <NoteBox text={t("track.branchAssignNote", "선택한 지점/팀에 소속된 모든 학생에게 트랙이 배정되며, 포함 강의가 자동 수강 승인 처리됩니다.")} />
+            </div>
+          )}
+
+          {mode === "country" && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">{t("track.selectCountryLabel", "배정 대상 국가")}</label>
+              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                <SelectTrigger className="h-9 rounded-lg text-sm">
+                  <SelectValue placeholder={t("track.selectCountryPlaceholder", "국가 선택")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.length === 0 ? (
+                    <div className="px-2 py-2 text-xs text-muted-foreground">국가 정보가 등록된 지점이 없습니다</div>
+                  ) : countries.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <NoteBox text={t("track.countryAssignNote", "선택한 국가의 모든 지점/팀 소속 인원에게 트랙이 배정됩니다.")} />
+            </div>
+          )}
+
+          {mode === "role" && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">{t("track.selectRoleLabel", "배정 대상 역할")}</label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="h-9 rounded-lg text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.labelKo}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <NoteBox text={t("track.roleAssignNote", "선택한 역할을 가진 모든 사용자에게 트랙이 배정됩니다.")} />
+            </div>
+          )}
+
+          {mode === "all" && (
+            <div className="space-y-2">
+              <NoteBox text={t("track.allAssignNote", "모든 사용자에게 트랙이 일괄 배정됩니다. 신중히 진행해 주세요.")} />
             </div>
           )}
         </div>
@@ -1109,5 +1205,12 @@ const AssignDialog = ({ track, onClose }: { track: Track; onClose: () => void })
     </Dialog>
   );
 };
+
+const NoteBox = ({ text }: { text: string }) => (
+  <div className="flex items-start gap-2 text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-2">
+    <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+    <span>{text}</span>
+  </div>
+);
 
 export default AdminTracks;
