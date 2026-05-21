@@ -169,7 +169,6 @@ Deno.serve(async (req) => {
         ? [
             await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
             await signCdnFileUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
-            await signBasicCdnFileUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
           ]
         : [rawPlaylistUrl];
       for (const candidate of playlistCandidates) {
