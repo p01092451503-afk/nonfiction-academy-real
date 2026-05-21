@@ -34,11 +34,26 @@ const TeacherDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("*, course_i18n(language_code, title, description)")
+        .select("*")
         .eq("instructor_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((c: any) => localizeCourse(c, lang));
+      const rows = data ?? [];
+      if (lang === "ko" || rows.length === 0) return rows;
+      const ids = rows.map((c: any) => c.id);
+      const { data: i18nRows } = await supabase
+        .from("course_i18n" as any)
+        .select("course_id, language_code, title, description")
+        .in("course_id", ids)
+        .eq("language_code", lang);
+      const map = new Map<string, { title: string | null; description: string | null }>();
+      (i18nRows as any[] | null)?.forEach((r) => {
+        map.set(r.course_id, { title: r.title, description: r.description });
+      });
+      return rows.map((c: any) => {
+        const tr = map.get(c.id);
+        return { ...c, title: tr?.title || c.title, description: tr?.description || c.description };
+      });
     },
     enabled: !!user?.id,
   });
