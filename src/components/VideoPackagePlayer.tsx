@@ -413,6 +413,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               const finalSrc = `${playbackUrl}${sep}${params.join("&")}`;
               return (
                 <iframe
+                  ref={iframeRef}
                   key={`${playbackUrl}#${iframeStartTime ?? 0}`}
                   src={finalSrc}
                   width="100%"
