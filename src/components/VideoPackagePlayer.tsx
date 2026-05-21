@@ -638,15 +638,20 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
             {items.map((it, idx) => {
               const isActive = idx === activeIdx;
               const isDone = completedItems.has(it.id);
-              const episodeLabel = `${idx + 1}${t("videoPackage.episodeSuffix", "차시")}`;
-              const itemTitle = it.title || `${t("course.video", "영상")} ${idx + 1}`;
+              // 각 차시(item)의 언어 코드에 맞춰 뱃지 텍스트를 번역 — UI 언어가 아닌 콘텐츠 언어 기준
+              const itemLang = normalizeLang(it.language_code);
+              const tItem = i18n.getFixedT(itemLang);
+              const tDone = tItem("course.completed", "완료");
+              const tPlaying = tItem("course.playing", "재생 중");
+              const episodeLabel = `${idx + 1}${tItem("videoPackage.episodeSuffix", "차시")}`;
+              const itemTitle = it.title || `${tItem("course.video", "영상")} ${idx + 1}`;
               return (
                 <li key={it.id}>
                   <button
                     type="button"
                     onClick={() => setActiveIdx(idx)}
                     aria-current={isActive ? "true" : undefined}
-                    aria-label={`${episodeLabel} ${itemTitle}${isDone ? ` (${t("course.completed", "완료")})` : isActive ? ` (${t("course.playing", "재생 중")})` : ""}`}
+                    aria-label={`${episodeLabel} ${itemTitle}${isDone ? ` (${tDone})` : isActive ? ` (${tPlaying})` : ""}`}
                     className={`w-full flex items-center gap-2 px-3 py-2 min-h-12 text-left rounded-2xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                       isActive ? "bg-accent" : "hover:bg-accent/50 active:bg-accent/50"
                     }`}
@@ -687,12 +692,12 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
                               className="gap-1 text-[11px] font-semibold rounded-full px-3 py-1 border-0 bg-emerald-500 text-white hover:bg-emerald-500 shadow-sm"
                             >
                               <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                              {t("course.completed", "완료")}
+                              {tDone}
                             </Badge>
                           ) : isActive ? (
                             <Badge className="gap-1 text-[11px] font-semibold rounded-full px-3 py-1 border-0 bg-orange-500 text-white hover:bg-orange-500 shadow-sm">
                               <Play className="h-3 w-3" aria-hidden="true" />
-                              {t("course.playing", "재생 중")}
+                              {tPlaying}
                             </Badge>
                           ) : null}
                           {total > 0 && (

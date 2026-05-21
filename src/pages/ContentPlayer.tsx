@@ -716,6 +716,9 @@ const ContentPlayer = () => {
                     ZH: "bg-amber-600 text-white dark:bg-amber-500",
                   };
                   const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground";
+                  // 다국어 차시: 뱃지 텍스트도 각 차시의 언어 코드에 맞춰 번역
+                  const itemLang = normalizeLang(langCode || i18n.language);
+                  const tItem = i18n.getFixedT(itemLang);
                   return (
                     <button
                       key={c.id}
@@ -741,12 +744,12 @@ const ContentPlayer = () => {
                       {isCompleted ? (
                         <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                           <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
-                          {t("contentPlayer.completed", "완료")}
+                          {tItem("contentPlayer.completed", "완료")}
                         </span>
                       ) : isActive ? (
                         <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                           <Play className="h-2.5 w-2.5" aria-hidden="true" />
-                          {t("contentPlayer.nowPlaying", "재생 중")}
+                          {tItem("contentPlayer.nowPlaying", "재생 중")}
                         </span>
                       ) : (
                         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
