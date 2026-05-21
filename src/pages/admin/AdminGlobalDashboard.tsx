@@ -297,13 +297,12 @@ export default function AdminGlobalDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countries, profiles, activeTracks, enrollments, trackRequiredCourseIds, userBestScoreMap, assessments]);
 
-  // Drill-down: entities under selected country
+  // Drill-down: every branch within the selected country
   const drilledEntities = useMemo(() => {
     if (!drillCountry) return [];
     const country = countries.find((c) => c.id === drillCountry);
     if (!country) return [];
-    const directChildren = departments.filter((d) => d.parent_department_id === country.id);
-    const entities = directChildren.length > 0 ? directChildren : [country];
+    const entities = country.branches;
 
     return entities.map((ent) => {
       const entUsers = profiles.filter((p) => p.department_id === ent.id);
