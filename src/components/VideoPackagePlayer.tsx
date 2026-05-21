@@ -352,19 +352,20 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         </div>
 
         {/* Progress strip — matches single-video player */}
-        <div className="px-4 py-2.5 bg-secondary/60 flex items-center gap-3 text-xs flex-wrap">
-          <span className="text-muted-foreground shrink-0">
+        <div className="px-4 py-2.5 bg-foreground/90 text-background flex items-center gap-3 text-xs flex-wrap">
+          <span className="shrink-0 font-medium">
             {t("contentPlayer.watchProgress", "시청 진행률")}
           </span>
           <Progress
             value={pct}
-            className="h-1.5 flex-1 min-w-[80px]"
+            className="h-1.5 flex-1 min-w-[80px] bg-background/20"
             aria-label={t("contentPlayer.watchProgress", "시청 진행률")}
           />
           <span
-            className="text-muted-foreground font-medium shrink-0 tabular-nums"
+            className="font-medium shrink-0 tabular-nums"
             aria-live="polite"
           >
+
             {progress.duration > 0
               ? `${formatTime(progress.current)} / ${formatTime(progress.duration)}`
               : `${Math.round(pct)}%`}
