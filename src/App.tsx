@@ -66,6 +66,7 @@ const AdminSystemInfo = lazyWithRetry(() => import("./pages/admin/AdminSystemInf
 const AdminTracks = lazyWithRetry(() => import("./pages/admin/AdminTracks"));
 const AdminGlobalDashboard = lazyWithRetry(() => import("./pages/admin/AdminGlobalDashboard"));
 const AdminLegacyRecords = lazyWithRetry(() => import("./pages/admin/AdminLegacyRecords"));
+const AdminMigrationRecords = lazyWithRetry(() => import("./pages/admin/AdminMigrationRecords"));
 const StudentBoard = lazyWithRetry(() => import("./pages/student/StudentBoard"));
 const StudentTracks = lazyWithRetry(() => import("./pages/student/StudentTracks"));
 const DeptAdminDashboard = lazyWithRetry(() => import("./pages/DeptAdminDashboard"));
