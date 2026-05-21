@@ -292,6 +292,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       } catch {}
     }
     if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
+      try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
       setCompletedItems((prev) => {
         const next = new Set(prev);
         next.add(activeItem.id);
