@@ -452,6 +452,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
           updateProgress(data?.seconds ?? 0, data?.duration ?? durationCache);
         });
         player.on("ended", () => {
+          try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
           setCompletedItems((prev) => {
             if (prev.has(activeItem.id)) return prev;
             const next = new Set(prev);
