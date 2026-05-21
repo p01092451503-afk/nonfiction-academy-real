@@ -45,6 +45,19 @@ export function useVideoProgress({
   const resumePosition = existingProgress?.last_position_seconds || 0;
   const isCompleted = existingProgress?.completed || false;
 
+  // Initialize max-watched from saved progress; user may seek freely up to that
+  useEffect(() => {
+    maxWatchedRef.current = resumePosition || 0;
+  }, [contentId, resumePosition]);
+
+  const warnSeekBlocked = useCallback(() => {
+    try {
+      // Lightweight inline notice; avoid hard dep on toast here
+      console.warn("[learning] forward seek blocked");
+    } catch {}
+  }, []);
+
+
   // ─── Upsert progress to DB ───
   const saveProgress = useCallback(
     async (posSeconds: number, pct: number, completed: boolean) => {
