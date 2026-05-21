@@ -529,6 +529,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                   allowFullScreen
                   referrerPolicy="strict-origin-when-cross-origin"
+                  tabIndex={-1}
                   title={activeItem?.title || t("course.video", "영상")}
                 />
               );
@@ -547,6 +548,21 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
               aria-label={activeItem?.title || t("course.video", "영상")}
+            />
+          )}
+          {playbackUrl && isBunnyIframe(playbackUrl) && !isItemComplete && (
+            <div
+              className="absolute inset-x-[6%] [bottom:clamp(3.5rem,18%,4.75rem)] z-10 h-20 cursor-not-allowed touch-none"
+              aria-hidden="true"
+              onPointerDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                warnSeekBlocked();
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+              }}
             />
           )}
         </div>
