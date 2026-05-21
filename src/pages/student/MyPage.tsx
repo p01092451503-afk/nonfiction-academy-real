@@ -139,6 +139,48 @@ const MyPage = () => {
     enabled: !!user?.id,
   });
 
+  // Migration records (이관 학습 이력) matched by email
+  const { data: migrationRecords = [] } = useQuery({
+    queryKey: ["my-migration-records", user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const { data: emp, error: empErr } = await supabase
+        .from("migration_employees")
+        .select("employee_id,email,country")
+        .ilike("email", user.email);
+      if (empErr) throw empErr;
+      if (!emp || emp.length === 0) return [];
+
+      const empIds = emp.map((e: any) => e.employee_id);
+      const [{ data: comps, error: cmpErr }, { data: courses, error: cErr }] = await Promise.all([
+        supabase.from("migration_completions").select("employee_id,course_id,status").in("employee_id", empIds),
+        supabase.from("migration_courses").select("course_id,course_name,year,country"),
+      ]);
+      if (cmpErr) throw cmpErr;
+      if (cErr) throw cErr;
+      const courseMap = new Map((courses || []).map((c: any) => [c.course_id, c]));
+      return (comps || [])
+        .filter((c: any) => c.status !== "not_assigned")
+        .map((c: any) => {
+          const course: any = courseMap.get(c.course_id);
+          return {
+            id: `mig-${c.employee_id}-${c.course_id}`,
+            course_title: course?.course_name || "-",
+            source_lms: `Legacy LMS (${course?.country || ""}${course?.year ? ` · ${course.year}` : ""})`.trim(),
+            completed_at: null as string | null,
+            is_completed: c.status === "completed",
+            status: c.status as string,
+          };
+        });
+    },
+    enabled: !!user?.email,
+  });
+
+  const combinedLegacyRecords = useMemo(() => {
+    return [...migrationRecords, ...legacyRecords];
+  }, [migrationRecords, legacyRecords]);
+
+
   const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
 
   const handleDownloadCert = async (cert: any) => {
