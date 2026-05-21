@@ -337,6 +337,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const handleEnded = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
+    try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
     setCompletedItems((prev) => {
       if (prev.has(activeItem.id)) return prev;
       const next = new Set(prev);
