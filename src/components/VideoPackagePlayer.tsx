@@ -114,6 +114,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     if (!activeItem) return;
     setIframeStartTime(null);
     setShowResumeDialog(false);
+    setProgress({ current: 0, duration: activeItem.duration_seconds || 0 });
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
       const saved = raw ? parseFloat(raw) : 0;
