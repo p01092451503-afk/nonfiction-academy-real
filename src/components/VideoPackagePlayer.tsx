@@ -20,6 +20,7 @@ interface VideoPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
   title?: string;
+  isAlreadyCompleted?: boolean;
 }
 
 interface VPItem {
@@ -58,7 +59,7 @@ const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
 };
 const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
+const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted = false }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -127,7 +128,21 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     completedRef.current = false;
   }, [contentId, lang]);
 
+  // Once content was completed previously, mark all items as completed permanently
+  // (replay mode — keep showing "완료" and skip seek-forward restriction)
+  useEffect(() => {
+    if (isAlreadyCompleted && items.length > 0) {
+      setCompletedItems((prev) => {
+        if (prev.size >= items.length && items.every((it) => prev.has(it.id))) return prev;
+        const next = new Set(prev);
+        items.forEach((it) => next.add(it.id));
+        return next;
+      });
+    }
+  }, [isAlreadyCompleted, items]);
+
   const activeItem = items[activeIdx];
+
 
   // Load resume position when active item changes
   useEffect(() => {
