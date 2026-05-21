@@ -180,14 +180,16 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
   const formatTime = (d: string | null) => {
     if (!d) return "-";
-    return new Date(d).toLocaleTimeString(isKo ? "ko-KR" : "en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return new Date(d).toLocaleTimeString(i18n.language || "ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   };
 
   const formatMinutes = (m: number) => {
     if (m === 0) return "-";
     const h = Math.floor(m / 60);
     const min = m % 60;
-    return h > 0 ? `${h}${isKo ? "시간" : "h"} ${min}${isKo ? "분" : "m"}` : `${min}${isKo ? "분" : "m"}`;
+    const hLabel = t("admin.attHour");
+    const mLabel = t("admin.attMinute");
+    return h > 0 ? `${h}${hLabel} ${min}${mLabel}` : `${min}${mLabel}`;
   };
 
   // Summary stats
@@ -206,12 +208,12 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
   const exportCsv = () => {
     const header = [
-      isKo ? "이름" : "Name",
-      isKo ? "부서" : "Department",
-      isKo ? "로그인" : "Login",
-      isKo ? "로그아웃" : "Logout",
-      isKo ? "학습시간" : "Learning Time",
-      isKo ? "완료 수" : "Completions",
+      t("admin.attName"),
+      t("admin.attDepartment"),
+      t("admin.attLogin"),
+      t("admin.attLogout"),
+      t("admin.attLearningTime"),
+      t("admin.attCompletionsCount"),
     ];
     const rows = filteredStats.map((s) => {
       const p = profileMap.get(s.userId);
@@ -244,7 +246,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
               {t("admin.attendanceManagement")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              {isKo ? "사용자 로그인/로그아웃 및 일일 학습 현황을 자동으로 추적합니다." : "Automatically tracks user login/logout and daily learning activity."}
+              {t("admin.attendanceDesc")}
             </p>
           </div>
           <Button onClick={exportCsv} variant="outline" className="rounded-xl gap-2 text-sm">
@@ -254,10 +256,10 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label={isKo ? "전체 사용자" : "Total Users"} value={totalUsers} icon={Users} tone="primary" trend={attSparkline.sessions7} delta={attSparkline.sessionsDelta} />
-          <StatCard label={isKo ? "현재 온라인" : "Currently Online"} value={totalOnline} icon={LogIn} tone="success" />
-          <StatCard label={isKo ? "총 학습시간" : "Total Learning Time"} value={formatMinutes(totalMinutes)} icon={Clock} tone="info" />
-          <StatCard label={isKo ? "학습 완료" : "Completions"} value={totalCompletions} icon={BookOpen} tone="warning" trend={attSparkline.completions7} delta={attSparkline.completionsDelta} />
+          <StatCard label={t("admin.totalUsers")} value={totalUsers} icon={Users} tone="primary" trend={attSparkline.sessions7} delta={attSparkline.sessionsDelta} />
+          <StatCard label={t("admin.currentOnline")} value={totalOnline} icon={LogIn} tone="success" />
+          <StatCard label={t("admin.totalLearningTime")} value={formatMinutes(totalMinutes)} icon={Clock} tone="info" />
+          <StatCard label={t("admin.learningCompletions")} value={totalCompletions} icon={BookOpen} tone="warning" trend={attSparkline.completions7} delta={attSparkline.completionsDelta} />
         </div>
 
         {/* Filters */}
@@ -269,7 +271,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
             className="w-full sm:w-44 h-10 rounded-xl"
           />
           <Input
-            placeholder={isKo ? "이름 검색..." : "Search name..."}
+            placeholder={t("admin.searchNamePlaceholder")}
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
             className="w-full sm:w-56 h-10 rounded-xl"
@@ -282,7 +284,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
           <div className="sm:hidden divide-y divide-border">
             {filteredStats.length === 0 ? (
               <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-                {isKo ? "해당 날짜에 기록이 없습니다." : "No records for this date."}
+                {t("admin.noRecordsForDate")}
               </div>
             ) : (
               filteredStats.map((s) => {
@@ -296,25 +298,25 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                       </div>
                       {s.loginAt && !s.logoutAt && (
                         <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
-                          {isKo ? "온라인" : "Online"}
+                          {t("admin.attOnline")}
                         </span>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "로그인" : "Login"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attLogin")}: </span>
                         <span className="text-foreground">{formatTime(s.loginAt)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "로그아웃" : "Logout"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attLogout")}: </span>
                         <span className="text-foreground">{formatTime(s.logoutAt)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "학습시간" : "Study"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attStudy")}: </span>
                         <span className="text-foreground">{formatMinutes(s.learningMinutes)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "완료" : "Done"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attDone")}: </span>
                         <span className="text-foreground">{s.completions}</span>
                       </div>
                     </div>
@@ -329,20 +331,20 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-secondary/30">
-                  <TableHead className="text-xs">{isKo ? "이름" : "Name"}</TableHead>
-                  <TableHead className="text-xs">{isKo ? "부서" : "Department"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "로그인" : "Login"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "로그아웃" : "Logout"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "상태" : "Status"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "학습시간" : "Learning Time"}</TableHead>
-                  <TableHead className="text-xs text-center">{isKo ? "학습 완료 수" : "Completions"}</TableHead>
+                  <TableHead className="text-xs">{t("admin.attName")}</TableHead>
+                  <TableHead className="text-xs">{t("admin.attDepartment")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attLogin")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attLogout")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attStatus")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attLearningTime")}</TableHead>
+                  <TableHead className="text-xs text-center">{t("admin.attCompletionsCount")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStats.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                      {isKo ? "해당 날짜에 기록이 없습니다." : "No records for this date."}
+                      {t("admin.noRecordsForDate")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -368,11 +370,11 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                         <TableCell className="text-center">
                           {isOnline ? (
                             <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2.5 py-1 rounded-lg">
-                              {isKo ? "온라인" : "Online"}
+                              {t("admin.attOnline")}
                             </span>
                           ) : s.loginAt ? (
                             <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-2.5 py-1 rounded-lg">
-                              {isKo ? "오프라인" : "Offline"}
+                              {t("admin.attOffline")}
                             </span>
                           ) : (
                             <span className="text-[10px] text-muted-foreground">-</span>
