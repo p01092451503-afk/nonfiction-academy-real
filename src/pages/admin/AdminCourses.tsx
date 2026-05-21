@@ -115,7 +115,11 @@ const AdminCourses = () => {
     queryFn: async () => {
       const ids = courses.map((c: any) => c.id);
       if (ids.length === 0) return {};
-      const { data, error } = await supabase.from("course_contents").select("course_id").in("course_id", ids);
+      const { data, error } = await supabase
+        .from("course_contents")
+        .select("course_id")
+        .in("course_id", ids)
+        .eq("language_code", "ko");
       if (error) throw error;
       const counts: Record<string, number> = {};
       data.forEach((e: any) => { counts[e.course_id] = (counts[e.course_id] || 0) + 1; });
