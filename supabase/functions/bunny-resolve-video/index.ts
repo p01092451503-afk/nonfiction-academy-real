@@ -47,6 +47,13 @@ async function sha256Base64Url(value: string) {
   return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
+async function md5Base64Url(value: string) {
+  const hash = await crypto.subtle.digest("MD5", new TextEncoder().encode(value));
+  let binary = "";
+  for (const byte of new Uint8Array(hash)) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
 async function hmacSha256Base64Url(secret: string, value: string) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -78,6 +85,12 @@ async function signCdnFileUrl(url: string, authKey: string, expires: number) {
   return `${parsed.origin}${parsed.pathname}?${params.toString()}`;
 }
 
+async function signBasicCdnFileUrl(url: string, authKey: string, expires: number) {
+  const parsed = new URL(url);
+  const token = await md5Base64Url(authKey + parsed.pathname + String(expires));
+  return `${parsed.origin}${parsed.pathname}?token=${token}&expires=${expires}`;
+}
+
 async function signCdnDirectoryUrl(url: string, authKey: string, expires: number) {
   const parsed = new URL(url);
   const dirPath = parsed.pathname.slice(0, parsed.pathname.lastIndexOf("/") + 1);
@@ -89,7 +102,7 @@ async function signCdnDirectoryUrl(url: string, authKey: string, expires: number
   const parameterData = entries.map(([key, value]) => `${key}=${value}`).join("&");
   const parameterDataUrl = entries.map(([key, value]) => `&${key}=${encodeURIComponent(value)}`).join("");
   const token = `HS256-${await hmacSha256Base64Url(authKey, dirPath + String(expires) + parameterData)}`;
-  return `${parsed.origin}/bcdn_token=${token}&expires=${expires}${parameterDataUrl}${parsed.pathname}`;
+  return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
 }
 
 async function signProxyToken(authKey: string, videoId: string, cdnHostname: string, expires: number) {
