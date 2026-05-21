@@ -12,8 +12,13 @@ const TodayOperationsCard = () => {
   const { data } = useQuery({
     queryKey: ["stat-today-operations", today],
     queryFn: async () => {
-      const [enrollRes, complRes, subRes, assessRes, pendingRes, unreadRes] = await Promise.all([
-        supabase.from("enrollments").select("*", { count: "exact", head: true }).gte("enrolled_at", today),
+      const [enrollSelfRes, enrollBulkRes, complRes, subRes, assessRes, pendingRes, unreadRes] = await Promise.all([
+        // 자발 신청: 관리자 검토 기록 없음 (reviewed_by IS NULL)
+        supabase.from("enrollments").select("user_id", { count: "exact", head: true })
+          .gte("enrolled_at", today).is("reviewed_by", null),
+        // 관리자 일괄 등록: reviewed_by 가 기록됨 (트랙 배정/일괄 등록)
+        supabase.from("enrollments").select("user_id", { count: "exact", head: true })
+          .gte("enrolled_at", today).not("reviewed_by", "is", null),
         supabase.from("enrollments").select("*", { count: "exact", head: true }).gte("completed_at", today),
         supabase.from("assignment_submissions").select("*", { count: "exact", head: true }).gte("submitted_at", today),
         supabase.from("assessment_attempts").select("*", { count: "exact", head: true }).gte("started_at", today),
@@ -21,7 +26,8 @@ const TodayOperationsCard = () => {
         supabase.from("notifications").select("*", { count: "exact", head: true }).eq("is_read", false),
       ]);
       return {
-        todayEnrollments: enrollRes.count || 0,
+        todayEnrollmentsSelf: enrollSelfRes.count || 0,
+        todayEnrollmentsBulk: enrollBulkRes.count || 0,
         todayCompletions: complRes.count || 0,
         todaySubmissions: subRes.count || 0,
         todayAssessments: assessRes.count || 0,
@@ -33,7 +39,7 @@ const TodayOperationsCard = () => {
   });
 
   const stats = data || {
-    todayEnrollments: 0, todayCompletions: 0, todaySubmissions: 0,
+    todayEnrollmentsSelf: 0, todayEnrollmentsBulk: 0, todayCompletions: 0, todaySubmissions: 0,
     todayAssessments: 0, pendingSubmissions: 0, unreadNotifications: 0,
   };
 
@@ -44,22 +50,26 @@ const TodayOperationsCard = () => {
   const assess7 = spark?.assessments ?? [];
 
   const items = [
-    { label: t("stats.newEnroll"), value: stats.todayEnrollments, color: "text-primary",     chart: "hsl(var(--primary))",     trend: enroll7 },
-    { label: t("stats.completionToday"), value: stats.todayCompletions, color: "text-chart-2", chart: "hsl(var(--chart-2))",   trend: compl7 },
-    { label: t("stats.submissionToday"), value: stats.todaySubmissions, color: "text-chart-3", chart: "hsl(var(--chart-3))",   trend: subm7 },
-    { label: t("stats.assessmentToday"), value: stats.todayAssessments, color: "text-chart-4", chart: "hsl(var(--chart-4))",   trend: assess7 },
-    { label: t("stats.pendingGrade"), value: stats.pendingSubmissions, color: "text-destructive", chart: "hsl(var(--destructive))", trend: [] as number[] },
-    { label: t("stats.unreadNotif"), value: stats.unreadNotifications, color: "text-chart-5", chart: "hsl(var(--chart-5))", trend: [] as number[] },
+    { label: t("stats.newEnrollSelf", "자발 신청"), value: stats.todayEnrollmentsSelf, color: "text-primary", chart: "hsl(var(--primary))", trend: enroll7, hint: "사용자 직접 신청" },
+    { label: t("stats.newEnrollBulk", "관리자 등록"), value: stats.todayEnrollmentsBulk, color: "text-muted-foreground", chart: "hsl(var(--muted-foreground))", trend: [] as number[], hint: "트랙/일괄 배정" },
+    { label: t("stats.completionToday"), value: stats.todayCompletions, color: "text-chart-2", chart: "hsl(var(--chart-2))", trend: compl7, hint: "" },
+    { label: t("stats.submissionToday"), value: stats.todaySubmissions, color: "text-chart-3", chart: "hsl(var(--chart-3))", trend: subm7, hint: "" },
+    { label: t("stats.assessmentToday"), value: stats.todayAssessments, color: "text-chart-4", chart: "hsl(var(--chart-4))", trend: assess7, hint: "" },
+    { label: t("stats.pendingGrade"), value: stats.pendingSubmissions, color: "text-destructive", chart: "hsl(var(--destructive))", trend: [] as number[], hint: "" },
+    { label: t("stats.unreadNotif"), value: stats.unreadNotifications, color: "text-chart-5", chart: "hsl(var(--chart-5))", trend: [] as number[], hint: "" },
   ];
 
   return (
     <div className="stat-card !p-4 sm:!p-5 space-y-3">
       <h3 className="text-sm font-semibold text-foreground">{t("stats.todayOps")}</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
         {items.map((item) => (
           <div key={item.label} className="p-2.5 rounded-lg border border-border min-w-0">
-            <p className="text-[10px] text-muted-foreground truncate">{item.label}</p>
+            <p className="text-[10px] text-muted-foreground truncate" title={item.hint || item.label}>{item.label}</p>
             <p className={`text-xl font-bold mt-0.5 tabular-nums ${item.color}`}>{item.value}</p>
+            {item.hint && (
+              <p className="text-[9px] text-muted-foreground/70 truncate mt-0.5">{item.hint}</p>
+            )}
             {item.trend.length > 1 && (
               <div className="mt-1 h-5">
                 <Sparkline data={item.trend} color={item.chart} height={20} showLastDot={false} strokeWidth={1.25} />
