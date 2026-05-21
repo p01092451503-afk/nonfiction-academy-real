@@ -1,4 +1,4 @@
-import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound } from "lucide-react";
+import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import StaffBulkUploadDialog from "@/components/admin/StaffBulkUploadDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -23,6 +23,8 @@ const ROLE_PRIORITY = ["super_admin", "admin", "teacher", "student"] as const;
 const AdminUsers = () => {
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [sortKey, setSortKey] = useState<"name" | "dept" | "role" | "position" | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -199,6 +201,45 @@ const AdminUsers = () => {
     return matchesSearch && matchesDept;
   });
 
+  const roleRankLabel: Record<string, number> = { super_admin: 0, admin: 1, teacher: 2, student: 3 };
+  const collator = new Intl.Collator(i18n.language || "ko", { numeric: true, sensitivity: "base" });
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a: any, b: any) => {
+      let av = "", bv = "";
+      if (sortKey === "name") { av = a.full_name || ""; bv = b.full_name || ""; }
+      else if (sortKey === "dept") { av = getDeptName(a.department_id); bv = getDeptName(b.department_id); }
+      else if (sortKey === "position") { av = a.position || ""; bv = b.position || ""; }
+      else if (sortKey === "role") {
+        const ar = roleRankLabel[getPrimaryRole(a.user_id)] ?? 99;
+        const br = roleRankLabel[getPrimaryRole(b.user_id)] ?? 99;
+        return (ar - br) * dir;
+      }
+      // Empty values pushed to the end regardless of direction
+      const aEmpty = !av || av === "-";
+      const bEmpty = !bv || bv === "-";
+      if (aEmpty && !bEmpty) return 1;
+      if (!aEmpty && bEmpty) return -1;
+      return collator.compare(av, bv) * dir;
+    });
+  }, [filtered, sortKey, sortDir, departments, isEn, rolesByUser]);
+
+  const toggleSort = (key: "name" | "dept" | "role" | "position") => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const SortIcon = ({ k }: { k: "name" | "dept" | "role" | "position" }) => {
+    if (sortKey !== k) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+  };
+
   const teacherCount = profiles.filter((profile: any) => getPrimaryRole(profile.user_id) === "teacher").length;
   const { data: usersSpark } = useDashboardSparklines(14);
 
@@ -362,15 +403,31 @@ const AdminUsers = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t("admin.nameColumn")}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("admin.departmentColumn")}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{t("admin.roleColumn")}</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">{t("admin.positionColumn")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">
+                  <button type="button" onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.nameColumn")} <SortIcon k="name" />
+                  </button>
+                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
+                  <button type="button" onClick={() => toggleSort("dept")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.departmentColumn")} <SortIcon k="dept" />
+                  </button>
+                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">
+                  <button type="button" onClick={() => toggleSort("role")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.roleColumn")} <SortIcon k="role" />
+                  </button>
+                </th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
+                  <button type="button" onClick={() => toggleSort("position")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                    {t("admin.positionColumn")} <SortIcon k="position" />
+                  </button>
+                </th>
                 <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((profile: any) => {
+              {sorted.map((profile: any) => {
                 const currentRole = getPrimaryRole(profile.user_id);
                 const assignedRoles = (rolesByUser.get(profile.user_id) ?? []) as StaffRole[];
                 const displayRoles = ROLE_PRIORITY.filter((r) => assignedRoles.includes(r));
