@@ -1415,13 +1415,14 @@
     "anonymous": "ユーザー",
     "signInRequired": "ログインが必要です",
     "placeholder": "この講義についての意見を残してください...",
-    "empty": "まだコメントがありません。最初のコメントを残しましょう！",
+    "empty": "最初のコメントを残しましょう！",
     "title": "コメント",
     "viewAll": "すべて表示",
     "confirmDelete": "このコメントを削除しますか？",
     "notAllowed": "コメントできません。受講承認をご確認ください。",
     "replyPlaceholder": "@{{name}} に返信...",
-    "translatedBadge": "翻訳済み"
+    "translatedBadge": "翻訳済み",
+    "emptyTitle": "まだコメントがありません"
   },
   "globalDashboard": {
     "activeTracks": "トラック",

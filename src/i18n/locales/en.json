@@ -1421,13 +1421,14 @@
     "anonymous": "User",
     "signInRequired": "Sign-in required",
     "placeholder": "Share your thoughts about this course...",
-    "empty": "No comments yet. Be the first to comment!",
+    "empty": "Be the first to comment!",
     "title": "Comments",
     "viewAll": "View all",
     "confirmDelete": "Delete this comment?",
     "notAllowed": "You cannot comment. Please check your enrollment approval.",
     "replyPlaceholder": "Reply to @{{name}}...",
-    "translatedBadge": "Translated"
+    "translatedBadge": "Translated",
+    "emptyTitle": "No comments yet"
   },
   "globalDashboard": {
     "title": "Global Learning Dashboard",
