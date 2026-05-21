@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import LanguageToggle from "@/components/LanguageToggle";
 import loginBg from "@/assets/login-bg.jpg";
+import nonfictionLogo from "@/assets/nonfiction-logo.png";
 
 // Preload the image as early as possible
 const preloadLink = document.createElement("link");
