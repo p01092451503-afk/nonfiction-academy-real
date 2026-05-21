@@ -50,6 +50,8 @@ const isBunny = (url: string, hint: string | null) =>
   hint?.toLowerCase() === "bunny" ||
   /iframe\.mediadelivery\.net|b-cdn\.net/i.test(url || "");
 const isPlaceholder = (url: string) => /placeholder_value_to_be_replaced/i.test(url || "");
+const toBunnyEmbedUrl = (url: string) =>
+  url.replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/");
 const detectProvider = (url: string, hint: string | null): string => {
   if (hint) return hint.toLowerCase();
   const u = (url || "").toLowerCase();
@@ -106,7 +108,7 @@ const VideoFrame = ({ target, onMeasured }: VideoFrameProps) => {
         setError("signed URL 발급 실패");
         return;
       }
-      const resolvedUrl = data.proxyPlaylistUrl || data.playlistUrl || data.playUrl;
+      const resolvedUrl = toBunnyEmbedUrl(data.embedUrl || data.playUrl);
       const sep = resolvedUrl.includes("?") ? "&" : "?";
       const needsPlayerParams = /iframe\.mediadelivery\.net/i.test(resolvedUrl);
       setPlayUrl(needsPlayerParams ? `${resolvedUrl}${sep}preload=true&responsive=true` : resolvedUrl);
