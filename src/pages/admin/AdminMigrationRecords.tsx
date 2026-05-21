@@ -1,17 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Database, Search, Download, Users, CheckCircle2, XCircle, Globe2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Database, Search, Download, Users, CheckCircle2, XCircle, Globe2, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Upload, Save } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+
+const STATUS_KEYS = ["completed", "not_completed", "in_progress", "not_assigned", "on_leave"] as const;
+type CompletionStatus = typeof STATUS_KEYS[number];
+
+const POSITIONS = ["Staff", "Senior", "Manager", "Director", "Trainee"] as const;
+
+// Simple CSV parser (handles quotes + commas)
+const parseCSV = (text: string): Record<string, string>[] => {
+  const clean = text.replace(/^\uFEFF/, "");
+  const lines = clean.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const split = (line: string) => {
+    const out: string[] = []; let cur = ""; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ;
+      } else if (c === "," && !inQ) { out.push(cur); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+  const headers = split(lines[0]).map((h) => h.toLowerCase());
+  return lines.slice(1).map((ln) => {
+    const cols = split(ln);
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => { obj[h] = cols[i] ?? ""; });
+    return obj;
+  });
+};
 
 interface Employee {
   employee_id: number;
