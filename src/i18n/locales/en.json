@@ -23,9 +23,9 @@
     "minutes": "min",
     "hours": "h",
     "days": "days",
-    "count": "",
-    "people": "",
-    "cases": "",
+    "count": "item(s)",
+    "people": "person(s)",
+    "cases": "case(s)",
     "points": "pts",
     "percent": "%",
     "details": "View Details",
@@ -86,7 +86,9 @@
     "loginFailedTooMany": "Too many login attempts.\nPlease try again in a moment.",
     "loginFailedGeneric": "Something went wrong while signing in.\nPlease try again later.",
     "tryAgain": "Try again",
-    "goSignUp": "Sign up"
+    "goSignUp": "Sign up",
+    "branch": "Affiliated Organization",
+    "selectBranch": "Select an affiliated organization"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -116,7 +118,8 @@
     "announcementManagement": "Announcements",
     "board": "Board",
     "boardManagement": "Board",
-    "legacyRecords": "Learning History"
+    "legacyRecords": "Learning History",
+    "branchManagement": "Organization Management"
   },
   "roles": {
     "student": "Student",
@@ -1385,7 +1388,10 @@
     "completionCount2": "Completions",
     "lessonCompletions": "Lesson Completions",
     "realtimeUsers": "Current Online Users",
-    "autoRefresh": "Auto-refreshing"
+    "autoRefresh": "Auto-refreshing",
+    "branchLearning": "Learning Status by Organization",
+    "byBranch": "By Organization/Department",
+    "tabBranch": "Learning by Organization"
   },
   "track": {
     "myTracks": "My Learning Tracks",
@@ -1453,5 +1459,46 @@
     "learnerBreakdown": "Learner Breakdown",
     "learner": "Learner",
     "done": "Done"
+  },
+  "branches": {
+    "addBranch": "Add Organization",
+    "addTeam": "Add Team",
+    "allBranches": "All Organizations",
+    "belongsToBranch": "My Organization",
+    "branch": "Affiliated Organization",
+    "branchList": "Organization List",
+    "branchName": "Organization Name",
+    "branchNameEn": "Organization Name (English)",
+    "bulkUpload": "Bulk Registration",
+    "bulkUploadDesc": "Register headquarters and organization employees at once via CSV file. Email and name are required.",
+    "bulkUploadTitle": "Bulk Employee Registration (CSV)",
+    "csvFormat": "CSV Format Guide",
+    "deleteBranch": "Delete Organization",
+    "deleteBranchConfirm": "Are you sure you want to delete the \"{{name}}\" organization? Assigned employees will be unassigned.",
+    "deleteTeam": "Delete Team",
+    "deleteTeamConfirm": "Are you sure you want to delete the \"{{name}}\" team?",
+    "downloadTemplate": "Download Template",
+    "editBranch": "Edit Organization",
+    "editTeam": "Edit Team",
+    "noBranches": "No organizations registered",
+    "noTeams": "No teams registered",
+    "parentBranch": "Parent Organization",
+    "selectBranch": "Select Organization",
+    "selectUploadBranch": "Select Target Organization for Upload",
+    "staffCount": "Members",
+    "staffManagement": "Employee Management",
+    "subtitle": "Manage headquarters and organization information and assign employees.",
+    "teamList": "Team List",
+    "teamName": "Team Name",
+    "teamNameEn": "Team Name (English)",
+    "title": "Organization Management",
+    "uploadCSV": "CSV Upload",
+    "uploadComplete": "Upload Complete",
+    "uploadFailed": "failed",
+    "uploadSuccess": "successfully registered",
+    "useCSVColumn": "Use CSV organization columns"
+  },
+  "branch": {
+    "branchTitle": "Affiliated Organization"
   }
 }

@@ -115,7 +115,8 @@
     "announcementManagement": "公告管理",
     "board": "公告板",
     "boardManagement": "公告板管理",
-    "legacyRecords": "学习历史管理"
+    "legacyRecords": "学习历史管理",
+    "globalDashboard": "全球仪表盘"
   },
   "roles": {
     "student": "Student",
@@ -1398,7 +1399,8 @@
     "free": "自由进行",
     "stage": "阶段",
     "locked": "已锁定",
-    "noCoursesInStage": "此阶段暂无课程。"
+    "noCoursesInStage": "此阶段暂无课程。",
+    "viewAllMyCourses": "查看我的全部课程"
   },
   "comments": {
     "translate": "翻译",
@@ -1416,5 +1418,40 @@
     "notAllowed": "无法评论。请确认您的报名审批。",
     "replyPlaceholder": "回复 @{{name}}...",
     "translatedBadge": "已翻译"
+  },
+  "globalDashboard": {
+    "activeTracks": "学习路径",
+    "allTracks": "全部学习路径",
+    "attempts": "考试",
+    "avgQuizScore": "平均评价分数",
+    "avgScore": "平均分数",
+    "completed": "结业",
+    "completionRate": "结业率",
+    "countries": "国家",
+    "country": "国家",
+    "countryCompletion": "各国家结业率",
+    "countryHeatmap": "各国家结业率热力图",
+    "done": "完成",
+    "entities": "法人/分支机构",
+    "entity": "法人/分支机构",
+    "exportCsv": "导出 CSV",
+    "learner": "学员",
+    "learnerBreakdown": "各学员结业情况",
+    "learnerDistribution": "学员分布",
+    "learners": "学员",
+    "learnersShort": "名",
+    "legend": "图例",
+    "noCountries": "未发现国家级组织。请在组织管理中添加顶级组织（国家）。",
+    "overallCompletion": "总结业率",
+    "passRate": "合格率",
+    "passShort": "合格",
+    "possible": "可用",
+    "quizPassRate": "评价合格率",
+    "quizPerformance": "各国家评价成绩",
+    "quizShort": "测验",
+    "subtitle": "各国家及分支机构学习路径结业情况",
+    "title": "全球学习仪表盘",
+    "totalLearners": "全体学员",
+    "trackCompletion": "各阶段完成率"
   }
 }

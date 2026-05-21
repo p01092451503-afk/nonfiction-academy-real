@@ -115,7 +115,8 @@
     "announcementManagement": "お知らせ管理",
     "board": "掲示板",
     "boardManagement": "掲示板管理",
-    "legacyRecords": "学習履歴管理"
+    "legacyRecords": "学習履歴管理",
+    "globalDashboard": "グローバルダッシュボード"
   },
   "roles": {
     "student": "Student",
@@ -1398,7 +1399,8 @@
     "free": "自由進行",
     "stage": "ステージ",
     "locked": "ロック中",
-    "noCoursesInStage": "このステージには講義がありません。"
+    "noCoursesInStage": "このステージには講義がありません。",
+    "viewAllMyCourses": "全マイコース表示"
   },
   "comments": {
     "translate": "翻訳",
@@ -1416,5 +1418,40 @@
     "notAllowed": "コメントできません。受講承認をご確認ください。",
     "replyPlaceholder": "@{{name}} に返信...",
     "translatedBadge": "翻訳済み"
+  },
+  "globalDashboard": {
+    "activeTracks": "トラック",
+    "allTracks": "全トラック",
+    "attempts": "受験",
+    "avgQuizScore": "平均評価点",
+    "avgScore": "平均点",
+    "completed": "修了",
+    "completionRate": "修了率",
+    "countries": "国",
+    "country": "国",
+    "countryCompletion": "国別修了率",
+    "countryHeatmap": "国別修了率ヒートマップ",
+    "done": "完了",
+    "entities": "法人/拠点",
+    "entity": "法人/拠点",
+    "exportCsv": "CSVエクスポート",
+    "learner": "学習者",
+    "learnerBreakdown": "学習者別修了状況",
+    "learnerDistribution": "学習者分布",
+    "learners": "学習者",
+    "learnersShort": "名",
+    "legend": "凡例",
+    "noCountries": "国単位の組織がありません。組織管理で最上位組織（国）を追加してください。",
+    "overallCompletion": "全体修了率",
+    "passRate": "合格率",
+    "passShort": "合格",
+    "possible": "可能",
+    "quizPassRate": "評価合格率",
+    "quizPerformance": "国別評価成績",
+    "quizShort": "クイズ",
+    "subtitle": "国および拠点別トラック修了状況",
+    "title": "グローバル学習ダッシュボード",
+    "totalLearners": "全学習者",
+    "trackCompletion": "トラック別修了率"
   }
 }
