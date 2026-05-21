@@ -372,6 +372,38 @@ export default function AdminMigrationRecords() {
     }
   };
 
+  // === Sample XLSX download ===
+  const downloadSampleXlsx = () => {
+    try {
+      const empSample = [
+        { employee_id: 1001, country: "KR", store: "강남점", name: "홍길동", email: "hong@example.com", position: "Staff", start_date: "2024-03-01" },
+        { employee_id: 1002, country: "KR", store: "성수점", name: "김영희", email: "kim@example.com", position: "Senior", start_date: "2023-07-15" },
+        { employee_id: 1003, country: "JP", store: "Tokyo", name: "Sato Taro", email: "sato@example.com", position: "Manager", start_date: "2022-01-10" },
+      ];
+      const cmpSample = [
+        { employee_id: 1001, course_id: "C001", status: "completed" },
+        { employee_id: 1001, course_id: "C002", status: "in_progress" },
+        { employee_id: 1002, course_id: "C001", status: "not_completed" },
+        { employee_id: 1003, course_id: "C001", status: "not_assigned" },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(empSample), "employees");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cmpSample), "completions");
+      const guide = [
+        { 항목: "employees 시트", 설명: "직원 정보. employee_id 중복 시 기존 데이터 갱신" },
+        { 항목: "completions 시트", 설명: "수료 이력. (employee_id + course_id) 기준 갱신" },
+        { 항목: "status 값", 설명: "completed / not_completed / in_progress / not_assigned / on_leave" },
+        { 항목: "start_date 형식", 설명: "YYYY-MM-DD" },
+        { 항목: "업로드 방법", 설명: "각 시트를 CSV(UTF-8)로 저장 후 'CSV 업로드'에서 개별 업로드" },
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(guide), "README");
+      XLSX.writeFile(wb, "이관학습이력_샘플.xlsx");
+      toast({ title: "샘플 다운로드", description: "엑셀 샘플 파일이 다운로드되었습니다." });
+    } catch (err: any) {
+      toast({ title: "다운로드 실패", description: err.message, variant: "destructive" });
+    }
+  };
+
   // === CSV Upload ===
   const handleEmployeesCsv = async (file: File) => {
     setUploading(true);
