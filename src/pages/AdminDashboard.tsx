@@ -174,7 +174,6 @@ const AdminDashboard = () => {
   });
 
   // ── Derived ──
-  const mandatoryCoursesAll = courses;
   const mandatoryCourses = courses.filter((c: any) => c.is_mandatory && c.status === "published");
   const urgentMandatory = mandatoryCourses.filter((c: any) => {
     if (!c.deadline) return false;
