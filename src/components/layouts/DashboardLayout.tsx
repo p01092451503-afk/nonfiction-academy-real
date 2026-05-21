@@ -193,6 +193,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
         { key: "completionManagement", label: t("nav.completionManagement"), href: "/admin/completion", icon: Trophy, tourId: "nav-completion-mgmt" },
         { key: "surveyManagement", label: t("nav.surveyManagement", "설문 관리"), href: "/admin/surveys", icon: ClipboardList },
         { key: "legacyRecords", label: t("nav.legacyRecords", "학습 이력 관리"), href: "/admin/legacy-records", icon: Archive },
+        { key: "migrationRecords", label: t("nav.migrationRecords", "이관 학습 이력"), href: "/admin/migration-records", icon: Database },
       ],
     },
     {
