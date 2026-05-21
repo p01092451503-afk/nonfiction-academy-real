@@ -66,8 +66,8 @@ const CourseStatsCard = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label={t("stats.totalStudentsCount")} value={stats.total_enrollments.toLocaleString()} unit={peopleUnit} icon={Users} tone="info" />
-          <StatCard label={t("stats.completedStudents")} value={stats.completed.toLocaleString()} unit={peopleUnit} icon={GraduationCap} tone="success" />
+          <StatCard label={t("stats.totalStudentsCount")} value={stats.unique_students.toLocaleString()} unit={peopleUnit} icon={Users} tone="info" />
+          <StatCard label={t("stats.completedStudents")} value={stats.completed_students.toLocaleString()} unit={peopleUnit} icon={GraduationCap} tone="success" />
           <StatCard label={t("stats.avgProgressRate")} value={`${stats.avg_progress}%`} icon={TrendingUp} tone="primary" />
           <StatCard label={t("stats.completionRateValue")} value={`${completionRate}%`} icon={Award} tone="success" />
         </div>
