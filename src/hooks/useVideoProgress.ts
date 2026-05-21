@@ -162,14 +162,17 @@ export function useVideoProgress({
     []
   );
 
-  // ─── Seek to specific position ───
+  // ─── Seek to specific position (allowed by app, e.g. resume) ───
   const seekTo = useCallback(async (seconds: number) => {
+    seekGuardRef.current = true;
+    if (seconds > maxWatchedRef.current) maxWatchedRef.current = seconds;
     if (ytPlayerRef.current?.seekTo) {
       try { ytPlayerRef.current.seekTo(seconds, true); } catch {}
     }
     if (vimeoPlayerRef.current?.setCurrentTime) {
       try { await vimeoPlayerRef.current.setCurrentTime(seconds); } catch {}
     }
+    setTimeout(() => { seekGuardRef.current = false; }, 300);
   }, []);
 
 
@@ -187,8 +190,32 @@ export function useVideoProgress({
           cur = (await vimeoPlayerRef.current.getCurrentTime()) || 0;
           dur = (await vimeoPlayerRef.current.getDuration()) || 0;
         }
+
+        // Block forward seeks (until completed)
+        if (
+          !isCompleted &&
+          !autoCompleted &&
+          !seekGuardRef.current &&
+          cur > maxWatchedRef.current + SEEK_TOLERANCE + 1
+        ) {
+          seekGuardRef.current = true;
+          const target = Math.max(0, maxWatchedRef.current);
+          try {
+            if (type === "youtube" && ytPlayerRef.current?.seekTo) {
+              ytPlayerRef.current.seekTo(target, true);
+            } else if (type === "vimeo" && vimeoPlayerRef.current?.setCurrentTime) {
+              await vimeoPlayerRef.current.setCurrentTime(target);
+            }
+          } catch {}
+          warnSeekBlocked();
+          setTimeout(() => { seekGuardRef.current = false; }, 300);
+          return;
+        }
+
+        if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
         setCurrentTime(cur);
         setDuration(dur);
+
 
         // Auto-complete check
         if (dur > 0) {
