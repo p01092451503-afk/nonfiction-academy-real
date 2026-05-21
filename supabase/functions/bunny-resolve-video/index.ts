@@ -20,7 +20,6 @@ const hostnameFromHeader = (value: string | null) => {
 };
 const defaultAllowedReferrers = [
   "32613697-36d8-44de-a44f-4b31fe45576b.lovableproject.com",
-  "32613697-36d8-44de-a44f-4b31fe45576b.lovableproject.com",
   "id-preview--32613697-36d8-44de-a44f-4b31fe45576b.lovable.app",
   "nonfiction-academy.lovable.app",
   "nonfiction-academy.webheads.co.kr",
