@@ -110,14 +110,18 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   useEffect(() => {
     if (!activeItem) return;
     setIframeStartTime(null);
+    setShowResumeDialog(false);
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
-      const t = raw ? parseFloat(raw) : 0;
-      setResumePos(isFinite(t) && t > 5 ? t : 0);
+      const saved = raw ? parseFloat(raw) : 0;
+      const pos = isFinite(saved) && saved > 5 ? saved : 0;
+      setResumePos(pos);
+      if (pos > 0) setShowResumeDialog(true);
     } catch {
       setResumePos(0);
     }
   }, [contentId, activeItem?.id]);
+
 
   useEffect(() => {
     if (!activeItem) {
