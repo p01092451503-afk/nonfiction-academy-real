@@ -187,7 +187,9 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     if (m === 0) return "-";
     const h = Math.floor(m / 60);
     const min = m % 60;
-    return h > 0 ? `${h}${isKo ? "시간" : "h"} ${min}${isKo ? "분" : "m"}` : `${min}${isKo ? "분" : "m"}`;
+    const hLabel = t("admin.attHour");
+    const mLabel = t("admin.attMinute");
+    return h > 0 ? `${h}${hLabel} ${min}${mLabel}` : `${min}${mLabel}`;
   };
 
   // Summary stats
