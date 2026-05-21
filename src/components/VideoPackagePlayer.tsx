@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import Hls from "hls.js";
-import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock } from "lucide-react";
+import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock, Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
+import { toast } from "@/hooks/use-toast";
 import { normalizeLang } from "@/lib/i18nLang";
+
+const SEEK_TOLERANCE = 2; // seconds — natural playback drift allowance
 
 
 interface VideoPackagePlayerProps {
