@@ -184,6 +184,7 @@ const VideoFrame = ({ target, onMeasured }: VideoFrameProps) => {
           style={{ aspectRatio: "16 / 9" }}
           allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
+          referrerPolicy="no-referrer"
           title={target.contentTitle}
           onLoad={() => setLoaded(true)}
         />
