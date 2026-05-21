@@ -4,7 +4,7 @@ const PLACEHOLDER_PATTERN = /placeholder_value_to_be_replaced/i;
 const VIDEO_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isConfigured = (value: string | null | undefined) => Boolean(value?.trim() && !PLACEHOLDER_PATTERN.test(value));
 const cleanHost = (value: string) => value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
-const SAFE_PATH_PATTERN = /^[0-9a-f-]+\/(?:playlist\.m3u8|\d+p\/video\.m3u8|audio\/audio\.m3u8|\d+p\/video\d+\.ts|\d+p\/audio\d+\.ts|\d+p\/segment-\d+\.ts|\d+p\/seg-\d+\.ts|audio\/audio\d+\.ts|preview\.webp|thumbnail\.jpg)$/i;
+const SAFE_PATH_PATTERN = /^[0-9a-f-]+\/(?:playlist\.m3u8|preview\.webp|thumbnail\.jpg|(?:\d{3,4}p|audio)\/[a-z0-9_.-]+\.(?:m3u8|ts))$/i;
 
 async function sha256Base64Url(value: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
