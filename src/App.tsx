@@ -115,18 +115,18 @@ const AppRoutes = () => {
           <Route path="/student/board" element={<ProtectedRoute><StudentBoard /></ProtectedRoute>} />
           <Route path="/student/tracks" element={<ProtectedRoute><StudentTracks /></ProtectedRoute>} />
 
-          {/* Teacher */}
-          <Route path="/teacher" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
-          <Route path="/teacher/courses" element={<ProtectedRoute><TeacherCourses /></ProtectedRoute>} />
-          <Route path="/teacher/assignments" element={<ProtectedRoute><TeacherAssignments /></ProtectedRoute>} />
-          <Route path="/teacher/courses/new" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
-          <Route path="/teacher/courses/:courseId/edit" element={<ProtectedRoute><CreateCourse /></ProtectedRoute>} />
-          <Route path="/teacher/students" element={<ProtectedRoute><TeacherStudents /></ProtectedRoute>} />
-          <Route path="/teacher/students/:studentId" element={<ProtectedRoute><TeacherStudentDetail /></ProtectedRoute>} />
-          <Route path="/teacher/notifications" element={<ProtectedRoute><TeacherNotifications /></ProtectedRoute>} />
-          <Route path="/teacher/announcements" element={<ProtectedRoute><TeacherAnnouncements /></ProtectedRoute>} />
-          <Route path="/teacher/board" element={<ProtectedRoute><AdminBoard role="teacher" /></ProtectedRoute>} />
-          <Route path="/teacher/attendance" element={<ProtectedRoute><AdminAttendance role="teacher" /></ProtectedRoute>} />
+          {/* Teacher (requires teacher/admin role) */}
+          <Route path="/teacher" element={<TeacherRoute><TeacherDashboard /></TeacherRoute>} />
+          <Route path="/teacher/courses" element={<TeacherRoute><TeacherCourses /></TeacherRoute>} />
+          <Route path="/teacher/assignments" element={<TeacherRoute><TeacherAssignments /></TeacherRoute>} />
+          <Route path="/teacher/courses/new" element={<TeacherRoute><CreateCourse /></TeacherRoute>} />
+          <Route path="/teacher/courses/:courseId/edit" element={<TeacherRoute><CreateCourse /></TeacherRoute>} />
+          <Route path="/teacher/students" element={<TeacherRoute><TeacherStudents /></TeacherRoute>} />
+          <Route path="/teacher/students/:studentId" element={<TeacherRoute><TeacherStudentDetail /></TeacherRoute>} />
+          <Route path="/teacher/notifications" element={<TeacherRoute><TeacherNotifications /></TeacherRoute>} />
+          <Route path="/teacher/announcements" element={<TeacherRoute><TeacherAnnouncements /></TeacherRoute>} />
+          <Route path="/teacher/board" element={<TeacherRoute><AdminBoard role="teacher" /></TeacherRoute>} />
+          <Route path="/teacher/attendance" element={<TeacherRoute><AdminAttendance role="teacher" /></TeacherRoute>} />
 
           {/* Admin */}
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
