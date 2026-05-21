@@ -342,8 +342,7 @@ export default function AdminGlobalDashboard() {
     ]);
     for (const cs of countryStats) {
       const country = cs.country;
-      const entities = departments.filter((d) => d.parent_department_id === country.id);
-      const list = entities.length > 0 ? entities : [country];
+      const list = country.branches;
       for (const ent of list) {
         const entUsers = profiles.filter((p) => p.department_id === ent.id);
         let comp = 0, poss = 0;
