@@ -433,7 +433,7 @@ export default function AdminMigrationRecords() {
                     <TableHead className="cursor-pointer" onClick={() => toggleSort("store")}>매장<SortIcon k="store" /></TableHead>
                     <TableHead className="cursor-pointer" onClick={() => toggleSort("position")}>직급<SortIcon k="position" /></TableHead>
                     <TableHead className="cursor-pointer" onClick={() => toggleSort("country")}>국가<SortIcon k="country" /></TableHead>
-                    <TableHead className="cursor-pointer" onClick={() => toggleSort("start_date")}>입사일<SortIcon k="start_date" /></TableHead>
+                    
                     <TableHead className="cursor-pointer" onClick={() => toggleSort("course_name")}>과정명<SortIcon k="course_name" /></TableHead>
                     <TableHead className="cursor-pointer" onClick={() => toggleSort("year")}>연도<SortIcon k="year" /></TableHead>
                     <TableHead className="cursor-pointer text-center" onClick={() => toggleSort("status")}>수료상태<SortIcon k="status" /></TableHead>
@@ -441,9 +441,9 @@ export default function AdminMigrationRecords() {
                 </TableHeader>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">로딩 중...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">로딩 중...</TableCell></TableRow>
                   ) : pageRows.length === 0 ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">데이터가 없습니다</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">데이터가 없습니다</TableCell></TableRow>
                   ) : (
                     pageRows.map((r, i) => {
                       const meta = STATUS_META[r.status];
@@ -457,7 +457,7 @@ export default function AdminMigrationRecords() {
                           <TableCell className="text-sm">{r.employee.store || "—"}</TableCell>
                           <TableCell className="text-sm">{r.employee.position || "—"}</TableCell>
                           <TableCell><Badge variant="outline" className="text-xs">{r.employee.country}</Badge></TableCell>
-                          <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{r.employee.start_date || "—"}</TableCell>
+                          
                           <TableCell className="text-sm max-w-[280px] truncate" title={r.course!.course_name}>{r.course!.course_name}</TableCell>
                           <TableCell className="text-sm">{r.course!.year}</TableCell>
                           <TableCell className="text-center">
@@ -505,7 +505,7 @@ export default function AdminMigrationRecords() {
                     <div><span className="text-muted-foreground">국가</span><p className="font-medium">{selectedEmp.country}</p></div>
                     <div><span className="text-muted-foreground">매장</span><p className="font-medium">{selectedEmp.store || "—"}</p></div>
                     <div><span className="text-muted-foreground">직급</span><p className="font-medium">{selectedEmp.position || "—"}</p></div>
-                    <div><span className="text-muted-foreground">입사일</span><p className="font-medium">{selectedEmp.start_date || "—"}</p></div>
+                    
                   </div>
 
                   <div className="rounded-lg border border-border p-4 bg-muted/30">
