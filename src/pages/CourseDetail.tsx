@@ -15,7 +15,7 @@ import {
   FileText, Video, ChevronRight, BarChart3, Plus, Pencil,
   Trash2, Eye, EyeOff, Settings, ChevronUp, ChevronDown,
   GripVertical, ExternalLink, Copy, MoreHorizontal,
-  ClipboardCheck, AlertTriangle, Upload, X, Image, Languages, UserPlus,
+  ClipboardCheck, AlertTriangle, Upload, X, Image, Images, Languages, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
@@ -46,6 +46,7 @@ import { useInvalidateI18nQueriesOnLangChange } from "@/lib/i18nQueryCache";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
+  video_package: Video, media_package: Images,
 };
 
 type ContentFormData = {
