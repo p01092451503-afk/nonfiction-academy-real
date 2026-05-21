@@ -90,6 +90,23 @@ const BranchLearningStats = () => {
     };
   }).filter((b) => b.members > 0);
 
+  const totals = branchStats.reduce(
+    (acc, b) => {
+      acc.members += b.members;
+      acc.enrollments += b.enrollments;
+      acc.completed += b.completed;
+      acc.contentCompletions += b.contentCompletions;
+      return acc;
+    },
+    { members: 0, enrollments: 0, completed: 0, contentCompletions: 0 },
+  );
+  const totalAvgProgress = totals.enrollments > 0
+    ? Math.round(branchStats.reduce((s, b) => s + b.avgProgress * b.enrollments, 0) / totals.enrollments)
+    : 0;
+  const totalCompletionRate = totals.enrollments > 0
+    ? Math.round((totals.completed / totals.enrollments) * 100)
+    : 0;
+
   const chartData = branchStats.map((b) => ({
     name: b.name.length > 6 ? b.name.slice(0, 6) + "…" : b.name,
     [completionRateLabel]: b.completionRate,
