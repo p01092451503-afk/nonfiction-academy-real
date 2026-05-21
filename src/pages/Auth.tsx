@@ -93,7 +93,7 @@ const Auth = () => {
             <h1 className="font-display text-2xl tracking-wider text-foreground">NONFICTION</h1>
           </div>
           <div className="hidden lg:block">
-            <p className="tracking-[0.2em] text-muted-foreground uppercase bg-slate-50 font-serif text-2xl text-black">NONFICTION ACADEMY</p>
+            <p className="tracking-[0.2em] text-muted-foreground uppercase bg-slate-50 font-serif text-2xl text-black">NONFICTION</p>
           </div>
 
           <div className="space-y-2">
