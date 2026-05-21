@@ -506,15 +506,26 @@ export default function AdminMigrationRecords() {
     <DashboardLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-2">
-            <Database className="h-6 w-6 text-primary" aria-hidden="true" />
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">이관 학습 이력</h1>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Database className="h-6 w-6 text-primary" aria-hidden="true" />
+              <h1 className="text-xl sm:text-2xl font-semibold text-foreground">이관 학습 이력</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              과거 학습 이력 데이터(직원·과정·수료 현황) 통합 검색 및 관리
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            과거 학습 이력 데이터(직원·과정·수료 현황) 통합 검색 및 관리
-          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)} className="gap-1.5">
+              <Upload className="h-4 w-4" /> CSV 업로드
+            </Button>
+            <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+              <UserPlus className="h-4 w-4" /> 직원 추가
+            </Button>
+          </div>
         </div>
+
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
