@@ -370,11 +370,11 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                         <TableCell className="text-center">
                           {isOnline ? (
                             <span className="text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2.5 py-1 rounded-lg">
-                              {isKo ? "온라인" : "Online"}
+                              {t("admin.attOnline")}
                             </span>
                           ) : s.loginAt ? (
                             <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-2.5 py-1 rounded-lg">
-                              {isKo ? "오프라인" : "Offline"}
+                              {t("admin.attOffline")}
                             </span>
                           ) : (
                             <span className="text-[10px] text-muted-foreground">-</span>
