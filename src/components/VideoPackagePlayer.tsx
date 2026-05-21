@@ -59,7 +59,7 @@ const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
 };
 const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
+const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted = false }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
