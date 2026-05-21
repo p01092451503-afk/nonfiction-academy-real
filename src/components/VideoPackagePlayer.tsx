@@ -641,7 +641,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
               // 각 차시(item)의 언어 코드에 맞춰 뱃지 텍스트를 번역 — UI 언어가 아닌 콘텐츠 언어 기준
               const itemLang = normalizeLang(it.language_code);
               const tItem = i18n.getFixedT(itemLang);
-              const tDone = tItem("course.completed", "완료");
+              const tDone = "Completed";
               const tPlaying = "Now Playing";
               const episodeLabel = `${idx + 1}${tItem("videoPackage.episodeSuffix", "차시")}`;
               const itemTitle = it.title || `${tItem("course.video", "영상")} ${idx + 1}`;
