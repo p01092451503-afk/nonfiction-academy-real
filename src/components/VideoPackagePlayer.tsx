@@ -53,6 +53,7 @@ const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
   const raw = url?.trim() || "";
   return raw && !hasPlaceholderHost(raw) ? raw : null;
 };
+const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
@@ -70,6 +71,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [isResolvingUrl, setIsResolvingUrl] = useState(false);
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
+  const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
 
 
@@ -112,6 +114,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     if (!activeItem) return;
     setIframeStartTime(null);
     setShowResumeDialog(false);
+    setProgress({ current: 0, duration: activeItem.duration_seconds || 0 });
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
       const saved = raw ? parseFloat(raw) : 0;
@@ -122,6 +125,12 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       setResumePos(0);
     }
   }, [contentId, activeItem?.id]);
+
+  useEffect(() => {
+    if (activeItem && playbackUrl && isBunnyIframe(playbackUrl)) {
+      setIframeInstanceKey(getFrameNonce());
+    }
+  }, [activeItem?.id, playbackUrl, iframeStartTime]);
 
 
   useEffect(() => {
@@ -285,17 +294,52 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
 
   // Bunny iframe progress tracking via Player.js postMessage protocol
   useEffect(() => {
-    if (!activeItem || !playbackUrl || !isBunnyIframe(playbackUrl)) return;
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!activeItem || !playbackUrl || !isBunnyIframe(playbackUrl) || !iframe) return;
 
     let cancelled = false;
     let player: any = null;
     let durationCache = 0;
     let lastSavedSec = -1;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     let PlayerCtor: any = null;
     let attachTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const updateProgress = (curRaw: number, durRaw?: number) => {
+      if (cancelled) return;
+      const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
+      const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
+      if (dur > 0) durationCache = dur;
+      setProgress({ current: cur, duration: dur });
+      const sec = Math.floor(cur);
+      if (sec > 0 && sec !== lastSavedSec && sec % 5 === 0) {
+        lastSavedSec = sec;
+        try {
+          localStorage.setItem(STORAGE_KEY(contentId, activeItem.id), String(cur));
+        } catch {}
+      }
+      if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
+        setCompletedItems((prev) => {
+          const next = new Set(prev);
+          next.add(activeItem.id);
+          return next;
+        });
+      }
+    };
+
+    const pollBunnyProgress = () => {
+      if (!player) return;
+      try {
+        player.getCurrentTime((cur: number) => {
+          if (durationCache > 0) {
+            updateProgress(cur, durationCache);
+            return;
+          }
+          player.getDuration((dur: number) => updateProgress(cur, dur));
+        });
+      } catch {}
+    };
 
     const attach = async () => {
       try {
@@ -311,26 +355,11 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               setProgress((p) => ({ current: p.current, duration: d }));
             }
           });
+          pollBunnyProgress();
+          pollTimer = setInterval(pollBunnyProgress, 1000);
         });
         player.on("timeupdate", (data: { seconds: number; duration: number }) => {
-          const cur = data?.seconds ?? 0;
-          const dur = data?.duration ?? durationCache ?? 0;
-          if (dur > 0) durationCache = dur;
-          setProgress({ current: cur, duration: dur });
-          const sec = Math.floor(cur);
-          if (sec !== lastSavedSec && sec % 5 === 0) {
-            lastSavedSec = sec;
-            try {
-              localStorage.setItem(STORAGE_KEY(contentId, activeItem.id), String(cur));
-            } catch {}
-          }
-          if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
-            setCompletedItems((prev) => {
-              const next = new Set(prev);
-              next.add(activeItem.id);
-              return next;
-            });
-          }
+          updateProgress(data?.seconds ?? 0, data?.duration ?? durationCache);
         });
         player.on("ended", () => {
           setCompletedItems((prev) => {
@@ -357,13 +386,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     return () => {
       cancelled = true;
       if (attachTimer) clearTimeout(attachTimer);
+      if (pollTimer) clearInterval(pollTimer);
       try {
         player?.off?.("timeupdate");
         player?.off?.("ended");
         player?.off?.("ready");
       } catch {}
     };
-  }, [activeItem?.id, playbackUrl, contentId, items.length, activeIdx, completedItems]);
+  }, [activeItem?.id, playbackUrl, iframeInstanceKey, contentId, items.length, activeIdx, completedItems]);
 
   if (isLoading) {
     return (
@@ -406,7 +436,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             (() => {
               const sep = playbackUrl.includes("?") ? "&" : "?";
-              const params = [`preload=true`, `responsive=true`];
+              const params = [`preload=true`, `responsive=true`, `_vp=${encodeURIComponent(iframeInstanceKey)}`];
               if (iframeStartTime && iframeStartTime > 0) {
                 params.push(`t=${Math.floor(iframeStartTime)}`, `autoplay=true`);
               }
@@ -414,7 +444,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               return (
                 <iframe
                   ref={iframeRef}
-                  key={`${playbackUrl}#${iframeStartTime ?? 0}`}
+                  key={finalSrc}
                   src={finalSrc}
                   width="100%"
                   height="100%"
@@ -422,7 +452,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
                   style={{ aspectRatio: "16 / 9" }}
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                   allowFullScreen
-                  referrerPolicy="no-referrer"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   title={activeItem?.title || t("course.video", "영상")}
                 />
               );
