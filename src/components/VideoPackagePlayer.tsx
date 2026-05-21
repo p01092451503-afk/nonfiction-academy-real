@@ -62,6 +62,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [activeIdx, setActiveIdx] = useState(0);
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
   const [resumePos, setResumePos] = useState(0);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
   const [progress, setProgress] = useState({ current: 0, duration: 0 });
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
@@ -69,6 +70,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const completedRef = useRef(false);
+
 
   // Fetch all items for this content (all languages), then filter by language
   const { data: allItems = [], isLoading } = useQuery({
