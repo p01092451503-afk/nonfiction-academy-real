@@ -108,7 +108,7 @@ const Auth = () => {
                 <label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("auth.email")}</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="email" placeholder="name@nonfiction.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 pl-11 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required />
+                  <Input id="login-email" name="email" type="email" autoComplete="username" placeholder="name@nonfiction.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 pl-11 bg-white border border-border rounded-xl text-sm placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-foreground/20" required />
                 </div>
               </div>
               <div className="space-y-2">
