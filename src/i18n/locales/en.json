@@ -393,7 +393,8 @@
     "enOptional": "(Falls back to Korean if empty)",
     "autoTranslate": "Auto Translate",
     "category": "Category",
-    "instructor": "Instructor"
+    "instructor": "Instructor",
+    "playing": "Now playing"
   },
   "assignments": {
     "title": "Assignments",
@@ -972,7 +973,9 @@
     "resumePlayback": "Resume",
     "fromBeginning": "Start over",
     "resumeDialogTitle": "Continue watching?",
-    "resumeDialogDesc": "You previously watched up to {{time}}. Would you like to resume or start over?"
+    "resumeDialogDesc": "You previously watched up to {{time}}. Would you like to resume or start over?",
+    "completed": "Completed",
+    "nowPlaying": "Now playing"
   },
   "notification": {
     "title": "Notifications",

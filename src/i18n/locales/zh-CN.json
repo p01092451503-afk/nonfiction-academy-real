@@ -390,7 +390,8 @@
     "enOptional": "(未输入时默认使用韩语)",
     "autoTranslate": "自动翻译",
     "category": "类别",
-    "instructor": "讲师"
+    "instructor": "讲师",
+    "playing": "播放中"
   },
   "assignments": {
     "title": "作业",
@@ -969,7 +970,9 @@
     "resumePlayback": "继续播放",
     "fromBeginning": "从头开始",
     "resumeDialogTitle": "继续观看？",
-    "resumeDialogDesc": "您之前观看到 {{time}}。要继续观看还是从头开始？"
+    "resumeDialogDesc": "您之前观看到 {{time}}。要继续观看还是从头开始？",
+    "completed": "已完成",
+    "nowPlaying": "播放中"
   },
   "notification": {
     "title": "通知",
