@@ -82,11 +82,32 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     enabled: !!contentId,
   });
 
+  // Reset state when content changes
   useEffect(() => {
     setIndex(0);
     setVisited(new Set([0]));
+    setResumeIndex(null);
     completedRef.current = false;
+    restoredRef.current = false;
   }, [contentId]);
+
+  // Restore saved progress once items are loaded
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (!contentId || items.length === 0) return;
+    restoredRef.current = true;
+    const saved = loadProgress(contentId);
+    if (!saved) return;
+    const validVisited = saved.visited.filter((n) => n >= 0 && n < items.length);
+    if (validVisited.length > 0) {
+      setVisited(new Set([0, ...validVisited]));
+    }
+    const savedIdx = Math.min(Math.max(0, saved.index), items.length - 1);
+    // Only suggest resume if not already completed and not at start
+    if (savedIdx > 0 && validVisited.length < items.length) {
+      setResumeIndex(savedIdx);
+    }
+  }, [contentId, items.length]);
 
   useEffect(() => {
     setVisited((prev) => {
@@ -100,6 +121,17 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
     setInlinePan({ x: 0, y: 0 });
   }, [index]);
 
+  // Persist progress
+  useEffect(() => {
+    if (!contentId || items.length === 0) return;
+    try {
+      const payload: StoredProgress = { index, visited: Array.from(visited) };
+      localStorage.setItem(STORAGE_KEY(contentId), JSON.stringify(payload));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [contentId, index, visited, items.length]);
+
   useEffect(() => {
     if (
       items.length > 0 &&
@@ -110,6 +142,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
       onComplete?.();
     }
   }, [visited, items.length, onComplete]);
+
 
   // Keyboard navigation
   useEffect(() => {
