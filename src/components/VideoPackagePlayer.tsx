@@ -388,21 +388,22 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
       const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
       if (dur > 0) durationCache = dur;
-      // Enforce no-skip-forward: if cur jumped beyond max + tolerance, snap back
+      // Enforce no-seek: if cur jumped (forward OR backward) beyond tolerance, snap back
       if (
         !completedItems.has(activeItem.id) &&
         !seekGuardRef.current &&
-        cur > maxWatchedRef.current + SEEK_TOLERANCE + 1
+        Math.abs(cur - lastTimeRef.current) > SEEK_TOLERANCE + 1
       ) {
         seekGuardRef.current = true;
         try {
-          player?.setCurrentTime?.(Math.max(0, maxWatchedRef.current));
+          player?.setCurrentTime?.(Math.max(0, lastTimeRef.current));
         } catch {}
         warnSeekBlocked();
         setTimeout(() => { seekGuardRef.current = false; }, 200);
         return;
       }
       if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
+      lastTimeRef.current = cur;
       setProgress({ current: cur, duration: dur });
       const sec = Math.floor(cur);
       if (sec > 0 && sec !== lastSavedSec && sec % 5 === 0) {
