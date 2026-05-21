@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
+import { localizeCourse } from "@/lib/i18nCourse";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const TeacherDashboard = () => {
   const { user, profile } = useUser();
