@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Search, BookOpen, Users, Clock, Sparkles, ChevronRight, ChevronLeft, Hourglass, Compass } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
@@ -232,6 +232,7 @@ const CourseCatalog = () => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { i18n } = useTranslation();
   const normalizeLang = (l?: string): string => {
@@ -324,17 +325,20 @@ const CourseCatalog = () => {
           { onConflict: "user_id,course_id", ignoreDuplicates: true }
         );
       if (error) throw error;
+      return courseId;
     },
-    onSuccess: () => {
+    onSuccess: (courseId) => {
       queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
       queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
+      navigate(`/student/courses/${courseId}?view=learn`);
     },
-    onError: (e: any) => {
+    onError: (e: any, courseId) => {
       // Silently ignore duplicate-enrollment races — the user is already enrolled,
-      // so just refresh the cache and let the UI move them into the course.
+      // so just refresh the cache and move them into the course.
       if (e?.code === "23505" || /duplicate key/i.test(e?.message || "")) {
         queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
         queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
+        navigate(`/student/courses/${courseId}?view=learn`);
         return;
       }
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
