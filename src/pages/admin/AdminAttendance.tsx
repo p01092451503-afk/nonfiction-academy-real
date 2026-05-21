@@ -256,10 +256,10 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label={isKo ? "전체 사용자" : "Total Users"} value={totalUsers} icon={Users} tone="primary" trend={attSparkline.sessions7} delta={attSparkline.sessionsDelta} />
-          <StatCard label={isKo ? "현재 온라인" : "Currently Online"} value={totalOnline} icon={LogIn} tone="success" />
-          <StatCard label={isKo ? "총 학습시간" : "Total Learning Time"} value={formatMinutes(totalMinutes)} icon={Clock} tone="info" />
-          <StatCard label={isKo ? "학습 완료" : "Completions"} value={totalCompletions} icon={BookOpen} tone="warning" trend={attSparkline.completions7} delta={attSparkline.completionsDelta} />
+          <StatCard label={t("admin.totalUsers")} value={totalUsers} icon={Users} tone="primary" trend={attSparkline.sessions7} delta={attSparkline.sessionsDelta} />
+          <StatCard label={t("admin.currentOnline")} value={totalOnline} icon={LogIn} tone="success" />
+          <StatCard label={t("admin.totalLearningTime")} value={formatMinutes(totalMinutes)} icon={Clock} tone="info" />
+          <StatCard label={t("admin.learningCompletions")} value={totalCompletions} icon={BookOpen} tone="warning" trend={attSparkline.completions7} delta={attSparkline.completionsDelta} />
         </div>
 
         {/* Filters */}
