@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import Hls from "hls.js";
-import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock } from "lucide-react";
+import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock, Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
+import { toast } from "@/hooks/use-toast";
 import { normalizeLang } from "@/lib/i18nLang";
+
+const SEEK_TOLERANCE = 2; // seconds — natural playback drift allowance
 
 
 interface VideoPackagePlayerProps {
@@ -73,6 +76,23 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
+  const maxWatchedRef = useRef<number>(0);
+  const seekGuardRef = useRef<boolean>(false);
+  const lastSeekWarnRef = useRef<number>(0);
+
+  const warnSeekBlocked = () => {
+    const now = Date.now();
+    if (now - lastSeekWarnRef.current < 2500) return;
+    lastSeekWarnRef.current = now;
+    toast({
+      title: t("videoPackage.seekBlockedTitle", "앞으로 건너뛸 수 없습니다"),
+      description: t(
+        "videoPackage.seekBlockedDesc",
+        "정확한 학습을 위해 시청하지 않은 구간으로 이동할 수 없습니다."
+      ),
+    });
+  };
+
 
 
   // Fetch all items for this content (all languages), then filter by language
@@ -120,11 +140,15 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       const saved = raw ? parseFloat(raw) : 0;
       const pos = isFinite(saved) && saved > 5 ? saved : 0;
       setResumePos(pos);
+      // Allow seeking up to previously-watched position
+      maxWatchedRef.current = pos;
       if (pos > 0) setShowResumeDialog(true);
     } catch {
       setResumePos(0);
+      maxWatchedRef.current = 0;
     }
   }, [contentId, activeItem?.id]);
+
 
   useEffect(() => {
     if (activeItem && playbackUrl && isBunnyIframe(playbackUrl)) {
@@ -232,6 +256,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     if (!v || !activeItem) return;
     const cur = v.currentTime;
     const dur = v.duration || 0;
+    // Track furthest watched position for seek-forward prevention
+    if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
     setProgress({ current: cur, duration: dur });
     // Save position every ~5s
     if (Math.floor(cur) % 5 === 0) {
@@ -248,6 +274,24 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     }
   };
 
+  const handleSeeking = () => {
+    const v = videoRef.current;
+    if (!v || !activeItem) return;
+    // Allow seeks after completion (re-watching freely)
+    if (completedItems.has(activeItem.id)) return;
+    if (seekGuardRef.current) return;
+    const target = v.currentTime;
+    const limit = maxWatchedRef.current + SEEK_TOLERANCE;
+    if (target > limit) {
+      seekGuardRef.current = true;
+      try {
+        v.currentTime = Math.max(0, maxWatchedRef.current);
+      } catch {}
+      warnSeekBlocked();
+      setTimeout(() => { seekGuardRef.current = false; }, 50);
+    }
+  };
+
   const handleLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
@@ -258,6 +302,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = resumePos;
+    if (resumePos > maxWatchedRef.current) maxWatchedRef.current = resumePos;
     setResumePos(0);
     v.play().catch(() => {});
   };
@@ -311,6 +356,21 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
       const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
       if (dur > 0) durationCache = dur;
+      // Enforce no-skip-forward: if cur jumped beyond max + tolerance, snap back
+      if (
+        !completedItems.has(activeItem.id) &&
+        !seekGuardRef.current &&
+        cur > maxWatchedRef.current + SEEK_TOLERANCE + 1
+      ) {
+        seekGuardRef.current = true;
+        try {
+          player?.setCurrentTime?.(Math.max(0, maxWatchedRef.current));
+        } catch {}
+        warnSeekBlocked();
+        setTimeout(() => { seekGuardRef.current = false; }, 200);
+        return;
+      }
+      if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
       setProgress({ current: cur, duration: dur });
       const sec = Math.floor(cur);
       if (sec > 0 && sec !== lastSavedSec && sec % 5 === 0) {
@@ -327,6 +387,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
         });
       }
     };
+
 
     const pollBunnyProgress = () => {
       if (!player) return;
@@ -467,6 +528,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               preload="metadata"
               className="absolute inset-0 h-full w-full bg-black object-contain"
               onTimeUpdate={handleTimeUpdate}
+              onSeeking={handleSeeking}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
               aria-label={activeItem?.title || t("course.video", "영상")}
