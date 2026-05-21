@@ -541,6 +541,9 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
               ref={videoRef}
               key={activeItem?.id}
               controls
+              controlsList="nodownload noplaybackrate noremoteplayback"
+              disablePictureInPicture
+              disableRemotePlayback
               playsInline
               poster={resolvedPoster || undefined}
               preload="metadata"
