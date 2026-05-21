@@ -284,7 +284,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
           <div className="sm:hidden divide-y divide-border">
             {filteredStats.length === 0 ? (
               <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-                {isKo ? "해당 날짜에 기록이 없습니다." : "No records for this date."}
+                {t("admin.noRecordsForDate")}
               </div>
             ) : (
               filteredStats.map((s) => {
