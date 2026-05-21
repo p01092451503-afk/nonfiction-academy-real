@@ -37,6 +37,7 @@ interface VPItem {
 }
 
 const STORAGE_KEY = (cid: string, vid: string) => `vp-progress:${cid}:${vid}`;
+const DONE_KEY = (cid: string, vid: string) => `vp-done:${cid}:${vid}`;
 
 const formatTime = (s: number) => {
   if (!isFinite(s) || s < 0) return "0:00";
