@@ -90,10 +90,10 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     if (now - lastSeekWarnRef.current < 2500) return;
     lastSeekWarnRef.current = now;
     toast({
-      title: t("videoPackage.seekBlockedTitle", "앞으로 건너뛸 수 없습니다"),
+      title: t("videoPackage.seekBlockedTitle", "건너뛸 수 없습니다"),
       description: t(
         "videoPackage.seekBlockedDesc",
-        "정확한 학습을 위해 시청하지 않은 구간으로 이동할 수 없습니다."
+        "정확한 진도율 측정을 위해 진행 바를 임의로 이동할 수 없습니다."
       ),
     });
   };
