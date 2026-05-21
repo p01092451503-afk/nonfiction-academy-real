@@ -298,25 +298,25 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                       </div>
                       {s.loginAt && !s.logoutAt && (
                         <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
-                          {isKo ? "온라인" : "Online"}
+                          {t("admin.attOnline")}
                         </span>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "로그인" : "Login"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attLogin")}: </span>
                         <span className="text-foreground">{formatTime(s.loginAt)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "로그아웃" : "Logout"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attLogout")}: </span>
                         <span className="text-foreground">{formatTime(s.logoutAt)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "학습시간" : "Study"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attStudy")}: </span>
                         <span className="text-foreground">{formatMinutes(s.learningMinutes)}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">{isKo ? "완료" : "Done"}: </span>
+                        <span className="text-muted-foreground">{t("admin.attDone")}: </span>
                         <span className="text-foreground">{s.completions}</span>
                       </div>
                     </div>
