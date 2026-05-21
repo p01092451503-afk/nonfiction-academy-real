@@ -51,7 +51,9 @@ const isBunny = (url: string, hint: string | null) =>
   /(?:iframe|player)\.mediadelivery\.net|b-cdn\.net/i.test(url || "");
 const isPlaceholder = (url: string) => /placeholder_value_to_be_replaced/i.test(url || "");
 const toBunnyEmbedUrl = (url: string) =>
-  url.replace("iframe.mediadelivery.net/play/", "player.mediadelivery.net/embed/");
+  url
+    .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
+    .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
 const detectProvider = (url: string, hint: string | null): string => {
   if (hint) return hint.toLowerCase();
   const u = (url || "").toLowerCase();
