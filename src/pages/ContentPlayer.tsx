@@ -738,7 +738,12 @@ const ContentPlayer = () => {
                         </div>
                       )}
                       <span className="truncate flex-1">{getTitle(c)}</span>
-                      {isActive ? (
+                      {isCompleted ? (
+                        <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
+                          <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
+                          {t("contentPlayer.completed", "완료")}
+                        </span>
+                      ) : isActive ? (
                         <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                           <Play className="h-2.5 w-2.5" aria-hidden="true" />
                           {t("contentPlayer.nowPlaying", "재생 중")}
