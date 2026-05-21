@@ -125,6 +125,8 @@ export default function AdminMigrationRecords() {
   const [uploadResult, setUploadResult] = useState<{ type: string; added: number; updated: number; errors: string[] } | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  const debouncedSearch = useDebounced(search, 300);
+
   const { data: employees = [], isLoading: empLoading } = useQuery({
     queryKey: ["mig-employees"],
     queryFn: async () => {
