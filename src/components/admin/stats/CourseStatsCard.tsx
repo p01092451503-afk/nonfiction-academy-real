@@ -34,7 +34,9 @@ const CourseStatsCard = () => {
 
   const stats: CourseStats = data || {
     total_courses: 0, published: 0, draft: 0, mandatory: 0,
-    total_enrollments: 0, completed: 0, avg_progress: 0, top_courses: [],
+    total_enrollments: 0, unique_students: 0,
+    completed: 0, completed_students: 0,
+    avg_progress: 0, top_courses: [],
   };
 
   const completionRate = stats.total_enrollments > 0
