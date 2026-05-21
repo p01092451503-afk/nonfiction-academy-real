@@ -69,12 +69,11 @@ const RoleSwitcher = () => {
           const config = roleConfig[role];
           if (!config) return null;
           const Icon = config.icon;
-          const isActive = role === primaryRole;
           return (
             <DropdownMenuItem
               key={role}
               onClick={() => navigate(config.path)}
-              className={`text-xs gap-2 ${isActive ? "font-bold bg-accent" : ""}`}
+              className="text-xs gap-2"
             >
               <Icon className="h-3.5 w-3.5" />
               {t(config.labelKey)}
