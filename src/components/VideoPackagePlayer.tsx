@@ -6,9 +6,12 @@ import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock } from "lucide
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { normalizeLang } from "@/lib/i18nLang";
+
 
 interface VideoPackagePlayerProps {
   contentId: string;
@@ -59,6 +62,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [activeIdx, setActiveIdx] = useState(0);
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
   const [resumePos, setResumePos] = useState(0);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
   const [progress, setProgress] = useState({ current: 0, duration: 0 });
   const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
   const [resolvedPoster, setResolvedPoster] = useState<string | null>(null);
@@ -66,6 +70,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   const [videoLoadError, setVideoLoadError] = useState<string | null>(null);
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const completedRef = useRef(false);
+
 
   // Fetch all items for this content (all languages), then filter by language
   const { data: allItems = [], isLoading } = useQuery({
@@ -105,14 +110,18 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
   useEffect(() => {
     if (!activeItem) return;
     setIframeStartTime(null);
+    setShowResumeDialog(false);
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
-      const t = raw ? parseFloat(raw) : 0;
-      setResumePos(isFinite(t) && t > 5 ? t : 0);
+      const saved = raw ? parseFloat(raw) : 0;
+      const pos = isFinite(saved) && saved > 5 ? saved : 0;
+      setResumePos(pos);
+      if (pos > 0) setShowResumeDialog(true);
     } catch {
       setResumePos(0);
     }
   }, [contentId, activeItem?.id]);
+
 
   useEffect(() => {
     if (!activeItem) {
@@ -520,9 +529,68 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           </ul>
         </section>
       )}
+
+      {/* Resume / Restart dialog */}
+      <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <DialogContent className="sm:max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("contentPlayer.resumeTitle", "이전 시청 기록")}</DialogTitle>
+            <DialogDescription>
+              {t("contentPlayer.resumeDesc", {
+                time: formatTime(resumePos),
+                defaultValue: `이전에 ${formatTime(resumePos)} 지점까지 시청했습니다. 이어보시겠어요?`,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full"
+              onClick={() => {
+                try {
+                  if (activeItem) localStorage.removeItem(STORAGE_KEY(contentId, activeItem.id));
+                } catch {}
+                setResumePos(0);
+                setShowResumeDialog(false);
+                if (playbackUrl && isBunnyIframe(playbackUrl)) {
+                  setIframeStartTime(0);
+                } else {
+                  const v = videoRef.current;
+                  if (v) {
+                    v.currentTime = 0;
+                    v.play().catch(() => {});
+                  }
+                }
+              }}
+            >
+              <RotateCcw className="h-4 w-4 mr-1.5" />
+              {t("contentPlayer.startOver", "처음부터")}
+            </Button>
+            <Button
+              className="flex-1 rounded-full"
+              onClick={() => {
+                setShowResumeDialog(false);
+                if (playbackUrl && isBunnyIframe(playbackUrl)) {
+                  setIframeStartTime(resumePos);
+                  setResumePos(0);
+                } else {
+                  handleResume();
+                }
+              }}
+            >
+              <Play className="h-4 w-4 mr-1.5" />
+              {t("contentPlayer.resumeAt", {
+                time: formatTime(resumePos),
+                defaultValue: `이어보기 (${formatTime(resumePos)})`,
+              })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 
 export default VideoPackagePlayer;
