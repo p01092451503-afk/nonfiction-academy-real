@@ -458,7 +458,7 @@ const MyPage = () => {
                   <h2 className="text-lg font-semibold">{t("mypage.legacyTitle")}</h2>
                   <p className="text-sm text-muted-foreground">{t("mypage.legacyDesc")}</p>
                 </div>
-                {legacyRecords.length === 0 ? (
+                {combinedLegacyRecords.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 space-y-3">
                     <div className="h-14 w-14 rounded-full bg-accent flex items-center justify-center">
                       <Archive className="h-6 w-6 text-muted-foreground" />
@@ -467,23 +467,33 @@ const MyPage = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {legacyRecords.map((r: any) => (
-                      <div key={r.id} className="flex items-center justify-between gap-4 border-b-2 border-border/80 pb-3">
-                        <div className="min-w-0 space-y-1">
-                          <h3 className="text-sm font-semibold text-foreground truncate">{r.course_title}</h3>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                            {r.source_lms && <span>{r.source_lms}</span>}
-                            {r.completed_at && <><span>·</span><span>{r.completed_at}</span></>}
+                    {combinedLegacyRecords.map((r: any) => {
+                      const statusLabel =
+                        r.status === "in_progress" ? "진행중"
+                        : r.status === "on_leave" ? "휴직"
+                        : r.is_completed ? t("mypage.legacyCompleted")
+                        : t("mypage.legacyNotCompleted");
+                      const statusCls =
+                        r.is_completed
+                          ? "bg-foreground text-background"
+                          : r.status === "in_progress"
+                            ? "bg-amber-500/10 text-amber-700 border border-amber-500/30"
+                            : r.status === "on_leave"
+                              ? "bg-violet-500/10 text-violet-700 border border-violet-500/30"
+                              : "border border-border text-muted-foreground";
+                      return (
+                        <div key={r.id} className="flex items-center justify-between gap-4 border-b-2 border-border/80 pb-3">
+                          <div className="min-w-0 space-y-1">
+                            <h3 className="text-sm font-semibold text-foreground truncate">{r.course_title}</h3>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                              {r.source_lms && <span>{r.source_lms}</span>}
+                              {r.completed_at && <><span>·</span><span>{r.completed_at}</span></>}
+                            </div>
                           </div>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded shrink-0 ${statusCls}`}>{statusLabel}</span>
                         </div>
-                        {r.is_completed ? (
-                          <span className="text-xs font-semibold px-2 py-1 rounded bg-foreground text-background shrink-0">{t("mypage.legacyCompleted")}</span>
-                        ) : (
-                          <span className="text-xs font-medium px-2 py-1 rounded border border-border text-muted-foreground shrink-0">{t("mypage.legacyNotCompleted")}</span>
-                        )}
-
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
