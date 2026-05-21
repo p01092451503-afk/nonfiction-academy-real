@@ -73,9 +73,12 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     }
   }, [activeRole, teacherRoleEnabled, navigate]);
 
-  // NOTE: language is fully user-controlled via LanguageToggle.
-  // Do NOT force a specific language by role — that would override the user's
-  // manual EN/JA/ZH-CN selection and break in-page language switching.
+  // Admin UI는 항상 한국어로 고정 — 다국어 토글도 admin에서는 노출되지 않음
+  useEffect(() => {
+    if (activeRole === "admin" && i18n.language !== "ko") {
+      i18n.changeLanguage("ko");
+    }
+  }, [activeRole, i18n]);
 
   const toggleCollapsed = () => {
     setSidebarCollapsed((prev) => {
