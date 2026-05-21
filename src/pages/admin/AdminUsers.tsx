@@ -201,6 +201,45 @@ const AdminUsers = () => {
     return matchesSearch && matchesDept;
   });
 
+  const roleRankLabel: Record<string, number> = { super_admin: 0, admin: 1, teacher: 2, student: 3 };
+  const collator = new Intl.Collator(i18n.language || "ko", { numeric: true, sensitivity: "base" });
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...filtered].sort((a: any, b: any) => {
+      let av = "", bv = "";
+      if (sortKey === "name") { av = a.full_name || ""; bv = b.full_name || ""; }
+      else if (sortKey === "dept") { av = getDeptName(a.department_id); bv = getDeptName(b.department_id); }
+      else if (sortKey === "position") { av = a.position || ""; bv = b.position || ""; }
+      else if (sortKey === "role") {
+        const ar = roleRankLabel[getPrimaryRole(a.user_id)] ?? 99;
+        const br = roleRankLabel[getPrimaryRole(b.user_id)] ?? 99;
+        return (ar - br) * dir;
+      }
+      // Empty values pushed to the end regardless of direction
+      const aEmpty = !av || av === "-";
+      const bEmpty = !bv || bv === "-";
+      if (aEmpty && !bEmpty) return 1;
+      if (!aEmpty && bEmpty) return -1;
+      return collator.compare(av, bv) * dir;
+    });
+  }, [filtered, sortKey, sortDir, departments, isEn, rolesByUser]);
+
+  const toggleSort = (key: "name" | "dept" | "role" | "position") => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const SortIcon = ({ k }: { k: "name" | "dept" | "role" | "position" }) => {
+    if (sortKey !== k) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+  };
+
   const teacherCount = profiles.filter((profile: any) => getPrimaryRole(profile.user_id) === "teacher").length;
   const { data: usersSpark } = useDashboardSparklines(14);
 
