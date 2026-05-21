@@ -49,7 +49,10 @@ type SortKey = "name" | "store" | "position" | "country" | "start_date" | "cours
 
 const useDebounced = <T,>(value: T, delay = 300): T => {
   const [v, setV] = useState(value);
-  useMemo(() => { const t = setTimeout(() => setV(value), delay); return () => clearTimeout(t); }, [value, delay]);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
   return v;
 };
 
