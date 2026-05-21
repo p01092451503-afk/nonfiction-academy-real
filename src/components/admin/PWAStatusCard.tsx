@@ -117,6 +117,10 @@ const PWAStatusCard = () => {
       }
     } finally {
       setLoading(false);
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+        toast.success("PWA 상태를 새로고침했습니다");
+      }
     }
   };
 
