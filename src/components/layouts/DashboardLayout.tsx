@@ -57,6 +57,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
   });
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
   const [hasNewBoardPost, setHasNewBoardPost] = useState(false);
+  const [hasAssignedTracks, setHasAssignedTracks] = useState(false);
   const { profile, signOut } = useUser();
   const { primaryRole } = useUserRole();
   const { t, i18n } = useTranslation();
