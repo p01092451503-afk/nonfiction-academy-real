@@ -90,10 +90,10 @@ const Auth = () => {
         </div>
 
         <div className="w-full max-w-md space-y-10">
-          <div className="lg:hidden flex justify-center mb-[60rem]">
+          <div className="lg:hidden flex justify-center" style={{ marginBottom: "180rem" }}>
             <img src={nonfictionLogo} alt="NONFICTION" className="h-5 w-auto" draggable={false} />
           </div>
-          <div className="hidden lg:block mb-[60rem]">
+          <div className="hidden lg:block" style={{ marginBottom: "180rem" }}>
             <img src={nonfictionLogo} alt="NONFICTION" className="h-[2.1rem] w-auto" draggable={false} />
           </div>
 
