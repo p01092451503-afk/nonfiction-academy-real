@@ -435,7 +435,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             (() => {
               const sep = playbackUrl.includes("?") ? "&" : "?";
-              const params = [`preload=true`, `responsive=true`];
+              const params = [`preload=true`, `responsive=true`, `_vp=${encodeURIComponent(iframeInstanceKey)}`];
               if (iframeStartTime && iframeStartTime > 0) {
                 params.push(`t=${Math.floor(iframeStartTime)}`, `autoplay=true`);
               }
@@ -443,7 +443,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               return (
                 <iframe
                   ref={iframeRef}
-                  key={`${playbackUrl}#${iframeStartTime ?? 0}`}
+                  key={finalSrc}
                   src={finalSrc}
                   width="100%"
                   height="100%"
