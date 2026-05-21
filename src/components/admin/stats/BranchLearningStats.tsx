@@ -205,6 +205,20 @@ const BranchLearningStats = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+                  <TableRow className="bg-muted/40 font-semibold border-t-2 border-border">
+                    <TableCell>{t("common.total", "합계")}</TableCell>
+                    <TableCell className="text-right">{totals.members}{t("common.people")}</TableCell>
+                    <TableCell className="text-right">{totals.enrollments}</TableCell>
+                    <TableCell className="text-right">{totals.completed}</TableCell>
+                    <TableCell className="text-right">{totals.contentCompletions}</TableCell>
+                    <TableCell className="text-right">{totalAvgProgress}%</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Progress value={totalCompletionRate} className="h-1.5 w-16" />
+                        <span className="text-xs text-muted-foreground w-10 text-right">{totalCompletionRate}%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </div>
