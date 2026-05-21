@@ -25,13 +25,18 @@ const AdminDashboard = () => {
   const locale = isEn ? enUS : ko;
 
   // ── Data Queries ──
-  const { data: realtimeSessions = [] } = useQuery({
-    queryKey: ["dash-realtime-sessions"],
+  // Use count-only query so we aren't capped at the 1,000-row default
+  // when many sessions overlap a 5-minute window.
+  const { data: onlineUsers = 0 } = useQuery({
+    queryKey: ["dash-realtime-online"],
     queryFn: async () => {
       const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const { data, error } = await supabase.from("user_sessions").select("user_id").gte("login_at", fiveMinAgo);
+      const { count, error } = await supabase
+        .from("user_sessions")
+        .select("user_id", { count: "exact", head: true })
+        .gte("login_at", fiveMinAgo);
       if (error) throw error;
-      return data;
+      return count || 0;
     },
     refetchInterval: 30000,
   });
@@ -169,7 +174,6 @@ const AdminDashboard = () => {
   });
 
   // ── Derived ──
-  const onlineUsers = new Set(realtimeSessions.map((s: any) => s.user_id)).size;
   const mandatoryCourses = courses.filter((c: any) => c.is_mandatory && c.status === "published");
   const urgentMandatory = mandatoryCourses.filter((c: any) => {
     if (!c.deadline) return false;

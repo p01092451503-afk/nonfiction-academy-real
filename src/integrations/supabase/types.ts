@@ -2349,7 +2349,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_course_stats: { Args: never; Returns: Json }
       admin_dashboard_summary: { Args: never; Returns: Json }
+      admin_site_summary_today: { Args: never; Returns: Json }
       assign_track_to_department: {
         Args: { p_department_id: string; p_track_id: string }
         Returns: Json

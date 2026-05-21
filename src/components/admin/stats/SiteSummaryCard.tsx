@@ -12,19 +12,16 @@ const SiteSummaryCard = () => {
   const monthStart = startOfMonth(new Date()).toISOString();
 
   const { data } = useQuery({
-    queryKey: ["stat-site-summary", today, monthStart],
+    queryKey: ["stat-site-summary-rpc", today, monthStart],
     queryFn: async () => {
-      const [sessionsRes, monthMembersRes, totalMembersRes, pageViewsRes] = await Promise.all([
-        supabase.from("user_sessions").select("user_id").gte("login_at", today),
-        supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
-        supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("traffic_logs").select("*", { count: "exact", head: true }).eq("event_type", "page_view").gte("created_at", today),
-      ]);
+      const { data, error } = await supabase.rpc("admin_site_summary_today");
+      if (error) throw error;
+      const row = (data || {}) as Record<string, number>;
       return {
-        todayVisitors: sessionsRes.data ? new Set(sessionsRes.data.map((s) => s.user_id)).size : 0,
-        monthNewMembers: monthMembersRes.count || 0,
-        totalMembers: totalMembersRes.count || 0,
-        todayPageViews: pageViewsRes.count || 0,
+        todayVisitors: Number(row.today_visitors) || 0,
+        monthNewMembers: Number(row.month_new_members) || 0,
+        totalMembers: Number(row.total_members) || 0,
+        todayPageViews: Number(row.today_pageviews) || 0,
       };
     },
     staleTime: 3 * 60 * 1000,
