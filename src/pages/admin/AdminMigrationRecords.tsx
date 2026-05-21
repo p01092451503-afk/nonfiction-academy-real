@@ -1,17 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Database, Search, Download, Users, CheckCircle2, XCircle, Globe2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Database, Search, Download, Users, CheckCircle2, XCircle, Globe2, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Upload, Save } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+
+const STATUS_KEYS = ["completed", "not_completed", "in_progress", "not_assigned", "on_leave"] as const;
+type CompletionStatus = typeof STATUS_KEYS[number];
+
+const POSITIONS = ["Staff", "Senior", "Manager", "Director", "Trainee"] as const;
+
+// Simple CSV parser (handles quotes + commas)
+const parseCSV = (text: string): Record<string, string>[] => {
+  const clean = text.replace(/^\uFEFF/, "");
+  const lines = clean.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const split = (line: string) => {
+    const out: string[] = []; let cur = ""; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ;
+      } else if (c === "," && !inQ) { out.push(cur); cur = ""; }
+      else cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+  const headers = split(lines[0]).map((h) => h.toLowerCase());
+  return lines.slice(1).map((ln) => {
+    const cols = split(ln);
+    const obj: Record<string, string> = {};
+    headers.forEach((h, i) => { obj[h] = cols[i] ?? ""; });
+    return obj;
+  });
+};
 
 interface Employee {
   employee_id: number;
@@ -68,6 +102,28 @@ export default function AdminMigrationRecords() {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortAsc, setSortAsc] = useState(true);
   const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [editStatusMap, setEditStatusMap] = useState<Record<number, CompletionStatus>>({});
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Add Employee form
+  const [newEmp, setNewEmp] = useState({
+    country: "KR" as Employee["country"],
+    store: "",
+    name: "",
+    email: "",
+    position: "Staff",
+    start_date: "",
+  });
+  const [addSaving, setAddSaving] = useState(false);
+
+  // CSV Upload state
+  const empCsvRef = useRef<HTMLInputElement>(null);
+  const cmpCsvRef = useRef<HTMLInputElement>(null);
+  const [uploadResult, setUploadResult] = useState<{ type: string; added: number; updated: number; errors: string[] } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const debouncedSearch = useDebounced(search, 300);
 
@@ -247,6 +303,185 @@ export default function AdminMigrationRecords() {
     return { rows, assigned: assigned.length, completed, rate };
   }, [selectedEmp, completions, courseMap]);
 
+  // Reset edit state on selection change
+  useEffect(() => { setEditStatusMap({}); }, [selectedEmp?.employee_id]);
+
+  const refetchAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["mig-employees"] });
+    queryClient.invalidateQueries({ queryKey: ["mig-completions"] });
+  };
+
+  // === Add Employee ===
+  const handleAddEmployee = async () => {
+    if (!newEmp.name.trim() || !newEmp.email.trim() || !newEmp.country) {
+      toast({ title: "필수 항목 누락", description: "이름·이메일·국가는 필수입니다.", variant: "destructive" });
+      return;
+    }
+    setAddSaving(true);
+    try {
+      const { data: maxRow, error: maxErr } = await supabase
+        .from("migration_employees")
+        .select("employee_id")
+        .order("employee_id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (maxErr) throw maxErr;
+      const nextId = (maxRow?.employee_id ?? 0) + 1;
+      const { error } = await supabase.from("migration_employees").insert({
+        employee_id: nextId,
+        country: newEmp.country,
+        store: newEmp.store || null,
+        name: newEmp.name.trim(),
+        email: newEmp.email.trim().toLowerCase(),
+        position: newEmp.position || null,
+        start_date: newEmp.start_date || null,
+      });
+      if (error) throw error;
+      toast({ title: "직원 추가 완료", description: `#${nextId} ${newEmp.name}` });
+      setAddOpen(false);
+      setNewEmp({ country: "KR", store: "", name: "", email: "", position: "Staff", start_date: "" });
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "추가 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
+  // === Save inline status edits ===
+  const handleSaveStatusEdits = async () => {
+    if (!selectedEmp || Object.keys(editStatusMap).length === 0) return;
+    setSaving(true);
+    try {
+      const rows = Object.entries(editStatusMap).map(([course_id, status]) => ({
+        employee_id: selectedEmp.employee_id,
+        course_id: Number(course_id),
+        status,
+      }));
+      const { error } = await supabase
+        .from("migration_completions")
+        .upsert(rows, { onConflict: "employee_id,course_id" });
+      if (error) throw error;
+      toast({ title: "저장 완료", description: `${rows.length}건 업데이트` });
+      setEditStatusMap({});
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "저장 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // === CSV Upload ===
+  const handleEmployeesCsv = async (file: File) => {
+    setUploading(true);
+    setUploadResult(null);
+    try {
+      const text = await file.text();
+      const rows = parseCSV(text);
+      if (rows.length === 0) throw new Error("CSV에 데이터가 없습니다");
+
+      // existing employee_ids → know add vs update
+      const { data: existing } = await supabase.from("migration_employees").select("employee_id");
+      const existingIds = new Set((existing || []).map((e: any) => e.employee_id));
+      const { data: maxRow } = await supabase
+        .from("migration_employees")
+        .select("employee_id")
+        .order("employee_id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      let nextId = (maxRow?.employee_id ?? 0) + 1;
+
+      const errors: string[] = [];
+      const payload: any[] = [];
+      let added = 0, updated = 0;
+      rows.forEach((r, idx) => {
+        const name = r.name?.trim();
+        const email = r.email?.trim().toLowerCase();
+        const country = (r.country || "").toUpperCase();
+        if (!name || !email || !["KR", "JP", "HK", "US"].includes(country)) {
+          errors.push(`${idx + 2}행: 필수값 누락 (name/email/country)`);
+          return;
+        }
+        let employee_id: number;
+        if (r.employee_id && /^\d+$/.test(r.employee_id)) {
+          employee_id = Number(r.employee_id);
+          if (existingIds.has(employee_id)) updated++; else added++;
+        } else {
+          employee_id = nextId++;
+          added++;
+        }
+        payload.push({
+          employee_id,
+          country,
+          store: r.store || null,
+          name,
+          email,
+          position: r.position || null,
+          start_date: r.start_date || null,
+        });
+      });
+
+      if (payload.length > 0) {
+        const { error } = await supabase
+          .from("migration_employees")
+          .upsert(payload, { onConflict: "employee_id" });
+        if (error) throw error;
+      }
+      setUploadResult({ type: "직원", added, updated, errors });
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "업로드 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleCompletionsCsv = async (file: File) => {
+    setUploading(true);
+    setUploadResult(null);
+    try {
+      const text = await file.text();
+      const rows = parseCSV(text);
+      if (rows.length === 0) throw new Error("CSV에 데이터가 없습니다");
+
+      const { data: existing } = await supabase
+        .from("migration_completions")
+        .select("employee_id,course_id");
+      const existingKeys = new Set((existing || []).map((e: any) => `${e.employee_id}-${e.course_id}`));
+
+      const errors: string[] = [];
+      const payload: any[] = [];
+      let added = 0, updated = 0;
+      rows.forEach((r, idx) => {
+        const employee_id = Number(r.employee_id);
+        const course_id = Number(r.course_id);
+        const status = r.status as CompletionStatus;
+        if (!employee_id || !course_id || !STATUS_KEYS.includes(status)) {
+          errors.push(`${idx + 2}행: 잘못된 값 (employee_id/course_id/status)`);
+          return;
+        }
+        const key = `${employee_id}-${course_id}`;
+        if (existingKeys.has(key)) updated++; else added++;
+        payload.push({ employee_id, course_id, status });
+      });
+
+      if (payload.length > 0) {
+        const { error } = await supabase
+          .from("migration_completions")
+          .upsert(payload, { onConflict: "employee_id,course_id" });
+        if (error) throw error;
+      }
+      setUploadResult({ type: "수료 이력", added, updated, errors });
+      refetchAll();
+    } catch (err: any) {
+      toast({ title: "업로드 실패", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+
   const exportExcel = () => {
     const data = sortedRows.map((r) => ({
       이름: r.employee.name,
@@ -271,15 +506,26 @@ export default function AdminMigrationRecords() {
     <DashboardLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <div className="flex items-center gap-2">
-            <Database className="h-6 w-6 text-primary" aria-hidden="true" />
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">이관 학습 이력</h1>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Database className="h-6 w-6 text-primary" aria-hidden="true" />
+              <h1 className="text-xl sm:text-2xl font-semibold text-foreground">이관 학습 이력</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              과거 학습 이력 데이터(직원·과정·수료 현황) 통합 검색 및 관리
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            과거 학습 이력 데이터(직원·과정·수료 현황) 통합 검색 및 관리
-          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)} className="gap-1.5">
+              <Upload className="h-4 w-4" /> CSV 업로드
+            </Button>
+            <Button size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+              <UserPlus className="h-4 w-4" /> 직원 추가
+            </Button>
+          </div>
         </div>
+
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -520,24 +766,54 @@ export default function AdminMigrationRecords() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-semibold mb-2">학습 이력</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold">학습 이력</h3>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveStatusEdits}
+                        disabled={Object.keys(editStatusMap).length === 0 || saving}
+                        className="gap-1.5"
+                      >
+                        <Save className="h-3.5 w-3.5" />
+                        {saving ? "저장 중..." : `저장 (${Object.keys(editStatusMap).length})`}
+                      </Button>
+                    </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>과정명</TableHead>
                           <TableHead className="w-16">연도</TableHead>
-                          <TableHead className="w-24 text-center">상태</TableHead>
+                          <TableHead className="w-36 text-center">상태</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {empSummary.rows.map((r) => {
-                          const meta = STATUS_META[r.status];
+                          const currentStatus = editStatusMap[r.course_id] ?? r.status;
                           return (
                             <TableRow key={r.course_id}>
                               <TableCell className="text-sm">{r.course!.course_name}</TableCell>
                               <TableCell className="text-sm">{r.course!.year}</TableCell>
                               <TableCell className="text-center">
-                                <Badge variant="outline" className={`text-xs ${meta.cls}`}>{meta.label}</Badge>
+                                <Select
+                                  value={currentStatus}
+                                  onValueChange={(v) => {
+                                    if (v === r.status) {
+                                      const { [r.course_id]: _, ...rest } = editStatusMap;
+                                      setEditStatusMap(rest);
+                                    } else {
+                                      setEditStatusMap({ ...editStatusMap, [r.course_id]: v as CompletionStatus });
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {STATUS_KEYS.map((k) => (
+                                      <SelectItem key={k} value={k}>{STATUS_META[k].label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </TableCell>
                             </TableRow>
                           );
@@ -550,6 +826,118 @@ export default function AdminMigrationRecords() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* Add Employee Dialog */}
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>직원 추가</DialogTitle>
+              <DialogDescription>신규 직원 정보를 입력하세요. ID는 자동 생성됩니다.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">국가 *</Label>
+                  <Select value={newEmp.country} onValueChange={(v) => setNewEmp({ ...newEmp, country: v as Employee["country"] })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">매장</Label>
+                  <Input value={newEmp.store} onChange={(e) => setNewEmp({ ...newEmp, store: e.target.value })} placeholder="매장명" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">이름 *</Label>
+                <Input value={newEmp.name} onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">이메일 *</Label>
+                <Input type="email" value={newEmp.email} onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">직급</Label>
+                  <Select value={newEmp.position} onValueChange={(v) => setNewEmp({ ...newEmp, position: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {POSITIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">입사일</Label>
+                  <Input type="date" value={newEmp.start_date} onChange={(e) => setNewEmp({ ...newEmp, start_date: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)} disabled={addSaving}>취소</Button>
+              <Button onClick={handleAddEmployee} disabled={addSaving}>{addSaving ? "추가 중..." : "추가"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* CSV Upload Dialog */}
+        <Dialog open={uploadOpen} onOpenChange={(o) => { setUploadOpen(o); if (!o) setUploadResult(null); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>CSV 일괄 업로드</DialogTitle>
+              <DialogDescription>
+                직원 또는 수료 이력 CSV를 업로드합니다. employee_id 기준 중복은 자동 갱신됩니다.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center cursor-pointer hover:bg-accent/30 transition"
+                onClick={() => empCsvRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleEmployeesCsv(f); }}
+              >
+                <Users className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                <p className="text-sm font-medium">employees.csv</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  컬럼: employee_id(선택)·country·store·name·email·position·start_date
+                </p>
+                <input ref={empCsvRef} type="file" accept=".csv" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleEmployeesCsv(f); e.target.value = ""; }} />
+              </div>
+
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center cursor-pointer hover:bg-accent/30 transition"
+                onClick={() => cmpCsvRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleCompletionsCsv(f); }}
+              >
+                <CheckCircle2 className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                <p className="text-sm font-medium">completions.csv</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  컬럼: employee_id·course_id·status (completed/not_completed/in_progress/not_assigned/on_leave)
+                </p>
+                <input ref={cmpCsvRef} type="file" accept=".csv" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCompletionsCsv(f); e.target.value = ""; }} />
+              </div>
+
+              {uploading && <p className="text-sm text-center text-muted-foreground">처리 중...</p>}
+
+              {uploadResult && (
+                <div className="rounded-lg border border-border p-3 bg-muted/30 text-sm space-y-1">
+                  <p className="font-medium">{uploadResult.type} 업로드 결과</p>
+                  <p>추가: <strong className="text-emerald-600">{uploadResult.added}건</strong> · 수정: <strong className="text-amber-600">{uploadResult.updated}건</strong> · 오류: <strong className="text-rose-600">{uploadResult.errors.length}건</strong></p>
+                  {uploadResult.errors.length > 0 && (
+                    <ul className="text-xs text-muted-foreground mt-2 max-h-24 overflow-y-auto list-disc pl-4">
+                      {uploadResult.errors.slice(0, 10).map((e, i) => <li key={i}>{e}</li>)}
+                      {uploadResult.errors.length > 10 && <li>... 외 {uploadResult.errors.length - 10}건</li>}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
