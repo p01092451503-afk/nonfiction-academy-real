@@ -41,8 +41,9 @@ const PWAStatusCard = () => {
   const [loading, setLoading] = useState(true);
   const [iosBannerStatus, setIosBannerStatus] = useState<string>("—");
 
-  const refresh = async () => {
+  const refresh = async (showToast = false) => {
     setLoading(true);
+    const loadingToast = showToast ? toast.loading("상태 새로고침 중...") : null;
     try {
       // standalone detection
       // @ts-ignore
@@ -116,6 +117,10 @@ const PWAStatusCard = () => {
       }
     } finally {
       setLoading(false);
+      if (loadingToast) {
+        toast.dismiss(loadingToast);
+        toast.success("PWA 상태를 새로고침했습니다");
+      }
     }
   };
 
@@ -238,7 +243,7 @@ const PWAStatusCard = () => {
           <Smartphone className="h-5 w-5 text-foreground" aria-hidden="true" />
           <h3 className="text-base font-semibold text-foreground">PWA 상태</h3>
         </div>
-        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={refresh} disabled={loading}>
+        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => refresh(true)} disabled={loading}>
           <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
           새로고침
         </Button>
