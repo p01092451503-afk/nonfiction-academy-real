@@ -254,7 +254,7 @@ export default function AdminMigrationRecords() {
       매장: r.employee.store || "",
       직급: r.employee.position || "",
       국가: r.employee.country,
-      입사일: r.employee.start_date || "",
+      
       과정명: r.course!.course_name,
       연도: r.course!.year,
       수료상태: STATUS_META[r.status].label,
