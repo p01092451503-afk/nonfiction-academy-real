@@ -48,14 +48,14 @@ interface MeasureResult {
 const BUNNY_ID_RE = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
 const isBunny = (url: string, hint: string | null) =>
   hint?.toLowerCase() === "bunny" ||
-  /iframe\.mediadelivery\.net|b-cdn\.net/i.test(url || "");
+  /(?:iframe|player)\.mediadelivery\.net|b-cdn\.net/i.test(url || "");
 const isPlaceholder = (url: string) => /placeholder_value_to_be_replaced/i.test(url || "");
 const toBunnyEmbedUrl = (url: string) =>
   url.replace("iframe.mediadelivery.net/play/", "player.mediadelivery.net/embed/");
 const detectProvider = (url: string, hint: string | null): string => {
   if (hint) return hint.toLowerCase();
   const u = (url || "").toLowerCase();
-  if (u.includes("iframe.mediadelivery.net") || u.includes("b-cdn.net")) return "bunny";
+  if (u.includes("iframe.mediadelivery.net") || u.includes("player.mediadelivery.net") || u.includes("b-cdn.net")) return "bunny";
   if (u.includes("youtube.com") || u.includes("youtu.be")) return "youtube";
   if (u.includes("vimeo.com")) return "vimeo";
   if (u.includes("mangoboard.net")) return "mangoboard";
