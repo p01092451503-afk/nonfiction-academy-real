@@ -173,6 +173,40 @@ const BranchLearningStats = () => {
                   </div>
                 </div>
               ))}
+              <div className="rounded-xl border-2 border-border bg-muted/40 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-foreground">{t("common.total", "합계")}</span>
+                  <span className="text-xs text-muted-foreground">{totals.members}{t("common.people")}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t("stats.enrollCount")}</p>
+                    <p className="text-sm font-bold text-foreground">{totals.enrollments}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t("stats.completionCount2")}</p>
+                    <p className="text-sm font-bold text-foreground">{totals.completed}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{t("stats.lessonCompletions")}</p>
+                    <p className="text-sm font-bold text-foreground">{totals.contentCompletions}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">{t("stats.avgProgressRate")}</span>
+                    <span className="font-medium">{totalAvgProgress}%</span>
+                  </div>
+                  <Progress value={totalAvgProgress} className="h-1.5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">{t("stats.completionRateValue")}</span>
+                    <span className="font-medium">{totalCompletionRate}%</span>
+                  </div>
+                  <Progress value={totalCompletionRate} className="h-1.5" />
+                </div>
+              </div>
             </div>
 
             <div className="hidden sm:block overflow-x-auto">
