@@ -642,7 +642,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
               const itemLang = normalizeLang(it.language_code);
               const tItem = i18n.getFixedT(itemLang);
               const tDone = tItem("course.completed", "완료");
-              const tPlaying = tItem("course.playing", "재생 중");
+              const tPlaying = "Now Playing";
               const episodeLabel = `${idx + 1}${tItem("videoPackage.episodeSuffix", "차시")}`;
               const itemTitle = it.title || `${tItem("course.video", "영상")} ${idx + 1}`;
               return (
