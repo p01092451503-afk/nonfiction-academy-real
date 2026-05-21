@@ -510,28 +510,13 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
               preload="metadata"
               className="absolute inset-0 h-full w-full bg-black object-contain"
               onTimeUpdate={handleTimeUpdate}
-              onSeeking={handleSeeking}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
               aria-label={activeItem?.title || t("course.video", "영상")}
             />
           )}
-          {playbackUrl && isBunnyIframe(playbackUrl) && !isItemComplete && (
-            <div
-              className="absolute inset-x-[6%] [bottom:clamp(3.5rem,18%,4.75rem)] z-10 h-20 cursor-not-allowed touch-none"
-              aria-hidden="true"
-              onPointerDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                warnSeekBlocked();
-              }}
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-              }}
-            />
-          )}
         </div>
+
 
         {/* Progress strip hidden — Bunny player exposes its own controls */}
 
