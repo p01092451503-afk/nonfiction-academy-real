@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SiteSummaryCard from "@/components/admin/stats/SiteSummaryCard";
 import TodayOperationsCard from "@/components/admin/stats/TodayOperationsCard";
 import RealtimeUsersCard from "@/components/admin/stats/RealtimeUsersCard";
+import CapacityMonitorCard from "@/components/admin/CapacityMonitorCard";
 
 // Lazy: chart-heavy components — load only when their tab is opened
 const BranchLearningStats = lazy(() => import("@/components/admin/stats/BranchLearningStats"));
@@ -206,6 +207,7 @@ const AdminTraffic = () => {
           </TabsContent>
 
           <TabsContent value="traffic" className="space-y-4">
+            <CapacityMonitorCard />
             <div className="flex w-full sm:w-auto items-center gap-2 self-start">
               <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
               <Select value={period} onValueChange={setPeriod}>

@@ -120,14 +120,55 @@ Deno.serve(async (req) => {
       }
     } catch (_) { /* ignore */ }
 
+    // ---------- Bunny account balance ----------
+    let bunnyBalance: { balance: number | null; error?: string } = { balance: null };
+    const ACCOUNT_KEY = Deno.env.get("BUNNY_ACCOUNT_API_KEY");
+    if (ACCOUNT_KEY) {
+      try {
+        const r = await fetch("https://api.bunny.net/billing/balance", {
+          headers: { AccessKey: ACCOUNT_KEY, accept: "application/json" },
+        });
+        if (r.ok) {
+          const j = await r.json();
+          bunnyBalance.balance = typeof j === "number" ? j : Number(j.Balance ?? j.balance ?? 0);
+        } else {
+          bunnyBalance.error = `HTTP ${r.status}`;
+        }
+      } catch (e) { bunnyBalance.error = String(e?.message || e); }
+    } else {
+      bunnyBalance.error = "BUNNY_ACCOUNT_API_KEY not configured";
+    }
+
+    // ---------- Pro plan quotas + usage % ----------
+    const PRO_LIMITS = {
+      storageBytes: 100 * 1024 ** 3,
+      egressBytes: 250 * 1024 ** 3,
+      dbBytes: 8 * 1024 ** 3,
+    };
+    const BUNNY_THRESHOLDS = { notice: 5, warning: 3, critical: 1 };
+    const supabaseStorageBytes = bucketUsage.reduce((s, b) => s + b.bytes, 0);
+
+    // Estimate this-month egress from traffic_logs
+    let egressBytesMonth = 0;
+    try {
+      const monthStart = new Date();
+      monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
+      const { data: egRows } = await supabase
+        .from("traffic_logs").select("estimated_bytes")
+        .gte("created_at", monthStart.toISOString()).limit(50000);
+      if (egRows) egressBytesMonth = egRows.reduce((s: number, r: any) => s + Number(r.estimated_bytes || 0), 0);
+    } catch (_) { /* ignore */ }
+
+    const pct = (u: number, l: number) => l > 0 ? Math.min(100, (u / l) * 100) : 0;
+    const supabaseUsage = {
+      storage: { used: supabaseStorageBytes, limit: PRO_LIMITS.storageBytes, percent: pct(supabaseStorageBytes, PRO_LIMITS.storageBytes) },
+      egress: { used: egressBytesMonth, limit: PRO_LIMITS.egressBytes, percent: pct(egressBytesMonth, PRO_LIMITS.egressBytes) },
+    };
+
     return new Response(
       JSON.stringify({
         bunnyStream: streamLib
-          ? {
-              storageBytes: Number(streamLib.storageBytes || 0),
-              videoCount: Number(streamLib.videoCount || 0),
-              totalLengthSec: Number(streamLib.totalLengthSec || 0),
-            }
+          ? { storageBytes: Number(streamLib.storageBytes || 0), videoCount: Number(streamLib.videoCount || 0), totalLengthSec: Number(streamLib.totalLengthSec || 0) }
           : null,
         bunnyStreamError: streamError,
         bunnyStorage,
@@ -141,9 +182,13 @@ Deno.serve(async (req) => {
           : null,
         supabaseStorage: {
           buckets: bucketUsage,
-          totalBytes: bucketUsage.reduce((s, b) => s + b.bytes, 0),
+          totalBytes: supabaseStorageBytes,
           totalObjects: bucketUsage.reduce((s, b) => s + b.count, 0),
         },
+        bunnyBalance,
+        bunnyThresholds: BUNNY_THRESHOLDS,
+        supabaseUsage,
+        supabasePlan: { name: "Pro", limits: PRO_LIMITS },
         fetchedAt: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
