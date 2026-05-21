@@ -70,9 +70,16 @@ Deno.serve(async (req) => {
       await signCdnFileUrl(`https://${cdnHostname}/${relativePath}`, authKey!, upstreamExpires),
       `https://${cdnHostname}/${relativePath}`,
     ];
+    // Forward Range header so iOS Safari (which probes with Range: bytes=0-1) gets 206 Partial Content.
+    const upstreamHeaders: Record<string, string> = {
+      "User-Agent": req.headers.get("User-Agent") || "Mozilla/5.0",
+    };
+    const rangeHeader = req.headers.get("Range");
+    if (rangeHeader) upstreamHeaders["Range"] = rangeHeader;
+
     let upstream: Response | null = null;
     for (const candidate of upstreamCandidates) {
-      const res = await fetch(candidate, { headers: { "User-Agent": req.headers.get("User-Agent") || "Mozilla/5.0" } }).catch(() => null);
+      const res = await fetch(candidate, { headers: upstreamHeaders }).catch(() => null);
       if (res?.ok) {
         upstream = res;
         break;
@@ -83,11 +90,23 @@ Deno.serve(async (req) => {
 
     const contentType = upstream.headers.get("Content-Type") || (assetPath.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/mp2t");
     if (!assetPath.endsWith(".m3u8")) {
+      // Pass through media segments with Range/Content-Length/Accept-Ranges so iOS Safari can stream HLS.
+      const passHeaders: Record<string, string> = {
+        ...corsHeaders,
+        "Content-Type": contentType,
+        "Cache-Control": "private, max-age=300",
+        "Accept-Ranges": "bytes",
+      };
+      const contentLength = upstream.headers.get("Content-Length");
+      if (contentLength) passHeaders["Content-Length"] = contentLength;
+      const contentRange = upstream.headers.get("Content-Range");
+      if (contentRange) passHeaders["Content-Range"] = contentRange;
       return new Response(upstream.body, {
-        status: 200,
-        headers: withCors({ "Content-Type": contentType, "Cache-Control": "private, max-age=300" }),
+        status: upstream.status, // 200 or 206
+        headers: passHeaders,
       });
     }
+
 
     const playlist = await upstream.text();
     const basePath = assetPath.includes("/") ? assetPath.slice(0, assetPath.lastIndexOf("/") + 1) : "";

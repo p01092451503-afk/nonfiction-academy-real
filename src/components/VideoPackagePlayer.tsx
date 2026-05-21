@@ -206,11 +206,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
         setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소를 불러오지 못했습니다."));
         return;
       }
-      // Bunny Pull Zone CDN token auth can make the official iframe's internal HLS
-      // requests return 403. Prefer our signed HLS proxy/direct playlist so every
-      // playlist and segment request is signed server-side.
-      setPlaybackUrl(data.proxyPlaylistUrl || data.playlistUrl || toBunnyEmbedUrl(data.embedUrl || data.playUrl));
+      // Bunny 공식 iframe 임베드를 1순위로 사용한다.
+      // - iOS Safari는 자체 HLS 프록시(m3u8)의 Range 요청을 제대로 처리하지 못해
+      //   네이티브 <video>가 재생되지 않는 문제가 있다.
+      // - Bunny iframe은 모바일(iOS/Android)에서 가장 안정적으로 동작한다.
+      // 프록시/직접 playlist는 iframe이 없을 때만 폴백으로 사용한다.
+      setPlaybackUrl(toBunnyEmbedUrl(data.embedUrl || data.playUrl) || data.proxyPlaylistUrl || data.playlistUrl);
       setResolvedPoster(sanitizeBunnyAssetUrl(data.thumbnailUrl) || sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
+
     })();
 
     return () => {
