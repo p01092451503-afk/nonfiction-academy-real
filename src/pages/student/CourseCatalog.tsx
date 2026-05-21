@@ -315,9 +315,14 @@ const CourseCatalog = () => {
   const enrollMutation = useMutation({
     mutationFn: async (courseId: string) => {
       // Auto-approve every enrollment from the student catalog.
+      // Upsert on (user_id, course_id) so re-clicking when already enrolled is a no-op
+      // instead of raising a unique-constraint error.
       const { error } = await supabase
         .from("enrollments")
-        .insert({ course_id: courseId, user_id: user!.id, status: "approved" });
+        .upsert(
+          { course_id: courseId, user_id: user!.id, status: "approved" },
+          { onConflict: "user_id,course_id", ignoreDuplicates: true }
+        );
       if (error) throw error;
     },
     onSuccess: () => {
@@ -325,6 +330,13 @@ const CourseCatalog = () => {
       queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
     },
     onError: (e: any) => {
+      // Silently ignore duplicate-enrollment races — the user is already enrolled,
+      // so just refresh the cache and let the UI move them into the course.
+      if (e?.code === "23505" || /duplicate key/i.test(e?.message || "")) {
+        queryClient.invalidateQueries({ queryKey: ["my-enrollment-status"] });
+        queryClient.invalidateQueries({ queryKey: ["catalog-enrollment-counts"] });
+        return;
+      }
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     },
   });
