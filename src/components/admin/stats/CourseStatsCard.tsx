@@ -12,7 +12,9 @@ type CourseStats = {
   draft: number;
   mandatory: number;
   total_enrollments: number;
+  unique_students: number;
   completed: number;
+  completed_students: number;
   avg_progress: number;
   top_courses: Array<{ id: string; title: string; count: number; completions: number }>;
 };
