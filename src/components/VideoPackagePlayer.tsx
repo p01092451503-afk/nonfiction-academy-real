@@ -6,9 +6,12 @@ import { Play, RotateCcw, Video as VideoIcon, CheckCircle2, Clock } from "lucide
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { normalizeLang } from "@/lib/i18nLang";
+
 
 interface VideoPackagePlayerProps {
   contentId: string;
