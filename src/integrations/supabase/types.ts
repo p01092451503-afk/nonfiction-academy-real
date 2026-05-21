@@ -1666,6 +1666,48 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_updates: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          message: string
+          require_reload: boolean
+          severity: string
+          target_audience: string
+          title: string
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          message: string
+          require_reload?: boolean
+          severity?: string
+          target_audience?: string
+          title: string
+          version: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string
+          require_reload?: boolean
+          severity?: string
+          target_audience?: string
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
       point_history: {
         Row: {
           action_type: string
