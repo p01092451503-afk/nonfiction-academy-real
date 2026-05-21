@@ -163,11 +163,15 @@ Deno.serve(async (req) => {
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
-    const playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
+    let playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
       ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
       : rawPlaylistUrl;
+    if (playlistUrl) {
+      const playlistCheck = await fetch(playlistUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).catch(() => null);
+      if (!playlistCheck?.ok) playlistUrl = null;
+    }
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
-    const proxyToken = cdnHostname && isConfigured(cdnTokenAuthKey)
+    const proxyToken = playlistUrl && cdnHostname && isConfigured(cdnTokenAuthKey)
       ? await signProxyToken(cdnTokenAuthKey!, videoId, cdnHostname, expires)
       : null;
     const proxyPlaylistUrl = proxyToken
