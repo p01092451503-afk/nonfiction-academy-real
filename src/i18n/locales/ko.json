@@ -1415,13 +1415,14 @@
     "anonymous": "사용자",
     "signInRequired": "로그인이 필요합니다",
     "placeholder": "이 강의에 대한 의견을 남겨보세요...",
-    "empty": "아직 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!",
+    "empty": "첫 번째 댓글을 남겨보세요!",
     "title": "댓글",
     "viewAll": "모두 보기",
     "confirmDelete": "이 댓글을 삭제하시겠습니까?",
     "notAllowed": "댓글을 작성할 수 없습니다. 수강 승인 여부를 확인해 주세요.",
     "replyPlaceholder": "@{{name}} 에게 답글 달기...",
-    "translatedBadge": "번역됨"
+    "translatedBadge": "번역됨",
+    "emptyTitle": "아직 댓글이 없습니다"
   },
   "globalDashboard": {
     "title": "글로벌 학습 대시보드",

@@ -1415,13 +1415,14 @@
     "anonymous": "用户",
     "signInRequired": "需要登录",
     "placeholder": "分享您对本课程的看法...",
-    "empty": "暂无评论。来发表第一条评论吧！",
+    "empty": "来发表第一条评论吧！",
     "title": "评论",
     "viewAll": "查看全部",
     "confirmDelete": "删除此评论？",
     "notAllowed": "无法评论。请确认您的报名审批。",
     "replyPlaceholder": "回复 @{{name}}...",
-    "translatedBadge": "已翻译"
+    "translatedBadge": "已翻译",
+    "emptyTitle": "暂无评论"
   },
   "globalDashboard": {
     "activeTracks": "学习路径",
