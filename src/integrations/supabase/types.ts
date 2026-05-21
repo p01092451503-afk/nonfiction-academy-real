@@ -1531,6 +1531,102 @@ export type Database = {
           },
         ]
       }
+      migration_completions: {
+        Row: {
+          course_id: number
+          created_at: string
+          employee_id: number
+          id: number
+          status: string
+        }
+        Insert: {
+          course_id: number
+          created_at?: string
+          employee_id: number
+          id?: number
+          status: string
+        }
+        Update: {
+          course_id?: number
+          created_at?: string
+          employee_id?: number
+          id?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_completions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "migration_courses"
+            referencedColumns: ["course_id"]
+          },
+          {
+            foreignKeyName: "migration_completions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "migration_employees"
+            referencedColumns: ["employee_id"]
+          },
+        ]
+      }
+      migration_courses: {
+        Row: {
+          country: string
+          course_id: number
+          course_name: string
+          created_at: string
+          year: number
+        }
+        Insert: {
+          country: string
+          course_id: number
+          course_name: string
+          created_at?: string
+          year: number
+        }
+        Update: {
+          country?: string
+          course_id?: number
+          course_name?: string
+          created_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      migration_employees: {
+        Row: {
+          country: string
+          created_at: string
+          email: string | null
+          employee_id: number
+          name: string
+          position: string | null
+          start_date: string | null
+          store: string | null
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          email?: string | null
+          employee_id: number
+          name: string
+          position?: string | null
+          start_date?: string | null
+          store?: string | null
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          email?: string | null
+          employee_id?: number
+          name?: string
+          position?: string | null
+          start_date?: string | null
+          store?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
