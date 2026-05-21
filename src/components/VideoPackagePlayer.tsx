@@ -311,18 +311,27 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               {videoLoadError}
             </div>
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
-            <iframe
-              key={`${playbackUrl}#${iframeStartTime ?? 0}`}
-              src={
-                iframeStartTime && iframeStartTime > 0
-                  ? `${playbackUrl}${playbackUrl.includes("?") ? "&" : "?"}t=${Math.floor(iframeStartTime)}&autoplay=true`
-                  : playbackUrl
+            (() => {
+              const sep = playbackUrl.includes("?") ? "&" : "?";
+              const params = [`preload=true`, `responsive=true`];
+              if (iframeStartTime && iframeStartTime > 0) {
+                params.push(`t=${Math.floor(iframeStartTime)}`, `autoplay=true`);
               }
-              className="absolute inset-0 h-full w-full border-0 bg-black"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-              allowFullScreen
-              title={activeItem?.title || t("course.video", "영상")}
-            />
+              const finalSrc = `${playbackUrl}${sep}${params.join("&")}`;
+              return (
+                <iframe
+                  key={`${playbackUrl}#${iframeStartTime ?? 0}`}
+                  src={finalSrc}
+                  width="100%"
+                  height="100%"
+                  className="absolute inset-0 h-full w-full border-0 bg-black"
+                  style={{ aspectRatio: "16 / 9" }}
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                  allowFullScreen
+                  title={activeItem?.title || t("course.video", "영상")}
+                />
+              );
+            })()
           ) : (
             <video
               ref={videoRef}
