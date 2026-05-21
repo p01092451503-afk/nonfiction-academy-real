@@ -316,6 +316,36 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
         )}
       </div>
 
+      {/* Progress strip — visited slides / total + percentage */}
+      {items.length > 0 && (
+        <div className="mt-3 flex items-center gap-3 rounded-xl bg-foreground/90 text-background px-4 py-2.5 text-xs flex-wrap">
+          <span className="shrink-0 font-medium">
+            {t("contentPlayer.watchProgress", "시청 진행률")}
+          </span>
+          <Progress
+            value={(visited.size / items.length) * 100}
+            className="h-1.5 flex-1 min-w-[80px] bg-background/20"
+            aria-label={t("contentPlayer.watchProgress", "시청 진행률")}
+          />
+          <span className="font-medium shrink-0 tabular-nums" aria-live="polite">
+            {visited.size} / {items.length} ({Math.round((visited.size / items.length) * 100)}%)
+          </span>
+          {resumeIndex !== null && resumeIndex !== index && (
+            <button
+              type="button"
+              onClick={() => {
+                setIndex(resumeIndex);
+                setResumeIndex(null);
+              }}
+              className="inline-flex items-center gap-1 rounded-full bg-background text-foreground px-3 py-1 text-[11px] font-semibold shadow-sm hover:bg-background/90 transition-colors"
+            >
+              <Play className="h-3 w-3" aria-hidden="true" />
+              {t("contentPlayer.resume", "이어보기")} ({resumeIndex + 1})
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Step dots – right below image */}
       {items.length > 1 && (
         <div className="mt-2 flex items-center justify-center gap-1.5">
@@ -327,6 +357,8 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
               className={`h-2 rounded-full transition-all ${
                 i === index
                   ? "w-6 bg-primary"
+                  : visited.has(i)
+                  ? "w-2 bg-primary/40 hover:bg-primary/60"
                   : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
               }`}
               aria-label={`슬라이드 ${i + 1}로 이동`}
@@ -334,6 +366,7 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           ))}
         </div>
       )}
+
 
       {/* Caption */}
       {current.caption && (
