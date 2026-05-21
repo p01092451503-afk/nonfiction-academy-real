@@ -232,6 +232,7 @@ const CourseCatalog = () => {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { i18n } = useTranslation();
   const normalizeLang = (l?: string): string => {
