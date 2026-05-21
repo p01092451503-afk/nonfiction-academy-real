@@ -37,6 +37,10 @@ export function useVideoProgress({
   const uiIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const hasResumedRef = useRef(false);
+  const maxWatchedRef = useRef<number>(0);
+  const seekGuardRef = useRef<boolean>(false);
+  const SEEK_TOLERANCE = 2;
+
 
   const resumePosition = existingProgress?.last_position_seconds || 0;
   const isCompleted = existingProgress?.completed || false;
