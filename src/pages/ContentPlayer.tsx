@@ -841,7 +841,7 @@ const ContentPlayer = () => {
               src={embedUrl}
               className="w-full h-full border-0 rounded-lg"
               allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; fullscreen"
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
               referrerPolicy="no-referrer-when-downgrade"
               title={localTitle}
