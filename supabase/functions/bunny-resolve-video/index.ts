@@ -176,12 +176,22 @@ Deno.serve(async (req) => {
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
-    let playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
-      ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
-      : rawPlaylistUrl;
-    if (playlistUrl) {
-      const playlistCheck = await fetch(playlistUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).catch(() => null);
-      if (!playlistCheck?.ok) playlistUrl = null;
+    let playlistUrl: string | null = null;
+    if (rawPlaylistUrl) {
+      const playlistCandidates = isConfigured(cdnTokenAuthKey)
+        ? [
+            await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
+            await signCdnFileUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
+            await signBasicCdnFileUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires),
+          ]
+        : [rawPlaylistUrl];
+      for (const candidate of playlistCandidates) {
+        const playlistCheck = await fetch(candidate, { headers: { "User-Agent": "Mozilla/5.0" } }).catch(() => null);
+        if (playlistCheck?.ok) {
+          playlistUrl = candidate;
+          break;
+        }
+      }
     }
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
     const proxyToken = playlistUrl && cdnHostname && isConfigured(cdnTokenAuthKey)
