@@ -191,30 +191,11 @@ export function useVideoProgress({
           dur = (await vimeoPlayerRef.current.getDuration()) || 0;
         }
 
-        // Block forward seeks (until completed)
-        if (
-          !isCompleted &&
-          !autoCompleted &&
-          !seekGuardRef.current &&
-          cur > maxWatchedRef.current + SEEK_TOLERANCE + 1
-        ) {
-          seekGuardRef.current = true;
-          const target = Math.max(0, maxWatchedRef.current);
-          try {
-            if (type === "youtube" && ytPlayerRef.current?.seekTo) {
-              ytPlayerRef.current.seekTo(target, true);
-            } else if (type === "vimeo" && vimeoPlayerRef.current?.setCurrentTime) {
-              await vimeoPlayerRef.current.setCurrentTime(target);
-            }
-          } catch {}
-          warnSeekBlocked();
-          setTimeout(() => { seekGuardRef.current = false; }, 300);
-          return;
-        }
-
         if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
         setCurrentTime(cur);
         setDuration(dur);
+
+
 
 
         // Auto-complete check
