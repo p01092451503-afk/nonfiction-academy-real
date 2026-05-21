@@ -390,7 +390,8 @@
     "enOptional": "(未入力の場合、韓国語に自動フォールバック)",
     "autoTranslate": "自動翻訳",
     "category": "カテゴリ",
-    "instructor": "講師"
+    "instructor": "講師",
+    "playing": "再生中"
   },
   "assignments": {
     "title": "課題",
@@ -969,7 +970,9 @@
     "resumePlayback": "再生を再開",
     "fromBeginning": "最初から",
     "resumeDialogTitle": "続きから再生しますか？",
-    "resumeDialogDesc": "以前に {{time}} まで視聴した記録があります。続きから再生しますか、最初から再生しますか？"
+    "resumeDialogDesc": "以前に {{time}} まで視聴した記録があります。続きから再生しますか、最初から再生しますか？",
+    "completed": "完了",
+    "nowPlaying": "再生中"
   },
   "notification": {
     "title": "通知",

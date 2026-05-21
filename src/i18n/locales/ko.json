@@ -390,7 +390,8 @@
     "enOptional": "(미입력 시 한국어 폴백)",
     "autoTranslate": "자동 번역",
     "category": "카테고리",
-    "instructor": "강사"
+    "instructor": "강사",
+    "playing": "재생 중"
   },
   "assignments": {
     "title": "과제",
@@ -969,7 +970,9 @@
     "resumePlayback": "이어보기",
     "fromBeginning": "처음부터",
     "resumeDialogTitle": "이어보시겠어요?",
-    "resumeDialogDesc": "이전에 {{time}} 지점까지 학습한 기록이 있어요. 이어서 보시겠어요, 처음부터 다시 시작하시겠어요?"
+    "resumeDialogDesc": "이전에 {{time}} 지점까지 학습한 기록이 있어요. 이어서 보시겠어요, 처음부터 다시 시작하시겠어요?",
+    "completed": "완료",
+    "nowPlaying": "재생 중"
   },
   "notification": {
     "title": "알림",
