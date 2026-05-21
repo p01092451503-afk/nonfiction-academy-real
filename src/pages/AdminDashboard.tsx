@@ -174,7 +174,7 @@ const AdminDashboard = () => {
   });
 
   // ── Derived ──
-  const onlineUsers = new Set(realtimeSessions.map((s: any) => s.user_id)).size;
+  const mandatoryCoursesAll = courses;
   const mandatoryCourses = courses.filter((c: any) => c.is_mandatory && c.status === "published");
   const urgentMandatory = mandatoryCourses.filter((c: any) => {
     if (!c.deadline) return false;
