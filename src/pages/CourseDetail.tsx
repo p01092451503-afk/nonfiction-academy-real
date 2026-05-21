@@ -1449,26 +1449,31 @@ const ContentDialog = ({
             <Input className="h-9 text-sm" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} placeholder={t("course.contentPlaceholder")} />
           </div>
           {renderTypeAndDuration(form.duration_minutes, (n) => setForm(f => ({ ...f, duration_minutes: n })))}
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.contentUrl")}</Label>
-            <Input className="h-9 text-sm" value={form.video_url} onChange={(e) => setForm(f => ({ ...f, video_url: e.target.value }))} placeholder="https://..." />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t("course.provider")}</Label>
-            <Select value={form.video_provider} onValueChange={(v) => setForm(f => ({ ...f, video_provider: v }))}>
-              <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("course.select")} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="youtube">{t("course.youtube")}</SelectItem>
-                <SelectItem value="vimeo">{t("course.vimeo")}</SelectItem>
-                <SelectItem value="custom">{t("course.flipLearningMango")}</SelectItem>
-                <SelectItem value="upload">{t("course.cdnUpload")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {form.content_type !== "media_package" && form.content_type !== "video_package" && (
+            <>
+              <div className="space-y-1">
+                <Label className="text-xs">{t("course.contentUrl")}</Label>
+                <Input className="h-9 text-sm" value={form.video_url} onChange={(e) => setForm(f => ({ ...f, video_url: e.target.value }))} placeholder="https://..." />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">{t("course.provider")}</Label>
+                <Select value={form.video_provider} onValueChange={(v) => setForm(f => ({ ...f, video_provider: v }))}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("course.select")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="youtube">{t("course.youtube")}</SelectItem>
+                    <SelectItem value="vimeo">{t("course.vimeo")}</SelectItem>
+                    <SelectItem value="custom">{t("course.flipLearningMango")}</SelectItem>
+                    <SelectItem value="upload">{t("course.cdnUpload")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
           <div className="space-y-1">
             <Label className="text-xs">{t("course.description")}</Label>
             <Textarea className="text-sm" value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
           </div>
+
           {publishSwitches}
         </TabsContent>
 
@@ -1498,22 +1503,27 @@ const ContentDialog = ({
               />
             </div>
             {renderTypeAndDuration(i18nForm[lc].duration_minutes, (n) => updateI18n(lc, { duration_minutes: n }))}
-            <div className="space-y-1">
-              <Label className="text-xs">{t("course.contentUrl")}</Label>
-              <Input className="h-9 text-sm" value={i18nForm[lc].video_url} onChange={(e) => updateI18n(lc, { video_url: e.target.value })} placeholder="https://..." />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{t("course.provider")}</Label>
-              <Select value={i18nForm[lc].video_provider || form.video_provider} onValueChange={(v) => updateI18n(lc, { video_provider: v })}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("course.select")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="youtube">{t("course.youtube")}</SelectItem>
-                  <SelectItem value="vimeo">{t("course.vimeo")}</SelectItem>
-                  <SelectItem value="custom">{t("course.flipLearningMango")}</SelectItem>
-                  <SelectItem value="upload">{t("course.cdnUpload")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {form.content_type !== "media_package" && form.content_type !== "video_package" && (
+              <>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("course.contentUrl")}</Label>
+                  <Input className="h-9 text-sm" value={i18nForm[lc].video_url} onChange={(e) => updateI18n(lc, { video_url: e.target.value })} placeholder="https://..." />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("course.provider")}</Label>
+                  <Select value={i18nForm[lc].video_provider || form.video_provider} onValueChange={(v) => updateI18n(lc, { video_provider: v })}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder={t("course.select")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="youtube">{t("course.youtube")}</SelectItem>
+                      <SelectItem value="vimeo">{t("course.vimeo")}</SelectItem>
+                      <SelectItem value="custom">{t("course.flipLearningMango")}</SelectItem>
+                      <SelectItem value="upload">{t("course.cdnUpload")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
             <div className="space-y-1">
               <Label className="text-xs">{I18N_LANG_LABELS[lc]} {t("course.description")}</Label>
               <Textarea
