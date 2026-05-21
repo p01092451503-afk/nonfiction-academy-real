@@ -207,6 +207,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
       label: "시스템",
       items: [
         { key: "settings", label: t("nav.settings"), href: "/admin/settings", icon: Settings, tourId: "nav-settings", protected: true },
+        { key: "platformUpdates", label: t("nav.platformUpdates", "플랫폼 업데이트 푸시"), href: "/admin/platform-updates", icon: Megaphone },
         { key: "systemInfo", label: t("nav.systemInfo", "시스템 정보"), href: "/admin/system-info", icon: Info },
       ],
     },
