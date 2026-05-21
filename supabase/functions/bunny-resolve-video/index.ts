@@ -47,18 +47,49 @@ async function sha256Base64Url(value: string) {
   return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
+async function hmacSha256Base64Url(secret: string, value: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  let binary = "";
+  for (const byte of new Uint8Array(signature)) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\n/g, "").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+const getSortedParameterData = (params: URLSearchParams) =>
+  Array.from(params.entries())
+    .filter(([key, value]) => key !== "token" && key !== "expires" && value !== "")
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+
+async function signCdnFileUrl(url: string, authKey: string, expires: number) {
+  const parsed = new URL(url);
+  const params = new URLSearchParams(parsed.search);
+  const signingData = getSortedParameterData(params);
+  const token = `HS256-${await hmacSha256Base64Url(authKey, parsed.pathname + String(expires) + signingData)}`;
+  params.set("token", token);
+  params.set("expires", String(expires));
+  return `${parsed.origin}${parsed.pathname}?${params.toString()}`;
+}
+
 async function signCdnDirectoryUrl(url: string, authKey: string, expires: number) {
   const parsed = new URL(url);
   const dirPath = parsed.pathname.slice(0, parsed.pathname.lastIndexOf("/") + 1);
   const params = new URLSearchParams(parsed.search);
   params.set("token_path", dirPath);
   const entries = Array.from(params.entries())
-    .filter(([, value]) => value !== "")
+    .filter(([key, value]) => key !== "token" && key !== "expires" && value !== "")
     .sort(([a], [b]) => a.localeCompare(b));
   const parameterData = entries.map(([key, value]) => `${key}=${value}`).join("&");
   const parameterDataUrl = entries.map(([key, value]) => `&${key}=${encodeURIComponent(value)}`).join("");
-  const token = await sha256Base64Url(authKey + dirPath + String(expires) + parameterData);
-  return `${parsed.origin}/bcdn_token=${token}${parameterDataUrl}&expires=${expires}${parsed.pathname}`;
+  const token = `HS256-${await hmacSha256Base64Url(authKey, dirPath + String(expires) + parameterData)}`;
+  return `${parsed.origin}/bcdn_token=${token}&expires=${expires}${parameterDataUrl}${parsed.pathname}`;
 }
 
 async function signProxyToken(authKey: string, videoId: string, cdnHostname: string, expires: number) {
@@ -132,11 +163,15 @@ Deno.serve(async (req) => {
     }
 
     const rawPlaylistUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/playlist.m3u8` : null;
-    const playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
+    let playlistUrl = rawPlaylistUrl && isConfigured(cdnTokenAuthKey)
       ? await signCdnDirectoryUrl(rawPlaylistUrl, cdnTokenAuthKey!, expires)
       : rawPlaylistUrl;
+    if (playlistUrl) {
+      const playlistCheck = await fetch(playlistUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).catch(() => null);
+      if (!playlistCheck?.ok) playlistUrl = null;
+    }
     const thumbnailUrl = cdnHostname ? `https://${cdnHostname}/${videoId}/thumbnail.jpg` : null;
-    const proxyToken = cdnHostname && isConfigured(cdnTokenAuthKey)
+    const proxyToken = playlistUrl && cdnHostname && isConfigured(cdnTokenAuthKey)
       ? await signProxyToken(cdnTokenAuthKey!, videoId, cdnHostname, expires)
       : null;
     const proxyPlaylistUrl = proxyToken

@@ -218,7 +218,10 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
         setVideoLoadError(t("videoPackage.invalidUrl", "재생 주소를 불러오지 못했습니다."));
         return;
       }
-      setPlaybackUrl(toBunnyEmbedUrl(data.embedUrl || data.playUrl));
+      // Bunny Pull Zone CDN token auth can make the official iframe's internal HLS
+      // requests return 403. Prefer our signed HLS proxy/direct playlist so every
+      // playlist and segment request is signed server-side.
+      setPlaybackUrl(data.proxyPlaylistUrl || data.playlistUrl || toBunnyEmbedUrl(data.embedUrl || data.playUrl));
       setResolvedPoster(sanitizeBunnyAssetUrl(data.thumbnailUrl) || sanitizeBunnyAssetUrl(activeItem.thumbnail_url));
     })();
 
