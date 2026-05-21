@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       const token = await signBunnyToken(tokenAuthKey!, videoId, expires);
       embedUrl = `${basePlayer}?token=${token}&expires=${expires}`;
     }
-    const playerUrl = embedUrl.replace("iframe.mediadelivery.net/play/", "player.mediadelivery.net/embed/");
+    const playerUrl = embedUrl.replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/");
 
     if (!cdnHostname) {
       const embedResponse = await fetch(embedUrl).catch(() => null);
@@ -143,9 +143,8 @@ Deno.serve(async (req) => {
       ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/bunny-stream-proxy/${videoId}/playlist.m3u8?token=${proxyToken}&expires=${expires}&cdn=${encodeURIComponent(cdnHostname!)}`
       : null;
 
-    // Current Bunny settings use player view token authentication while direct
-    // file access is blocked. Use the raw player embed URL directly so Bunny's
-    // intermediate /play wrapper cannot force a small centered viewport.
+    // Use Bunny's official iframe embed host. The player.mediadelivery.net alias
+    // can return 403 for allowed-referrer protected libraries on preview domains.
     const playUrl = playerUrl;
 
     return json({
