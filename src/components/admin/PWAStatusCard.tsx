@@ -243,7 +243,7 @@ const PWAStatusCard = () => {
           <Smartphone className="h-5 w-5 text-foreground" aria-hidden="true" />
           <h3 className="text-base font-semibold text-foreground">PWA 상태</h3>
         </div>
-        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={refresh} disabled={loading}>
+        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => refresh(true)} disabled={loading}>
           <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
           새로고침
         </Button>
