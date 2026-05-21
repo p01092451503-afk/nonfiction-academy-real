@@ -75,9 +75,24 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update department if provided
-    if (departmentId && newUser.user) {
-      await adminClient.from("profiles").update({ department_id: departmentId }).eq("user_id", newUser.user.id);
+    // Ensure profile row exists (no auth trigger in this project)
+    if (newUser.user) {
+      const { error: profileError } = await adminClient
+        .from("profiles")
+        .upsert(
+          {
+            user_id: newUser.user.id,
+            full_name: fullName || null,
+            email,
+            department_id: departmentId || null,
+          },
+          { onConflict: "user_id" },
+        );
+      if (profileError) {
+        return new Response(JSON.stringify({ error: `Profile creation failed: ${profileError.message}` }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     return new Response(JSON.stringify({ user: newUser.user }), {
