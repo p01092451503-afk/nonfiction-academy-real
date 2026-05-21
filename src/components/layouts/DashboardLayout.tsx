@@ -162,6 +162,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
         { key: "trackManagement", label: t("nav.trackManagement", "학습 트랙 관리"), href: "/admin/tracks", icon: Layers },
         { key: "videoManagement", label: t("nav.videoManagement", "동영상 관리"), href: "/admin/videos", icon: Video },
         { key: "videoHealthCheck", label: t("nav.videoHealthCheck", "영상 자동 점검"), href: "/admin/video-health", icon: Activity },
+        { key: "videoMobileCheck", label: t("nav.videoMobileCheck", "모바일 영상 점검"), href: "/admin/video-mobile-check", icon: Smartphone },
         { key: "i18nManagement", label: t("nav.i18nManagement", "다국어 관리"), href: "/admin/i18n", icon: Languages },
       ],
     },
