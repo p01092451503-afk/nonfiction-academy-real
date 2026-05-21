@@ -237,30 +237,31 @@ export default function AdminGlobalDashboard() {
     };
   };
 
-  // Country = top-level departments (parent_department_id is null) with a country code
-  const countries = useMemo(() => {
-    const list = departments.filter((d) => !d.parent_department_id);
-    const seen = new Map<string, Department>();
-    for (const d of list) {
-      const key = (d.country || d.code || d.id).toUpperCase();
-      if (!seen.has(key)) seen.set(key, d);
+  // Group all active branches by country code → 1 entry per country
+  const countries = useMemo<CountryGroup[]>(() => {
+    const map = new Map<string, CountryGroup>();
+    for (const d of departments) {
+      const cc = (d.country || "").toUpperCase();
+      if (!cc) continue;
+      if (!map.has(cc)) {
+        const localized = COUNTRY_NAMES[cc];
+        map.set(cc, {
+          id: cc,
+          code: cc,
+          country: cc,
+          name: localized?.ko || cc,
+          name_en: localized?.en || cc,
+          branches: [],
+        });
+      }
+      map.get(cc)!.branches.push(d);
     }
-    return Array.from(seen.values());
+    return Array.from(map.values()).sort((a, b) => b.branches.length - a.branches.length);
   }, [departments]);
 
-  // Get all department IDs that belong to a country (country dept + all descendants)
-  const getCountryDeptIds = (country: Department): Set<string> => {
-    const ids = new Set<string>([country.id]);
-    const queue = [country.id];
-    while (queue.length > 0) {
-      const parent = queue.shift()!;
-      for (const d of departments) {
-        if (d.parent_department_id === parent && !ids.has(d.id)) {
-          ids.add(d.id); queue.push(d.id);
-        }
-      }
-    }
-    return ids;
+  // Get all department IDs that belong to a country (every branch sharing the country code)
+  const getCountryDeptIds = (country: CountryGroup): Set<string> => {
+    return new Set(country.branches.map((b) => b.id));
   };
 
   // Per-user track completion: user is "completed" if all required courses have progress >= 100
