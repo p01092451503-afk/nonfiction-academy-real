@@ -280,6 +280,9 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
           <video
             src={item.media_url}
             controls
+            controlsList="nodownload noplaybackrate noremoteplayback"
+            disablePictureInPicture
+            disableRemotePlayback
             className="w-full max-h-[85vh]"
             playsInline
           />
