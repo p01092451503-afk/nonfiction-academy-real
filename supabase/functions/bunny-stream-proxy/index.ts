@@ -78,9 +78,22 @@ Deno.serve(async (req) => {
     const relativePath = `${videoId}/${assetPath}`;
     if (!SAFE_PATH_PATTERN.test(relativePath)) return new Response("Forbidden", { status: 403, headers: corsHeaders });
 
-    const upstreamUrl = await signCdnFileUrl(`https://${cdnHostname}/${relativePath}`, authKey!, Math.min(expires, Math.floor(Date.now() / 1000) + 60 * 10));
-    const upstream = await fetch(upstreamUrl, { headers: { "User-Agent": req.headers.get("User-Agent") || "Mozilla/5.0" } });
-    if (!upstream.ok) return new Response(await upstream.text().catch(() => "Forbidden"), { status: upstream.status, headers: corsHeaders });
+    const upstreamExpires = Math.min(expires, Math.floor(Date.now() / 1000) + 60 * 10);
+    const upstreamCandidates = [
+      await signCdnFileUrl(`https://${cdnHostname}/${relativePath}`, authKey!, upstreamExpires),
+      await signBasicCdnFileUrl(`https://${cdnHostname}/${relativePath}`, authKey!, upstreamExpires),
+      `https://${cdnHostname}/${relativePath}`,
+    ];
+    let upstream: Response | null = null;
+    for (const candidate of upstreamCandidates) {
+      const res = await fetch(candidate, { headers: { "User-Agent": req.headers.get("User-Agent") || "Mozilla/5.0" } }).catch(() => null);
+      if (res?.ok) {
+        upstream = res;
+        break;
+      }
+      upstream = res;
+    }
+    if (!upstream?.ok) return new Response(await upstream?.text().catch(() => "Forbidden") || "Forbidden", { status: upstream?.status || 403, headers: corsHeaders });
 
     const contentType = upstream.headers.get("Content-Type") || (assetPath.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/mp2t");
     if (!assetPath.endsWith(".m3u8")) {
