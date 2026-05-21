@@ -143,12 +143,18 @@ const CourseDetail = () => {
   const isAdminRoute = location.pathname.startsWith("/admin/courses/");
   const isTeacherRoute = location.pathname.startsWith("/teacher/courses/");
   const forceLearnView = searchParams.get("view") === "learn";
+  // Management UI (settings/add/edit/delete/publish toggle) is ADMIN-ONLY.
+  // Teachers on /teacher/courses/:id see the same management surface only when
+  // they also hold an admin role; otherwise they fall through to the student
+  // learning view. This prevents the admin management page from leaking to
+  // Learning Leaders (러닝리더 = teacher role).
+  const { isAdmin: hasAdminRole } = useUserRole();
   const role: "admin" | "teacher" | "student" = isAdminRoute
     ? "admin"
-    : isTeacherRoute
-    ? "teacher"
+    : isTeacherRoute && hasAdminRole
+    ? "admin"
     : "student";
-  const isTeacherOrAdmin = role === "admin" || role === "teacher";
+  const isTeacherOrAdmin = role === "admin";
   const routePrefix = isAdminRoute ? "/admin" : isTeacherRoute ? "/teacher" : "/student";
   const viewParam = role === "student" ? "?view=learn" : "";
 
