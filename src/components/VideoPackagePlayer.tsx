@@ -37,6 +37,7 @@ interface VPItem {
 }
 
 const STORAGE_KEY = (cid: string, vid: string) => `vp-progress:${cid}:${vid}`;
+const DONE_KEY = (cid: string, vid: string) => `vp-done:${cid}:${vid}`;
 
 const formatTime = (s: number) => {
   if (!isFinite(s) || s < 0) return "0:00";
@@ -130,18 +131,23 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     completedRef.current = false;
   }, [contentId, lang]);
 
-  // Once content was completed previously, mark all items as completed permanently
-  // (replay mode — keep showing "완료" and skip seek-forward restriction)
+  // Hydrate per-item completion from localStorage (permanent "완료" badge across replays)
+  // and merge with content-level isAlreadyCompleted flag.
   useEffect(() => {
-    if (isAlreadyCompleted && items.length > 0) {
-      setCompletedItems((prev) => {
-        if (prev.size >= items.length && items.every((it) => prev.has(it.id))) return prev;
-        const next = new Set(prev);
-        items.forEach((it) => next.add(it.id));
-        return next;
+    if (items.length === 0) return;
+    setCompletedItems((prev) => {
+      const next = new Set(prev);
+      items.forEach((it) => {
+        try {
+          if (localStorage.getItem(DONE_KEY(contentId, it.id)) === "1") next.add(it.id);
+        } catch {}
+        if (isAlreadyCompleted) next.add(it.id);
       });
-    }
-  }, [isAlreadyCompleted, items]);
+      if (next.size === prev.size && items.every((it) => prev.has(it.id) === next.has(it.id))) return prev;
+      return next;
+    });
+  }, [isAlreadyCompleted, items, contentId]);
+
 
   const activeItem = items[activeIdx];
 
@@ -286,6 +292,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       } catch {}
     }
     if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
+      try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
       setCompletedItems((prev) => {
         const next = new Set(prev);
         next.add(activeItem.id);
@@ -330,6 +337,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const handleEnded = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
+    try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
     setCompletedItems((prev) => {
       if (prev.has(activeItem.id)) return prev;
       const next = new Set(prev);
@@ -400,6 +408,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
         } catch {}
       }
       if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
+        try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
         setCompletedItems((prev) => {
           const next = new Set(prev);
           next.add(activeItem.id);
@@ -443,6 +452,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
           updateProgress(data?.seconds ?? 0, data?.duration ?? durationCache);
         });
         player.on("ended", () => {
+          try { localStorage.setItem(DONE_KEY(contentId, activeItem.id), "1"); } catch {}
           setCompletedItems((prev) => {
             if (prev.has(activeItem.id)) return prev;
             const next = new Set(prev);
