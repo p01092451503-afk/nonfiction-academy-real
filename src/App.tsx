@@ -150,6 +150,7 @@ const AppRoutes = () => {
           <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
           <Route path="/admin/global-dashboard" element={<AdminRoute><AdminGlobalDashboard /></AdminRoute>} />
           <Route path="/admin/legacy-records" element={<AdminRoute><AdminLegacyRecords /></AdminRoute>} />
+          <Route path="/admin/migration-records" element={<AdminRoute><AdminMigrationRecords /></AdminRoute>} />
 
           {/* Dept Admin */}
           <Route path="/dept-admin" element={<ProtectedRoute><DeptAdminDashboard /></ProtectedRoute>} />
