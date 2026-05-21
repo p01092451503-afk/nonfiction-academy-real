@@ -1,4 +1,4 @@
-import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload } from "lucide-react";
+import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound } from "lucide-react";
 import StaffBulkUploadDialog from "@/components/admin/StaffBulkUploadDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -27,6 +27,8 @@ const AdminUsers = () => {
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [staffEdit, setStaffEdit] = useState<StaffEditDraft | null>(null);
+  const [resetTarget, setResetTarget] = useState<{ userId: string; name: string; email: string } | null>(null);
+  const [newPassword, setNewPassword] = useState("");
   const [newUser, setNewUser] = useState<{ name: string; email: string; password: string; roles: StaffRole[]; departmentId: string; branchId: string }>({ name: "", email: "", password: "", roles: ["student"], departmentId: "", branchId: "" });
   const { t, i18n } = useTranslation();
   const { user } = useUser();
@@ -129,6 +131,25 @@ const AdminUsers = () => {
       }
 
       toast.error(message || t("common.error"));
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { userId, newPassword: password },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      toast.success(t("admin.passwordResetSuccess", "비밀번호가 변경되었습니다"));
+      setResetTarget(null);
+      setNewPassword("");
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || t("common.error"));
     },
   });
 
@@ -405,6 +426,19 @@ const AdminUsers = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 rounded-full"
+                          title={t("admin.resetPassword", "비밀번호 초기화")}
+                          aria-label={t("admin.resetPassword", "비밀번호 초기화")}
+                          onClick={() => {
+                            setNewPassword("");
+                            setResetTarget({ userId: profile.user_id, name: profile.full_name || "-", email: profile.email || "" });
+                          }}
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 rounded-full text-destructive hover:text-destructive"
                           disabled={!!deleteDisabledReason}
                           title={deleteDisabledReason || t("admin.deleteUser")}
@@ -545,6 +579,43 @@ const AdminUsers = () => {
           queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
         }}
       />
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetTarget} onOpenChange={(open) => { if (!open) { setResetTarget(null); setNewPassword(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("admin.resetPassword", "비밀번호 초기화")}</DialogTitle>
+            <DialogDescription>
+              {resetTarget?.name} {resetTarget?.email ? `(${resetTarget.email})` : ""} {t("admin.resetPasswordDesc", "님의 새 비밀번호를 입력하세요. 변경 후 사용자에게 안전하게 전달해주세요.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>{t("admin.newPassword", "새 비밀번호")}</Label>
+              <Input
+                type="text"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder={t("admin.newPasswordPlaceholder", "최소 6자 이상")}
+                className="mt-1"
+                autoComplete="new-password"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">{t("admin.newPasswordHint", "최소 6자 이상이어야 합니다.")}</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setResetTarget(null); setNewPassword(""); }}>
+                {t("common.cancel")}
+              </Button>
+              <Button
+                onClick={() => resetTarget && resetPasswordMutation.mutate({ userId: resetTarget.userId, password: newPassword })}
+                disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? t("common.processing") : t("common.save")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
