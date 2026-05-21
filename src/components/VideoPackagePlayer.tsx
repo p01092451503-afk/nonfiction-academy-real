@@ -529,9 +529,68 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
           </ul>
         </section>
       )}
+
+      {/* Resume / Restart dialog */}
+      <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <DialogContent className="sm:max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("contentPlayer.resumeTitle", "이전 시청 기록")}</DialogTitle>
+            <DialogDescription>
+              {t("contentPlayer.resumeDesc", {
+                time: formatTime(resumePos),
+                defaultValue: `이전에 ${formatTime(resumePos)} 지점까지 시청했습니다. 이어보시겠어요?`,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-full"
+              onClick={() => {
+                try {
+                  if (activeItem) localStorage.removeItem(STORAGE_KEY(contentId, activeItem.id));
+                } catch {}
+                setResumePos(0);
+                setShowResumeDialog(false);
+                if (playbackUrl && isBunnyIframe(playbackUrl)) {
+                  setIframeStartTime(0);
+                } else {
+                  const v = videoRef.current;
+                  if (v) {
+                    v.currentTime = 0;
+                    v.play().catch(() => {});
+                  }
+                }
+              }}
+            >
+              <RotateCcw className="h-4 w-4 mr-1.5" />
+              {t("contentPlayer.startOver", "처음부터")}
+            </Button>
+            <Button
+              className="flex-1 rounded-full"
+              onClick={() => {
+                setShowResumeDialog(false);
+                if (playbackUrl && isBunnyIframe(playbackUrl)) {
+                  setIframeStartTime(resumePos);
+                  setResumePos(0);
+                } else {
+                  handleResume();
+                }
+              }}
+            >
+              <Play className="h-4 w-4 mr-1.5" />
+              {t("contentPlayer.resumeAt", {
+                time: formatTime(resumePos),
+                defaultValue: `이어보기 (${formatTime(resumePos)})`,
+              })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 
 export default VideoPackagePlayer;
