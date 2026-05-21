@@ -81,6 +81,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
   const maxWatchedRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
   const seekGuardRef = useRef<boolean>(false);
   const lastSeekWarnRef = useRef<number>(0);
 
@@ -89,10 +90,10 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     if (now - lastSeekWarnRef.current < 2500) return;
     lastSeekWarnRef.current = now;
     toast({
-      title: t("videoPackage.seekBlockedTitle", "앞으로 건너뛸 수 없습니다"),
+      title: t("videoPackage.seekBlockedTitle", "건너뛸 수 없습니다"),
       description: t(
         "videoPackage.seekBlockedDesc",
-        "정확한 학습을 위해 시청하지 않은 구간으로 이동할 수 없습니다."
+        "정확한 진도율 측정을 위해 진행 바를 임의로 이동할 수 없습니다."
       ),
     });
   };
@@ -284,6 +285,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     const dur = v.duration || 0;
     // Track furthest watched position for seek-forward prevention
     if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
+    // Track last natural playback position (used to block any drag-seek)
+    if (!seekGuardRef.current) lastTimeRef.current = cur;
     setProgress({ current: cur, duration: dur });
     // Save position every ~5s
     if (Math.floor(cur) % 5 === 0) {
@@ -304,15 +307,15 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const handleSeeking = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
-    // Allow seeks after completion (re-watching freely)
+    // Allow seeks freely after completion (re-watching)
     if (completedItems.has(activeItem.id)) return;
     if (seekGuardRef.current) return;
     const target = v.currentTime;
-    const limit = maxWatchedRef.current + SEEK_TOLERANCE;
-    if (target > limit) {
+    // Block ANY manual seek (forward or backward) — pin to natural playback position
+    if (Math.abs(target - lastTimeRef.current) > SEEK_TOLERANCE) {
       seekGuardRef.current = true;
       try {
-        v.currentTime = Math.max(0, maxWatchedRef.current);
+        v.currentTime = lastTimeRef.current;
       } catch {}
       warnSeekBlocked();
       setTimeout(() => { seekGuardRef.current = false; }, 50);
@@ -330,6 +333,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     if (!v) return;
     v.currentTime = resumePos;
     if (resumePos > maxWatchedRef.current) maxWatchedRef.current = resumePos;
+    lastTimeRef.current = resumePos;
     setResumePos(0);
     v.play().catch(() => {});
   };
@@ -384,21 +388,22 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
       const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
       if (dur > 0) durationCache = dur;
-      // Enforce no-skip-forward: if cur jumped beyond max + tolerance, snap back
+      // Enforce no-seek: if cur jumped (forward OR backward) beyond tolerance, snap back
       if (
         !completedItems.has(activeItem.id) &&
         !seekGuardRef.current &&
-        cur > maxWatchedRef.current + SEEK_TOLERANCE + 1
+        Math.abs(cur - lastTimeRef.current) > SEEK_TOLERANCE + 1
       ) {
         seekGuardRef.current = true;
         try {
-          player?.setCurrentTime?.(Math.max(0, maxWatchedRef.current));
+          player?.setCurrentTime?.(Math.max(0, lastTimeRef.current));
         } catch {}
         warnSeekBlocked();
         setTimeout(() => { seekGuardRef.current = false; }, 200);
         return;
       }
       if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
+      lastTimeRef.current = cur;
       setProgress({ current: cur, duration: dur });
       const sec = Math.floor(cur);
       if (sec > 0 && sec !== lastSavedSec && sec % 5 === 0) {
