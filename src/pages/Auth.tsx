@@ -82,7 +82,7 @@ const Auth = () => {
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center px-6 lg:px-16 bg-white relative h-screen overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center px-6 lg:px-16 bg-white relative h-screen overflow-y-auto text-black">
         {/* Language toggle */}
         <div className="absolute top-4 right-4">
           <LanguageToggle />
@@ -93,7 +93,7 @@ const Auth = () => {
             <h1 className="font-display text-2xl tracking-wider text-foreground">NONFICTION</h1>
           </div>
           <div className="hidden lg:block">
-            <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">NONFICTION ACADEMY</p>
+            <p className="tracking-[0.2em] text-muted-foreground uppercase bg-slate-50 font-serif text-2xl text-black">NONFICTION ACADEMY</p>
           </div>
 
           <div className="space-y-2">
