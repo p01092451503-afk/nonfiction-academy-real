@@ -140,11 +140,15 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
       const saved = raw ? parseFloat(raw) : 0;
       const pos = isFinite(saved) && saved > 5 ? saved : 0;
       setResumePos(pos);
+      // Allow seeking up to previously-watched position
+      maxWatchedRef.current = pos;
       if (pos > 0) setShowResumeDialog(true);
     } catch {
       setResumePos(0);
+      maxWatchedRef.current = 0;
     }
   }, [contentId, activeItem?.id]);
+
 
   useEffect(() => {
     if (activeItem && playbackUrl && isBunnyIframe(playbackUrl)) {
