@@ -1231,11 +1231,14 @@
     "myAnnouncements": "내 공지사항",
     "updated": "수정 완료",
     "created": "공지사항 등록 완료",
-    "deleted": "삭제 완료"
+    "deleted": "삭제 완료",
+    "scopedToBranch": "이 공지사항은 내 그룹의 수강생에게만 노출됩니다."
   },
   "board": {
     "title": "게시판 관리",
     "subtitle": "학생에게 자료를 배포하고 안내사항을 게시합니다.",
+    "subtitleLeader": "내 그룹의 수강생에게만 게시됩니다.",
+    "scopedToBranch": "이 게시글은 내 그룹의 수강생에게만 노출됩니다.",
     "studentTitle": "게시판",
     "studentSubtitle": "교육 자료 및 안내사항을 확인하세요.",
     "newPost": "새 게시글",
