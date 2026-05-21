@@ -389,11 +389,6 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
               })}
             </button>
           )}
-          {!isItemComplete && (
-            <span className="text-[10px] text-muted-foreground/70 shrink-0">
-              {t("contentPlayer.autoCompleteAt80", "80% 이상 시청 시 자동 완료")}
-            </span>
-          )}
           {isItemComplete && (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 shrink-0">
               <CheckCircle2 className="h-3 w-3" />
