@@ -283,6 +283,88 @@ const VideoPackagePlayer = ({ contentId, onComplete, title }: VideoPackagePlayer
     }
   }, [completedItems, items.length, onComplete]);
 
+  // Bunny iframe progress tracking via Player.js postMessage protocol
+  useEffect(() => {
+    if (!activeItem || !playbackUrl || !isBunnyIframe(playbackUrl)) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    let cancelled = false;
+    let player: any = null;
+    let durationCache = 0;
+    let lastSavedSec = -1;
+
+    let PlayerCtor: any = null;
+    let attachTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const attach = async () => {
+      try {
+        const mod: any = await import("player.js");
+        if (cancelled) return;
+        PlayerCtor = mod.Player || mod.default?.Player || mod.default;
+        if (!PlayerCtor || !iframeRef.current) return;
+        player = new PlayerCtor(iframeRef.current);
+        player.on("ready", () => {
+          player.getDuration((d: number) => {
+            if (d && isFinite(d)) {
+              durationCache = d;
+              setProgress((p) => ({ current: p.current, duration: d }));
+            }
+          });
+        });
+        player.on("timeupdate", (data: { seconds: number; duration: number }) => {
+          const cur = data?.seconds ?? 0;
+          const dur = data?.duration ?? durationCache ?? 0;
+          if (dur > 0) durationCache = dur;
+          setProgress({ current: cur, duration: dur });
+          const sec = Math.floor(cur);
+          if (sec !== lastSavedSec && sec % 5 === 0) {
+            lastSavedSec = sec;
+            try {
+              localStorage.setItem(STORAGE_KEY(contentId, activeItem.id), String(cur));
+            } catch {}
+          }
+          if (dur > 0 && cur / dur >= 0.8 && !completedItems.has(activeItem.id)) {
+            setCompletedItems((prev) => {
+              const next = new Set(prev);
+              next.add(activeItem.id);
+              return next;
+            });
+          }
+        });
+        player.on("ended", () => {
+          setCompletedItems((prev) => {
+            if (prev.has(activeItem.id)) return prev;
+            const next = new Set(prev);
+            next.add(activeItem.id);
+            return next;
+          });
+          try {
+            localStorage.removeItem(STORAGE_KEY(contentId, activeItem.id));
+          } catch {}
+          if (activeIdx < items.length - 1) {
+            setActiveIdx((i) => i + 1);
+          }
+        });
+      } catch {
+        /* ignore */
+      }
+    };
+
+    // Wait for iframe to mount/load
+    attachTimer = setTimeout(attach, 300);
+
+    return () => {
+      cancelled = true;
+      if (attachTimer) clearTimeout(attachTimer);
+      try {
+        player?.off?.("timeupdate");
+        player?.off?.("ended");
+        player?.off?.("ready");
+      } catch {}
+    };
+  }, [activeItem?.id, playbackUrl, contentId, items.length, activeIdx, completedItems]);
+
   if (isLoading) {
     return (
       <div className="aspect-video w-full">
