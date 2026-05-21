@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SiteSummaryCard from "@/components/admin/stats/SiteSummaryCard";
 import TodayOperationsCard from "@/components/admin/stats/TodayOperationsCard";
 import RealtimeUsersCard from "@/components/admin/stats/RealtimeUsersCard";
+import CapacityMonitorCard from "@/components/admin/CapacityMonitorCard";
 
 // Lazy: chart-heavy components — load only when their tab is opened
 const BranchLearningStats = lazy(() => import("@/components/admin/stats/BranchLearningStats"));
