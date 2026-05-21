@@ -73,12 +73,9 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     }
   }, [activeRole, teacherRoleEnabled, navigate]);
 
-  // Force Korean for admin UI — admin pages must always render in Korean
-  useEffect(() => {
-    if (activeRole === "admin" && i18n.language !== "ko") {
-      i18n.changeLanguage("ko");
-    }
-  }, [activeRole, i18n]);
+  // NOTE: language is fully user-controlled via LanguageToggle.
+  // Do NOT force a specific language by role — that would override the user's
+  // manual EN/JA/ZH-CN selection and break in-page language switching.
 
   const toggleCollapsed = () => {
     setSidebarCollapsed((prev) => {
