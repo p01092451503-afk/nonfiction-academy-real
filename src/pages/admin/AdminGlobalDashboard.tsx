@@ -46,6 +46,34 @@ const flag = (cc: string | null) => {
   return String.fromCodePoint(...cc.toUpperCase().split("").map((c) => 127397 + c.charCodeAt(0)));
 };
 
+// Country code → display name
+const COUNTRY_NAMES: Record<string, { ko: string; en: string }> = {
+  KR: { ko: "대한민국", en: "Korea" },
+  JP: { ko: "일본", en: "Japan" },
+  US: { ko: "미국", en: "United States" },
+  HK: { ko: "홍콩", en: "Hong Kong" },
+  CN: { ko: "중국", en: "China" },
+  TW: { ko: "대만", en: "Taiwan" },
+  SG: { ko: "싱가포르", en: "Singapore" },
+  VN: { ko: "베트남", en: "Vietnam" },
+  TH: { ko: "태국", en: "Thailand" },
+  MY: { ko: "말레이시아", en: "Malaysia" },
+  ID: { ko: "인도네시아", en: "Indonesia" },
+  PH: { ko: "필리핀", en: "Philippines" },
+  GB: { ko: "영국", en: "United Kingdom" },
+  FR: { ko: "프랑스", en: "France" },
+  DE: { ko: "독일", en: "Germany" },
+};
+
+interface CountryGroup {
+  id: string;          // country code (e.g. "KR")
+  code: string;
+  country: string;
+  name: string;
+  name_en: string | null;
+  branches: Department[];
+}
+
 // Color scale based on completion rate (0-100)
 const heatColor = (pct: number): string => {
   if (pct >= 80) return "bg-emerald-500";
