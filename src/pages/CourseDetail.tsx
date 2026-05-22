@@ -5,6 +5,7 @@ import {
   getCourseTitleByLangWithContentFallback,
   getCourseDescByLang,
   hasUploadedContent,
+  localizeLessonPrefix,
 } from "@/lib/courseContentI18n";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
@@ -821,7 +822,7 @@ const CourseDetail = () => {
                                         }}
                                         aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
                                       >
-                                        {localizedTitle}
+                                        {localizeLessonPrefix(localizedTitle, content.language_code || langKey, idx)}
                                       </button>
                                       {isUnpublished && <Badge variant="outline" className="h-4 shrink-0 border-dashed text-[9px]">{t("course.draftStatus")}</Badge>}
                                       {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
@@ -1114,7 +1115,7 @@ const CourseDetail = () => {
                           ) : (
                             <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                           )}
-                          <span className="truncate text-sm font-semibold text-foreground">{localizedTitle}</span>
+                          <span className="truncate text-sm font-semibold text-foreground">{localizeLessonPrefix(localizedTitle, content.language_code || currentLang, idx)}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{(() => {

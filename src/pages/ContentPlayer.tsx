@@ -34,6 +34,7 @@ import {
   getContentVideoProvider,
   getCourseTitleByLangWithContentFallback,
   hasUploadedContent,
+  localizeLessonPrefix,
 } from "@/lib/courseContentI18n";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
@@ -785,7 +786,7 @@ const ContentPlayer = () => {
                           {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
                         </div>
                       )}
-                      <span className="truncate flex-1">{getTitle(c)}</span>
+                      <span className="truncate flex-1">{localizeLessonPrefix(getTitle(c), itemLang, idx)}</span>
                       {isCompleted ? (
                         <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                           <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
@@ -954,7 +955,7 @@ const ContentPlayer = () => {
                         {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
                       </div>
                     )}
-                    <span className="truncate flex-1">{getTitle(c)}</span>
+                    <span className="truncate flex-1">{localizeLessonPrefix(getTitle(c), itemLang, idx)}</span>
                     {isCompleted ? (
                       <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-green-500 text-white px-2.5 py-0.5 text-[10px] font-semibold shadow-sm">
                         <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
