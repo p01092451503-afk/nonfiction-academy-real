@@ -167,12 +167,6 @@ const AdminPlatformUpdates = () => {
                   placeholder="0 = 만료 없음" />
               </div>
             </div>
-              <div>
-                <Label>자동 만료 (시간)</Label>
-                <Input type="number" min="0" value={expiresInHours} onChange={(e) => setExpiresInHours(e.target.value)}
-                  placeholder="0 = 만료 없음" />
-              </div>
-            </div>
 
             <div className="flex justify-end pt-2">
               <Button onClick={handleSend} disabled={sending} size="lg">
