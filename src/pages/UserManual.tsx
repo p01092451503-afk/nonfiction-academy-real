@@ -1,11 +1,96 @@
 import { useMemo, useState } from "react";
-import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight } from "lucide-react";
+import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight, Download } from "lucide-react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks/useUserRole";
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const downloadManualPdf = (manual: { label: string; intro: string; sections: Section[] }) => {
+  const today = new Date().toLocaleDateString("ko-KR");
+  const sectionsHtml = manual.sections
+    .map(
+      (s) => `
+        <section class="chap">
+          <h2>${escapeHtml(s.title)}</h2>
+          <p class="summary">${escapeHtml(s.summary)}</p>
+          <ol>
+            ${s.steps.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}
+          </ol>
+          ${
+            s.tips && s.tips.length > 0
+              ? `<div class="tips"><div class="tips-label">TIP</div><ul>${s.tips
+                  .map((t) => `<li>${escapeHtml(t)}</li>`)
+                  .join("")}</ul></div>`
+              : ""
+          }
+        </section>`,
+    )
+    .join("");
+
+  const html = `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>NONFICTION Academy - ${escapeHtml(manual.label)} 매뉴얼</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+         color: #1a1a1a; line-height: 1.6; font-size: 11pt; margin: 0; }
+  header { border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 20px; }
+  .brand { font-size: 10pt; color: #666; letter-spacing: 0.08em; }
+  h1 { font-size: 22pt; margin: 6px 0 4px; font-weight: 700; }
+  .meta { font-size: 9.5pt; color: #666; }
+  .intro { background: #f6f6f6; padding: 12px 14px; border-radius: 6px; margin: 16px 0 22px;
+           font-size: 10.5pt; color: #333; }
+  .chap { page-break-inside: avoid; margin-bottom: 22px; padding-bottom: 16px;
+          border-bottom: 1px solid #e5e5e5; }
+  .chap h2 { font-size: 14pt; margin: 0 0 6px; color: #1a1a1a; }
+  .summary { color: #555; margin: 0 0 10px; font-size: 10.5pt; }
+  ol { margin: 0 0 0 22px; padding: 0; }
+  ol li { margin: 4px 0; }
+  .tips { margin-top: 10px; background: #fff8e6; border-left: 3px solid #d4a017;
+          padding: 8px 12px; border-radius: 4px; }
+  .tips-label { font-size: 9pt; font-weight: 700; color: #8a6d10; margin-bottom: 4px; letter-spacing: 0.05em; }
+  .tips ul { margin: 0 0 0 18px; padding: 0; }
+  .tips li { font-size: 10pt; color: #555; }
+  footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e5e5;
+           font-size: 9pt; color: #888; text-align: center; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">NONFICTION ACADEMY · USER MANUAL</div>
+    <h1>${escapeHtml(manual.label)} 매뉴얼</h1>
+    <div class="meta">발행일 ${today} · 총 ${manual.sections.length}개 챕터</div>
+  </header>
+  <div class="intro">${escapeHtml(manual.intro)}</div>
+  ${sectionsHtml}
+  <footer>© NONFICTION Academy — 본 문서는 시스템에서 자동 생성되었습니다.</footer>
+  <script>
+    window.addEventListener("load", () => {
+      setTimeout(() => { window.focus(); window.print(); }, 250);
+    });
+  </script>
+</body>
+</html>`;
+
+  const w = window.open("", "_blank", "width=900,height=1100");
+  if (!w) {
+    alert("팝업이 차단되어 PDF를 생성할 수 없습니다. 팝업 차단을 해제해 주세요.");
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+};
+
 
 type Section = {
   id: string;
