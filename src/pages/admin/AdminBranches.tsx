@@ -197,8 +197,15 @@ const AdminBranches = () => {
 
   const openEditStaff = (p: any) => {
     setEditingStaff(p);
-    const role = userRoles.find((r: any) => r.user_id === p.user_id);
-    setStaffForm({ department_id: p.department_id || "__none__", position: p.position || "", role: role?.role || "student" });
+    const myRoles = userRoles
+      .filter((r: any) => r.user_id === p.user_id)
+      .map((r: any) => r.role)
+      .filter((r: string) => r === "student" || r === "teacher" || r === "admin") as ("student" | "teacher" | "admin")[];
+    setStaffForm({
+      department_id: p.department_id || "__none__",
+      position: p.position || "",
+      roles: myRoles.length ? myRoles : ["student"],
+    });
     setEditStaffDialog(true);
   };
 
@@ -208,9 +215,11 @@ const AdminBranches = () => {
       const deptId = staffForm.department_id === "__none__" ? null : staffForm.department_id;
       const { error: pErr } = await supabase.from("profiles").update({ department_id: deptId, position: staffForm.position || null }).eq("user_id", editingStaff.user_id);
       if (pErr) throw pErr;
+      // Replace non-super_admin role rows with the chosen multi-role set.
       const { error: deleteRoleError } = await supabase.from("user_roles").delete().eq("user_id", editingStaff.user_id).neq("role", "super_admin");
       if (deleteRoleError) throw deleteRoleError;
-      const { error: insertRoleError } = await supabase.from("user_roles").insert({ user_id: editingStaff.user_id, role: staffForm.role as any });
+      const rolesToInsert = (staffForm.roles.length ? staffForm.roles : ["student"]).map((role) => ({ user_id: editingStaff.user_id, role: role as any }));
+      const { error: insertRoleError } = await supabase.from("user_roles").insert(rolesToInsert);
       if (insertRoleError) throw insertRoleError;
     },
     onSuccess: () => {
