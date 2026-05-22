@@ -642,7 +642,7 @@ export default function AdminGlobalDashboard() {
 
         {/* Drill-down panel */}
         {drillCountry && (
-          <Card>
+          <Card id="drill-down-panel">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 min-w-0">
