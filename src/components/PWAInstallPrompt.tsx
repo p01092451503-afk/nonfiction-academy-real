@@ -16,6 +16,14 @@ const isStandalone = () =>
 
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
+const isMobileOrTablet = () => {
+  const ua = navigator.userAgent;
+  return (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+    (/Macintosh/i.test(ua) && (navigator as any).maxTouchPoints > 1)
+  );
+};
+
 const isInIframe = (() => {
   try { return window.self !== window.top; } catch { return true; }
 })();
@@ -29,6 +37,7 @@ export default function PWAInstallPrompt() {
   useEffect(() => {
     if (!user || isStandalone() || isInIframe) return;
     if (localStorage.getItem(DISMISSED_KEY) === "1") return;
+    const mobileOrTablet = isMobileOrTablet();
 
     const checkInterval = async () => {
       const { data } = await supabase
@@ -45,6 +54,7 @@ export default function PWAInstallPrompt() {
 
     const onBIP = (e: Event) => {
       e.preventDefault();
+      if (!mobileOrTablet) return;
       checkInterval().then((ok) => {
         if (!ok) return;
         setDeferred(e as BIPEvent);
@@ -54,7 +64,7 @@ export default function PWAInstallPrompt() {
     window.addEventListener("beforeinstallprompt", onBIP);
 
     // iOS Safari doesn't fire beforeinstallprompt — show manual hint
-    if (isIOS()) {
+    if (mobileOrTablet && isIOS()) {
       checkInterval().then((ok) => { if (ok) { setIosHint(true); setShow(true); } });
     }
 
