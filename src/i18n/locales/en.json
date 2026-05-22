@@ -119,7 +119,8 @@
     "board": "Board",
     "boardManagement": "Board",
     "legacyRecords": "Learning History",
-    "branchManagement": "Organization Management"
+    "branchManagement": "Organization Management",
+    "userManual": "User Manual"
   },
   "roles": {
     "student": "Student",

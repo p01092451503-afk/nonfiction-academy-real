@@ -116,7 +116,8 @@
     "board": "公告板",
     "boardManagement": "公告板管理",
     "legacyRecords": "学习历史管理",
-    "globalDashboard": "全球仪表盘"
+    "globalDashboard": "全球仪表盘",
+    "userManual": "用户手册"
   },
   "roles": {
     "student": "Student",
