@@ -82,9 +82,9 @@ const AdminPlatformUpdates = () => {
   };
 
   const sevColor: Record<string, string> = {
-    info: "bg-sky-100 text-sky-800",
-    important: "bg-amber-100 text-amber-800",
-    critical: "bg-red-100 text-red-800",
+    info: "bg-sky-600 text-white",
+    important: "bg-amber-500 text-white",
+    critical: "bg-red-600 text-white",
   };
 
   return (
