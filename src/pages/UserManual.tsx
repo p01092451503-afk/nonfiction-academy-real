@@ -417,9 +417,22 @@ const ManualPanel = ({ manual, query }: { manual: RoleManual; query: string }) =
       <div className="stat-card">
         <div className="flex items-start gap-3">
           <Icon className="h-6 w-6 text-foreground mt-0.5" aria-hidden="true" />
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-foreground">{manual.label} 매뉴얼</h2>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{manual.intro}</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-foreground">{manual.label} 매뉴얼</h2>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{manual.intro}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadManualPdf(manual)}
+                className="shrink-0 gap-2 whitespace-nowrap"
+              >
+                <Download className="h-4 w-4" />
+                PDF 다운로드
+              </Button>
+            </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="secondary" className="font-normal">총 {manual.sections.length}개 챕터</Badge>
               {query && (
