@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
+import DashboardInsights from "@/components/admin/DashboardInsights";
 
 const AdminDashboard = () => {
   const { profile } = useUser();
@@ -473,6 +474,9 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* ④ Insights: Learning Health · User · Content Quality */}
+        <DashboardInsights />
       </div>
     </DashboardLayout>
   );
