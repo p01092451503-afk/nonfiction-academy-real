@@ -1106,13 +1106,21 @@ const ManualPanel = ({ manual, query }: { manual: RoleManual; query: string }) =
 };
 
 const UserManual = () => {
-  const { primaryRole } = useUserRole();
+  const { primaryRole, isStudent, isTeacher, isAdmin } = useUserRole();
   const [query, setQuery] = useState("");
+  // 직전에 사용 중이던 대시보드 컨텍스트를 우선 사용 (학생 사이드바에서 진입했는데 admin 레이아웃이 뜨는 문제 방지)
+  const lastRole = (() => {
+    try { return sessionStorage.getItem("lastDashboardRole") as "student" | "teacher" | "admin" | null; } catch { return null; }
+  })();
+  const hasRole = (r: "student" | "teacher" | "admin") =>
+    r === "admin" ? isAdmin : r === "teacher" ? isTeacher : isStudent;
+  const layoutRole = (lastRole && hasRole(lastRole)) ? lastRole : (primaryRole as "student" | "teacher" | "admin");
   const defaultTab =
-    primaryRole === "admin" ? "admin" : primaryRole === "teacher" ? "teacher" : "student";
+    layoutRole === "admin" ? "admin" : layoutRole === "teacher" ? "teacher" : "student";
 
   return (
-    <DashboardLayout role={primaryRole as "student" | "teacher" | "admin"}>
+    <DashboardLayout role={layoutRole}>
+
       <div className="space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
