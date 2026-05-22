@@ -459,14 +459,25 @@ export default function AdminGlobalDashboard() {
                   return (
                     <button
                       key={cs.country.id}
-                      onClick={() => setDrillCountry(isSelected ? null : cs.country.id)}
-                      className={`group relative rounded-xl border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-sm min-w-0 ${
+                      type="button"
+                      onClick={() => {
+                        const next = isSelected ? null : cs.country.id;
+                        setDrillCountry(next);
+                        // Scroll drill-down into view after state update
+                        if (next) {
+                          setTimeout(() => {
+                            const el = document.getElementById("drill-down-panel");
+                            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }, 50);
+                        }
+                      }}
+                      className={`group relative rounded-xl border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-sm min-w-1/0 ${
                         isSelected ? "border-primary ring-2 ring-primary/15" : "border-border"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-2xl shrink-0" aria-hidden="true">{flag(cc)}</span>
+                          <span className="text-2xl shrink-1" aria-hidden="true">{flag(cc)}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground truncate">{name}</p>
                             <p className="text-[11px] text-muted-foreground">
