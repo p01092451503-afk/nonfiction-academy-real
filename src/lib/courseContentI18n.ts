@@ -40,6 +40,8 @@ export type CourseContentLike = {
   video_provider?: string | null;
 };
 
+const containsHangul = (value: string | null | undefined) => /[가-힣]/.test(value || "");
+
 /**
  * Remove repetitive "n차시." / "Lesson N." / "第 N 课." / "レッスン N." /
  * "第 N 回." prefixes that some legacy data injects into the title.
@@ -50,9 +52,9 @@ export function stripLessonPrefix(title: string | null | undefined): string {
   const s = (title || "")
     .replace(/^\d+차시\.\s*/, "")
     .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
-    .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
-    .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
-    .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "")
+    .replace(/^第\s*\d+\s*课[.:：]?\s*/, "")
+    .replace(/^レッスン\s*\d+[.:：]?\s*/, "")
+    .replace(/^第\s*\d+\s*回[.:：]?\s*/, "")
     .trim();
   return s || (title || "");
 }
@@ -153,7 +155,7 @@ export function getCourseTitleByLangWithContentFallback(
   const baseTitle = base?.title || "";
   if (!lang || lang === "ko") return baseTitle;
   const tr = i18n?.find((r) => r.language_code === lang);
-  if (tr?.title && tr.title.trim()) return tr.title;
+  if (tr?.title && tr.title.trim() && !containsHangul(tr.title)) return tr.title;
   const match = (contents || []).find((c) => (c.language_code || "ko") === lang);
   if (match) {
     const t = getContentTitle(match, contentI18n);

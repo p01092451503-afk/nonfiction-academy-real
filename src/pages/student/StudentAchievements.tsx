@@ -22,6 +22,8 @@ import {
 } from "recharts";
 import { ChartTooltipContent, chartTooltipDefaults, chartLineCursor } from "@/components/ui/chart-tooltip";
 import { format, startOfWeek, subWeeks } from "date-fns";
+import { getCourseTitleByLangWithContentFallback, stripLessonPrefix } from "@/lib/courseContentI18n";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const badgeIcons: Record<string, React.ElementType> = {
   star: Star, flame: Flame, target: Target, award: Award, zap: Zap,
@@ -98,17 +100,44 @@ const StudentAchievements = () => {
   });
 
   const { data: courseProgress = [] } = useQuery({
-    queryKey: ["my-course-progress", user?.id],
+    queryKey: ["my-course-progress", user?.id, i18n.language],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("progress, courses(title, course_i18n(language_code, title))")
+        .select("course_id, progress, courses(id, title, course_i18n(language_code, title))")
         .eq("user_id", user!.id)
         .eq("status", "approved")
         .order("progress", { ascending: false })
         .limit(7);
       if (error) throw error;
-      return data;
+      const courseIds = (data || []).map((e: any) => e.course_id).filter(Boolean);
+      if (courseIds.length === 0) return data || [];
+
+      const { data: contents, error: contentsError } = await supabase
+        .from("course_contents")
+        .select("id, course_id, title, language_code, order_index, is_published")
+        .in("course_id", courseIds)
+        .eq("is_published", true)
+        .order("order_index", { ascending: true });
+      if (contentsError) throw contentsError;
+
+      const contentMap = new Map<string, any[]>();
+      (contents || []).forEach((content: any) => {
+        const list = contentMap.get(content.course_id) || [];
+        list.push(content);
+        contentMap.set(content.course_id, list);
+      });
+
+      return (data || []).map((enrollment: any) => ({
+        ...enrollment,
+        localizedTitle: getCourseTitleByLangWithContentFallback(
+          enrollment.courses,
+          enrollment.courses?.course_i18n || [],
+          contentMap.get(enrollment.course_id) || [],
+          [],
+          normalizeLang(i18n.language),
+        ),
+      }));
     },
     enabled: !!user?.id,
   });
@@ -152,22 +181,14 @@ const StudentAchievements = () => {
   const badgeDonut = [{ name: "badges", value: badgePercent, fill: "hsl(var(--warning))" }];
 
   // Course progress chart with color by progress
-  const lang = (i18n.language || "ko").startsWith("zh")
-    ? "zh-CN"
-    : (i18n.language || "ko").startsWith("ja")
-    ? "ja"
-    : (i18n.language || "ko").startsWith("en")
-    ? "en"
-    : "ko";
   const courseChartData = courseProgress.map((c: any) => {
-    const base = c.courses?.title || "-";
-    const tr = (c.courses?.course_i18n || []).find((r: any) => r.language_code === lang);
-    const localized = (lang !== "ko" && tr?.title) ? tr.title : base;
+    const localized = stripLessonPrefix(c.localizedTitle || c.courses?.title || "-");
     return {
-      name: localized.replace(/^\d+(차시|강|장)\.\s*/, "").slice(0, 12),
+      name: localized,
       progress: c.progress || 0,
     };
   });
+  const formatAxisCourseName = (name: string) => name.length > 16 ? `${name.slice(0, 16)}…` : name;
   const getBarColor = (p: number) => {
     if (p >= 80) return "hsl(var(--success))";
     if (p >= 50) return "hsl(var(--warning))";
@@ -334,9 +355,9 @@ const StudentAchievements = () => {
                   <BarChart data={courseChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} tickFormatter={formatAxisCourseName} width={120} />
                     <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
-                    <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="progress" name={t("achievements.progressRate")} radius={[0, 4, 4, 0]}>
                       {courseChartData.map((entry, idx) => (
                         <Cell key={idx} fill={getBarColor(entry.progress)} />
                       ))}
