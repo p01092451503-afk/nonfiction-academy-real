@@ -82,6 +82,7 @@ const AssessmentPage = lazyWithRetry(() => import("./pages/AssessmentPage"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const CourseRedirect = lazyWithRetry(() => import("./components/CourseRedirect"));
 const ContentRedirect = lazyWithRetry(() => import("./components/ContentRedirect"));
+const UserManual = lazyWithRetry(() => import("./pages/UserManual"));
 
 
 const queryClient = new QueryClient({
