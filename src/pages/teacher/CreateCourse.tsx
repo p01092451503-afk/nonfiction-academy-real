@@ -844,17 +844,40 @@ const CreateCourse = () => {
       );
       await supabase.from("course_contents").delete().eq("course_id", editCourseId!);
 
-      // Save course i18n (en, zh-CN, ja)
-      const courseI18nRows = [
-        { lang: "en", title: enTitle, desc: enDescription },
-        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
-        { lang: "ja", title: jaTitle, desc: jaDescription },
-      ].filter((r) => r.title || r.desc).map((r) => ({
-        course_id: editCourseId!,
-        language_code: r.lang,
-        title: r.title || title,
-        description: r.desc || description || null,
-      }));
+      // Save course i18n (en, zh-CN, ja) — fill in missing slots BEFORE saving so we
+      // never persist KO text into a non-KO row (which would later be misread as a
+      // "manual edit" and lock translations permanently).
+      const resolvedI18n = await ensureCourseI18nReady();
+      const koTitleTrim = title.trim();
+      const koDescTrim = description.trim();
+      const courseI18nRows = (["en", "zh-CN", "ja"] as TargetLang[])
+        .map((lang) => {
+          const r = resolvedI18n[lang];
+          const tVal = (r.title || "").trim();
+          const dVal = (r.desc || "").trim();
+          // Drop KO-equivalent values so they don't get saved.
+          const safeTitle = tVal && tVal !== koTitleTrim ? tVal : "";
+          const safeDesc = dVal && dVal !== koDescTrim ? dVal : "";
+          return { lang, title: safeTitle, desc: safeDesc };
+        })
+        .filter((r) => r.title || r.desc)
+        .map((r) => ({
+          course_id: editCourseId!,
+          language_code: r.lang,
+          // Title is NOT NULL in schema — if only desc translated, mirror desc-language title from KO is unsafe;
+          // require an actual translated title to write the row at all.
+          title: r.title,
+          description: r.desc || null,
+        }))
+        .filter((row) => !!row.title);
+      // Remove rows whose translation got cleared so stale KO copies don't linger.
+      const langsWithRows = new Set(courseI18nRows.map((r) => r.language_code));
+      const langsToClear = (["en", "zh-CN", "ja"] as string[]).filter((l) => !langsWithRows.has(l));
+      if (langsToClear.length) {
+        await supabase.from("course_i18n").delete()
+          .eq("course_id", editCourseId!)
+          .in("language_code", langsToClear);
+      }
       if (courseI18nRows.length) {
         await supabase.from("course_i18n").upsert(courseI18nRows, { onConflict: "course_id,language_code" });
       }
