@@ -82,6 +82,7 @@ const AssessmentPage = lazyWithRetry(() => import("./pages/AssessmentPage"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const CourseRedirect = lazyWithRetry(() => import("./components/CourseRedirect"));
 const ContentRedirect = lazyWithRetry(() => import("./components/ContentRedirect"));
+const UserManual = lazyWithRetry(() => import("./pages/UserManual"));
 
 
 const queryClient = new QueryClient({
@@ -154,6 +155,7 @@ const AppRoutes = () => {
           <Route path="/admin/video-mobile-check" element={<AdminRoute><AdminVideoMobileCheck /></AdminRoute>} />
           <Route path="/admin/i18n" element={<AdminRoute><AdminI18n /></AdminRoute>} />
           <Route path="/admin/system-info" element={<AdminRoute><AdminSystemInfo /></AdminRoute>} />
+          <Route path="/manual" element={<ProtectedRoute><UserManual /></ProtectedRoute>} />
           <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
           <Route path="/admin/global-dashboard" element={<AdminRoute><AdminGlobalDashboard /></AdminRoute>} />
           <Route path="/admin/legacy-records" element={<AdminRoute><AdminLegacyRecords /></AdminRoute>} />

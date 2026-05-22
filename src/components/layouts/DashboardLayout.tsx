@@ -4,7 +4,7 @@ import {
   LayoutDashboard, BookOpen, ClipboardList, Trophy, Users, Settings, Compass, UserCircle, ClipboardCheck,
   LogOut, Menu, X, ChevronRight, ChevronDown, GraduationCap, CalendarCheck, Activity, Building2, Bell, Megaphone, FileText, BarChart3, Video,
   PanelLeftClose, PanelLeftOpen, Languages, Layers, Archive, Smartphone,
-  Info, Globe2, Database,
+  Info, Globe2, Database, BookMarked,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -145,6 +145,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
     { key: "announcements", label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
     { key: "board", label: t("nav.board", "게시판"), href: "/student/board", icon: FileText, showNew: hasNewBoardPost },
+    { key: "userManual", label: t("nav.userManual", "사용자 매뉴얼"), href: "/manual", icon: BookMarked },
     { key: "myPage", label: t("nav.myPage"), href: "/mypage", icon: UserCircle, protected: true },
   ];
 
@@ -157,6 +158,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     { key: "announcementManagement", label: t("nav.announcementManagement", "공지사항 관리"), href: "/teacher/announcements", icon: Megaphone },
     { key: "boardManagement", label: t("nav.boardManagement", "게시판 관리"), href: "/teacher/board", icon: FileText },
     { key: "attendanceManagement", label: t("nav.attendanceManagement"), href: "/teacher/attendance", icon: CalendarCheck },
+    { key: "userManual", label: t("nav.userManual", "사용자 매뉴얼"), href: "/manual", icon: BookMarked },
   ];
   const adminGroups: NavGroup[] = [
     {
@@ -211,6 +213,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
         { key: "platformUpdates", label: t("nav.platformUpdates", "플랫폼 업데이트 푸시"), href: "/admin/platform-updates", icon: Megaphone },
         { key: "pwaSettings", label: t("nav.pwaSettings", "PWA 앱 설정"), href: "/admin/pwa-settings", icon: Smartphone },
         { key: "systemInfo", label: t("nav.systemInfo", "시스템 정보"), href: "/admin/system-info", icon: Info },
+        { key: "userManual", label: t("nav.userManual", "사용자 매뉴얼"), href: "/manual", icon: BookMarked },
       ],
     },
   ];
