@@ -158,6 +158,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     { key: "announcementManagement", label: t("nav.announcementManagement", "공지사항 관리"), href: "/teacher/announcements", icon: Megaphone },
     { key: "boardManagement", label: t("nav.boardManagement", "게시판 관리"), href: "/teacher/board", icon: FileText },
     { key: "attendanceManagement", label: t("nav.attendanceManagement"), href: "/teacher/attendance", icon: CalendarCheck },
+    { key: "userManual", label: t("nav.userManual", "사용자 매뉴얼"), href: "/manual", icon: BookMarked },
   ];
   const adminGroups: NavGroup[] = [
     {
