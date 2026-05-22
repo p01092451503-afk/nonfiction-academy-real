@@ -40,7 +40,7 @@ const AdminBranches = () => {
   const [uploadBranch, setUploadBranch] = useState<string>("__csv__");
   const [editStaffDialog, setEditStaffDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any>(null);
-  const [staffForm, setStaffForm] = useState({ department_id: "__none__", position: "", role: "student" });
+  const [staffForm, setStaffForm] = useState<{ department_id: string; position: string; roles: ("student" | "teacher" | "admin")[] }>({ department_id: "__none__", position: "", roles: ["student"] });
 
   // Fetch all departments
   const { data: allDepts = [] } = useQuery({
@@ -197,8 +197,15 @@ const AdminBranches = () => {
 
   const openEditStaff = (p: any) => {
     setEditingStaff(p);
-    const role = userRoles.find((r: any) => r.user_id === p.user_id);
-    setStaffForm({ department_id: p.department_id || "__none__", position: p.position || "", role: role?.role || "student" });
+    const myRoles = userRoles
+      .filter((r: any) => r.user_id === p.user_id)
+      .map((r: any) => r.role)
+      .filter((r: string) => r === "student" || r === "teacher" || r === "admin") as ("student" | "teacher" | "admin")[];
+    setStaffForm({
+      department_id: p.department_id || "__none__",
+      position: p.position || "",
+      roles: myRoles.length ? myRoles : ["student"],
+    });
     setEditStaffDialog(true);
   };
 
@@ -208,9 +215,11 @@ const AdminBranches = () => {
       const deptId = staffForm.department_id === "__none__" ? null : staffForm.department_id;
       const { error: pErr } = await supabase.from("profiles").update({ department_id: deptId, position: staffForm.position || null }).eq("user_id", editingStaff.user_id);
       if (pErr) throw pErr;
+      // Replace non-super_admin role rows with the chosen multi-role set.
       const { error: deleteRoleError } = await supabase.from("user_roles").delete().eq("user_id", editingStaff.user_id).neq("role", "super_admin");
       if (deleteRoleError) throw deleteRoleError;
-      const { error: insertRoleError } = await supabase.from("user_roles").insert({ user_id: editingStaff.user_id, role: staffForm.role as any });
+      const rolesToInsert = (staffForm.roles.length ? staffForm.roles : ["student"]).map((role) => ({ user_id: editingStaff.user_id, role: role as any }));
+      const { error: insertRoleError } = await supabase.from("user_roles").insert(rolesToInsert);
       if (insertRoleError) throw insertRoleError;
     },
     onSuccess: () => {
@@ -536,15 +545,40 @@ const AdminBranches = () => {
               <Input value={staffForm.position} onChange={e => setStaffForm(f => ({ ...f, position: e.target.value }))} placeholder={t("admin.positionColumn")} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("admin.roleColumn")}</label>
-              <Select value={staffForm.role} onValueChange={v => setStaffForm(f => ({ ...f, role: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">{t("roles.studentLabel")}</SelectItem>
-                  <SelectItem value="teacher">{t("roles.teacherLabel")}</SelectItem>
-                  <SelectItem value="admin">{t("roles.adminLabel")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">{t("admin.roleColumn")}</label>
+                <span className="text-xs text-muted-foreground">
+                  {t("admin.rolesMultiHint", "여러 역할을 동시에 지정할 수 있습니다")}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["student", "teacher", "admin"] as const).map((r) => {
+                  const checked = staffForm.roles.includes(r);
+                  return (
+                    <button
+                      type="button"
+                      key={r}
+                      onClick={() => {
+                        setStaffForm((f) => {
+                          const has = f.roles.includes(r);
+                          const next = has ? f.roles.filter((x) => x !== r) : [...f.roles, r];
+                          return { ...f, roles: next.length ? next : ["student"] };
+                        });
+                      }}
+                      className={`px-3 py-2 rounded-xl border text-sm transition ${
+                        checked
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border text-muted-foreground hover:border-foreground/40"
+                      }`}
+                    >
+                      {t(`roles.${r}Label`)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("admin.branchLeaderMultiHint", "한 지점에 러닝 리더(강사)를 여러 명 지정할 수 있습니다.")}
+              </p>
             </div>
           </div>
           <DialogFooter>
