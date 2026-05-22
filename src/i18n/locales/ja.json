@@ -538,7 +538,18 @@
     "badgeUnit": "{{count}}個",
     "weeksAgo": "{{count}}週間前",
     "thisWeek": "今週",
-    "toLevel": "Lv.{{level}}まで{{percent}}%"
+    "toLevel": "Lv.{{level}}まで{{percent}}%",
+    "placeholderBadges": {
+      "firstCourse": { "name": "初回コース修了", "description": "最初のコースを修了すると獲得" },
+      "streak3": { "name": "3日連続学習", "description": "3日連続で学習すると獲得" },
+      "streak7": { "name": "7日連続学習", "description": "7日連続で学習すると獲得" },
+      "perfectQuiz": { "name": "クイズ満点", "description": "評価で満点を取ると獲得" },
+      "fiveCourses": { "name": "コース5つ修了", "description": "5コース修了で獲得" },
+      "tenCourses": { "name": "コース10修了", "description": "10コース修了で獲得" },
+      "level5": { "name": "レベル5達成", "description": "レベル5に到達すると獲得" },
+      "level10": { "name": "レベル10達成", "description": "レベル10に到達すると獲得" },
+      "topRanker": { "name": "TOP 10入り", "description": "リーダーボードTOP 10に入ると獲得" }
+    }
   },
   "admin": {
     "adminDashboard": "管理者ダッシュボード",

@@ -541,7 +541,18 @@
     "badgeUnit": "{{count}}",
     "weeksAgo": "{{count}}w ago",
     "thisWeek": "This week",
-    "toLevel": "{{percent}}% to Lv.{{level}}"
+    "toLevel": "{{percent}}% to Lv.{{level}}",
+    "placeholderBadges": {
+      "firstCourse": { "name": "First Course Completed", "description": "Earned by completing your first course" },
+      "streak3": { "name": "3-Day Streak", "description": "Earned by learning 3 days in a row" },
+      "streak7": { "name": "7-Day Streak", "description": "Earned by learning 7 days in a row" },
+      "perfectQuiz": { "name": "Perfect Quiz", "description": "Earned by scoring 100% on an assessment" },
+      "fiveCourses": { "name": "5 Courses Completed", "description": "Earned by completing 5 courses" },
+      "tenCourses": { "name": "10 Courses Completed", "description": "Earned by completing 10 courses" },
+      "level5": { "name": "Reach Level 5", "description": "Earned by reaching level 5" },
+      "level10": { "name": "Reach Level 10", "description": "Earned by reaching level 10" },
+      "topRanker": { "name": "TOP 10 Ranker", "description": "Earned by entering leaderboard TOP 10" }
+    }
   },
   "admin": {
     "adminDashboard": "Admin Dashboard",

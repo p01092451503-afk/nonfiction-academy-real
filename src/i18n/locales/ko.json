@@ -538,7 +538,18 @@
     "badgeUnit": "{{count}}개",
     "weeksAgo": "{{count}}주전",
     "thisWeek": "이번주",
-    "toLevel": "{{percent}}% to Lv.{{level}}"
+    "toLevel": "{{percent}}% to Lv.{{level}}",
+    "placeholderBadges": {
+      "firstCourse": { "name": "첫 강의 완료", "description": "첫 강의를 완료하면 획득" },
+      "streak3": { "name": "3일 연속 학습", "description": "3일 연속 학습 시 획득" },
+      "streak7": { "name": "7일 연속 학습", "description": "7일 연속 학습 시 획득" },
+      "perfectQuiz": { "name": "퀴즈 만점", "description": "평가에서 만점을 받으면 획득" },
+      "fiveCourses": { "name": "강의 5개 완료", "description": "강의 5개 완료 시 획득" },
+      "tenCourses": { "name": "강의 10개 완료", "description": "강의 10개 완료 시 획득" },
+      "level5": { "name": "레벨 5 달성", "description": "레벨 5에 도달하면 획득" },
+      "level10": { "name": "레벨 10 달성", "description": "레벨 10에 도달하면 획득" },
+      "topRanker": { "name": "TOP 10 진입", "description": "리더보드 TOP 10 진입" }
+    }
   },
   "admin": {
     "adminDashboard": "관리자 대시보드",
