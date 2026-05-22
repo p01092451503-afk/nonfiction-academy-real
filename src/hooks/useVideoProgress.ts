@@ -45,10 +45,17 @@ export function useVideoProgress({
   const resumePosition = existingProgress?.last_position_seconds || 0;
   const isCompleted = existingProgress?.completed || false;
 
-  // Initialize max-watched from saved progress; user may seek freely up to that
+  // Initialize max-watched from saved progress; user may seek freely up to that.
+  // Strictly: if item is already completed in DB, or saved progress crossed 80%,
+  // disable the guard entirely by setting maxWatched to Infinity.
   useEffect(() => {
-    maxWatchedRef.current = resumePosition || 0;
-  }, [contentId, resumePosition]);
+    const pct = Number(existingProgress?.progress_percentage) || 0;
+    if (isCompleted || pct >= 80) {
+      maxWatchedRef.current = Number.POSITIVE_INFINITY;
+    } else {
+      maxWatchedRef.current = resumePosition || 0;
+    }
+  }, [contentId, resumePosition, isCompleted, existingProgress?.progress_percentage]);
 
   const warnSeekBlocked = useCallback(() => {
     try {

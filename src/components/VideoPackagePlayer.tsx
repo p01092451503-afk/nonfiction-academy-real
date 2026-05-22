@@ -162,7 +162,27 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       const m = rawMax ? parseFloat(rawMax) : 0;
       savedMax = isFinite(m) && m > 0 ? m : 0;
     } catch {}
-    maxWatchedRef.current = Math.max(savedMax, savedPos);
+
+    // Strict completion check: if this item has ever been completed (in-memory set
+    // or persisted DONE flag), disable the first-watch seek guard entirely by
+    // setting maxWatched to Infinity. Users who already finished can scrub freely.
+    let doneFlag = false;
+    try { doneFlag = localStorage.getItem(DONE_KEY(contentId, activeItem.id)) === "1"; } catch {}
+    const alreadyDone = completedItems.has(activeItem.id) || doneFlag;
+
+    if (alreadyDone) {
+      maxWatchedRef.current = Number.POSITIVE_INFINITY;
+      // Keep completedItems in sync so other code paths see it as done.
+      if (!completedItems.has(activeItem.id)) {
+        setCompletedItems((prev) => {
+          const next = new Set(prev);
+          next.add(activeItem.id);
+          return next;
+        });
+      }
+    } else {
+      maxWatchedRef.current = Math.max(savedMax, savedPos);
+    }
 
     const pos = savedPos > 5 ? savedPos : 0;
     setResumePos(pos);
