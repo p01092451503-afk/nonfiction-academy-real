@@ -146,23 +146,27 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     setIframeStartTime(null);
     setShowResumeDialog(false);
     setProgress({ current: 0, duration: activeItem.duration_seconds || 0 });
-    // Hydrate per-item max-watched (for first-watch forward-seek limit)
-    try {
-      const rawMax = localStorage.getItem(MAX_KEY(contentId, activeItem.id));
-      const maxV = rawMax ? parseFloat(rawMax) : 0;
-      maxWatchedRef.current = isFinite(maxV) && maxV > 0 ? maxV : 0;
-    } catch {
-      maxWatchedRef.current = 0;
-    }
+    // Hydrate per-item max-watched (for first-watch forward-seek limit).
+    // IMPORTANT: include saved resume position so the guard doesn't snap a
+    // legitimately resumed playhead back to 0 (which caused a 403/seek loop
+    // on Bunny iframe due to continuous setCurrentTime calls).
+    let savedPos = 0;
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
-      const saved = raw ? parseFloat(raw) : 0;
-      const pos = isFinite(saved) && saved > 5 ? saved : 0;
-      setResumePos(pos);
-      if (pos > 0) setShowResumeDialog(true);
-    } catch {
-      setResumePos(0);
-    }
+      const v = raw ? parseFloat(raw) : 0;
+      savedPos = isFinite(v) && v > 0 ? v : 0;
+    } catch {}
+    let savedMax = 0;
+    try {
+      const rawMax = localStorage.getItem(MAX_KEY(contentId, activeItem.id));
+      const m = rawMax ? parseFloat(rawMax) : 0;
+      savedMax = isFinite(m) && m > 0 ? m : 0;
+    } catch {}
+    maxWatchedRef.current = Math.max(savedMax, savedPos);
+
+    const pos = savedPos > 5 ? savedPos : 0;
+    setResumePos(pos);
+    if (pos > 0) setShowResumeDialog(true);
 
   }, [contentId, activeItem?.id]);
 
