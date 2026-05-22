@@ -478,8 +478,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* ④ Insights: Learning Health · User · Content Quality */}
-        <DashboardInsights />
       </div>
     </DashboardLayout>
   );
