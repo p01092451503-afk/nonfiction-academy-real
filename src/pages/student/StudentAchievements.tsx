@@ -29,7 +29,7 @@ const badgeIcons: Record<string, React.ElementType> = {
 
 const StudentAchievements = () => {
   const { user } = useUser();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { data: gamification } = useQuery({
     queryKey: ["my-gamification", user?.id],
