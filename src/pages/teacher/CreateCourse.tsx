@@ -199,22 +199,25 @@ const CreateCourse = () => {
         .select("*")
         .eq("course_id", editCourseId)
         .in("language_code", ["en", "zh-CN", "ja"]);
+      // Load course i18n. Mark "manual" only when stored value actually differs from the
+      // KO original — otherwise the slot is stale (auto-translation never succeeded) and
+      // must remain eligible for re-translation, instead of being permanently locked.
+      const koTitleRaw = (courseData?.title || "").trim();
+      const koDescRaw = (courseData?.description || "").trim();
       (courseI18ns || []).forEach((row: any) => {
+        const tVal = row.title || "";
+        const dVal = row.description || "";
+        const titleIsManual = !!tVal && tVal.trim() !== koTitleRaw;
+        const descIsManual = !!dVal && dVal.trim() !== koDescRaw;
         if (row.language_code === "en") {
-          setEnTitle(row.title || "");
-          setEnDescription(row.description || "");
-          if (row.title) setEnTitleManual(true);
-          if (row.description) setEnDescManual(true);
+          setEnTitle(tVal); setEnDescription(dVal);
+          setEnTitleManual(titleIsManual); setEnDescManual(descIsManual);
         } else if (row.language_code === "zh-CN") {
-          setZhTitle(row.title || "");
-          setZhDescription(row.description || "");
-          if (row.title) setZhTitleManual(true);
-          if (row.description) setZhDescManual(true);
+          setZhTitle(tVal); setZhDescription(dVal);
+          setZhTitleManual(titleIsManual); setZhDescManual(descIsManual);
         } else if (row.language_code === "ja") {
-          setJaTitle(row.title || "");
-          setJaDescription(row.description || "");
-          if (row.title) setJaTitleManual(true);
-          if (row.description) setJaDescManual(true);
+          setJaTitle(tVal); setJaDescription(dVal);
+          setJaTitleManual(titleIsManual); setJaDescManual(descIsManual);
         }
       });
 
