@@ -76,6 +76,17 @@ const getVimeoVideoId = (url: string | null) => {
   return match?.[1] || null;
 };
 
+const getBunnyVideoId = (url: string | null) =>
+  url?.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1] || null;
+
+const isBunnyVideo = (url: string | null, provider: string | null) =>
+  provider === "bunny" || /(?:iframe|player)\.mediadelivery\.net|b-cdn\.net/i.test(url || "");
+
+const toBunnyEmbedUrl = (url: string) =>
+  url
+    .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
+    .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
+
 const ContentPlayer = () => {
   const { courseId, contentId } = useParams<{ courseId: string; contentId: string }>();
   const navigate = useNavigate();
@@ -258,6 +269,7 @@ const ContentPlayer = () => {
 
   const [cardIndex, setCardIndex] = useState(0);
   const [kollusEmbedUrl, setKollusEmbedUrl] = useState<string | null>(null);
+  const [bunnyEmbedUrl, setBunnyEmbedUrl] = useState<string | null>(null);
   const [kollusLoading, setKollusLoading] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const resumePromptedRef = useRef<string | null>(null);
