@@ -52,9 +52,9 @@ export function stripLessonPrefix(title: string | null | undefined): string {
   const s = (title || "")
     .replace(/^\d+차시\.\s*/, "")
     .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
-    .replace(/^第\s*\d+\s*课[\.:：]?\s*/, "")
-    .replace(/^レッスン\s*\d+[\.:：]?\s*/, "")
-    .replace(/^第\s*\d+\s*回[\.:：]?\s*/, "")
+    .replace(/^第\s*\d+\s*课[.:：]?\s*/, "")
+    .replace(/^レッスン\s*\d+[.:：]?\s*/, "")
+    .replace(/^第\s*\d+\s*回[.:：]?\s*/, "")
     .trim();
   return s || (title || "");
 }
