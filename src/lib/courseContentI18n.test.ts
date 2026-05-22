@@ -6,6 +6,7 @@ import {
   getContentDescription,
   getContentVideoUrl,
   getCourseTitleByLang,
+  getCourseTitleByLangWithContentFallback,
   getCourseDescByLang,
   type CourseContentLike,
   type ContentI18nRow,
