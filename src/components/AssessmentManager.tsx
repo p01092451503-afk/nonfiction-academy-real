@@ -422,6 +422,21 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     },
   });
 
+  const deleteAssessmentMutation = useMutation({
+    mutationFn: async () => {
+      if (!assessment?.id) return;
+      const { error } = await supabase.from("assessments").delete().eq("id", assessment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assessment", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["assessment-questions", assessment?.id] });
+      setShowResults(false);
+      toast({ title: isEn ? "Assessment deleted" : "평가가 삭제되었습니다" });
+    },
+    onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
+  });
+
   const openEditAssessment = () => {
     if (assessment) {
       setAssessmentForm({
