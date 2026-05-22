@@ -255,6 +255,15 @@ const TeacherDashboard = () => {
   ];
 
   // ── 빈 상태 ────────────────────────────────────────────
+  if (scopeLoading) {
+    return (
+      <DashboardLayout role="teacher">
+        <div className="rounded-xl border border-border bg-card p-10 text-center">
+          <p className="text-sm text-muted-foreground">{t("common.loading", "불러오는 중...")}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
   if (!hasDepartment) {
     return (
       <DashboardLayout role="teacher">
