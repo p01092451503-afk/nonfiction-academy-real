@@ -97,8 +97,11 @@ const StudentDashboard = () => {
   const completedContentIds = new Set(contentProgress.filter((p: any) => p.completed).map((p: any) => p.content_id));
 
   const getNextContent = (courseId: string) => {
-    const contents = courseContents.filter((c: any) => c.course_id === courseId);
-    return contents.find((c: any) => !completedContentIds.has(c.id));
+    const all = courseContents.filter((c: any) => c.course_id === courseId);
+    // 현재 UI 언어의 차시를 우선 사용, 없으면 한국어(원본)로 폴백
+    const inLang = all.filter((c: any) => (c.language_code || "ko") === lang);
+    const pool = inLang.length > 0 ? inLang : all.filter((c: any) => (c.language_code || "ko") === "ko");
+    return pool.find((c: any) => !completedContentIds.has(c.id));
   };
 
   // 통계
