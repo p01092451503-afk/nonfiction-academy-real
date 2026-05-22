@@ -398,7 +398,7 @@ const UserManual = () => {
     primaryRole === "admin" ? "admin" : primaryRole === "teacher" ? "teacher" : "student";
 
   return (
-    <DashboardLayout role={primaryRole}>
+    <DashboardLayout role={primaryRole as "student" | "teacher" | "admin"}>
       <div className="space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
