@@ -453,6 +453,75 @@ const CreateCourse = () => {
     }
   };
 
+  /**
+   * Ensure every non-KO slot has a real translation BEFORE saving.
+   * - Manually edited slots stay as-is.
+   * - Empty / KO-identical slots are translated synchronously here.
+   * - If translation still fails, the slot stays empty (we skip saving it)
+   *   so we never persist KO text into an EN/ZH/JA row again.
+   * Returns the resolved {en, zh, ja} title/desc values to use when building rows.
+   */
+  const ensureCourseI18nReady = async () => {
+    const koTitle = title.trim();
+    const koDesc = description.trim();
+    const resolved = {
+      en: { title: enTitle, desc: enDescription },
+      "zh-CN": { title: zhTitle, desc: zhDescription },
+      ja: { title: jaTitle, desc: jaDescription },
+    };
+    const targets: { lang: TargetLang; needTitle: boolean; needDesc: boolean }[] = [
+      {
+        lang: "en",
+        needTitle: !enTitleManual && !!koTitle && (!enTitle.trim() || enTitle.trim() === koTitle),
+        needDesc: !enDescManual && !!koDesc && (!enDescription.trim() || enDescription.trim() === koDesc),
+      },
+      {
+        lang: "zh-CN",
+        needTitle: !zhTitleManual && !!koTitle && (!zhTitle.trim() || zhTitle.trim() === koTitle),
+        needDesc: !zhDescManual && !!koDesc && (!zhDescription.trim() || zhDescription.trim() === koDesc),
+      },
+      {
+        lang: "ja",
+        needTitle: !jaTitleManual && !!koTitle && (!jaTitle.trim() || jaTitle.trim() === koTitle),
+        needDesc: !jaDescManual && !!koDesc && (!jaDescription.trim() || jaDescription.trim() === koDesc),
+      },
+    ];
+    if (!targets.some((t) => t.needTitle || t.needDesc)) return resolved;
+    setTranslatingCourse(true);
+    try {
+      await Promise.all(targets.map(async (tgt) => {
+        if (!tgt.needTitle && !tgt.needDesc) return;
+        const inputs: string[] = [];
+        if (tgt.needTitle) inputs.push(koTitle);
+        if (tgt.needDesc) inputs.push(koDesc);
+        try {
+          const out = await translateKoTo(tgt.lang, inputs);
+          let i = 0;
+          if (tgt.needTitle) {
+            const v = (out[i++] || "").trim();
+            // Reject KO-equivalent fallback so we don't re-poison the slot.
+            const safe = v && v !== koTitle ? v : "";
+            resolved[tgt.lang].title = safe;
+            if (tgt.lang === "en") setEnTitle(safe);
+            if (tgt.lang === "zh-CN") setZhTitle(safe);
+            if (tgt.lang === "ja") setJaTitle(safe);
+          }
+          if (tgt.needDesc) {
+            const v = (out[i++] || "").trim();
+            const safe = v && v !== koDesc ? v : "";
+            resolved[tgt.lang].desc = safe;
+            if (tgt.lang === "en") setEnDescription(safe);
+            if (tgt.lang === "zh-CN") setZhDescription(safe);
+            if (tgt.lang === "ja") setJaDescription(safe);
+          }
+        } catch { /* leave slot empty rather than fall back to KO */ }
+      }));
+    } finally {
+      setTranslatingCourse(false);
+    }
+    return resolved;
+  };
+
   const buildDraftData = useCallback(() => ({
     title, description, categoryId, difficultyLevel,
     estimatedHours, maxStudents, isMandatory, deadline, status, contents,
