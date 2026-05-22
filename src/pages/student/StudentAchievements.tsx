@@ -189,10 +189,11 @@ const StudentAchievements = () => {
     };
   });
   const formatAxisCourseName = (name: string) => name.length > 16 ? `${name.slice(0, 16)}…` : name;
-  const getBarColor = (p: number) => {
-    if (p >= 80) return "hsl(var(--success))";
-    if (p >= 50) return "hsl(var(--warning))";
-    return "hsl(var(--primary))";
+  const getBarColor = (p: number, idx: number) => {
+    // 100%인 항목들이 모두 같은 색으로 단조롭게 보이는 것을 방지하기 위해 교차 색상 적용
+    if (p >= 80) return idx % 2 === 0 ? "hsl(var(--success))" : "hsl(var(--primary))";
+    if (p >= 50) return idx % 2 === 0 ? "hsl(var(--warning))" : "hsl(var(--chart-2))";
+    return idx % 2 === 0 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))";
   };
 
   return (
