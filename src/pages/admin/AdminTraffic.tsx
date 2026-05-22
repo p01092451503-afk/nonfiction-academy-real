@@ -116,7 +116,7 @@ const AdminTraffic = () => {
   const cdnAssetCount = bunnyStorageCount + bunnyStreamCount;
 
   const totalContents = storageData?.length || 0;
-  const videoContents = storageData?.filter((c) => c.content_type === "video").length || 0;
+  const videoContents = storageData?.filter((c) => c.content_type === "video" || c.content_type === "video_package").length || 0;
   const docContents = storageData?.filter((c) => c.content_type === "document").length || 0;
 
   const dailyMap = new Map<string, { views: number; access: number; bytes: number }>();
