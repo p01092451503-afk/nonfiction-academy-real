@@ -116,7 +116,8 @@
     "announcementManagement": "공지사항 관리",
     "board": "게시판",
     "boardManagement": "게시판 관리",
-    "legacyRecords": "이전 학습 이력"
+    "legacyRecords": "이전 학습 이력",
+    "userManual": "사용자 매뉴얼"
   },
   "roles": {
     "student": "학습자",
