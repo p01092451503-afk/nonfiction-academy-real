@@ -87,23 +87,13 @@ export default function PlatformUpdateBanner() {
     setUpdate(null);
   };
 
-  const handleReload = async () => {
-    // Mark as dismissed so banner doesn't reappear after reload
-    if (update) {
-      const list = dismissedIds();
-      list.push(update.id);
-      try { localStorage.setItem(DISMISS_KEY, JSON.stringify(list.slice(-50))); } catch {}
-    }
-
-    // Build target URL with cache-bust param BEFORE async work, so we can fall back safely
+  const getReloadHref = () => {
     const url = new URL(window.location.href);
     url.searchParams.set("pwa-refresh", Date.now().toString());
+    return url.toString();
+  };
 
-    // Schedule hard reload as a safety net (in case async cleanup hangs)
-    const fallback = window.setTimeout(() => {
-      window.location.href = url.toString();
-    }, 1500);
-
+  const cleanupPwaCaches = async () => {
     try {
       if ("caches" in window) {
         const keys = await caches.keys().catch(() => [] as string[]);
@@ -114,11 +104,25 @@ export default function PlatformUpdateBanner() {
         await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
       }
     } catch {
-      // ignore — fallback timer will still navigate
+      // Reload must never be blocked by cache cleanup failures.
+    }
+  };
+
+  const handleReload = () => {
+    // Mark as dismissed so banner doesn't reappear after reload
+    if (update) {
+      const list = dismissedIds();
+      list.push(update.id);
+      try { localStorage.setItem(DISMISS_KEY, JSON.stringify(list.slice(-50))); } catch {}
     }
 
-    window.clearTimeout(fallback);
-    window.location.href = url.toString();
+    const href = getReloadHref();
+    void cleanupPwaCaches();
+
+    // Do not wait for async cleanup: navigate synchronously while the click is still trusted.
+    window.location.assign(href);
+    window.setTimeout(() => window.location.replace(href), 250);
+    window.setTimeout(() => window.location.reload(), 750);
   };
 
   if (!update) return null;
@@ -138,9 +142,11 @@ export default function PlatformUpdateBanner() {
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           {update.require_reload && (
-            <Button size="sm" onClick={handleReload} className="h-8">
+            <Button size="sm" asChild className="h-8">
+              <a href={getReloadHref()} onClick={handleReload} target="_self">
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               지금 새로고침
+              </a>
             </Button>
           )}
           {update.severity !== "critical" && (
