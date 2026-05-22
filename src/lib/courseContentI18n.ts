@@ -135,6 +135,34 @@ export function getCourseDescByLang(
 }
 
 /**
+ * Same as `getCourseTitleByLang`, but if there is no course-level translation
+ * for `lang`, fall back to the title of the first published course-content row
+ * that exists in that language (with lesson-number prefix stripped).
+ * Only when no such content exists do we fall back to the base Korean title.
+ *
+ * Used on the student-facing course detail / player so the course header does
+ * not stay Korean when the admin only translated the chapters.
+ */
+export function getCourseTitleByLangWithContentFallback(
+  base: { title?: string | null } | null | undefined,
+  i18n: CourseI18nRow[] | null | undefined,
+  contents: CourseContentLike[] | null | undefined,
+  contentI18n: ContentI18nRow[] | null | undefined,
+  lang: string,
+): string {
+  const baseTitle = base?.title || "";
+  if (!lang || lang === "ko") return baseTitle;
+  const tr = i18n?.find((r) => r.language_code === lang);
+  if (tr?.title && tr.title.trim()) return tr.title;
+  const match = (contents || []).find((c) => (c.language_code || "ko") === lang);
+  if (match) {
+    const t = getContentTitle(match, contentI18n);
+    if (t && t.trim()) return t;
+  }
+  return baseTitle;
+}
+
+/**
  * Returns true when a course-content row has uploaded learning material.
  * Rules:
  *   - video / document → requires a non-empty `video_url`
