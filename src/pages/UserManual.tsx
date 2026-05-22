@@ -73,7 +73,7 @@ const PDF_STRINGS: Record<Lang, { brand: string; manualSuffix: string; issued: s
   },
 };
 
-const downloadManualPdf = (loc: LocalizedManual, lang: Lang) => {
+const downloadManualPdf = async (loc: LocalizedManual, lang: Lang) => {
   const S = PDF_STRINGS[lang];
   const today = new Date().toLocaleDateString(S.locale);
   const sectionsHtml = loc.sections
@@ -96,89 +96,99 @@ const downloadManualPdf = (loc: LocalizedManual, lang: Lang) => {
     )
     .join("");
 
-  const html = `<!doctype html>
-<html lang="${S.htmlLang}">
-<head>
-<meta charset="utf-8" />
-<title>NONFICTION Academy - ${escapeHtml(loc.label)} ${S.manualSuffix}</title>
-<style>
-  @page { size: A4; margin: 18mm 16mm; }
-  * { box-sizing: border-box; }
-  body { font-family: "Noto Sans KR", "Noto Sans JP", "Apple SD Gothic Neo", "Hiragino Sans", "Malgun Gothic", "Yu Gothic", sans-serif;
-         color: #1a1a1a; line-height: 1.7; font-size: 11pt; margin: 0; }
-  header { border-bottom: 2px solid #1a1a1a; padding-bottom: 12px; margin-bottom: 20px; }
-  .brand { font-size: 10pt; color: #666; letter-spacing: 0.08em; }
-  h1 { font-size: 22pt; margin: 6px 0 4px; font-weight: 700; }
-  .meta { font-size: 9.5pt; color: #666; }
-  .intro { background: #f6f6f6; padding: 14px 16px; border-radius: 6px; margin: 16px 0 22px;
-           font-size: 10.5pt; color: #333; }
-  .chap { page-break-inside: avoid; margin-bottom: 22px; padding-bottom: 16px;
-          border-bottom: 1px solid #e5e5e5; }
-  .chap h2 { font-size: 14pt; margin: 0 0 6px; color: #1a1a1a; }
-  .summary { color: #555; margin: 0 0 10px; font-size: 10.5pt; }
-  ol { margin: 0 0 0 22px; padding: 0; }
-  ol li { margin: 6px 0; }
-  .tips { margin-top: 12px; background: #fff8e6; border-left: 3px solid #d4a017;
-          padding: 10px 14px; border-radius: 4px; }
-  .tips-label { font-size: 9pt; font-weight: 700; color: #8a6d10; margin-bottom: 4px; letter-spacing: 0.05em; }
-  .tips ul { margin: 0 0 0 18px; padding: 0; }
-  .tips li { font-size: 10pt; color: #555; margin: 3px 0; }
-  footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e5e5;
-           font-size: 9pt; color: #888; text-align: center; }
-</style>
-</head>
-<body>
-  <header>
-    <div class="brand">${S.brand}</div>
-    <h1>${escapeHtml(loc.label)} ${S.manualSuffix}</h1>
-    <div class="meta">${S.issued} ${today} · ${S.chapters.replace("{n}", String(loc.sections.length))}</div>
-  </header>
-  <div class="intro">${escapeHtml(loc.intro)}</div>
-  ${sectionsHtml}
-  <footer>${S.footer}</footer>
-</body>
-</html>`;
+  // A4 폭(210mm)을 픽셀로 환산: 96dpi 기준 약 794px. 좌우 여백 32px 고려.
+  const A4_WIDTH_PX = 794;
+  const CONTENT_WIDTH_PX = A4_WIDTH_PX - 64;
 
-  // 팝업 차단 없이 동작하도록 숨겨진 iframe으로 인쇄 다이얼로그 실행
-  const iframe = document.createElement("iframe");
-  iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.style.border = "0";
-  iframe.setAttribute("aria-hidden", "true");
-  document.body.appendChild(iframe);
+  const container = document.createElement("div");
+  container.style.cssText = `
+    position: fixed; left: -10000px; top: 0;
+    width: ${A4_WIDTH_PX}px; padding: 48px 32px; background: #ffffff;
+    font-family: "Noto Sans KR", "Noto Sans JP", "Apple SD Gothic Neo", "Hiragino Sans", "Malgun Gothic", "Yu Gothic", sans-serif;
+    color: #1a1a1a; line-height: 1.7; font-size: 14px;
+    z-index: -1;
+  `;
+  container.innerHTML = `
+    <style>
+      .pdf-root { width: ${CONTENT_WIDTH_PX}px; }
+      .pdf-root header { border-bottom: 2px solid #1a1a1a; padding-bottom: 14px; margin-bottom: 22px; }
+      .pdf-root .brand { font-size: 12px; color: #666; letter-spacing: 0.08em; }
+      .pdf-root h1 { font-size: 28px; margin: 8px 0 4px; font-weight: 700; }
+      .pdf-root .meta { font-size: 12px; color: #666; }
+      .pdf-root .intro { background: #f6f6f6; padding: 16px 18px; border-radius: 6px; margin: 18px 0 24px; font-size: 13px; color: #333; }
+      .pdf-root .chap { margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #e5e5e5; }
+      .pdf-root .chap h2 { font-size: 18px; margin: 0 0 6px; color: #1a1a1a; font-weight: 700; }
+      .pdf-root .summary { color: #555; margin: 0 0 12px; font-size: 13px; }
+      .pdf-root ol { margin: 0 0 0 22px; padding: 0; }
+      .pdf-root ol li { margin: 6px 0; font-size: 13px; }
+      .pdf-root .tips { margin-top: 14px; background: #fff8e6; border-left: 3px solid #d4a017; padding: 10px 14px; border-radius: 4px; }
+      .pdf-root .tips-label { font-size: 11px; font-weight: 700; color: #8a6d10; margin-bottom: 4px; letter-spacing: 0.05em; }
+      .pdf-root .tips ul { margin: 0 0 0 18px; padding: 0; }
+      .pdf-root .tips li { font-size: 12px; color: #555; margin: 3px 0; }
+      .pdf-root footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5e5e5; font-size: 11px; color: #888; text-align: center; }
+    </style>
+    <div class="pdf-root">
+      <header>
+        <div class="brand">${S.brand}</div>
+        <h1>${escapeHtml(loc.label)} ${S.manualSuffix}</h1>
+        <div class="meta">${S.issued} ${today} · ${S.chapters.replace("{n}", String(loc.sections.length))}</div>
+      </header>
+      <div class="intro">${escapeHtml(loc.intro)}</div>
+      ${sectionsHtml}
+      <footer>${S.footer}</footer>
+    </div>
+  `;
+  document.body.appendChild(container);
 
-  const doc = iframe.contentDocument || iframe.contentWindow?.document;
-  if (!doc) {
-    document.body.removeChild(iframe);
-    alert("PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
-    return;
-  }
-  doc.open();
-  doc.write(html);
-  doc.close();
+  try {
+    // 동적 import로 초기 번들 가볍게
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import("html2canvas"),
+      import("jspdf"),
+    ]);
 
-  let fired = false;
-  const trigger = () => {
-    if (fired) return;
-    fired = true;
-    try {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-    } catch (e) {
-      console.error("print failed", e);
+    // 웹폰트 로딩 대기 (한국어/일본어 문자 깨짐 방지)
+    if ((document as any).fonts && (document as any).fonts.ready) {
+      try { await (document as any).fonts.ready; } catch {}
     }
-    setTimeout(() => {
-      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-    }, 60_000);
-  };
 
-  iframe.onload = () => setTimeout(trigger, 400);
-  // onload이 이미 지나간 경우를 위한 fallback
-  setTimeout(trigger, 1200);
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+      windowWidth: A4_WIDTH_PX,
+    });
+
+    const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+    const pageWidthMm = 210;
+    const pageHeightMm = 297;
+    const imgWidthMm = pageWidthMm;
+    const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+    let remaining = imgHeightMm;
+    let position = 0;
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidthMm, imgHeightMm);
+    remaining -= pageHeightMm;
+    while (remaining > 0) {
+      position -= pageHeightMm;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidthMm, imgHeightMm);
+      remaining -= pageHeightMm;
+    }
+
+    const safeName = loc.label.replace(/[^\p{L}\p{N}]+/gu, "_");
+    pdf.save(`NONFICTION_Academy_${safeName}_${lang}.pdf`);
+  } catch (e) {
+    console.error("PDF generation failed", e);
+    alert("PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+  } finally {
+    if (container.parentNode) container.parentNode.removeChild(container);
+  }
 };
+
 
 // ===== 학습자 매뉴얼 (한/영/일) — 매우 자세한 텍스트 기반 =====
 
