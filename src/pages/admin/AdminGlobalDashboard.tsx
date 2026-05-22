@@ -459,14 +459,25 @@ export default function AdminGlobalDashboard() {
                   return (
                     <button
                       key={cs.country.id}
-                      onClick={() => setDrillCountry(isSelected ? null : cs.country.id)}
-                      className={`group relative rounded-xl border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-sm min-w-0 ${
+                      type="button"
+                      onClick={() => {
+                        const next = isSelected ? null : cs.country.id;
+                        setDrillCountry(next);
+                        // Scroll drill-down into view after state update
+                        if (next) {
+                          setTimeout(() => {
+                            const el = document.getElementById("drill-down-panel");
+                            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }, 50);
+                        }
+                      }}
+                      className={`group relative rounded-xl border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-sm min-w-1/0 ${
                         isSelected ? "border-primary ring-2 ring-primary/15" : "border-border"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-3 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-2xl shrink-0" aria-hidden="true">{flag(cc)}</span>
+                          <span className="text-2xl shrink-1" aria-hidden="true">{flag(cc)}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground truncate">{name}</p>
                             <p className="text-[11px] text-muted-foreground">
@@ -503,136 +514,135 @@ export default function AdminGlobalDashboard() {
           </CardContent>
         </Card>
 
-        {/* Two-up: Track × Country matrix + Leaderboards */}
+        {/* Leaderboards side-by-side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Track × Country */}
+          {/* 우수 지점 TOP 5 */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Layers className="h-4 w-4 text-muted-foreground" />
-                {t("globalDashboard.trackByCountry", "트랙별 국가 수료율")}
+                <Trophy className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                {t("globalDashboard.topBranches", "우수 지점 TOP 5")}
               </CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {t("globalDashboard.scoreFormula", "필수이수 50% + 평균진도 30% + 활성률 20% 가중치")}
+              </p>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              {trackMatrix.length === 0 || countryStats.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  {t("globalDashboard.noTracks", "활성화된 트랙이 없습니다.")}
+            <CardContent>
+              {topBranches.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {t("common.noData", "데이터가 없습니다")}
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[140px]">{t("globalDashboard.track", "트랙")}</TableHead>
-                      {countryStats.map((cs) => (
-                        <TableHead key={cs.country.id} className="text-center text-xs">
-                          <span aria-hidden="true">{flag(cs.country.country)}</span>{" "}
-                          {cs.country.country}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {trackMatrix.map(({ track, row }) => (
-                      <TableRow key={track.id}>
-                        <TableCell className="font-medium text-sm">
-                          {(isEn ? track.title_en : track.title) || track.title}
-                        </TableCell>
-                        {row.map((cell) => (
-                          <TableCell key={cell.country.id} className="text-center p-1">
-                            <div
-                              className={`inline-flex flex-col items-center justify-center min-w-[52px] py-1.5 rounded-md ${heatColor(cell.rate)} bg-opacity-15`}
-                              title={`${cell.done}/${cell.total}`}
-                            >
-                              <span className={`text-xs font-bold ${heatText(cell.rate)}`}>{cell.rate}%</span>
-                              <span className="text-[10px] text-muted-foreground">{cell.done}/{cell.total}</span>
-                            </div>
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <ol className="space-y-2">
+                  {topBranches.map((b, idx) => (
+                    <li key={b.branch.id} className="flex items-center gap-3 py-1.5 border-b-2 border-border/60 last:border-0">
+                      <span className={`text-sm font-bold w-5 text-center ${idx < 3 ? "text-primary" : "text-muted-foreground"}`}>{idx + 1}</span>
+                      <span className="text-base shrink-0" aria-hidden="true">{flag(b.branch.country)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{(isEn ? b.branch.name_en : b.branch.name) || b.branch.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {b.userCount}{t("globalDashboard.learnersShort", "명")} · {t("globalDashboard.mandShort", "필수")} {b.mandRate}% · {t("globalDashboard.progShort", "진도")} {b.avgProgress}%
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               )}
             </CardContent>
           </Card>
 
-          {/* Leaderboards */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  {t("globalDashboard.topBranches", "우수 지점 TOP 5")}
-                </CardTitle>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {t("globalDashboard.scoreFormula", "필수이수 50% + 평균진도 30% + 활성률 20% 가중치")}
+          {/* 주의가 필요한 지점 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                {t("globalDashboard.watchBranches", "주의가 필요한 지점")}
+              </CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {t("globalDashboard.watchHint", "활성률·진도가 낮은 3명 이상 지점")}
+              </p>
+            </CardHeader>
+            <CardContent>
+              {watchBranches.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {t("globalDashboard.allHealthy", "주의가 필요한 지점이 없습니다.")}
                 </p>
-              </CardHeader>
-              <CardContent>
-                {topBranches.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    {t("common.noData", "데이터가 없습니다")}
-                  </p>
-                ) : (
-                  <ol className="space-y-2">
-                    {topBranches.map((b, idx) => (
-                      <li key={b.branch.id} className="flex items-center gap-3 py-1.5 border-b-2 border-border/60 last:border-0">
-                        <span className={`text-sm font-bold w-5 text-center ${idx < 3 ? "text-primary" : "text-muted-foreground"}`}>{idx + 1}</span>
-                        <span className="text-base shrink-0" aria-hidden="true">{flag(b.branch.country)}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{(isEn ? b.branch.name_en : b.branch.name) || b.branch.name}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {b.userCount}{t("globalDashboard.learnersShort", "명")} · {t("globalDashboard.mandShort", "필수")} {b.mandRate}% · {t("globalDashboard.progShort", "진도")} {b.avgProgress}%
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  {t("globalDashboard.watchBranches", "주의가 필요한 지점")}
-                </CardTitle>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {t("globalDashboard.watchHint", "활성률·진도가 낮은 3명 이상 지점")}
-                </p>
-              </CardHeader>
-              <CardContent>
-                {watchBranches.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    {t("globalDashboard.allHealthy", "주의가 필요한 지점이 없습니다.")}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {watchBranches.map((b) => (
-                      <li key={b.branch.id} className="flex items-center gap-3 py-1.5 border-b-2 border-border/60 last:border-0">
-                        <span className="text-base shrink-0" aria-hidden="true">{flag(b.branch.country)}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{(isEn ? b.branch.name_en : b.branch.name) || b.branch.name}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {t("globalDashboard.activeShort", "활성")} {b.activeRate}% · {t("globalDashboard.progShort", "진도")} {b.avgProgress}%
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-400 border-amber-500/30">
-                          {b.userCount}{t("globalDashboard.learnersShort", "명")}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              ) : (
+                <ul className="space-y-2">
+                  {watchBranches.map((b) => (
+                    <li key={b.branch.id} className="flex items-center gap-3 py-1.5 border-b-2 border-border/60 last:border-0">
+                      <span className="text-base shrink-0" aria-hidden="true">{flag(b.branch.country)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{(isEn ? b.branch.name_en : b.branch.name) || b.branch.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {t("globalDashboard.activeShort", "활성")} {b.activeRate}% · {t("globalDashboard.progShort", "진도")} {b.avgProgress}%
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-400 border-amber-500/30">
+                        {b.userCount}{t("globalDashboard.learnersShort", "명")}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Track × Country matrix — full width at bottom */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              {t("globalDashboard.trackByCountry", "트랙별 국가 수료율")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            {trackMatrix.length === 0 || countryStats.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                {t("globalDashboard.noTracks", "활성화된 트랙이 없습니다.")}
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[140px]">{t("globalDashboard.track", "트랙")}</TableHead>
+                    {countryStats.map((cs) => (
+                      <TableHead key={cs.country.id} className="text-center text-xs">
+                        <span aria-hidden="true">{flag(cs.country.country)}</span>{" "}
+                        {cs.country.country}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {trackMatrix.map(({ track, row }) => (
+                    <TableRow key={track.id}>
+                      <TableCell className="font-medium text-sm">
+                        {(isEn ? track.title_en : track.title) || track.title}
+                      </TableCell>
+                      {row.map((cell) => (
+                        <TableCell key={cell.country.id} className="text-center p-1">
+                          <div
+                            className={`inline-flex flex-col items-center justify-center min-w-[52px] py-1.5 rounded-md ${heatColor(cell.rate)} bg-opacity-15`}
+                            title={`${cell.done}/${cell.total}`}
+                          >
+                            <span className={`text-xs font-bold ${heatText(cell.rate)}`}>{cell.rate}%</span>
+                            <span className="text-[10px] text-muted-foreground">{cell.done}/{cell.total}</span>
+                          </div>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Drill-down panel */}
         {drillCountry && (
-          <Card>
+          <Card id="drill-down-panel">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 min-w-0">
