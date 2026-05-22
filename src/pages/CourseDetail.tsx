@@ -1115,7 +1115,7 @@ const CourseDetail = () => {
                           ) : (
                             <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                           )}
-                          <span className="truncate text-sm font-semibold text-foreground">{localizedTitle}</span>
+                          <span className="truncate text-sm font-semibold text-foreground">{localizeLessonPrefix(localizedTitle, content.language_code || currentLang, idx)}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
                           <span>{(() => {
