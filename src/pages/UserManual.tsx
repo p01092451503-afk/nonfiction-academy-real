@@ -160,25 +160,24 @@ const downloadManualPdf = (loc: LocalizedManual, lang: Lang) => {
   doc.write(html);
   doc.close();
 
+  let fired = false;
   const trigger = () => {
+    if (fired) return;
+    fired = true;
     try {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
     } catch (e) {
       console.error("print failed", e);
     }
-    // 인쇄 다이얼로그가 닫힌 뒤 정리 (충분한 지연)
     setTimeout(() => {
       if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
     }, 60_000);
   };
 
-  // 폰트/스타일 로딩 시간 확보
-  if (iframe.contentWindow) {
-    iframe.onload = () => setTimeout(trigger, 400);
-    // onload가 늦게 잡히는 경우를 대비한 fallback
-    setTimeout(trigger, 800);
-  }
+  iframe.onload = () => setTimeout(trigger, 400);
+  // onload이 이미 지나간 경우를 위한 fallback
+  setTimeout(trigger, 1200);
 };
 
 // ===== 학습자 매뉴얼 (한/영/일) — 매우 자세한 텍스트 기반 =====
