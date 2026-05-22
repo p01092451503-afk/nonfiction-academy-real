@@ -43,6 +43,9 @@ const isStandalone = (() => {
 const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
 const isIOS = /iphone|ipad|ipod/i.test(ua);
 const isIPad = /ipad/i.test(ua) || (/Macintosh/i.test(ua) && (navigator as any).maxTouchPoints > 1);
+const isMobileOrTablet =
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) ||
+  (/Macintosh/i.test(ua) && (navigator as any).maxTouchPoints > 1);
 // On iOS Safari ≥16, share menu is in the bottom toolbar on iPhone but
 // in the top-right on iPad / iOS in landscape. Keep guidance accurate.
 const sharePosition: "bottom" | "top" = isIPad ? "top" : "bottom";
@@ -99,13 +102,18 @@ const PWAUpdatePrompt = () => {
 
   // ------- Chromium install prompt -------
   useEffect(() => {
-    const handler = (e: Event) => { e.preventDefault(); setInstallEvent(e as BIPEvent); };
+    const handler = (e: Event) => {
+      e.preventDefault();
+      if (!isMobileOrTablet) return;
+      setInstallEvent(e as BIPEvent);
+    };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   // ------- iOS banner visibility logic -------
   useEffect(() => {
+    if (!isMobileOrTablet) return;
     if (!isIOS || isStandalone) return;
     if (isInIframe || isPreviewHost) return;
     if (localStorage.getItem(IOS_NEVER_KEY) === "1") return;
@@ -230,7 +238,7 @@ const PWAUpdatePrompt = () => {
       )}
 
       {/* Chromium install card */}
-      {installEvent && !isStandalone && (
+      {isMobileOrTablet && installEvent && !isStandalone && (
         <div role="dialog" aria-label={t("pwa.installTitle", "앱 설치")}
           className="fixed bottom-4 right-4 z-[9998] w-[min(92vw,360px)] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="bg-background border-2 border-border rounded-xl shadow-xl p-4 flex items-start gap-3">
@@ -255,7 +263,7 @@ const PWAUpdatePrompt = () => {
       )}
 
       {/* iOS bottom banner — minimal CTA, opens full guide */}
-      {showIOSBanner && (
+      {isMobileOrTablet && showIOSBanner && (
         <div role="dialog" aria-label={t("pwa.iosBannerTitle", "iOS 홈화면 설치")}
           className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9998] w-[min(92vw,420px)] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="bg-background border-2 border-border rounded-xl shadow-xl p-4">
