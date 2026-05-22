@@ -26,9 +26,9 @@ const isStandalone = () =>
 const DISMISS_KEY = "platform-update-dismissed";
 
 const severityStyle = {
-  info: { bg: "bg-sky-50 dark:bg-sky-950/40", border: "border-sky-500", text: "text-sky-900 dark:text-sky-100", icon: Info },
-  important: { bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-500", text: "text-amber-900 dark:text-amber-100", icon: Megaphone },
-  critical: { bg: "bg-red-50 dark:bg-red-950/40", border: "border-red-500", text: "text-red-900 dark:text-red-100", icon: AlertTriangle },
+  info: { bg: "bg-sky-600", border: "border-sky-700", text: "text-white", icon: Info },
+  important: { bg: "bg-amber-500", border: "border-amber-600", text: "text-white", icon: Megaphone },
+  critical: { bg: "bg-red-600", border: "border-red-700", text: "text-white", icon: AlertTriangle },
 };
 
 export default function PlatformUpdateBanner() {
