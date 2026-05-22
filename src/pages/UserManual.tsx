@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight, Download, Languages } from "lucide-react";
+import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight, Download, Languages, FileText } from "lucide-react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
