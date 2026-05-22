@@ -155,6 +155,7 @@ const AppRoutes = () => {
           <Route path="/admin/video-mobile-check" element={<AdminRoute><AdminVideoMobileCheck /></AdminRoute>} />
           <Route path="/admin/i18n" element={<AdminRoute><AdminI18n /></AdminRoute>} />
           <Route path="/admin/system-info" element={<AdminRoute><AdminSystemInfo /></AdminRoute>} />
+          <Route path="/manual" element={<ProtectedRoute><UserManual /></ProtectedRoute>} />
           <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
           <Route path="/admin/global-dashboard" element={<AdminRoute><AdminGlobalDashboard /></AdminRoute>} />
           <Route path="/admin/legacy-records" element={<AdminRoute><AdminLegacyRecords /></AdminRoute>} />
