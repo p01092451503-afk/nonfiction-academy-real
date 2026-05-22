@@ -333,7 +333,8 @@ const CourseDetail = () => {
   // Shared helpers (see src/lib/courseContentI18n.ts) — covered by regression tests.
   const getLocalizedContentTitle = (content: any) => pickContentTitle(content, contentI18nData);
 
-  const getCourseTitle = () => getCourseTitleByLang(course, courseI18n, currentLang);
+  const getCourseTitle = () =>
+    getCourseTitleByLangWithContentFallback(course, courseI18n, contents as any, contentI18nData, currentLang);
 
   const getCourseDesc = () => getCourseDescByLang(course, courseI18n, currentLang);
 
