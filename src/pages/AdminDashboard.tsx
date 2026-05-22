@@ -368,7 +368,10 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* ③ Bottom Row: Activity Feed + Quick Summary */}
+        {/* ③ Insights: Learning Health · User · Content Quality */}
+        <DashboardInsights />
+
+        {/* ④ Bottom Row: Activity Feed + Quick Summary */}
         <div className="grid lg:grid-cols-5 gap-4">
           {/* Recent Activity Feed */}
           <div className="stat-card !p-5 lg:col-span-3">
@@ -475,8 +478,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* ④ Insights: Learning Health · User · Content Quality */}
-        <DashboardInsights />
       </div>
     </DashboardLayout>
   );
