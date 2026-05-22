@@ -1090,7 +1090,15 @@
     "legacyDesc": "从原有LMS迁移的学习记录。(仅供参考)",
     "legacyEmpty": "暂无以往学习记录。",
     "legacyCompleted": "已完成",
-    "legacyNotCompleted": "未完成"
+    "legacyNotCompleted": "未完成",
+    "passwordRequirements": "密码要求",
+    "pwReqLength": "至少8个字符",
+    "pwReqLetter": "包含英文字母 (a-z, A-Z)",
+    "pwReqNumber": "包含数字 (0-9)",
+    "pwReqSpecial": "包含特殊字符 (!@#$ 等)",
+    "pwReqHint": "曾经泄露过的密码(如 password、12345678 等)无法使用。",
+    "passwordRequirementsNotMet": "必须满足所有密码要求。",
+    "passwordWeak": "该密码曾被泄露或过于简单,请使用其他密码。"
   },
   "assessment": {
     "title": "评估",
