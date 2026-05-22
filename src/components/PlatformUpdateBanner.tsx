@@ -88,19 +88,37 @@ export default function PlatformUpdateBanner() {
   };
 
   const handleReload = async () => {
-    // Clear caches for PWA + unregister old SW so stale icons/manifests cannot win again.
-    if ("caches" in window) {
-      const keys = await caches.keys().catch(() => []);
-      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+    // Mark as dismissed so banner doesn't reappear after reload
+    if (update) {
+      const list = dismissedIds();
+      list.push(update.id);
+      try { localStorage.setItem(DISMISS_KEY, JSON.stringify(list.slice(-50))); } catch {}
     }
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
-      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
-    }
-    handleDismiss();
+
+    // Build target URL with cache-bust param BEFORE async work, so we can fall back safely
     const url = new URL(window.location.href);
     url.searchParams.set("pwa-refresh", Date.now().toString());
-    setTimeout(() => window.location.replace(url.toString()), 100);
+
+    // Schedule hard reload as a safety net (in case async cleanup hangs)
+    const fallback = window.setTimeout(() => {
+      window.location.href = url.toString();
+    }, 1500);
+
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys().catch(() => [] as string[]);
+        await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+      }
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
+        await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+      }
+    } catch {
+      // ignore — fallback timer will still navigate
+    }
+
+    window.clearTimeout(fallback);
+    window.location.href = url.toString();
   };
 
   if (!update) return null;
