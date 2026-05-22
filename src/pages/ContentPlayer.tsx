@@ -32,7 +32,7 @@ import {
   getContentDescription,
   getContentVideoUrl,
   getContentVideoProvider,
-  getCourseTitleByLang,
+  getCourseTitleByLangWithContentFallback,
   hasUploadedContent,
 } from "@/lib/courseContentI18n";
 
@@ -251,7 +251,10 @@ const ContentPlayer = () => {
   const getDescription = (c: any) => getContentDescription(c, contentI18nData);
   const getVideoUrl = (c: any) => getContentVideoUrl(c, contentI18nData);
   const getVideoProvider = (c: any) => getContentVideoProvider(c, contentI18nData);
-  const getCourseTitle = () => (isLocalized ? getCourseTitleByLang(course, courseI18n, lang) : course?.title || "");
+  const getCourseTitle = () =>
+    isLocalized
+      ? getCourseTitleByLangWithContentFallback(course, courseI18n, contents as any, contentI18nData, lang)
+      : course?.title || "";
 
 
   const isMangoboard = (url: string | null) => url?.includes("mangoboard.net") ?? false;
