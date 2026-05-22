@@ -202,8 +202,8 @@ const CreateCourse = () => {
       // Load course i18n. Mark "manual" only when stored value actually differs from the
       // KO original — otherwise the slot is stale (auto-translation never succeeded) and
       // must remain eligible for re-translation, instead of being permanently locked.
-      const koTitleRaw = (courseData?.title || "").trim();
-      const koDescRaw = (courseData?.description || "").trim();
+      const koTitleRaw = (course.title || "").trim();
+      const koDescRaw = (course.description || "").trim();
       (courseI18ns || []).forEach((row: any) => {
         const tVal = row.title || "";
         const dVal = row.description || "";
