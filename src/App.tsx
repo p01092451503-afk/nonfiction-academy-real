@@ -196,7 +196,7 @@ const App = () => (
           <TrafficLogger />
           <AdminWebVitalsGate />
           <PWAUpdatePrompt />
-          <PlatformUpdateBanner />
+          {/* <PlatformUpdateBanner /> 비활성화: 아이콘 업데이트 안내 더 이상 표시하지 않음 */}
           <PWAInstallPrompt />
           <AppRoutes />
         </BrowserRouter>
