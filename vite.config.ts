@@ -24,16 +24,17 @@ export default defineConfig(({ mode }) => ({
         enabled: false,
       },
       includeAssets: [
-        "apple-touch-icon.png",
-        "icon-192.png",
-        "icon-512.png",
-        "icon-maskable-512.png",
+        "nonfiction-apple-touch-icon-v20260522b.png",
+        "nonfiction-pwa-icon-192-v20260522b.png",
+        "nonfiction-pwa-icon-512-v20260522b.png",
+        "nonfiction-pwa-maskable-512-v20260522b.png",
       ],
       manifest: {
         name: "NONFICTION Education",
         short_name: "NONFICTION",
         description: "논픽션 사내 교육 시스템",
         start_url: "/",
+        id: "/?pwa-icon=20260522b",
         scope: "/",
         display: "standalone",
         orientation: "portrait-primary",
@@ -41,9 +42,9 @@ export default defineConfig(({ mode }) => ({
         theme_color: "#1a1a2e",
         lang: "ko-KR",
         icons: [
-          { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-          { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-          { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "/nonfiction-pwa-icon-192-v20260522b.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/nonfiction-pwa-icon-512-v20260522b.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/nonfiction-pwa-maskable-512-v20260522b.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
@@ -58,12 +59,19 @@ export default defineConfig(({ mode }) => ({
         // Avoid runtime caching for Supabase API (always go network)
         runtimeCaching: [
           {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: { cacheName: "html", networkTimeoutSeconds: 3 },
+          },
+          {
             urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
             handler: "StaleWhileRevalidate",
             options: { cacheName: "google-fonts", expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 } },
           },
           {
-            urlPattern: ({ request }) => request.destination === "image",
+            urlPattern: ({ request, url }) =>
+              request.destination === "image" &&
+              !/\/(?:apple-touch-icon|icon-|nonfiction-(?:apple-touch-icon|pwa-icon|pwa-maskable))/.test(url.pathname),
             handler: "StaleWhileRevalidate",
             options: { cacheName: "images", expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 } },
           },
