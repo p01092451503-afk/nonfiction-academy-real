@@ -10,7 +10,7 @@ import { useUser } from "@/contexts/UserContext";
  * scopeIds = [branchId, ...all child department ids of that branch]
  */
 export const useLeaderScope = () => {
-  const { user, profile } = useUser();
+  const { user, profile, isLoading: userLoading } = useUser();
   const myDeptId = profile?.department_id ?? null;
 
   const query = useQuery({
@@ -28,11 +28,16 @@ export const useLeaderScope = () => {
 
       const branchId = myDept.parent_department_id ?? myDept.id;
 
-      const { data: branch } = await supabase
-        .from("departments")
-        .select("id, name, name_en, code, parent_department_id")
-        .eq("id", branchId)
-        .maybeSingle();
+      // If the user's own dept IS the branch, reuse it; otherwise fetch branch.
+      let branch = myDept;
+      if (myDept.parent_department_id) {
+        const { data: br } = await supabase
+          .from("departments")
+          .select("id, name, name_en, code, parent_department_id")
+          .eq("id", branchId)
+          .maybeSingle();
+        if (br) branch = br;
+      }
 
       // Include the branch + all sub-departments (teams)
       const { data: children, error: e2 } = await supabase
@@ -46,11 +51,18 @@ export const useLeaderScope = () => {
     },
   });
 
+  // While the user/profile is still loading, or while the scope query is in
+  // flight (when enabled), report loading so callers don't prematurely show
+  // a "no department" empty state.
+  const isLoading = userLoading || (!!myDeptId && query.isLoading);
+
   return {
-    isLoading: query.isLoading,
+    isLoading,
     branchId: query.data?.branchId ?? null,
     branch: query.data?.branch ?? null,
     scopeIds: query.data?.scopeIds ?? [],
-    hasDepartment: !!myDeptId,
+    // Treat as having a department only after we've finished loading the user
+    // profile — avoids a false negative on first render.
+    hasDepartment: userLoading ? true : !!myDeptId,
   };
 };
