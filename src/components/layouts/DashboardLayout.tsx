@@ -157,7 +157,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
 
   const teacherNav: NavItem[] = [
     { key: "dashboard", label: t("nav.dashboard"), href: "/teacher", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
-    { key: "courseManagement", label: t("nav.courseManagement"), href: "/teacher/courses", icon: BookOpen, tourId: "nav-course-mgmt" },
+    // 강의 관리 메뉴는 러닝 리더에게 제공하지 않음 (관리자 전용)
     { key: "assignmentManagement", label: t("nav.assignmentManagement"), href: "/teacher/assignments", icon: ClipboardList, tourId: "nav-assignment-mgmt" },
     { key: "studentManagement", label: t("nav.studentManagement"), href: "/teacher/students", icon: Users, tourId: "nav-student-mgmt" },
     { key: "notificationManagement", label: t("nav.notificationManagement", "알림 관리"), href: "/teacher/notifications", icon: Bell },

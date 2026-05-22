@@ -1,10 +1,11 @@
 import {
-  BookOpen, Users, ClipboardCheck, TrendingUp, ArrowRight, Clock, Plus, LayoutDashboard,
+  Users, ClipboardCheck, TrendingUp, LayoutDashboard, Activity, GraduationCap,
+  AlertCircle, Trophy, BookOpen, Target, Flame, ArrowRight,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
@@ -16,237 +17,405 @@ import { localizeCourse } from "@/lib/i18nCourse";
 import { normalizeLang } from "@/lib/i18nLang";
 
 const TeacherDashboard = () => {
-  const { user, profile } = useUser();
-  const { scopeIds, branch } = useLeaderScope();
-  const navigate = useNavigate();
+  const { user } = useUser();
+  const { scopeIds, branch, hasDepartment } = useLeaderScope();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
+  const lang = normalizeLang(i18n.language);
 
   const branchLabel = branch
     ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
       (branch.code ? ` (${branch.code})` : "")
     : "";
 
-  const lang = normalizeLang(i18n.language);
-
-  const { data: courses = [] } = useQuery({
-    queryKey: ["teacher-dash-courses", user?.id, lang],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("*")
-        .eq("instructor_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      const rows = data ?? [];
-      if (lang === "ko" || rows.length === 0) return rows;
-      const ids = rows.map((c: any) => c.id);
-      const { data: i18nRows } = await supabase
-        .from("course_i18n" as any)
-        .select("course_id, language_code, title, description")
-        .in("course_id", ids)
-        .eq("language_code", lang);
-      const map = new Map<string, { title: string | null; description: string | null }>();
-      (i18nRows as any[] | null)?.forEach((r) => {
-        map.set(r.course_id, { title: r.title, description: r.description });
-      });
-      return rows.map((c: any) => {
-        const tr = map.get(c.id);
-        return { ...c, title: tr?.title || c.title, description: tr?.description || c.description };
-      });
-    },
-    enabled: !!user?.id,
-  });
-
-  // Department-scoped students (members of the leader's branch with student role)
+  // ── 지점 소속 학생들 ──────────────────────────────────
   const { data: deptStudents = [] } = useQuery({
-    queryKey: ["teacher-dash-dept-students", scopeIds],
+    queryKey: ["leader-dash-students", scopeIds],
+    enabled: scopeIds.length > 0,
     queryFn: async () => {
-      if (scopeIds.length === 0) return [];
-      const { data: roleRows } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "student");
-      const idSet = new Set((roleRows ?? []).map((r: any) => r.user_id));
+      const { data: roleRows } = await supabase.from("user_roles").select("user_id").eq("role", "student");
+      const studentIds = new Set((roleRows ?? []).map((r: any) => r.user_id));
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id")
+        .select("user_id, full_name, department_id, created_at")
         .in("department_id", scopeIds);
       if (error) throw error;
-      return (data ?? []).filter((p: any) => idSet.has(p.user_id));
+      return (data ?? []).filter((p: any) => studentIds.has(p.user_id));
     },
-    enabled: scopeIds.length > 0,
   });
 
-  const deptStudentIds = deptStudents.map((p: any) => p.user_id);
+  const studentIds = deptStudents.map((p: any) => p.user_id);
 
-  const courseIds = courses.map((c: any) => c.id);
-
-  // Enrollments are scoped to department students (across ALL courses they're enrolled in)
-  const { data: enrollments = [] } = useQuery({
-    queryKey: ["teacher-dash-enrollments", deptStudentIds],
+  // ── 학습 세션 (활동) ──────────────────────────────────
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["leader-dash-sessions", studentIds],
+    enabled: studentIds.length > 0,
     queryFn: async () => {
-      if (deptStudentIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("user_sessions")
+        .select("user_id, login_at, logout_at")
+        .in("user_id", studentIds)
+        .gte("login_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // ── 지점 학생들의 모든 수강 정보 ─────────────────────
+  const { data: enrollments = [] } = useQuery({
+    queryKey: ["leader-dash-enrollments", studentIds, lang],
+    enabled: studentIds.length > 0,
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("course_id, user_id, progress, completed_at")
-        .in("user_id", deptStudentIds);
+        .select("id, course_id, user_id, progress, status, enrolled_at, completed_at, courses(id, title, status, is_mandatory, deadline, course_i18n(language_code, title))")
+        .in("user_id", studentIds)
+        .eq("status", "approved");
       if (error) throw error;
-      return data;
+      return (data ?? []).map((e: any) => ({
+        ...e,
+        courses: e.courses ? localizeCourse(e.courses, lang) : e.courses,
+      }));
     },
-    enabled: deptStudentIds.length > 0,
   });
 
-  // Recent submissions from students in the leader's department (across any course)
+  // ── 최근 과제 제출 ────────────────────────────────────
   const { data: recentSubmissions = [] } = useQuery({
-    queryKey: ["teacher-dash-submissions", deptStudentIds, lang],
+    queryKey: ["leader-dash-submissions", studentIds, lang],
+    enabled: studentIds.length > 0,
     queryFn: async () => {
-      if (deptStudentIds.length === 0) return [];
       const { data, error } = await supabase
         .from("assignment_submissions")
-        .select("*, assignments(title, course_id, courses(title, course_i18n(language_code, title, description)))")
-        .in("student_id", deptStudentIds)
+        .select("*, assignments(title, course_id, courses(title, course_i18n(language_code, title)))")
+        .in("student_id", studentIds)
         .order("submitted_at", { ascending: false })
         .limit(10);
       if (error) throw error;
-      return (data || []).map((s: any) => ({
+      return (data ?? []).map((s: any) => ({
         ...s,
         assignments: s.assignments
-          ? {
-              ...s.assignments,
-              courses: s.assignments.courses ? localizeCourse(s.assignments.courses, lang) : s.assignments.courses,
-            }
+          ? { ...s.assignments, courses: s.assignments.courses ? localizeCourse(s.assignments.courses, lang) : s.assignments.courses }
           : s.assignments,
       }));
     },
-    enabled: deptStudentIds.length > 0,
   });
 
-  const { data: submitterProfiles = [] } = useQuery({
-    queryKey: ["teacher-dash-profiles", recentSubmissions.map((s: any) => s.student_id)],
+  // ── 게임화(포인트/스트릭) ─────────────────────────────
+  const { data: gamification = [] } = useQuery({
+    queryKey: ["leader-dash-gamification", studentIds],
+    enabled: studentIds.length > 0,
     queryFn: async () => {
-      const ids = [...new Set(recentSubmissions.map((s: any) => s.student_id))];
-      if (ids.length === 0) return [];
-      const { data, error } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids);
+      const { data, error } = await supabase
+        .from("user_gamification")
+        .select("user_id, total_points, level, streak_days")
+        .in("user_id", studentIds);
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    enabled: recentSubmissions.length > 0,
   });
 
-  const profileMap = new Map(submitterProfiles.map((p: any) => [p.user_id, p.full_name]));
+  // ── 평가 응시 ─────────────────────────────────────────
+  const { data: attempts = [] } = useQuery({
+    queryKey: ["leader-dash-attempts", studentIds],
+    enabled: studentIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("assessment_attempts")
+        .select("user_id, passed, completed_at, score")
+        .in("user_id", studentIds)
+        .not("completed_at", "is", null)
+        .gte("started_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const totalStudents = deptStudentIds.length;
-  const publishedCourses = courses.filter((c: any) => c.status === "published").length;
-  const draftCourses = courses.filter((c: any) => c.status !== "published").length;
+  // ── 프로필 맵 ──────────────────────────────────────────
+  const profileMap = new Map(deptStudents.map((p: any) => [p.user_id, p.full_name]));
+
+  // ── 파생 통계 ──────────────────────────────────────────
+  const totalStudents = studentIds.length;
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+  const weeklyActiveSet = new Set<string>();
+  const monthlyActiveSet = new Set<string>();
+  sessions.forEach((s: any) => {
+    const t = new Date(s.login_at).getTime();
+    if (t >= sevenDaysAgo) weeklyActiveSet.add(s.user_id);
+    if (t >= thirtyDaysAgo) monthlyActiveSet.add(s.user_id);
+  });
+
+  const totalEnrollments = enrollments.length;
+  const completedEnrollments = enrollments.filter((e: any) => e.completed_at).length;
+  const completionRate = totalEnrollments ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
+  const avgProgress = totalEnrollments
+    ? Math.round(enrollments.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / totalEnrollments)
+    : 0;
+
+  // 필수교육 통계
+  const mandatoryEnrollments = enrollments.filter((e: any) => e.courses?.is_mandatory);
+  const mandatoryCompleted = mandatoryEnrollments.filter((e: any) => e.completed_at).length;
+  const mandatoryRate = mandatoryEnrollments.length
+    ? Math.round((mandatoryCompleted / mandatoryEnrollments.length) * 100)
+    : 0;
+
+  // 휴면(14일+ 미접속)
+  const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+  const recentActiveSet = new Set<string>();
+  sessions.forEach((s: any) => {
+    if (new Date(s.login_at).getTime() >= fourteenDaysAgo) recentActiveSet.add(s.user_id);
+  });
+  const dormantStudents = studentIds.filter((id: string) => !recentActiveSet.has(id));
+
+  // 평가 합격률
+  const passedCount = attempts.filter((a: any) => a.passed).length;
+  const passRate = attempts.length ? Math.round((passedCount / attempts.length) * 100) : 0;
+
+  // 미채점 과제
   const pendingSubmissions = recentSubmissions.filter((s: any) => s.status === "submitted");
 
-  const enrollmentCountMap = new Map<string, number>();
+  // ── 학생별 진도/포인트 집계 ────────────────────────────
+  const studentProgressMap = new Map<string, { count: number; sum: number; completed: number }>();
   enrollments.forEach((e: any) => {
-    enrollmentCountMap.set(e.course_id, (enrollmentCountMap.get(e.course_id) || 0) + 1);
+    const m = studentProgressMap.get(e.user_id) || { count: 0, sum: 0, completed: 0 };
+    m.count += 1;
+    m.sum += Number(e.progress) || 0;
+    if (e.completed_at) m.completed += 1;
+    studentProgressMap.set(e.user_id, m);
   });
 
+  // TOP 5 우수 학습자 (평균 진도 + 완료 강의 수 가중치)
+  const topLearners = [...studentIds]
+    .map((id) => {
+      const p = studentProgressMap.get(id);
+      const g = gamification.find((x: any) => x.user_id === id);
+      const avg = p && p.count ? p.sum / p.count : 0;
+      const score = avg * 0.6 + (p?.completed ?? 0) * 8 + (g?.streak_days ?? 0) * 2;
+      return {
+        id, name: profileMap.get(id) || "—",
+        avgProgress: Math.round(avg),
+        completed: p?.completed ?? 0,
+        points: g?.total_points ?? 0,
+        streak: g?.streak_days ?? 0,
+        score,
+      };
+    })
+    .filter((s) => s.avgProgress > 0 || s.completed > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  // 강의별 지점 진도 통계 (학생들이 가장 많이 수강한 강의 TOP 5)
+  const courseStatsMap = new Map<string, { id: string; title: string; learners: number; sum: number; completed: number; mandatory: boolean }>();
+  enrollments.forEach((e: any) => {
+    if (!e.courses?.id) return;
+    const k = e.courses.id;
+    const m = courseStatsMap.get(k) || { id: k, title: e.courses.title, learners: 0, sum: 0, completed: 0, mandatory: !!e.courses.is_mandatory };
+    m.learners += 1;
+    m.sum += Number(e.progress) || 0;
+    if (e.completed_at) m.completed += 1;
+    courseStatsMap.set(k, m);
+  });
+  const topCourses = [...courseStatsMap.values()]
+    .sort((a, b) => b.learners - a.learners)
+    .slice(0, 5)
+    .map((c) => ({ ...c, avgProgress: c.learners ? Math.round(c.sum / c.learners) : 0 }));
+
+  // ── 통계 카드 ──────────────────────────────────────────
   const stats = [
-    { label: t("teacher.totalStudents"), value: totalStudents, sub: branchLabel || t("teacher.myStudents"), icon: Users },
-    { label: t("teacher.activeCourses"), value: publishedCourses, sub: t("teacher.waitingCount", { count: draftCourses }), icon: BookOpen },
-    { label: t("teacher.allCourses"), value: courses.length, sub: t("teacher.registeredCourses"), icon: LayoutDashboard },
-    { label: t("teacher.recentSubmissions"), value: pendingSubmissions.length, sub: t("teacher.recentAssignmentSub"), icon: TrendingUp },
+    {
+      label: t("teacher.branchTotalStudents", "지점 학생 수"),
+      value: totalStudents,
+      sub: branchLabel || t("teacher.allBranchStudents", "전체 지점 학생"),
+      icon: Users,
+      tone: "text-primary",
+    },
+    {
+      label: t("teacher.weeklyActive", "주간 활성 학습자"),
+      value: weeklyActiveSet.size,
+      sub: t("teacher.activeRatio", { rate: totalStudents ? Math.round((weeklyActiveSet.size / totalStudents) * 100) : 0, defaultValue: "활동률 {{rate}}%" }),
+      icon: Activity,
+      tone: "text-emerald-600",
+    },
+    {
+      label: t("teacher.avgProgressLabel", "평균 학습 진도"),
+      value: `${avgProgress}%`,
+      sub: t("teacher.completionStat", { done: completedEnrollments, total: totalEnrollments, defaultValue: "{{done}}/{{total}} 완료" }),
+      icon: TrendingUp,
+      tone: "text-blue-600",
+    },
+    {
+      label: t("teacher.mandatoryCompletion", "필수교육 이수율"),
+      value: `${mandatoryRate}%`,
+      sub: t("teacher.mandatoryStat", { done: mandatoryCompleted, total: mandatoryEnrollments.length, defaultValue: "{{done}}/{{total}} 이수" }),
+      icon: GraduationCap,
+      tone: "text-purple-600",
+    },
   ];
+
+  // ── 빈 상태 ────────────────────────────────────────────
+  if (!hasDepartment) {
+    return (
+      <DashboardLayout role="teacher">
+        <div className="rounded-xl border border-border bg-card p-10 text-center">
+          <AlertCircle className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">
+            {t("teacher.noDepartment", "소속 지점이 설정되지 않았습니다. 관리자에게 문의하세요.")}
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="teacher">
       <div className="space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-              <LayoutDashboard className="h-6 w-6 text-primary" aria-hidden="true" /> {t("teacher.teacherDashboard")}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {branchLabel ? `${branchLabel} · ` : ""}{t("teacher.manageStudents")}
-            </p>
-          </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+            <LayoutDashboard className="h-6 w-6 text-primary" aria-hidden="true" /> {t("teacher.teacherDashboard")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {branchLabel ? `${branchLabel} · ` : ""}
+            {t("teacher.leaderSubtitle", "내 지점 학습 현황을 한눈에 확인하세요")}
+          </p>
         </div>
 
+        {/* Stats */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label={t("teacher.teacherDashboard")}>
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4" role="group" aria-label={stat.label}>
+            <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground">{stat.label}</span>
-                <stat.icon className="h-4 w-4 text-muted-foreground/50" aria-hidden="true" />
+                <stat.icon className={`h-4 w-4 ${stat.tone}`} aria-hidden="true" />
               </div>
               <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-[11px] text-primary mt-0.5">{stat.sub}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{stat.sub}</p>
             </div>
           ))}
         </section>
 
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">{t("teacher.myCoursesList")}</h2>
-              <p className="text-xs text-muted-foreground">{t("teacher.manageCourseDesc")}</p>
+        {/* Secondary metrics */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">{t("teacher.completionRateLabel", "완강률")}</span>
+              <Target className="h-4 w-4 text-emerald-600" />
             </div>
-            <Link to="/teacher/courses">
-              <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1" aria-label={t("common.viewAll")}>
-                {t("common.viewAll")} <ArrowRight className="h-3 w-3" aria-hidden="true" />
-              </Button>
+            <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
+            <Progress value={completionRate} className="h-1.5 mt-2" />
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">{t("teacher.assessmentPassRate", "평가 합격률")}</span>
+              <ClipboardCheck className="h-4 w-4 text-blue-600" />
+            </div>
+            <p className="text-2xl font-bold text-foreground">{passRate}%</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {t("teacher.attemptsLast30d", { count: attempts.length, defaultValue: "최근 30일 {{count}}건" })}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">{t("teacher.dormantStudents", "휴면 학습자")}</span>
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+            </div>
+            <p className="text-2xl font-bold text-foreground">{dormantStudents.length}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{t("teacher.dormantHint", "14일+ 미접속")}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-muted-foreground">{t("teacher.pendingGrading", "미채점 과제")}</span>
+              <ClipboardCheck className="h-4 w-4 text-rose-600" />
+            </div>
+            <p className="text-2xl font-bold text-foreground">{pendingSubmissions.length}</p>
+            <Link to="/teacher/assignments" className="text-[11px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5">
+              {t("teacher.gradeNow", "채점하러 가기")} <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
+        </section>
 
-          {courses.length === 0 ? (
-            <div className="text-center py-12">
-              <BookOpen className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" aria-hidden="true" />
-              <p className="text-sm text-muted-foreground">{t("teacher.noCourses")}</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {courses.slice(0, 5).map((course: any) => {
-                const studentCount = enrollmentCountMap.get(course.id) || 0;
-                const courseEnrollments = enrollments.filter((e: any) => e.course_id === course.id);
-                const avgProgress = courseEnrollments.length > 0
-                  ? Math.round(courseEnrollments.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / courseEnrollments.length)
-                  : 0;
-
-                return (
-                  <Link key={course.id} to={`/teacher/courses/${course.id}`} className="flex items-center gap-4 px-5 py-3 hover:bg-accent/20 transition-colors group" aria-label={course.title}>
-                    {course.thumbnail_url ? (
-                      <img src={course.thumbnail_url} alt={course.title} className="h-12 w-[76px] aspect-[16/10] rounded-lg object-cover shrink-0" />
-                    ) : (
-                      <div className="h-12 w-[76px] aspect-[16/10] rounded-lg bg-accent flex items-center justify-center shrink-0" aria-hidden="true">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground truncate">{course.title}</span>
-                        <Badge
-                          variant="secondary"
-                          className={`text-[9px] h-4 shrink-0 ${
-                            course.status === "published"
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-secondary text-muted-foreground"
-                          }`}
-                        >
-                          {course.status === "published" ? t("teacher.published") : t("teacher.unpublished")}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-[11px] text-muted-foreground"><Users className="h-3 w-3 inline mr-0.5" aria-hidden="true" />{studentCount}{t("common.people")}</span>
-                        <span className="text-[11px] text-muted-foreground">{t("teacher.progressPercent", { percent: avgProgress })}</span>
-                      </div>
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true" />
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
+        {/* TOP 5 Learners & Top Courses */}
         <div className="grid lg:grid-cols-2 gap-4">
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              <h2 className="text-base font-semibold text-foreground">{t("teacher.topLearners", "우수 학습자 TOP 5")}</h2>
+            </div>
+            {topLearners.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">{t("teacher.noLearnerData", "학습 데이터가 아직 없습니다")}</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {topLearners.map((s, idx) => (
+                  <Link
+                    key={s.id}
+                    to={`/teacher/students/${s.id}`}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-accent/20 transition-colors"
+                  >
+                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-semibold ${
+                      idx === 0 ? "bg-amber-100 text-amber-700" : idx === 1 ? "bg-slate-100 text-slate-700" : idx === 2 ? "bg-orange-100 text-orange-700" : "bg-muted text-muted-foreground"
+                    }`}>{idx + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {t("teacher.progressPercent", { percent: s.avgProgress })} · {t("teacher.completedCount", { count: s.completed, defaultValue: "완료 {{count}}" })}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-semibold text-foreground">{s.points.toLocaleString()} pt</p>
+                      {s.streak > 0 && (
+                        <p className="text-[10px] text-amber-600 inline-flex items-center gap-0.5">
+                          <Flame className="h-3 w-3" />{s.streak}d
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <h2 className="text-base font-semibold text-foreground">{t("teacher.popularCourses", "지점 수강 TOP 5 강의")}</h2>
+            </div>
+            {topCourses.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">{t("teacher.noCourseData", "수강 데이터가 아직 없습니다")}</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {topCourses.map((c) => (
+                  <div key={c.id} className="px-5 py-3">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm font-medium text-foreground truncate">{c.title}</span>
+                        {c.mandatory && (
+                          <Badge variant="secondary" className="text-[9px] h-4 bg-rose-100 text-rose-700 whitespace-nowrap shrink-0">
+                            {t("teacher.mandatoryBadge", "필수")}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                        {c.learners}{t("common.people")} · {c.avgProgress}%
+                      </span>
+                    </div>
+                    <Progress value={c.avgProgress} className="h-1.5" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Submissions & Dormant Students */}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <h2 className="text-base font-semibold text-foreground">{t("teacher.recentSubmissionsTitle")}</h2>
+              <Link to="/teacher/assignments" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center">
+                {t("common.viewAll")} <ArrowRight className="h-3 w-3 ml-0.5" />
+              </Link>
             </div>
             {recentSubmissions.length === 0 ? (
               <div className="text-center py-10">
@@ -269,9 +438,9 @@ const TeacherDashboard = () => {
                         variant="secondary"
                         className={`text-[9px] ${
                           sub.status === "submitted"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            ? "bg-amber-100 text-amber-700"
                             : sub.status === "graded"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            ? "bg-green-100 text-green-700"
                             : "bg-secondary text-muted-foreground"
                         }`}
                       >
@@ -288,23 +457,38 @@ const TeacherDashboard = () => {
           </div>
 
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
-              <h2 className="text-base font-semibold text-foreground">{t("teacher.courseStats")}</h2>
-              <p className="text-xs text-muted-foreground">{t("teacher.myCourseStatus")}</p>
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <h2 className="text-base font-semibold text-foreground">{t("teacher.needsAttention", "관심이 필요한 학습자")}</h2>
+              </div>
+              <span className="text-xs text-muted-foreground">{t("teacher.dormantHint", "14일+ 미접속")}</span>
             </div>
-            <div className="px-5 py-3 space-y-0">
-              {[
-                { label: t("teacher.totalCoursesCount"), value: `${courses.length}${t("common.count")}` },
-                { label: t("teacher.activeCoursesCount"), value: `${publishedCourses}${t("common.count")}` },
-                { label: t("teacher.totalStudentsCount"), value: `${totalStudents}${t("common.people")}` },
-                { label: t("teacher.waitingCoursesCount"), value: `${draftCourses}${t("common.count")}` },
-              ].map((row, idx) => (
-                <div key={row.label} className={`flex items-center justify-between py-3 ${idx > 0 ? "border-t border-border" : ""}`}>
-                  <span className="text-sm text-muted-foreground">{row.label}</span>
-                  <span className="text-sm font-semibold text-foreground">{row.value}</span>
-                </div>
-              ))}
-            </div>
+            {dormantStudents.length === 0 ? (
+              <div className="text-center py-10">
+                <Activity className="h-7 w-7 text-emerald-500/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">{t("teacher.allActive", "모든 학습자가 활발히 활동 중입니다")}</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {dormantStudents.slice(0, 8).map((id: string) => (
+                  <Link
+                    key={id}
+                    to={`/teacher/students/${id}`}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-accent/20 transition-colors"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                      {(profileMap.get(id) || "—")[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{profileMap.get(id) || "—"}</p>
+                      <p className="text-[11px] text-amber-700">{t("teacher.followUpHint", "팔로업이 필요합니다")}</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
