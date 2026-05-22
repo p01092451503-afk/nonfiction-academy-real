@@ -422,6 +422,21 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
     },
   });
 
+  const deleteAssessmentMutation = useMutation({
+    mutationFn: async () => {
+      if (!assessment?.id) return;
+      const { error } = await supabase.from("assessments").delete().eq("id", assessment.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assessment", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["assessment-questions", assessment?.id] });
+      setShowResults(false);
+      toast({ title: isEn ? "Assessment deleted" : "평가가 삭제되었습니다" });
+    },
+    onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
+  });
+
   const openEditAssessment = () => {
     if (assessment) {
       setAssessmentForm({
@@ -729,6 +744,33 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                 {assessment.is_published ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                 {assessment.is_published ? t("assessment.unpublishBtn") : t("assessment.publishBtn")}
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs gap-1 text-destructive hover:text-destructive">
+                    <Trash2 className="h-3 w-3" />
+                    {isEn ? "Delete" : "삭제"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{isEn ? "Delete assessment?" : "평가를 삭제하시겠습니까?"}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {isEn
+                        ? "All questions, translations, and student attempts for this assessment will be permanently deleted. This action cannot be undone."
+                        : "이 평가의 모든 문항, 번역, 학생 응시 기록이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다."}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteAssessmentMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isEn ? "Delete" : "삭제"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </>
           )}
           <Button size="sm" className="h-8 text-xs gap-1" onClick={openEditAssessment}>
