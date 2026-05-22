@@ -213,6 +213,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
         { key: "platformUpdates", label: t("nav.platformUpdates", "플랫폼 업데이트 푸시"), href: "/admin/platform-updates", icon: Megaphone },
         { key: "pwaSettings", label: t("nav.pwaSettings", "PWA 앱 설정"), href: "/admin/pwa-settings", icon: Smartphone },
         { key: "systemInfo", label: t("nav.systemInfo", "시스템 정보"), href: "/admin/system-info", icon: Info },
+        { key: "userManual", label: t("nav.userManual", "사용자 매뉴얼"), href: "/manual", icon: BookMarked },
       ],
     },
   ];
