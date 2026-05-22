@@ -367,15 +367,18 @@ const StudentAchievements = () => {
               <div style={{ height: Math.max(courseChartData.length * 24, 180) }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={courseChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }} barCategoryGap="45%">
+                    <defs>
+                      <linearGradient id="progressGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
+                        <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} tickFormatter={formatAxisCourseName} width={120} />
                     <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
-                    <Bar dataKey="progress" name={t("achievements.progressRate")} radius={[0, 4, 4, 0]} barSize={10}>
-                      {courseChartData.map((entry, idx) => (
-                        <Cell key={idx} fill={getBarColor(entry.progress, idx)} />
-                      ))}
-                    </Bar>
+                    <Bar dataKey="progress" name={t("achievements.progressRate")} radius={[0, 4, 4, 0]} barSize={10} fill="url(#progressGrad)" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
