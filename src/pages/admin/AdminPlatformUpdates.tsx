@@ -22,6 +22,7 @@ const AdminPlatformUpdates = () => {
   const [severity, setSeverity] = useState<"info" | "important" | "critical">("important");
   const [audience, setAudience] = useState<"all" | "admin" | "student" | "teacher">("all");
   const [requireReload, setRequireReload] = useState(true);
+  const [pwaOnly, setPwaOnly] = useState(false);
   const [expiresInHours, setExpiresInHours] = useState("24");
   const [sending, setSending] = useState(false);
 
@@ -39,7 +40,7 @@ const AdminPlatformUpdates = () => {
   const reset = () => {
     setVersion(""); setTitle(""); setMessage("");
     setSeverity("important"); setAudience("all");
-    setRequireReload(true); setExpiresInHours("24");
+    setRequireReload(true); setPwaOnly(false); setExpiresInHours("24");
   };
 
   const handleSend = async () => {
@@ -54,7 +55,8 @@ const AdminPlatformUpdates = () => {
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("platform_updates").insert({
       version, title, message, severity, target_audience: audience,
-      require_reload: requireReload, expires_at, created_by: user?.id,
+      require_reload: requireReload, pwa_only: pwaOnly,
+      expires_at, created_by: user?.id,
     });
     setSending(false);
     if (error) {
@@ -144,7 +146,7 @@ const AdminPlatformUpdates = () => {
                 placeholder="예: 학습 플레이어 안정성 개선 및 신규 기능이 추가되었습니다. 새로고침 후 이용해주세요." />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div>
                   <p className="text-sm font-medium">새로고침 버튼 표시</p>
@@ -152,6 +154,19 @@ const AdminPlatformUpdates = () => {
                 </div>
                 <Switch checked={requireReload} onCheckedChange={setRequireReload} />
               </div>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <p className="text-sm font-medium">PWA 설치자만</p>
+                  <p className="text-[11px] text-muted-foreground">홈 화면에 설치한 사용자에게만 노출</p>
+                </div>
+                <Switch checked={pwaOnly} onCheckedChange={setPwaOnly} />
+              </div>
+              <div>
+                <Label>자동 만료 (시간)</Label>
+                <Input type="number" min="0" value={expiresInHours} onChange={(e) => setExpiresInHours(e.target.value)}
+                  placeholder="0 = 만료 없음" />
+              </div>
+            </div>
               <div>
                 <Label>자동 만료 (시간)</Label>
                 <Input type="number" min="0" value={expiresInHours} onChange={(e) => setExpiresInHours(e.target.value)}
