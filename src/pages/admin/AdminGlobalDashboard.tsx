@@ -1,7 +1,10 @@
-import { useMemo, useState, Suspense, lazy } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Globe2, Download, ChevronRight, Layers, Users, Trophy, ArrowLeft, GraduationCap, BarChart3, PieChart as PieIcon, Award } from "lucide-react";
+import {
+  Globe2, Download, ChevronRight, ArrowLeft, Users, Activity,
+  TrendingUp, ShieldCheck, Trophy, AlertTriangle, MapPin, Layers,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,26 +13,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-
-// Recharts-heavy charts → lazy load
-const CountryCompletionBar = lazy(() =>
-  import("@/components/charts/GlobalDashboardCharts").then((m) => ({ default: m.CountryCompletionBar }))
-);
-const LearnerDistributionDonut = lazy(() =>
-  import("@/components/charts/GlobalDashboardCharts").then((m) => ({ default: m.LearnerDistributionDonut }))
-);
-const CountryQuizCompare = lazy(() =>
-  import("@/components/charts/GlobalDashboardCharts").then((m) => ({ default: m.CountryQuizCompare }))
-);
-const TrackCompletionBar = lazy(() =>
-  import("@/components/charts/GlobalDashboardCharts").then((m) => ({ default: m.TrackCompletionBar }))
-);
-
-const ChartFallback = () => <Skeleton className="h-full w-full rounded-md" />;
 
 interface Track { id: string; title: string; title_en: string | null; }
-interface Stage { id: string; track_id: string; name: string; name_en: string | null; order_index: number; }
+interface Stage { id: string; track_id: string; }
 interface StageCourse { stage_id: string; course_id: string; }
 interface Department {
   id: string; name: string; name_en: string | null; code: string | null; country: string | null;
@@ -37,52 +23,46 @@ interface Department {
 }
 interface Profile { user_id: string; department_id: string | null; full_name: string | null; email: string | null; }
 interface Enrollment { user_id: string; course_id: string; progress: number | null; completed_at: string | null; }
-interface Assessment { id: string; course_id: string; passing_score: number; }
-interface Attempt { user_id: string; assessment_id: string; score: number | null; passed: boolean | null; completed_at: string | null; }
+interface CourseMeta { id: string; is_mandatory: boolean | null; status: string | null; }
+interface Session { user_id: string; login_at: string; }
 
-// Country code → flag emoji
 const flag = (cc: string | null) => {
   if (!cc || cc.length !== 2) return "🌐";
   return String.fromCodePoint(...cc.toUpperCase().split("").map((c) => 127397 + c.charCodeAt(0)));
 };
 
-// Country code → display name
 const COUNTRY_NAMES: Record<string, { ko: string; en: string }> = {
-  KR: { ko: "대한민국", en: "Korea" },
-  JP: { ko: "일본", en: "Japan" },
-  US: { ko: "미국", en: "United States" },
-  HK: { ko: "홍콩", en: "Hong Kong" },
-  CN: { ko: "중국", en: "China" },
-  TW: { ko: "대만", en: "Taiwan" },
-  SG: { ko: "싱가포르", en: "Singapore" },
-  VN: { ko: "베트남", en: "Vietnam" },
-  TH: { ko: "태국", en: "Thailand" },
-  MY: { ko: "말레이시아", en: "Malaysia" },
-  ID: { ko: "인도네시아", en: "Indonesia" },
-  PH: { ko: "필리핀", en: "Philippines" },
-  GB: { ko: "영국", en: "United Kingdom" },
-  FR: { ko: "프랑스", en: "France" },
+  KR: { ko: "대한민국", en: "Korea" }, JP: { ko: "일본", en: "Japan" },
+  US: { ko: "미국", en: "United States" }, HK: { ko: "홍콩", en: "Hong Kong" },
+  CN: { ko: "중국", en: "China" }, TW: { ko: "대만", en: "Taiwan" },
+  SG: { ko: "싱가포르", en: "Singapore" }, VN: { ko: "베트남", en: "Vietnam" },
+  TH: { ko: "태국", en: "Thailand" }, MY: { ko: "말레이시아", en: "Malaysia" },
+  ID: { ko: "인도네시아", en: "Indonesia" }, PH: { ko: "필리핀", en: "Philippines" },
+  GB: { ko: "영국", en: "United Kingdom" }, FR: { ko: "프랑스", en: "France" },
   DE: { ko: "독일", en: "Germany" },
 };
 
-interface CountryGroup {
-  id: string;          // country code (e.g. "KR")
-  code: string;
-  country: string;
-  name: string;
-  name_en: string | null;
-  branches: Department[];
-}
-
-// Color scale based on completion rate (0-100)
-const heatColor = (pct: number): string => {
+const heatColor = (pct: number) => {
   if (pct >= 80) return "bg-emerald-500";
   if (pct >= 60) return "bg-emerald-400";
   if (pct >= 40) return "bg-amber-400";
   if (pct >= 20) return "bg-orange-400";
-  if (pct > 0) return "bg-rose-400";
+  if (pct > 0)   return "bg-rose-400";
   return "bg-muted";
 };
+
+const heatText = (pct: number) => {
+  if (pct >= 60) return "text-emerald-700 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-700 dark:text-amber-400";
+  if (pct > 0)   return "text-rose-700 dark:text-rose-400";
+  return "text-muted-foreground";
+};
+
+interface CountryGroup {
+  id: string; code: string; country: string;
+  name: string; name_en: string | null;
+  branches: Department[];
+}
 
 export default function AdminGlobalDashboard() {
   const { t, i18n } = useTranslation();
@@ -93,151 +73,103 @@ export default function AdminGlobalDashboard() {
   const { data: tracks = [] } = useQuery({
     queryKey: ["gd-tracks"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("learning_tracks")
-        .select("id,title,title_en")
-        .eq("status", "published");
-      if (error) throw error; return (data || []) as Track[];
+      const { data } = await supabase.from("learning_tracks").select("id,title,title_en").eq("status", "published");
+      return (data || []) as Track[];
     },
   });
 
   const { data: stages = [] } = useQuery({
     queryKey: ["gd-stages"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("track_stages")
-        .select("id,track_id,name,name_en,order_index")
-        .order("order_index");
-      if (error) throw error; return (data || []) as Stage[];
+      const { data } = await supabase.from("track_stages").select("id,track_id");
+      return (data || []) as Stage[];
     },
   });
 
   const { data: stageCourses = [] } = useQuery({
     queryKey: ["gd-stage-courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("track_stage_courses").select("stage_id,course_id");
-      if (error) throw error; return (data || []) as StageCourse[];
+      const { data } = await supabase.from("track_stage_courses").select("stage_id,course_id");
+      return (data || []) as StageCourse[];
     },
   });
 
   const { data: departments = [] } = useQuery({
     queryKey: ["gd-departments"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("departments")
         .select("id,name,name_en,code,country,parent_department_id,is_active")
         .eq("is_active", true);
-      if (error) throw error; return (data || []) as Department[];
+      return (data || []) as Department[];
     },
   });
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["gd-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id,department_id,full_name,email");
-      if (error) throw error; return (data || []) as Profile[];
+      const { data } = await supabase.from("profiles").select("user_id,department_id,full_name,email");
+      return (data || []) as Profile[];
     },
   });
 
   const { data: enrollments = [] } = useQuery({
     queryKey: ["gd-enrollments"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("user_id,course_id,progress,completed_at");
-      if (error) throw error; return (data || []) as Enrollment[];
+      const { data } = await supabase.from("enrollments").select("user_id,course_id,progress,completed_at");
+      return (data || []) as Enrollment[];
     },
   });
 
-  const { data: assessments = [] } = useQuery({
-    queryKey: ["gd-assessments"],
+  const { data: courseMeta = [] } = useQuery({
+    queryKey: ["gd-courses-meta"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assessments")
-        .select("id,course_id,passing_score")
-        .eq("is_published", true);
-      if (error) throw error; return (data || []) as Assessment[];
+      const { data } = await supabase.from("courses").select("id,is_mandatory,status");
+      return (data || []) as CourseMeta[];
     },
   });
 
-  const { data: attempts = [] } = useQuery({
-    queryKey: ["gd-attempts"],
+  // Recent sessions (last 7 days) for activity
+  const { data: recentSessions = [] } = useQuery({
+    queryKey: ["gd-recent-sessions"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assessment_attempts")
-        .select("user_id,assessment_id,score,passed,completed_at")
-        .not("completed_at", "is", null);
-      if (error) throw error; return (data || []) as Attempt[];
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("user_sessions")
+        .select("user_id,login_at")
+        .gte("login_at", since)
+        .limit(10000);
+      return (data || []) as Session[];
     },
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Filter: active tracks (or single selected)
+  // ── Derived ─────────────────────────────────────────────────────────────────
+
   const activeTracks = useMemo(
     () => (selectedTrackId === "all" ? tracks : tracks.filter((tr) => tr.id === selectedTrackId)),
     [tracks, selectedTrackId]
   );
 
-  // Required course IDs per track (all stage courses are treated as required)
+  // Required course IDs per track
   const trackRequiredCourseIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const tr of activeTracks) {
-      const trackStageIds = new Set(stages.filter((s) => s.track_id === tr.id).map((s) => s.id));
-      const courseIds = new Set(
-        stageCourses.filter((sc) => trackStageIds.has(sc.stage_id)).map((sc) => sc.course_id)
-      );
-      map.set(tr.id, courseIds);
+      const tsIds = new Set(stages.filter((s) => s.track_id === tr.id).map((s) => s.id));
+      map.set(tr.id, new Set(stageCourses.filter((sc) => tsIds.has(sc.stage_id)).map((sc) => sc.course_id)));
     }
     return map;
   }, [activeTracks, stages, stageCourses]);
 
-  // Track-scoped assessment ids — only quizzes attached to required courses of the selected tracks
-  const trackAssessmentIds = useMemo(() => {
-    const all = new Set<string>();
-    for (const set of trackRequiredCourseIds.values()) {
-      for (const cid of set) {
-        for (const a of assessments) {
-          if (a.course_id === cid) all.add(a.id);
-        }
-      }
-    }
-    return all;
-  }, [trackRequiredCourseIds, assessments]);
+  // Mandatory published course IDs
+  const mandatoryCourseIds = useMemo(
+    () => new Set(courseMeta.filter((c) => c.is_mandatory && c.status === "published").map((c) => c.id)),
+    [courseMeta]
+  );
 
-  // Per-user best score across the in-scope assessments
-  const userBestScoreMap = useMemo(() => {
-    const map = new Map<string, Map<string, number>>();
-    for (const at of attempts) {
-      if (!trackAssessmentIds.has(at.assessment_id)) continue;
-      if (at.score == null) continue;
-      if (!map.has(at.user_id)) map.set(at.user_id, new Map());
-      const inner = map.get(at.user_id)!;
-      const prev = inner.get(at.assessment_id) ?? -1;
-      if (at.score > prev) inner.set(at.assessment_id, at.score);
-    }
-    return map;
-  }, [attempts, trackAssessmentIds]);
+  const activeUserIds = useMemo(() => new Set(recentSessions.map((s) => s.user_id)), [recentSessions]);
 
-  // Helpers: average best score & pass rate for a list of users
-  const computeQuizMetrics = (userIds: string[]) => {
-    let scoreSum = 0, scoreCnt = 0, passSum = 0, passCnt = 0;
-    const passingMap = new Map<string, number>();
-    assessments.forEach((a) => passingMap.set(a.id, a.passing_score));
-    for (const uid of userIds) {
-      const inner = userBestScoreMap.get(uid);
-      if (!inner) continue;
-      for (const [aid, score] of inner) {
-        scoreSum += score; scoreCnt += 1;
-        const pass = (passingMap.get(aid) ?? 60);
-        passCnt += 1;
-        if (score >= pass) passSum += 1;
-      }
-    }
-    return {
-      avgScore: scoreCnt > 0 ? Math.round(scoreSum / scoreCnt) : 0,
-      passRate: passCnt > 0 ? Math.round((passSum / passCnt) * 100) : 0,
-      attemptedCount: scoreCnt,
-    };
-  };
-
-  // Group all active branches by country code → 1 entry per country
+  // Country grouping
   const countries = useMemo<CountryGroup[]>(() => {
     const map = new Map<string, CountryGroup>();
     for (const d of departments) {
@@ -246,11 +178,8 @@ export default function AdminGlobalDashboard() {
       if (!map.has(cc)) {
         const localized = COUNTRY_NAMES[cc];
         map.set(cc, {
-          id: cc,
-          code: cc,
-          country: cc,
-          name: localized?.ko || cc,
-          name_en: localized?.en || cc,
+          id: cc, code: cc, country: cc,
+          name: localized?.ko || cc, name_en: localized?.en || cc,
           branches: [],
         });
       }
@@ -259,12 +188,6 @@ export default function AdminGlobalDashboard() {
     return Array.from(map.values()).sort((a, b) => b.branches.length - a.branches.length);
   }, [departments]);
 
-  // Get all department IDs that belong to a country (every branch sharing the country code)
-  const getCountryDeptIds = (country: CountryGroup): Set<string> => {
-    return new Set(country.branches.map((b) => b.id));
-  };
-
-  // Per-user track completion: user is "completed" if all required courses have progress >= 100
   const isUserTrackComplete = (userId: string, trackId: string) => {
     const required = trackRequiredCourseIds.get(trackId);
     if (!required || required.size === 0) return false;
@@ -275,93 +198,162 @@ export default function AdminGlobalDashboard() {
     return true;
   };
 
-  // Aggregate stats per country
+  // Compute the canonical metric set for any user pool
+  const computeMetrics = (userIds: string[]) => {
+    const idSet = new Set(userIds);
+    const userCount = userIds.length;
+
+    // Activity (7d)
+    let active = 0;
+    for (const uid of userIds) if (activeUserIds.has(uid)) active += 1;
+    const activeRate = userCount > 0 ? Math.round((active / userCount) * 100) : 0;
+
+    // Avg progress across enrollments belonging to these users
+    let progSum = 0, progCnt = 0;
+    for (const e of enrollments) {
+      if (!idSet.has(e.user_id)) continue;
+      progSum += e.progress ?? 0;
+      progCnt += 1;
+    }
+    const avgProgress = progCnt > 0 ? Math.round(progSum / progCnt) : 0;
+
+    // Mandatory completion: per user, all mandatory courses completed
+    let mandDone = 0, mandUsers = 0;
+    if (mandatoryCourseIds.size > 0) {
+      for (const uid of userIds) {
+        mandUsers += 1;
+        let allDone = true;
+        for (const cid of mandatoryCourseIds) {
+          const e = enrollments.find((en) => en.user_id === uid && en.course_id === cid);
+          if (!e || !e.completed_at) { allDone = false; break; }
+        }
+        if (allDone) mandDone += 1;
+      }
+    }
+    const mandRate = mandUsers > 0 && mandatoryCourseIds.size > 0
+      ? Math.round((mandDone / mandUsers) * 100) : 0;
+
+    // Track completion (across activeTracks)
+    let trkDone = 0, trkPoss = 0;
+    for (const tr of activeTracks) {
+      for (const uid of userIds) {
+        trkPoss += 1;
+        if (isUserTrackComplete(uid, tr.id)) trkDone += 1;
+      }
+    }
+    const trackRate = trkPoss > 0 ? Math.round((trkDone / trkPoss) * 100) : 0;
+
+    return { userCount, active, activeRate, avgProgress, mandRate, mandDone, mandUsers, trackRate, trkDone, trkPoss };
+  };
+
+  // Per country
   const countryStats = useMemo(() => {
-    return countries.map((country) => {
-      const deptIds = getCountryDeptIds(country);
-      const countryUsers = profiles.filter((p) => p.department_id && deptIds.has(p.department_id));
-      const userCount = countryUsers.length;
-
-      let totalCompletions = 0;
-      let totalPossible = 0;
-      for (const tr of activeTracks) {
-        for (const u of countryUsers) {
-          totalPossible += 1;
-          if (isUserTrackComplete(u.user_id, tr.id)) totalCompletions += 1;
-        }
-      }
-      const completionRate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
-      const quiz = computeQuizMetrics(countryUsers.map((u) => u.user_id));
-      return { country, deptIds, userCount, totalCompletions, totalPossible, completionRate, ...quiz };
+    return countries.map((c) => {
+      const deptIds = new Set(c.branches.map((b) => b.id));
+      const users = profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id);
+      return { country: c, ...computeMetrics(users) };
     }).sort((a, b) => b.userCount - a.userCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countries, profiles, activeTracks, enrollments, trackRequiredCourseIds, userBestScoreMap, assessments]);
+  }, [countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
 
-  // Drill-down: every branch within the selected country
-  const drilledEntities = useMemo(() => {
+  // Per branch (for leaderboard)
+  const branchStats = useMemo(() => {
+    return departments.map((d) => {
+      const users = profiles.filter((p) => p.department_id === d.id).map((p) => p.user_id);
+      return { branch: d, ...computeMetrics(users) };
+    }).filter((b) => b.userCount >= 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [departments, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+
+  // Drill-down branches
+  const drilledBranches = useMemo(() => {
     if (!drillCountry) return [];
-    const country = countries.find((c) => c.id === drillCountry);
-    if (!country) return [];
-    const entities = country.branches;
-
-    return entities.map((ent) => {
-      const entUsers = profiles.filter((p) => p.department_id === ent.id);
-      let totalCompletions = 0; let totalPossible = 0;
-      for (const tr of activeTracks) {
-        for (const u of entUsers) {
-          totalPossible += 1;
-          if (isUserTrackComplete(u.user_id, tr.id)) totalCompletions += 1;
-        }
-      }
-      const userBreakdown = entUsers.map((u) => {
-        const trackStatus = activeTracks.map((tr) => ({
-          track: tr,
-          complete: isUserTrackComplete(u.user_id, tr.id),
-        }));
-        return { user: u, trackStatus };
+    const c = countries.find((x) => x.id === drillCountry);
+    if (!c) return [];
+    return c.branches.map((b) => {
+      const users = profiles.filter((p) => p.department_id === b.id);
+      const m = computeMetrics(users.map((u) => u.user_id));
+      const userRows = users.map((u) => {
+        const userEnr = enrollments.filter((e) => e.user_id === u.user_id);
+        const avg = userEnr.length > 0
+          ? Math.round(userEnr.reduce((s, e) => s + (e.progress ?? 0), 0) / userEnr.length) : 0;
+        const tracks = activeTracks.map((tr) => ({ track: tr, complete: isUserTrackComplete(u.user_id, tr.id) }));
+        const mandDone = mandatoryCourseIds.size > 0 && Array.from(mandatoryCourseIds).every((cid) => {
+          const e = userEnr.find((x) => x.course_id === cid);
+          return e && e.completed_at;
+        });
+        return { user: u, avg, tracks, active: activeUserIds.has(u.user_id), mandDone };
       });
-      const rate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
-      const quiz = computeQuizMetrics(entUsers.map((u) => u.user_id));
-      return { entity: ent, userCount: entUsers.length, completionRate: rate, totalCompletions, totalPossible, userBreakdown, ...quiz };
+      return { branch: b, ...m, userRows };
     }).sort((a, b) => b.userCount - a.userCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillCountry, departments, countries, profiles, activeTracks, enrollments, trackRequiredCourseIds, userBestScoreMap, assessments]);
+  }, [drillCountry, countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
 
-  // CSV Export
+  // Overall
+  const overall = useMemo(() => {
+    const allCountryUserIds = countryStats.flatMap((cs) => {
+      const deptIds = new Set(cs.country.branches.map((b) => b.id));
+      return profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id);
+    });
+    return computeMetrics(allCountryUserIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryStats, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+
+  // Track × Country matrix
+  const trackMatrix = useMemo(() => {
+    return activeTracks.map((tr) => {
+      const row = countryStats.map((cs) => {
+        const deptIds = new Set(cs.country.branches.map((b) => b.id));
+        const users = profiles.filter((p) => p.department_id && deptIds.has(p.department_id));
+        let done = 0;
+        for (const u of users) if (isUserTrackComplete(u.user_id, tr.id)) done += 1;
+        const rate = users.length > 0 ? Math.round((done / users.length) * 100) : 0;
+        return { country: cs.country, done, total: users.length, rate };
+      });
+      return { track: tr, row };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTracks, countryStats, profiles, enrollments, trackRequiredCourseIds]);
+
+  // Leaderboards
+  const topBranches = useMemo(
+    () => [...branchStats]
+      .map((b) => ({ ...b, score: b.mandRate * 0.5 + b.avgProgress * 0.3 + b.activeRate * 0.2 }))
+      .sort((a, b) => b.score - a.score).slice(0, 5),
+    [branchStats]
+  );
+
+  const watchBranches = useMemo(
+    () => [...branchStats]
+      .filter((b) => b.userCount >= 3)
+      .sort((a, b) => (a.activeRate - b.activeRate) || (a.avgProgress - b.avgProgress))
+      .slice(0, 5),
+    [branchStats]
+  );
+
   const exportCSV = () => {
     const rows: string[][] = [];
     rows.push([
       t("globalDashboard.country", "국가"),
       t("globalDashboard.entity", "법인/지점"),
       t("globalDashboard.learners", "학습자"),
-      t("globalDashboard.completed", "수료"),
-      t("globalDashboard.possible", "가능"),
-      t("globalDashboard.completionRate", "수료율 %"),
-      t("globalDashboard.avgQuizScore", "평균 평가 점수 %"),
-      t("globalDashboard.quizPassRate", "평가 합격률 %"),
+      t("globalDashboard.activeRate", "7일 활성률 %"),
+      t("globalDashboard.avgProgress", "평균 진도 %"),
+      t("globalDashboard.mandRate", "필수교육 이수율 %"),
+      t("globalDashboard.trackRate", "트랙 수료율 %"),
     ]);
     for (const cs of countryStats) {
-      const country = cs.country;
-      const list = country.branches;
-      for (const ent of list) {
-        const entUsers = profiles.filter((p) => p.department_id === ent.id);
-        let comp = 0, poss = 0;
-        for (const tr of activeTracks) {
-          for (const u of entUsers) {
-            poss += 1;
-            if (isUserTrackComplete(u.user_id, tr.id)) comp += 1;
-          }
-        }
-        const q = computeQuizMetrics(entUsers.map((u) => u.user_id));
+      for (const b of cs.country.branches) {
+        const bs = branchStats.find((x) => x.branch.id === b.id);
+        if (!bs) continue;
         rows.push([
-          (isEn ? country.name_en : country.name) || country.name,
-          (isEn ? ent.name_en : ent.name) || ent.name,
-          String(entUsers.length),
-          String(comp),
-          String(poss),
-          poss > 0 ? String(Math.round((comp / poss) * 100)) : "0",
-          String(q.avgScore),
-          String(q.passRate),
+          (isEn ? cs.country.name_en : cs.country.name) || cs.country.name,
+          (isEn ? b.name_en : b.name) || b.name,
+          String(bs.userCount),
+          String(bs.activeRate),
+          String(bs.avgProgress),
+          String(bs.mandRate),
+          String(bs.trackRate),
         ]);
       }
     }
@@ -369,61 +361,16 @@ export default function AdminGlobalDashboard() {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `global-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    a.href = url; a.download = `global-dashboard-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Totals
-  const totalLearners = countryStats.reduce((s, c) => s + c.userCount, 0);
-  const totalCompletions = countryStats.reduce((s, c) => s + c.totalCompletions, 0);
-  const totalPossible = countryStats.reduce((s, c) => s + c.totalPossible, 0);
-  const overallRate = totalPossible > 0 ? Math.round((totalCompletions / totalPossible) * 100) : 0;
-  const overallQuiz = computeQuizMetrics(profiles.map((p) => p.user_id));
-
-  // Chart data — country rows
-  const countryChartData = useMemo(
-    () =>
-      countryStats
-        .filter((cs) => cs.userCount > 0)
-        .map((cs) => ({
-          name: ((isEn ? cs.country.name_en : cs.country.name) || cs.country.name).slice(0, 18),
-          cc: cs.country.country || cs.country.code || "",
-          learners: cs.userCount,
-          completionRate: cs.completionRate,
-          avgScore: cs.avgScore,
-          passRate: cs.passRate,
-        })),
-    [countryStats, isEn]
-  );
-
-  // Chart data — track rows (uses entire learner pool)
-  const trackChartData = useMemo(() => {
-    return activeTracks.map((tr) => {
-      let completed = 0;
-      let possible = 0;
-      for (const p of profiles) {
-        if (!p.department_id) continue;
-        possible += 1;
-        if (isUserTrackComplete(p.user_id, tr.id)) completed += 1;
-      }
-      return {
-        name: ((isEn ? tr.title_en : tr.title) || tr.title).slice(0, 24),
-        rate: possible > 0 ? Math.round((completed / possible) * 100) : 0,
-        completed,
-        possible,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTracks, profiles, enrollments, trackRequiredCourseIds, isEn]);
-
   return (
     <DashboardLayout role="admin">
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         {/* Header */}
         <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Globe2 className="h-6 w-6 text-primary" aria-hidden="true" />
               <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
@@ -431,7 +378,7 @@ export default function AdminGlobalDashboard() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {t("globalDashboard.subtitle", "국가 및 지점별 트랙 수료 현황")}
+              {t("globalDashboard.subtitleV2", "국가·지점별 학습 참여와 필수 교육 이수 현황을 한눈에 확인합니다.")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -450,212 +397,253 @@ export default function AdminGlobalDashboard() {
           </div>
         </div>
 
-        {/* Compact summary bar — 4 key metrics */}
+        {/* KPI bar — 4 actionable metrics */}
         <Card>
           <CardContent className="p-0">
             <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-border">
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Users className="h-4 w-4 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] text-muted-foreground leading-tight">{t("globalDashboard.totalLearners", "전체 학습자")}</p>
-                  <p className="text-xl font-bold text-foreground leading-tight">{totalLearners.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
-                    {countries.length} {t("globalDashboard.countries", "국가")} · {activeTracks.length} {t("globalDashboard.activeTracks", "트랙")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                  <Trophy className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] text-muted-foreground leading-tight">{t("globalDashboard.overallCompletion", "전체 수료율")}</p>
-                  <p className="text-xl font-bold text-foreground leading-tight">{overallRate}%</p>
-                  <div className="h-1 w-full bg-muted rounded-full overflow-hidden mt-1">
-                    <div className="h-full bg-emerald-500 transition-all" style={{ width: `${overallRate}%` }} />
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] text-muted-foreground leading-tight">{t("globalDashboard.avgQuizScore", "평균 평가 점수")}</p>
-                  <p className="text-xl font-bold text-foreground leading-tight">{overallQuiz.avgScore}%</p>
-                  <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
-                    {overallQuiz.attemptedCount.toLocaleString()} {t("globalDashboard.attempts", "응시")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                  <Layers className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] text-muted-foreground leading-tight">{t("globalDashboard.quizPassRate", "평가 합격률")}</p>
-                  <p className="text-xl font-bold text-foreground leading-tight">{overallQuiz.passRate}%</p>
-                  <div className="h-1 w-full bg-muted rounded-full overflow-hidden mt-1">
-                    <div className="h-full bg-amber-500 transition-all" style={{ width: `${overallQuiz.passRate}%` }} />
-                  </div>
-                </div>
-              </div>
+              <Kpi
+                icon={Users} tone="primary"
+                label={t("globalDashboard.totalLearners", "전체 학습자")}
+                value={overall.userCount.toLocaleString()}
+                sub={`${countries.length} ${t("globalDashboard.countries", "국가")} · ${departments.length} ${t("globalDashboard.branches", "지점")}`}
+              />
+              <Kpi
+                icon={Activity} tone="emerald"
+                label={t("globalDashboard.activeLearners7d", "7일 활성 학습자")}
+                value={`${overall.active.toLocaleString()}`}
+                sub={`${t("globalDashboard.activeRate", "활성률")} ${overall.activeRate}%`}
+                progress={overall.activeRate}
+              />
+              <Kpi
+                icon={TrendingUp} tone="blue"
+                label={t("globalDashboard.avgProgress", "평균 학습 진도")}
+                value={`${overall.avgProgress}%`}
+                sub={t("globalDashboard.allEnrollments", "전체 수강신청 기준")}
+                progress={overall.avgProgress}
+              />
+              <Kpi
+                icon={ShieldCheck} tone="amber"
+                label={t("globalDashboard.mandRate", "필수교육 이수율")}
+                value={`${overall.mandRate}%`}
+                sub={mandatoryCourseIds.size > 0
+                  ? `${overall.mandDone}/${overall.mandUsers} ${t("globalDashboard.completedShort", "이수")}`
+                  : t("globalDashboard.noMandatory", "필수 과정 없음")}
+                progress={overall.mandRate}
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Compact visualizations */}
-        {countryChartData.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-            <Card>
-              <CardHeader className="py-2.5 px-4 border-b border-border/60">
-                <CardTitle className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground uppercase tracking-wide">
-                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                  {t("globalDashboard.countryCompletion", "국가별 수료율")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-2">
-                <div className="h-[200px]">
-                  <Suspense fallback={<ChartFallback />}>
-                    <CountryCompletionBar data={countryChartData} />
-                  </Suspense>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="py-2.5 px-4 border-b border-border/60">
-                <CardTitle className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground uppercase tracking-wide">
-                  <PieIcon className="h-3.5 w-3.5 text-primary" />
-                  {t("globalDashboard.learnerDistribution", "학습자 분포")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-2">
-                <div className="h-[200px] w-full overflow-hidden">
-                  <Suspense fallback={<ChartFallback />}>
-                    <LearnerDistributionDonut data={countryChartData} />
-                  </Suspense>
-                </div>
-              </CardContent>
-            </Card>
-
-            {countryChartData.some((c) => c.avgScore > 0 || c.passRate > 0) && (
-              <Card>
-                <CardHeader className="py-2.5 px-4 border-b border-border/60">
-                  <CardTitle className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground uppercase tracking-wide">
-                    <Award className="h-3.5 w-3.5 text-primary" />
-                    {t("globalDashboard.quizPerformance", "국가별 평가 성적")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-2">
-                  <div className="h-[200px]">
-                    <Suspense fallback={<ChartFallback />}>
-                      <CountryQuizCompare
-                        data={countryChartData}
-                        scoreLabel={t("globalDashboard.avgScore", "평균 점수")}
-                        passLabel={t("globalDashboard.passRate", "합격률")}
-                      />
-                    </Suspense>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {trackChartData.length > 0 && (
-              <Card>
-                <CardHeader className="py-2.5 px-4 border-b border-border/60">
-                  <CardTitle className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground uppercase tracking-wide">
-                    <Layers className="h-3.5 w-3.5 text-primary" />
-                    {t("globalDashboard.trackCompletion", "트랙별 수료율")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-2">
-                  <div className="h-[200px]">
-                    <Suspense fallback={<ChartFallback />}>
-                      <TrackCompletionBar data={trackChartData} />
-                    </Suspense>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Country Heatmap */}
+        {/* Country comparison cards */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">{t("globalDashboard.countryHeatmap", "국가별 수료율 히트맵")}</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              {t("globalDashboard.countryOverview", "국가별 종합 현황")}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("globalDashboard.clickHint", "카드를 클릭하면 해당 국가의 지점·학습자 상세를 볼 수 있습니다.")}
+            </p>
           </CardHeader>
           <CardContent>
             {countryStats.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">
-                {t("globalDashboard.noCountries", "국가 단위 조직이 없습니다. 조직 관리에서 최상위 조직(국가)을 추가하세요.")}
+                {t("globalDashboard.noCountries", "국가 단위 조직이 없습니다.")}
               </p>
             ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {countryStats.map((cs) => {
-                    const name = (isEn ? cs.country.name_en : cs.country.name) || cs.country.name;
-                    const cc = cs.country.country || cs.country.code || null;
-                    return (
-                      <button
-                        key={cs.country.id}
-                        onClick={() => setDrillCountry(cs.country.id)}
-                        className={`relative rounded-xl border border-border p-4 text-left transition-all hover:scale-[1.02] hover:shadow-md hover:border-primary/40 ${drillCountry === cs.country.id ? "border-primary ring-2 ring-primary/20" : ""}`}
-                        aria-label={`${name} — ${cs.completionRate}% completion`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-2xl" aria-hidden="true">{flag(cc)}</span>
-                          <Badge variant="outline" className="text-[10px] uppercase">{cc || "—"}</Badge>
-                        </div>
-                        <p className="text-sm font-semibold text-foreground truncate">{name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{cs.userCount} {t("globalDashboard.learnersShort", "명")}</p>
-                        <div className="mt-3 flex items-center gap-2">
-                          <div className="h-2 flex-1 rounded-full overflow-hidden bg-muted">
-                            <div className={`h-full ${heatColor(cs.completionRate)} transition-all`} style={{ width: `${cs.completionRate}%` }} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {countryStats.map((cs) => {
+                  const name = (isEn ? cs.country.name_en : cs.country.name) || cs.country.name;
+                  const cc = cs.country.country;
+                  const isSelected = drillCountry === cs.country.id;
+                  return (
+                    <button
+                      key={cs.country.id}
+                      onClick={() => setDrillCountry(isSelected ? null : cs.country.id)}
+                      className={`group relative rounded-xl border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-sm min-w-0 ${
+                        isSelected ? "border-primary ring-2 ring-primary/15" : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-2xl shrink-0" aria-hidden="true">{flag(cc)}</span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {cs.userCount} {t("globalDashboard.learnersShort", "명")} · {cs.country.branches.length} {t("globalDashboard.branches", "지점")}
+                            </p>
                           </div>
-                          <span className="text-xs font-bold text-foreground w-9 text-right">{cs.completionRate}%</span>
                         </div>
-                        {cs.attemptedCount > 0 && (
-                          <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <GraduationCap className="h-3 w-3" />
-                              {t("globalDashboard.quizShort", "퀴즈")} {cs.avgScore}%
-                            </span>
-                            <span>{t("globalDashboard.passShort", "합격")} {cs.passRate}%</span>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                        <Badge variant="outline" className="text-[10px] uppercase shrink-0">{cc}</Badge>
+                      </div>
 
-                {/* Legend */}
-                <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-muted-foreground flex-wrap">
-                  <span className="font-medium">{t("globalDashboard.legend", "범례")}:</span>
-                  {[{ l: "0%", c: "bg-muted" }, { l: "1-19%", c: "bg-rose-400" }, { l: "20-39%", c: "bg-orange-400" }, { l: "40-59%", c: "bg-amber-400" }, { l: "60-79%", c: "bg-emerald-400" }, { l: "80-100%", c: "bg-emerald-500" }].map((it) => (
-                    <span key={it.l} className="flex items-center gap-1.5"><span className={`inline-block w-3 h-3 rounded ${it.c}`} />{it.l}</span>
-                  ))}
-                </div>
-              </>
+                      <div className="space-y-2">
+                        <MetricRow
+                          label={t("globalDashboard.activeRate", "활성률")}
+                          value={cs.activeRate}
+                          icon={Activity}
+                        />
+                        <MetricRow
+                          label={t("globalDashboard.avgProgress", "평균 진도")}
+                          value={cs.avgProgress}
+                          icon={TrendingUp}
+                        />
+                        <MetricRow
+                          label={t("globalDashboard.mandRate", "필수 이수")}
+                          value={cs.mandRate}
+                          icon={ShieldCheck}
+                          disabled={mandatoryCourseIds.size === 0}
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Two-up: Track × Country matrix + Leaderboards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Track × Country */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" />
+                {t("globalDashboard.trackByCountry", "트랙별 국가 수료율")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {trackMatrix.length === 0 || countryStats.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  {t("globalDashboard.noTracks", "활성화된 트랙이 없습니다.")}
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[140px]">{t("globalDashboard.track", "트랙")}</TableHead>
+                      {countryStats.map((cs) => (
+                        <TableHead key={cs.country.id} className="text-center text-xs">
+                          <span aria-hidden="true">{flag(cs.country.country)}</span>{" "}
+                          {cs.country.country}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {trackMatrix.map(({ track, row }) => (
+                      <TableRow key={track.id}>
+                        <TableCell className="font-medium text-sm">
+                          {(isEn ? track.title_en : track.title) || track.title}
+                        </TableCell>
+                        {row.map((cell) => (
+                          <TableCell key={cell.country.id} className="text-center p-1">
+                            <div
+                              className={`inline-flex flex-col items-center justify-center min-w-[52px] py-1.5 rounded-md ${heatColor(cell.rate)} bg-opacity-15`}
+                              title={`${cell.done}/${cell.total}`}
+                            >
+                              <span className={`text-xs font-bold ${heatText(cell.rate)}`}>{cell.rate}%</span>
+                              <span className="text-[10px] text-muted-foreground">{cell.done}/{cell.total}</span>
+                            </div>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Leaderboards */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  {t("globalDashboard.topBranches", "우수 지점 TOP 5")}
+                </CardTitle>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {t("globalDashboard.scoreFormula", "필수이수 50% + 평균진도 30% + 활성률 20% 가중치")}
+                </p>
+              </CardHeader>
+              <CardContent>
+                {topBranches.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {t("common.noData", "데이터가 없습니다")}
+                  </p>
+                ) : (
+                  <ol className="space-y-2">
+                    {topBranches.map((b, idx) => (
+                      <li key={b.branch.id} className="flex items-center gap-3 py-1.5 border-b-2 border-border/60 last:border-0">
+                        <span className={`text-sm font-bold w-5 text-center ${idx < 3 ? "text-primary" : "text-muted-foreground"}`}>{idx + 1}</span>
+                        <span className="text-base shrink-0" aria-hidden="true">{flag(b.branch.country)}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{(isEn ? b.branch.name_en : b.branch.name) || b.branch.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {b.userCount}{t("globalDashboard.learnersShort", "명")} · {t("globalDashboard.mandShort", "필수")} {b.mandRate}% · {t("globalDashboard.progShort", "진도")} {b.avgProgress}%
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  {t("globalDashboard.watchBranches", "주의가 필요한 지점")}
+                </CardTitle>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {t("globalDashboard.watchHint", "활성률·진도가 낮은 3명 이상 지점")}
+                </p>
+              </CardHeader>
+              <CardContent>
+                {watchBranches.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {t("globalDashboard.allHealthy", "주의가 필요한 지점이 없습니다.")}
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {watchBranches.map((b) => (
+                      <li key={b.branch.id} className="flex items-center gap-3 py-1.5 border-b-2 border-border/60 last:border-0">
+                        <span className="text-base shrink-0" aria-hidden="true">{flag(b.branch.country)}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{(isEn ? b.branch.name_en : b.branch.name) || b.branch.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {t("globalDashboard.activeShort", "활성")} {b.activeRate}% · {t("globalDashboard.progShort", "진도")} {b.avgProgress}%
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-400 border-amber-500/30">
+                          {b.userCount}{t("globalDashboard.learnersShort", "명")}
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Drill-down panel */}
         {drillCountry && (
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <Button variant="ghost" size="sm" onClick={() => setDrillCountry(null)} className="gap-1">
                     <ArrowLeft className="h-4 w-4" /> {t("common.back", "뒤로")}
                   </Button>
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-2xl">{flag(countries.find((c) => c.id === drillCountry)?.country || countries.find((c) => c.id === drillCountry)?.code || null)}</span>
-                  <CardTitle className="text-base">
+                  <span className="text-2xl">
+                    {flag(countries.find((c) => c.id === drillCountry)?.country || null)}
+                  </span>
+                  <CardTitle className="text-base truncate">
                     {(() => {
                       const c = countries.find((x) => x.id === drillCountry);
                       return (isEn ? c?.name_en : c?.name) || c?.name;
@@ -665,40 +653,37 @@ export default function AdminGlobalDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              {drilledEntities.length === 0 ? (
+              {drilledBranches.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">{t("common.noData", "데이터가 없습니다")}</p>
               ) : (
                 <div className="space-y-6">
-                  {/* Entity-level summary */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2">{t("globalDashboard.entities", "법인/지점")}</h3>
+                  {/* Branch summary table */}
+                  <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>{t("globalDashboard.entity", "법인/지점")}</TableHead>
                           <TableHead className="text-right">{t("globalDashboard.learners", "학습자")}</TableHead>
-                          <TableHead className="text-right">{t("globalDashboard.completed", "수료")}</TableHead>
-                          <TableHead className="text-right">{t("globalDashboard.avgQuizScore", "평균 평가")}</TableHead>
-                          <TableHead className="text-right">{t("globalDashboard.quizPassRate", "합격률")}</TableHead>
-                          <TableHead className="w-[200px]">{t("globalDashboard.completionRate", "수료율")}</TableHead>
+                          <TableHead className="text-right">{t("globalDashboard.activeRate", "활성률")}</TableHead>
+                          <TableHead className="text-right">{t("globalDashboard.avgProgress", "평균 진도")}</TableHead>
+                          <TableHead className="text-right">{t("globalDashboard.mandRate", "필수 이수")}</TableHead>
+                          <TableHead className="w-[180px]">{t("globalDashboard.trackRate", "트랙 수료율")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {drilledEntities.map((row) => (
-                          <TableRow key={row.entity.id}>
-                            <TableCell className="font-medium">{(isEn ? row.entity.name_en : row.entity.name) || row.entity.name}</TableCell>
-                            <TableCell className="text-right">{row.userCount}</TableCell>
-                            <TableCell className="text-right">{row.totalCompletions}/{row.totalPossible}</TableCell>
+                        {drilledBranches.map((r) => (
+                          <TableRow key={r.branch.id}>
+                            <TableCell className="font-medium">{(isEn ? r.branch.name_en : r.branch.name) || r.branch.name}</TableCell>
+                            <TableCell className="text-right">{r.userCount}</TableCell>
+                            <TableCell className="text-right">{r.activeRate}%</TableCell>
+                            <TableCell className="text-right">{r.avgProgress}%</TableCell>
                             <TableCell className="text-right">
-                              {row.attemptedCount > 0 ? `${row.avgScore}%` : <span className="text-muted-foreground">—</span>}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {row.attemptedCount > 0 ? `${row.passRate}%` : <span className="text-muted-foreground">—</span>}
+                              {mandatoryCourseIds.size > 0 ? `${r.mandRate}%` : <span className="text-muted-foreground">—</span>}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Progress value={row.completionRate} className="h-2" />
-                                <span className="text-xs font-semibold w-10 text-right">{row.completionRate}%</span>
+                                <Progress value={r.trackRate} className="h-2" />
+                                <span className="text-xs font-semibold w-10 text-right">{r.trackRate}%</span>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -708,53 +693,67 @@ export default function AdminGlobalDashboard() {
                   </div>
 
                   {/* Per-learner breakdown */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2">{t("globalDashboard.learnerBreakdown", "학습자별 수료 현황")}</h3>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{t("globalDashboard.learner", "학습자")}</TableHead>
-                            <TableHead>{t("globalDashboard.entity", "법인/지점")}</TableHead>
-                            {activeTracks.map((tr) => (
-                              <TableHead key={tr.id} className="text-center text-xs">{(isEn ? tr.title_en : tr.title) || tr.title}</TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {drilledEntities.flatMap((row) =>
-                            row.userBreakdown.map(({ user, trackStatus }) => (
-                              <TableRow key={user.user_id}>
-                                <TableCell className="font-medium text-sm">
-                                  {user.full_name || user.email || user.user_id.slice(0, 8)}
-                                </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">
-                                  {(isEn ? row.entity.name_en : row.entity.name) || row.entity.name}
-                                </TableCell>
-                                {trackStatus.map(({ track, complete }) => (
-                                  <TableCell key={track.id} className="text-center">
-                                    {complete ? (
-                                      <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
-                                        <Trophy className="h-3 w-3 mr-1" />{t("globalDashboard.done", "완료")}
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="text-muted-foreground">—</Badge>
-                                    )}
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))
-                          )}
-                          {drilledEntities.every((r) => r.userBreakdown.length === 0) && (
-                            <TableRow>
-                              <TableCell colSpan={2 + activeTracks.length} className="text-center text-sm text-muted-foreground py-6">
-                                {t("common.noData", "데이터가 없습니다")}
+                  <div className="overflow-x-auto">
+                    <h3 className="text-sm font-semibold text-foreground mb-2">
+                      {t("globalDashboard.learnerBreakdown", "학습자별 현황")}
+                    </h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("globalDashboard.learner", "학습자")}</TableHead>
+                          <TableHead>{t("globalDashboard.entity", "지점")}</TableHead>
+                          <TableHead className="text-center">{t("globalDashboard.activeShort", "활성")}</TableHead>
+                          <TableHead className="text-right">{t("globalDashboard.avgProgress", "평균 진도")}</TableHead>
+                          <TableHead className="text-center">{t("globalDashboard.mandShort", "필수")}</TableHead>
+                          {activeTracks.map((tr) => (
+                            <TableHead key={tr.id} className="text-center text-xs">
+                              {(isEn ? tr.title_en : tr.title) || tr.title}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {drilledBranches.flatMap((r) =>
+                          r.userRows.map(({ user, avg, tracks, active, mandDone }) => (
+                            <TableRow key={user.user_id}>
+                              <TableCell className="font-medium text-sm">
+                                {user.full_name || user.email || user.user_id.slice(0, 8)}
                               </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {(isEn ? r.branch.name_en : r.branch.name) || r.branch.name}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <span className={`inline-block h-2 w-2 rounded-full ${active ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
+                              </TableCell>
+                              <TableCell className="text-right text-sm">{avg}%</TableCell>
+                              <TableCell className="text-center">
+                                {mandatoryCourseIds.size === 0 ? (
+                                  <span className="text-muted-foreground text-xs">—</span>
+                                ) : mandDone ? (
+                                  <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                                    ✓
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-rose-600 border-rose-300/40">!</Badge>
+                                )}
+                              </TableCell>
+                              {tracks.map(({ track, complete }) => (
+                                <TableCell key={track.id} className="text-center">
+                                  {complete ? (
+                                    <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                                      <Trophy className="h-3 w-3 mr-1" />
+                                      {t("globalDashboard.done", "완료")}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-muted-foreground">—</Badge>
+                                  )}
+                                </TableCell>
+                              ))}
                             </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -763,5 +762,59 @@ export default function AdminGlobalDashboard() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Small presentational helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const toneMap: Record<string, { bg: string; fg: string; bar: string }> = {
+  primary: { bg: "bg-primary/10", fg: "text-primary", bar: "bg-primary" },
+  emerald: { bg: "bg-emerald-500/10", fg: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500" },
+  blue:    { bg: "bg-blue-500/10",    fg: "text-blue-600 dark:text-blue-400",       bar: "bg-blue-500" },
+  amber:   { bg: "bg-amber-500/10",   fg: "text-amber-600 dark:text-amber-400",     bar: "bg-amber-500" },
+};
+
+function Kpi({
+  icon: Icon, label, value, sub, tone = "primary", progress,
+}: {
+  icon: any; label: string; value: string; sub?: string;
+  tone?: "primary" | "emerald" | "blue" | "amber"; progress?: number;
+}) {
+  const t = toneMap[tone];
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 min-w-0">
+      <div className={`h-9 w-9 rounded-lg ${t.bg} flex items-center justify-center shrink-0`}>
+        <Icon className={`h-4 w-4 ${t.fg}`} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] text-muted-foreground leading-tight whitespace-nowrap">{label}</p>
+        <p className="text-xl font-bold text-foreground leading-tight">{value}</p>
+        {progress !== undefined ? (
+          <div className="h-1 w-full bg-muted rounded-full overflow-hidden mt-1">
+            <div className={`h-full ${t.bar} transition-all`} style={{ width: `${Math.min(100, progress)}%` }} />
+          </div>
+        ) : null}
+        {sub && <p className="text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+function MetricRow({
+  label, value, icon: Icon, disabled,
+}: { label: string; value: number; icon: any; disabled?: boolean }) {
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <Icon className="h-3 w-3 text-muted-foreground shrink-0" />
+      <span className="text-[11px] text-muted-foreground w-14 shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className={`h-full ${disabled ? "bg-muted-foreground/20" : heatColor(value)} transition-all`} style={{ width: `${value}%` }} />
+      </div>
+      <span className={`text-[11px] font-semibold w-9 text-right tabular-nums ${disabled ? "text-muted-foreground" : "text-foreground"}`}>
+        {disabled ? "—" : `${value}%`}
+      </span>
+    </div>
   );
 }
