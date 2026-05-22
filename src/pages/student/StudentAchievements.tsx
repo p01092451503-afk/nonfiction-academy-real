@@ -438,8 +438,12 @@ const StudentAchievements = () => {
                     return (
                       <div key={badge.id} className={`stat-card text-center !p-4 ${!earned ? "opacity-40 grayscale" : ""}`}>
                         <Icon className={`h-8 w-8 mx-auto mb-2 ${earned ? "text-warning" : "text-muted-foreground"}`} />
-                        <h3 className="text-sm font-medium text-foreground">{badge.name}</h3>
-                        <p className="text-[10px] text-muted-foreground mt-1">{badge.description}</p>
+                        <h3 className="text-sm font-medium text-foreground">
+                          {badge.key ? t(`achievements.placeholderBadges.${badge.key}.name`, badge.name || "") : badge.name}
+                        </h3>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {badge.key ? t(`achievements.placeholderBadges.${badge.key}.description`, badge.description || "") : badge.description}
+                        </p>
                         {earned && <p className="text-[10px] text-success font-medium mt-1.5">{t("achievements.earned")}</p>}
                       </div>
                     );
