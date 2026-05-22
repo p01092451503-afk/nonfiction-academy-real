@@ -32,7 +32,7 @@ import {
   getContentDescription,
   getContentVideoUrl,
   getContentVideoProvider,
-  getCourseTitleByLang,
+  getCourseTitleByLangWithContentFallback,
   hasUploadedContent,
 } from "@/lib/courseContentI18n";
 
