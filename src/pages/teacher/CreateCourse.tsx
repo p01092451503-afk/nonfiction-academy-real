@@ -871,7 +871,7 @@ const CreateCourse = () => {
         }))
         .filter((row) => !!row.title);
       // Remove rows whose translation got cleared so stale KO copies don't linger.
-      const langsWithRows = new Set(courseI18nRows.map((r) => r.language_code));
+      const langsWithRows = new Set<string>(courseI18nRows.map((r) => r.language_code as string));
       const langsToClear = (["en", "zh-CN", "ja"] as string[]).filter((l) => !langsWithRows.has(l));
       if (langsToClear.length) {
         await supabase.from("course_i18n").delete()
