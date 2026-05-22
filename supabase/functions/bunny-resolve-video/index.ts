@@ -97,12 +97,14 @@ async function signProxyToken(authKey: string, videoId: string, cdnHostname: str
 }
 
 async function ensureAllowedReferrers(libraryId: string, apiKey: string | undefined, hostnames: Array<string | null>) {
-  if (!isConfigured(apiKey)) return;
+  // api.bunny.net requires the Account API Key, NOT the Stream Library API Key.
+  const accountKey = Deno.env.get("BUNNY_ACCOUNT_API_KEY")?.trim() || apiKey;
+  if (!isConfigured(accountKey)) return;
   const uniqueHosts = [...new Set(hostnames.filter((host): host is string => isConfigured(host)))] ;
   await Promise.all(uniqueHosts.map(async (host) => {
     const res = await fetch(`https://api.bunny.net/videolibrary/${libraryId}/addAllowedReferrer`, {
       method: "POST",
-      headers: { AccessKey: apiKey!, "Content-Type": "application/json", accept: "application/json" },
+      headers: { AccessKey: accountKey!, "Content-Type": "application/json", accept: "application/json" },
       body: JSON.stringify({ Hostname: host }),
     }).catch(() => null);
     if (res && !res.ok) console.error(`Failed to add Bunny allowed referrer: ${host} (${res.status})`);
