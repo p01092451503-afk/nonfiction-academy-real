@@ -59,12 +59,19 @@ export default defineConfig(({ mode }) => ({
         // Avoid runtime caching for Supabase API (always go network)
         runtimeCaching: [
           {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: { cacheName: "html", networkTimeoutSeconds: 3 },
+          },
+          {
             urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
             handler: "StaleWhileRevalidate",
             options: { cacheName: "google-fonts", expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 } },
           },
           {
-            urlPattern: ({ request }) => request.destination === "image",
+            urlPattern: ({ request, url }) =>
+              request.destination === "image" &&
+              !/\/(?:apple-touch-icon|icon-|nonfiction-(?:apple-touch-icon|pwa-icon|pwa-maskable))/.test(url.pathname),
             handler: "StaleWhileRevalidate",
             options: { cacheName: "images", expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 } },
           },

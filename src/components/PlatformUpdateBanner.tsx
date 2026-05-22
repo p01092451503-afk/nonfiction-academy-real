@@ -87,16 +87,20 @@ export default function PlatformUpdateBanner() {
     setUpdate(null);
   };
 
-  const handleReload = () => {
-    // Clear caches for PWA + hard reload
+  const handleReload = async () => {
+    // Clear caches for PWA + unregister old SW so stale icons/manifests cannot win again.
     if ("caches" in window) {
-      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+      const keys = await caches.keys().catch(() => []);
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
     }
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.update()));
+      const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
+      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
     }
     handleDismiss();
-    setTimeout(() => window.location.reload(), 100);
+    const url = new URL(window.location.href);
+    url.searchParams.set("pwa-refresh", Date.now().toString());
+    setTimeout(() => window.location.replace(url.toString()), 100);
   };
 
   if (!update) return null;
