@@ -199,22 +199,25 @@ const CreateCourse = () => {
         .select("*")
         .eq("course_id", editCourseId)
         .in("language_code", ["en", "zh-CN", "ja"]);
+      // Load course i18n. Mark "manual" only when stored value actually differs from the
+      // KO original — otherwise the slot is stale (auto-translation never succeeded) and
+      // must remain eligible for re-translation, instead of being permanently locked.
+      const koTitleRaw = (course.title || "").trim();
+      const koDescRaw = (course.description || "").trim();
       (courseI18ns || []).forEach((row: any) => {
+        const tVal = row.title || "";
+        const dVal = row.description || "";
+        const titleIsManual = !!tVal && tVal.trim() !== koTitleRaw;
+        const descIsManual = !!dVal && dVal.trim() !== koDescRaw;
         if (row.language_code === "en") {
-          setEnTitle(row.title || "");
-          setEnDescription(row.description || "");
-          if (row.title) setEnTitleManual(true);
-          if (row.description) setEnDescManual(true);
+          setEnTitle(tVal); setEnDescription(dVal);
+          setEnTitleManual(titleIsManual); setEnDescManual(descIsManual);
         } else if (row.language_code === "zh-CN") {
-          setZhTitle(row.title || "");
-          setZhDescription(row.description || "");
-          if (row.title) setZhTitleManual(true);
-          if (row.description) setZhDescManual(true);
+          setZhTitle(tVal); setZhDescription(dVal);
+          setZhTitleManual(titleIsManual); setZhDescManual(descIsManual);
         } else if (row.language_code === "ja") {
-          setJaTitle(row.title || "");
-          setJaDescription(row.description || "");
-          if (row.title) setJaTitleManual(true);
-          if (row.description) setJaDescManual(true);
+          setJaTitle(tVal); setJaDescription(dVal);
+          setJaTitleManual(titleIsManual); setJaDescManual(descIsManual);
         }
       });
 
@@ -448,6 +451,75 @@ const CreateCourse = () => {
     } finally {
       setTranslatingCourse(false);
     }
+  };
+
+  /**
+   * Ensure every non-KO slot has a real translation BEFORE saving.
+   * - Manually edited slots stay as-is.
+   * - Empty / KO-identical slots are translated synchronously here.
+   * - If translation still fails, the slot stays empty (we skip saving it)
+   *   so we never persist KO text into an EN/ZH/JA row again.
+   * Returns the resolved {en, zh, ja} title/desc values to use when building rows.
+   */
+  const ensureCourseI18nReady = async () => {
+    const koTitle = title.trim();
+    const koDesc = description.trim();
+    const resolved = {
+      en: { title: enTitle, desc: enDescription },
+      "zh-CN": { title: zhTitle, desc: zhDescription },
+      ja: { title: jaTitle, desc: jaDescription },
+    };
+    const targets: { lang: TargetLang; needTitle: boolean; needDesc: boolean }[] = [
+      {
+        lang: "en",
+        needTitle: !enTitleManual && !!koTitle && (!enTitle.trim() || enTitle.trim() === koTitle),
+        needDesc: !enDescManual && !!koDesc && (!enDescription.trim() || enDescription.trim() === koDesc),
+      },
+      {
+        lang: "zh-CN",
+        needTitle: !zhTitleManual && !!koTitle && (!zhTitle.trim() || zhTitle.trim() === koTitle),
+        needDesc: !zhDescManual && !!koDesc && (!zhDescription.trim() || zhDescription.trim() === koDesc),
+      },
+      {
+        lang: "ja",
+        needTitle: !jaTitleManual && !!koTitle && (!jaTitle.trim() || jaTitle.trim() === koTitle),
+        needDesc: !jaDescManual && !!koDesc && (!jaDescription.trim() || jaDescription.trim() === koDesc),
+      },
+    ];
+    if (!targets.some((t) => t.needTitle || t.needDesc)) return resolved;
+    setTranslatingCourse(true);
+    try {
+      await Promise.all(targets.map(async (tgt) => {
+        if (!tgt.needTitle && !tgt.needDesc) return;
+        const inputs: string[] = [];
+        if (tgt.needTitle) inputs.push(koTitle);
+        if (tgt.needDesc) inputs.push(koDesc);
+        try {
+          const out = await translateKoTo(tgt.lang, inputs);
+          let i = 0;
+          if (tgt.needTitle) {
+            const v = (out[i++] || "").trim();
+            // Reject KO-equivalent fallback so we don't re-poison the slot.
+            const safe = v && v !== koTitle ? v : "";
+            resolved[tgt.lang].title = safe;
+            if (tgt.lang === "en") setEnTitle(safe);
+            if (tgt.lang === "zh-CN") setZhTitle(safe);
+            if (tgt.lang === "ja") setJaTitle(safe);
+          }
+          if (tgt.needDesc) {
+            const v = (out[i++] || "").trim();
+            const safe = v && v !== koDesc ? v : "";
+            resolved[tgt.lang].desc = safe;
+            if (tgt.lang === "en") setEnDescription(safe);
+            if (tgt.lang === "zh-CN") setZhDescription(safe);
+            if (tgt.lang === "ja") setJaDescription(safe);
+          }
+        } catch { /* leave slot empty rather than fall back to KO */ }
+      }));
+    } finally {
+      setTranslatingCourse(false);
+    }
+    return resolved;
   };
 
   const buildDraftData = useCallback(() => ({
@@ -772,17 +844,40 @@ const CreateCourse = () => {
       );
       await supabase.from("course_contents").delete().eq("course_id", editCourseId!);
 
-      // Save course i18n (en, zh-CN, ja)
-      const courseI18nRows = [
-        { lang: "en", title: enTitle, desc: enDescription },
-        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
-        { lang: "ja", title: jaTitle, desc: jaDescription },
-      ].filter((r) => r.title || r.desc).map((r) => ({
-        course_id: editCourseId!,
-        language_code: r.lang,
-        title: r.title || title,
-        description: r.desc || description || null,
-      }));
+      // Save course i18n (en, zh-CN, ja) — fill in missing slots BEFORE saving so we
+      // never persist KO text into a non-KO row (which would later be misread as a
+      // "manual edit" and lock translations permanently).
+      const resolvedI18n = await ensureCourseI18nReady();
+      const koTitleTrim = title.trim();
+      const koDescTrim = description.trim();
+      const courseI18nRows = (["en", "zh-CN", "ja"] as TargetLang[])
+        .map((lang) => {
+          const r = resolvedI18n[lang];
+          const tVal = (r.title || "").trim();
+          const dVal = (r.desc || "").trim();
+          // Drop KO-equivalent values so they don't get saved.
+          const safeTitle = tVal && tVal !== koTitleTrim ? tVal : "";
+          const safeDesc = dVal && dVal !== koDescTrim ? dVal : "";
+          return { lang, title: safeTitle, desc: safeDesc };
+        })
+        .filter((r) => r.title || r.desc)
+        .map((r) => ({
+          course_id: editCourseId!,
+          language_code: r.lang,
+          // Title is NOT NULL in schema — if only desc translated, mirror desc-language title from KO is unsafe;
+          // require an actual translated title to write the row at all.
+          title: r.title,
+          description: r.desc || null,
+        }))
+        .filter((row) => !!row.title);
+      // Remove rows whose translation got cleared so stale KO copies don't linger.
+      const langsWithRows = new Set<string>(courseI18nRows.map((r) => r.language_code as string));
+      const langsToClear = (["en", "zh-CN", "ja"] as string[]).filter((l) => !langsWithRows.has(l));
+      if (langsToClear.length) {
+        await supabase.from("course_i18n").delete()
+          .eq("course_id", editCourseId!)
+          .in("language_code", langsToClear);
+      }
       if (courseI18nRows.length) {
         await supabase.from("course_i18n").upsert(courseI18nRows, { onConflict: "course_id,language_code" });
       }
@@ -911,17 +1006,27 @@ const CreateCourse = () => {
         course.thumbnail_url = selectedLessonImageUrl;
       }
 
-      // Save course i18n (en, zh-CN, ja)
-      const courseI18nRows = [
-        { lang: "en", title: enTitle, desc: enDescription },
-        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
-        { lang: "ja", title: jaTitle, desc: jaDescription },
-      ].filter((r) => r.title || r.desc).map((r) => ({
-        course_id: course.id,
-        language_code: r.lang,
-        title: r.title || title,
-        description: r.desc || description || null,
-      }));
+      // Save course i18n (en, zh-CN, ja) — ensure translations are ready first; never
+      // fall back to KO text (that previously caused permanent "manual edit" lock-in).
+      const resolvedI18nNew = await ensureCourseI18nReady();
+      const koTitleTrimNew = title.trim();
+      const koDescTrimNew = description.trim();
+      const courseI18nRows = (["en", "zh-CN", "ja"] as TargetLang[])
+        .map((lang) => {
+          const r = resolvedI18nNew[lang];
+          const tVal = (r.title || "").trim();
+          const dVal = (r.desc || "").trim();
+          const safeTitle = tVal && tVal !== koTitleTrimNew ? tVal : "";
+          const safeDesc = dVal && dVal !== koDescTrimNew ? dVal : "";
+          return { lang, title: safeTitle, desc: safeDesc };
+        })
+        .filter((r) => !!r.title) // require an actual translated title (NOT NULL column)
+        .map((r) => ({
+          course_id: course.id,
+          language_code: r.lang,
+          title: r.title,
+          description: r.desc || null,
+        }));
       if (courseI18nRows.length) {
         await supabase.from("course_i18n").insert(courseI18nRows);
       }
