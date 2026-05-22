@@ -152,10 +152,22 @@ const StudentAchievements = () => {
   const badgeDonut = [{ name: "badges", value: badgePercent, fill: "hsl(var(--warning))" }];
 
   // Course progress chart with color by progress
-  const courseChartData = courseProgress.map((c: any) => ({
-    name: (c.courses?.title || "-").replace(/^\d+(차시|강|장)\.\s*/, "").slice(0, 12),
-    progress: c.progress || 0,
-  }));
+  const lang = (i18n.language || "ko").startsWith("zh")
+    ? "zh-CN"
+    : (i18n.language || "ko").startsWith("ja")
+    ? "ja"
+    : (i18n.language || "ko").startsWith("en")
+    ? "en"
+    : "ko";
+  const courseChartData = courseProgress.map((c: any) => {
+    const base = c.courses?.title || "-";
+    const tr = (c.courses?.course_i18n || []).find((r: any) => r.language_code === lang);
+    const localized = (lang !== "ko" && tr?.title) ? tr.title : base;
+    return {
+      name: localized.replace(/^\d+(차시|강|장)\.\s*/, "").slice(0, 12),
+      progress: c.progress || 0,
+    };
+  });
   const getBarColor = (p: number) => {
     if (p >= 80) return "hsl(var(--success))";
     if (p >= 50) return "hsl(var(--warning))";
