@@ -18,7 +18,7 @@ import { normalizeLang } from "@/lib/i18nLang";
 
 const TeacherDashboard = () => {
   const { user } = useUser();
-  const { scopeIds, branch, hasDepartment } = useLeaderScope();
+  const { scopeIds, branch, hasDepartment, isLoading: scopeLoading } = useLeaderScope();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
   const lang = normalizeLang(i18n.language);
@@ -255,6 +255,15 @@ const TeacherDashboard = () => {
   ];
 
   // ── 빈 상태 ────────────────────────────────────────────
+  if (scopeLoading) {
+    return (
+      <DashboardLayout role="teacher">
+        <div className="rounded-xl border border-border bg-card p-10 text-center">
+          <p className="text-sm text-muted-foreground">{t("common.loading", "불러오는 중...")}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
   if (!hasDepartment) {
     return (
       <DashboardLayout role="teacher">
