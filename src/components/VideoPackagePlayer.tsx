@@ -391,6 +391,24 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
       const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
       if (dur > 0) durationCache = dur;
+
+      // First-watch forward-seek limit: if user scrubbed past max-watched, snap back.
+      const itemDone =
+        completedItems.has(activeItem.id) ||
+        (() => { try { return localStorage.getItem(DONE_KEY(contentId, activeItem.id)) === "1"; } catch { return false; } })();
+      if (!itemDone && cur > maxWatchedRef.current + SEEK_TOLERANCE && player?.setCurrentTime) {
+        try { player.setCurrentTime(Math.max(0, maxWatchedRef.current)); } catch {}
+        setProgress({ current: maxWatchedRef.current, duration: dur });
+        return;
+      }
+      if (cur > maxWatchedRef.current) {
+        maxWatchedRef.current = cur;
+        const sec0 = Math.floor(cur);
+        if (sec0 > 0 && sec0 % 5 === 0) {
+          try { localStorage.setItem(MAX_KEY(contentId, activeItem.id), String(cur)); } catch {}
+        }
+      }
+
       setProgress({ current: cur, duration: dur });
 
       const sec = Math.floor(cur);
