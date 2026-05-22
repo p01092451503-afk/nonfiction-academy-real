@@ -466,10 +466,40 @@ const ContentPlayer = () => {
     return () => { cancelled = true; };
   }, [currentContent?.id, user?.id]);
 
+  useEffect(() => {
+    if (!currentContent) return;
+    const provider = getVideoProvider(currentContent);
+    const videoUrl = getVideoUrl(currentContent);
+    if (!isBunnyVideo(videoUrl, provider)) {
+      setBunnyEmbedUrl(null);
+      return;
+    }
+    const videoId = getBunnyVideoId(videoUrl);
+    if (!videoId) {
+      setBunnyEmbedUrl(null);
+      return;
+    }
+    let cancelled = false;
+    setBunnyEmbedUrl(null);
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("bunny-resolve-video", {
+        body: { videoId, url: videoUrl },
+      });
+      if (cancelled) return;
+      if (!error && (data?.embedUrl || data?.playUrl)) {
+        const resolvedUrl = toBunnyEmbedUrl(data.embedUrl || data.playUrl);
+        const sep = resolvedUrl.includes("?") ? "&" : "?";
+        setBunnyEmbedUrl(`${resolvedUrl}${sep}autoplay=false&muted=false&preload=true&responsive=true&playsinline=true&disableIosPlayer=true`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentContent?.id]);
+
   const getVideoEmbed = (url: string | null, provider: string | null) => {
     if (!url) return null;
     if (isMangoboard(url)) return normalizeMangoboardUrl(url);
     if (isKollus(provider)) return kollusEmbedUrl;
+    if (isBunnyVideo(url, provider)) return bunnyEmbedUrl;
 
     const resolvedYouTubeId = getYouTubeVideoId(url);
     if ((provider === "youtube" || url.includes("youtube.com") || url.includes("youtu.be")) && resolvedYouTubeId) {
