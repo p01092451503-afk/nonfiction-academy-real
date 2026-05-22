@@ -274,12 +274,28 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     };
   }, [activeItem?.id, playbackUrl, t]);
 
+  const isItemDone = (id: string) => {
+    if (completedItems.has(id)) return true;
+    try {
+      return localStorage.getItem(DONE_KEY(contentId, id)) === "1";
+    } catch {
+      return false;
+    }
+  };
+
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
     const cur = v.currentTime;
     const dur = v.duration || 0;
     setProgress({ current: cur, duration: dur });
+    // Track max-watched (only forward via natural playback)
+    if (!seekGuardRef.current && cur > maxWatchedRef.current) {
+      maxWatchedRef.current = cur;
+      if (Math.floor(cur) % 5 === 0) {
+        try { localStorage.setItem(MAX_KEY(contentId, activeItem.id), String(cur)); } catch {}
+      }
+    }
     // Save position every ~5s
     if (Math.floor(cur) % 5 === 0) {
       try {
@@ -293,6 +309,20 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
         next.add(activeItem.id);
         return next;
       });
+    }
+  };
+
+  // Block forward seek during first watch; allow free seek after this item is completed.
+  const handleSeeking = () => {
+    const v = videoRef.current;
+    if (!v || !activeItem) return;
+    if (isItemDone(activeItem.id)) return;
+    if (seekGuardRef.current) return;
+    const limit = maxWatchedRef.current + SEEK_TOLERANCE;
+    if (v.currentTime > limit) {
+      seekGuardRef.current = true;
+      v.currentTime = Math.max(0, maxWatchedRef.current);
+      setTimeout(() => { seekGuardRef.current = false; }, 200);
     }
   };
 
