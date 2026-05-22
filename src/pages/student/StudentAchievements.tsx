@@ -189,10 +189,11 @@ const StudentAchievements = () => {
     };
   });
   const formatAxisCourseName = (name: string) => name.length > 16 ? `${name.slice(0, 16)}…` : name;
-  const getBarColor = (p: number) => {
-    if (p >= 80) return "hsl(var(--success))";
-    if (p >= 50) return "hsl(var(--warning))";
-    return "hsl(var(--primary))";
+  const getBarColor = (p: number, idx: number) => {
+    // 100%인 항목들이 모두 같은 색으로 단조롭게 보이는 것을 방지하기 위해 교차 색상 적용
+    if (p >= 80) return idx % 2 === 0 ? "hsl(var(--success))" : "hsl(var(--primary))";
+    if (p >= 50) return idx % 2 === 0 ? "hsl(var(--warning))" : "hsl(var(--chart-2))";
+    return idx % 2 === 0 ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))";
   };
 
   return (
@@ -350,16 +351,16 @@ const StudentAchievements = () => {
             {courseChartData.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("common.noData")}</p>
             ) : (
-              <div style={{ height: Math.max(courseChartData.length * 36, 200) }}>
+              <div style={{ height: Math.max(courseChartData.length * 24, 180) }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={courseChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+                  <BarChart data={courseChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }} barCategoryGap="45%">
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} tickFormatter={formatAxisCourseName} width={120} />
                     <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
-                    <Bar dataKey="progress" name={t("achievements.progressRate")} radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="progress" name={t("achievements.progressRate")} radius={[0, 4, 4, 0]} barSize={10}>
                       {courseChartData.map((entry, idx) => (
-                        <Cell key={idx} fill={getBarColor(entry.progress)} />
+                        <Cell key={idx} fill={getBarColor(entry.progress, idx)} />
                       ))}
                     </Bar>
                   </BarChart>
