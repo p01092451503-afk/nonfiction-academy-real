@@ -102,7 +102,7 @@ const StudentAchievements = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("progress, courses(title)")
+        .select("progress, courses(title, course_i18n(language_code, title))")
         .eq("user_id", user!.id)
         .eq("status", "approved")
         .order("progress", { ascending: false })
