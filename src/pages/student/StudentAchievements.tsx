@@ -357,7 +357,7 @@ const StudentAchievements = () => {
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} tickFormatter={formatAxisCourseName} width={120} />
                     <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
-                    <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="progress" name={t("achievements.progressRate")} radius={[0, 4, 4, 0]}>
                       {courseChartData.map((entry, idx) => (
                         <Cell key={idx} fill={getBarColor(entry.progress)} />
                       ))}
