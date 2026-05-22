@@ -355,7 +355,7 @@ const StudentAchievements = () => {
                   <BarChart data={courseChartData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} ticks={[0, 25, 50, 75, 100]} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} tickFormatter={formatAxisCourseName} width={120} />
                     <Tooltip {...chartTooltipDefaults} content={<ChartTooltipContent unit="%" />} />
                     <Bar dataKey="progress" radius={[0, 4, 4, 0]}>
                       {courseChartData.map((entry, idx) => (
