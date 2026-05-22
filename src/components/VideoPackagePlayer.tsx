@@ -146,6 +146,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     setIframeStartTime(null);
     setShowResumeDialog(false);
     setProgress({ current: 0, duration: activeItem.duration_seconds || 0 });
+    // Hydrate per-item max-watched (for first-watch forward-seek limit)
+    try {
+      const rawMax = localStorage.getItem(MAX_KEY(contentId, activeItem.id));
+      const maxV = rawMax ? parseFloat(rawMax) : 0;
+      maxWatchedRef.current = isFinite(maxV) && maxV > 0 ? maxV : 0;
+    } catch {
+      maxWatchedRef.current = 0;
+    }
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
       const saved = raw ? parseFloat(raw) : 0;
