@@ -1090,7 +1090,15 @@
     "legacyDesc": "既存LMSから移行された受講履歴です。(参考用)",
     "legacyEmpty": "過去の学習履歴はありません。",
     "legacyCompleted": "修了",
-    "legacyNotCompleted": "未修了"
+    "legacyNotCompleted": "未修了",
+    "passwordRequirements": "パスワード要件",
+    "pwReqLength": "8文字以上",
+    "pwReqLetter": "英字を含む (a-z, A-Z)",
+    "pwReqNumber": "数字を含む (0-9)",
+    "pwReqSpecial": "特殊文字を含む (!@#$ など)",
+    "pwReqHint": "漏洩したことのあるパスワード(例: password、12345678など)は使用できません。",
+    "passwordRequirementsNotMet": "パスワード要件をすべて満たす必要があります。",
+    "passwordWeak": "このパスワードは漏洩したことがあるか、単純すぎます。別のパスワードを使用してください。"
   },
   "assessment": {
     "title": "評価",

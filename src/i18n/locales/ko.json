@@ -1090,7 +1090,15 @@
     "legacyDesc": "기존 LMS에서 이관된 수강 이력입니다. (참고용)",
     "legacyEmpty": "이전 학습 이력이 없습니다.",
     "legacyCompleted": "수료",
-    "legacyNotCompleted": "미수료"
+    "legacyNotCompleted": "미수료",
+    "passwordRequirements": "비밀번호 요구사항",
+    "pwReqLength": "최소 8자 이상",
+    "pwReqLetter": "영문자 포함 (a-z, A-Z)",
+    "pwReqNumber": "숫자 포함 (0-9)",
+    "pwReqSpecial": "특수문자 포함 (!@#$ 등)",
+    "pwReqHint": "유출된 적이 있는 비밀번호(예: password, 12345678 등)는 사용할 수 없습니다.",
+    "passwordRequirementsNotMet": "비밀번호 요구사항을 모두 충족해야 합니다.",
+    "passwordWeak": "이 비밀번호는 유출된 적이 있거나 너무 단순합니다. 다른 비밀번호를 사용해 주세요."
   },
   "assessment": {
     "title": "평가",

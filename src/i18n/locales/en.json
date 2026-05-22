@@ -1093,7 +1093,15 @@
     "legacyDesc": "Course history migrated from the previous LMS. (For reference)",
     "legacyEmpty": "No previous learning history.",
     "legacyCompleted": "Completed",
-    "legacyNotCompleted": "Not Completed"
+    "legacyNotCompleted": "Not Completed",
+    "passwordRequirements": "Password Requirements",
+    "pwReqLength": "At least 8 characters",
+    "pwReqLetter": "Contains letters (a-z, A-Z)",
+    "pwReqNumber": "Contains numbers (0-9)",
+    "pwReqSpecial": "Contains special characters (!@#$ etc.)",
+    "pwReqHint": "Passwords known to be compromised (e.g., password, 12345678) cannot be used.",
+    "passwordRequirementsNotMet": "All password requirements must be met.",
+    "passwordWeak": "This password has been compromised or is too simple. Please use a different one."
   },
   "assessment": {
     "title": "Assessment",
