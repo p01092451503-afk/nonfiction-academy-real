@@ -294,7 +294,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
               <img
                 src={nonfictionLogo}
                 alt="NONFICTION"
-                className="h-[1.34rem] w-auto select-none"
+                className="h-7 w-auto select-none"
                 draggable={false}
               />
               <span className="mt-4 inline-block text-[11px] tracking-[0.1em] font-medium text-muted-foreground bg-accent px-2.5 py-0.5 rounded-full" aria-label={`${t("common.role", "역할")}: ${roleLabel}`}>
