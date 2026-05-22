@@ -16,6 +16,7 @@ import AppErrorBoundary from "./components/AppErrorBoundary";
 import RouteSkeleton from "./components/RouteSkeleton";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import PlatformUpdateBanner from "./components/PlatformUpdateBanner";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const lazyWithRetry = <T extends { default: React.ComponentType<any> }>(factory: () => Promise<T>) =>
   lazy(async () => {
@@ -55,6 +56,7 @@ const AdminAttendance = lazyWithRetry(() => import("./pages/admin/AdminAttendanc
 const AdminCompletion = lazyWithRetry(() => import("./pages/admin/AdminCompletion"));
 const AdminTraffic = lazyWithRetry(() => import("./pages/admin/AdminTraffic"));
 const AdminPlatformUpdates = lazyWithRetry(() => import("./pages/admin/AdminPlatformUpdates"));
+const AdminPWASettings = lazyWithRetry(() => import("./pages/admin/AdminPWASettings"));
 const AdminBranches = lazyWithRetry(() => import("./pages/admin/AdminBranches"));
 const AdminNotifications = lazyWithRetry(() => import("./pages/admin/AdminNotifications"));
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/admin/AdminAnnouncements"));
@@ -141,6 +143,7 @@ const AppRoutes = () => {
           <Route path="/admin/completion" element={<AdminRoute><AdminCompletion /></AdminRoute>} />
           <Route path="/admin/traffic" element={<AdminRoute><AdminTraffic /></AdminRoute>} />
           <Route path="/admin/platform-updates" element={<AdminRoute><AdminPlatformUpdates /></AdminRoute>} />
+          <Route path="/admin/pwa-settings" element={<AdminRoute><AdminPWASettings /></AdminRoute>} />
           <Route path="/admin/branches" element={<AdminRoute><AdminBranches /></AdminRoute>} />
           <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
           <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
@@ -192,6 +195,7 @@ const App = () => (
           <AdminWebVitalsGate />
           <PWAUpdatePrompt />
           <PlatformUpdateBanner />
+          <PWAInstallPrompt />
           <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>

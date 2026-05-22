@@ -15,7 +15,13 @@ type Update = {
   active: boolean;
   expires_at: string | null;
   created_at: string;
+  pwa_only?: boolean;
 };
+
+const isStandalone = () =>
+  // @ts-ignore
+  window.navigator.standalone === true ||
+  window.matchMedia?.("(display-mode: standalone)")?.matches === true;
 
 const DISMISS_KEY = "platform-update-dismissed";
 
@@ -48,10 +54,12 @@ export default function PlatformUpdateBanner() {
       .limit(5);
     if (!data) return;
     const dismissed = dismissedIds();
+    const standalone = isStandalone();
     const candidate = (data as Update[]).find(
       (u) =>
         !dismissed.includes(u.id) &&
         matchesAudience(u) &&
+        (!u.pwa_only || standalone) &&
         (!u.expires_at || new Date(u.expires_at) > new Date()),
     );
     setUpdate(candidate || null);

@@ -1674,6 +1674,7 @@ export type Database = {
           expires_at: string | null
           id: string
           message: string
+          pwa_only: boolean
           require_reload: boolean
           severity: string
           target_audience: string
@@ -1687,6 +1688,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           message: string
+          pwa_only?: boolean
           require_reload?: boolean
           severity?: string
           target_audience?: string
@@ -1700,6 +1702,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           message?: string
+          pwa_only?: boolean
           require_reload?: boolean
           severity?: string
           target_audience?: string
@@ -1797,6 +1800,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pwa_settings: {
+        Row: {
+          app_name: string
+          background_color: string
+          created_at: string
+          description: string
+          id: string
+          install_prompt_enabled: boolean
+          install_prompt_interval_days: number
+          short_name: string
+          singleton: boolean
+          theme_color: string
+          updated_at: string
+        }
+        Insert: {
+          app_name?: string
+          background_color?: string
+          created_at?: string
+          description?: string
+          id?: string
+          install_prompt_enabled?: boolean
+          install_prompt_interval_days?: number
+          short_name?: string
+          singleton?: boolean
+          theme_color?: string
+          updated_at?: string
+        }
+        Update: {
+          app_name?: string
+          background_color?: string
+          created_at?: string
+          description?: string
+          id?: string
+          install_prompt_enabled?: boolean
+          install_prompt_interval_days?: number
+          short_name?: string
+          singleton?: boolean
+          theme_color?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       survey_answers: {
         Row: {
