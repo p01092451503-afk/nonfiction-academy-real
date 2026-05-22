@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight, Download, Languages } from "lucide-react";
+import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight, Download, Languages, FileText } from "lucide-react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -188,6 +188,79 @@ const downloadManualPdf = async (loc: LocalizedManual, lang: Lang) => {
     if (container.parentNode) container.parentNode.removeChild(container);
   }
 };
+
+const downloadManualDoc = (loc: LocalizedManual, lang: Lang) => {
+  const S = PDF_STRINGS[lang];
+  const today = new Date().toLocaleDateString(S.locale);
+  const sectionsHtml = loc.sections
+    .map(
+      (s, idx) => `
+        <h2 style="font-size:16pt;margin:18pt 0 6pt;color:#1a1a1a;">${idx + 1}. ${escapeHtml(s.title)}</h2>
+        <p style="color:#555;margin:0 0 8pt;font-size:11pt;">${escapeHtml(s.summary)}</p>
+        <ol style="margin:0 0 0 20pt;padding:0;">
+          ${s.steps.map((line) => `<li style="margin:4pt 0;font-size:11pt;">${escapeHtml(line)}</li>`).join("")}
+        </ol>
+        ${
+          s.tips && s.tips.length > 0
+            ? `<div style="margin-top:8pt;background:#fff8e6;border-left:3pt solid #d4a017;padding:8pt 12pt;">
+                <div style="font-size:9pt;font-weight:bold;color:#8a6d10;margin-bottom:3pt;">${S.tip}</div>
+                <ul style="margin:0 0 0 16pt;padding:0;">
+                  ${s.tips.map((t) => `<li style="font-size:10pt;color:#555;margin:2pt 0;">${escapeHtml(t)}</li>`).join("")}
+                </ul>
+              </div>`
+            : ""
+        }`,
+    )
+    .join("");
+
+  const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" lang="${S.htmlLang}">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(loc.label)} ${S.manualSuffix}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: "Malgun Gothic", "Yu Gothic", "Noto Sans KR", sans-serif; color: #1a1a1a; line-height: 1.6; font-size: 11pt; }
+    h1 { font-size: 22pt; margin: 0 0 4pt; }
+    .brand { font-size: 9pt; color: #666; letter-spacing: 1pt; }
+    .meta { font-size: 9pt; color: #666; margin-top: 4pt; }
+    .intro { background: #f6f6f6; padding: 12pt; margin: 14pt 0 18pt; font-size: 11pt; color: #333; }
+    hr { border: none; border-top: 1pt solid #1a1a1a; margin: 8pt 0 14pt; }
+    .footer { margin-top: 24pt; padding-top: 8pt; border-top: 1pt solid #e5e5e5; font-size: 9pt; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="brand">${S.brand}</div>
+  <h1>${escapeHtml(loc.label)} ${S.manualSuffix}</h1>
+  <div class="meta">${S.issued} ${today} · ${S.chapters.replace("{n}", String(loc.sections.length))}</div>
+  <hr />
+  <div class="intro">${escapeHtml(loc.intro)}</div>
+  ${sectionsHtml}
+  <div class="footer">${S.footer}</div>
+</body>
+</html>`;
+
+  const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const safeName = loc.label.replace(/[^\p{L}\p{N}]+/gu, "_");
+  a.href = url;
+  a.download = `NONFICTION_Academy_${safeName}_${lang}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 
 
 // ===== 학습자 매뉴얼 (한/영/일) — 매우 자세한 텍스트 기반 =====
@@ -1012,36 +1085,69 @@ const ManualPanel = ({ manual, query }: { manual: RoleManual; query: string }) =
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{loc.intro}</p>
               </div>
               {availableLangs.length > 1 ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="shrink-0 gap-2 whitespace-nowrap">
-                      <Languages className="h-4 w-4" />
-                      PDF 다운로드
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {availableLangs.map((lng) => (
-                      <DropdownMenuItem
-                        key={lng}
-                        onClick={() => downloadManualPdf(manual.i18n[lng]!, lng)}
-                        className="gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        {LANG_LABEL[lng]}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="shrink-0 gap-2 whitespace-nowrap">
+                        <Languages className="h-4 w-4" />
+                        PDF 다운로드
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {availableLangs.map((lng) => (
+                        <DropdownMenuItem
+                          key={lng}
+                          onClick={() => downloadManualPdf(manual.i18n[lng]!, lng)}
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          {LANG_LABEL[lng]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="shrink-0 gap-2 whitespace-nowrap">
+                        <FileText className="h-4 w-4" />
+                        Word 다운로드
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {availableLangs.map((lng) => (
+                        <DropdownMenuItem
+                          key={lng}
+                          onClick={() => downloadManualDoc(manual.i18n[lng]!, lng)}
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          {LANG_LABEL[lng]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadManualPdf(loc, "ko")}
-                  className="shrink-0 gap-2 whitespace-nowrap"
-                >
-                  <Download className="h-4 w-4" />
-                  PDF 다운로드
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadManualPdf(loc, "ko")}
+                    className="shrink-0 gap-2 whitespace-nowrap"
+                  >
+                    <Download className="h-4 w-4" />
+                    PDF 다운로드
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadManualDoc(loc, "ko")}
+                    className="shrink-0 gap-2 whitespace-nowrap"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Word 다운로드
+                  </Button>
+                </div>
               )}
             </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
