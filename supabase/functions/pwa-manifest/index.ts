@@ -8,6 +8,13 @@ const cors = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
+const iconVersion = "20260522b";
+const iconPaths = {
+  any192: `/nonfiction-pwa-icon-192-v${iconVersion}.png`,
+  any512: `/nonfiction-pwa-icon-512-v${iconVersion}.png`,
+  maskable512: `/nonfiction-pwa-maskable-512-v${iconVersion}.png`,
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
@@ -48,14 +55,15 @@ Deno.serve(async (req) => {
     short_name: s.short_name,
     description: s.description,
     start_url: "/",
+    id: `/?pwa-icon=${iconVersion}`,
     scope: "/",
     display: "standalone",
     background_color: s.background_color,
     theme_color: s.theme_color,
     icons: [
-      { src: "/icon-192.png?v=20260522", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icon-512.png?v=20260522", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon-maskable-512.png?v=20260522", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: iconPaths.any192, sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: iconPaths.any512, sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: iconPaths.maskable512, sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 
@@ -64,7 +72,9 @@ Deno.serve(async (req) => {
     headers: {
       ...cors,
       "Content-Type": "application/manifest+json; charset=utf-8",
-      "Cache-Control": "public, max-age=300",
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+      "Pragma": "no-cache",
+      "Expires": "0",
     },
   });
 });
