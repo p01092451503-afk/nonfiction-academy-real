@@ -545,15 +545,40 @@ const AdminBranches = () => {
               <Input value={staffForm.position} onChange={e => setStaffForm(f => ({ ...f, position: e.target.value }))} placeholder={t("admin.positionColumn")} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t("admin.roleColumn")}</label>
-              <Select value={staffForm.role} onValueChange={v => setStaffForm(f => ({ ...f, role: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">{t("roles.studentLabel")}</SelectItem>
-                  <SelectItem value="teacher">{t("roles.teacherLabel")}</SelectItem>
-                  <SelectItem value="admin">{t("roles.adminLabel")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">{t("admin.roleColumn")}</label>
+                <span className="text-xs text-muted-foreground">
+                  {t("admin.rolesMultiHint", "여러 역할을 동시에 지정할 수 있습니다")}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["student", "teacher", "admin"] as const).map((r) => {
+                  const checked = staffForm.roles.includes(r);
+                  return (
+                    <button
+                      type="button"
+                      key={r}
+                      onClick={() => {
+                        setStaffForm((f) => {
+                          const has = f.roles.includes(r);
+                          const next = has ? f.roles.filter((x) => x !== r) : [...f.roles, r];
+                          return { ...f, roles: next.length ? next : ["student"] };
+                        });
+                      }}
+                      className={`px-3 py-2 rounded-xl border text-sm transition ${
+                        checked
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border text-muted-foreground hover:border-foreground/40"
+                      }`}
+                    >
+                      {t(`roles.${r}Label`)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("admin.branchLeaderMultiHint", "한 지점에 러닝 리더(강사)를 여러 명 지정할 수 있습니다.")}
+              </p>
             </div>
           </div>
           <DialogFooter>
