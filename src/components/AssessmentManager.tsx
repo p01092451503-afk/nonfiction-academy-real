@@ -771,6 +771,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            </>
           )}
           <Button size="sm" className="h-8 text-xs gap-1" onClick={openEditAssessment}>
             {assessment ? <Pencil className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
