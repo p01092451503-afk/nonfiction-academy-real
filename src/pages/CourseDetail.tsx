@@ -1010,9 +1010,17 @@ const CourseDetail = () => {
           <ol className="space-y-1.5">
             {(() => {
               const isSequential = (course as any)?.is_sequential || false;
-              const publishedContents = contents
+              const allPublished = contents
                 .filter(c => c.is_published)
                 .filter(c => hasUploadedContent(c as any, mediaPackageContentIds, videoPackageContentIds));
+
+              // 학생 화면에서는 현재 UI 언어에 해당하는 차시만 노출.
+              // 해당 언어의 차시가 없으면 한국어(원본)로 폴백.
+              const inLang = allPublished.filter(c => (c.language_code || "ko") === currentLang);
+              const publishedContents = inLang.length > 0
+                ? inLang
+                : allPublished.filter(c => (c.language_code || "ko") === "ko");
+
               
               // Build assessment gate map: assessmentOrderIndex -> assessment
               // An assessment with order_index N acts as a gate AFTER content at position N
