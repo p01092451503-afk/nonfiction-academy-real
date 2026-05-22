@@ -1006,17 +1006,27 @@ const CreateCourse = () => {
         course.thumbnail_url = selectedLessonImageUrl;
       }
 
-      // Save course i18n (en, zh-CN, ja)
-      const courseI18nRows = [
-        { lang: "en", title: enTitle, desc: enDescription },
-        { lang: "zh-CN", title: zhTitle, desc: zhDescription },
-        { lang: "ja", title: jaTitle, desc: jaDescription },
-      ].filter((r) => r.title || r.desc).map((r) => ({
-        course_id: course.id,
-        language_code: r.lang,
-        title: r.title || title,
-        description: r.desc || description || null,
-      }));
+      // Save course i18n (en, zh-CN, ja) — ensure translations are ready first; never
+      // fall back to KO text (that previously caused permanent "manual edit" lock-in).
+      const resolvedI18nNew = await ensureCourseI18nReady();
+      const koTitleTrimNew = title.trim();
+      const koDescTrimNew = description.trim();
+      const courseI18nRows = (["en", "zh-CN", "ja"] as TargetLang[])
+        .map((lang) => {
+          const r = resolvedI18nNew[lang];
+          const tVal = (r.title || "").trim();
+          const dVal = (r.desc || "").trim();
+          const safeTitle = tVal && tVal !== koTitleTrimNew ? tVal : "";
+          const safeDesc = dVal && dVal !== koDescTrimNew ? dVal : "";
+          return { lang, title: safeTitle, desc: safeDesc };
+        })
+        .filter((r) => !!r.title) // require an actual translated title (NOT NULL column)
+        .map((r) => ({
+          course_id: course.id,
+          language_code: r.lang,
+          title: r.title,
+          description: r.desc || null,
+        }));
       if (courseI18nRows.length) {
         await supabase.from("course_i18n").insert(courseI18nRows);
       }
