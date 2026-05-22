@@ -120,10 +120,11 @@ const AppRoutes = () => {
 
           {/* Teacher (requires teacher/admin role) */}
           <Route path="/teacher" element={<TeacherRoute><TeacherDashboard /></TeacherRoute>} />
-          <Route path="/teacher/courses" element={<TeacherRoute><TeacherCourses /></TeacherRoute>} />
+          {/* 강의 관리 권한은 관리자 전용. 러닝 리더는 /teacher 대시보드로 리다이렉트 */}
+          <Route path="/teacher/courses" element={<Navigate to="/teacher" replace />} />
+          <Route path="/teacher/courses/new" element={<Navigate to="/teacher" replace />} />
+          <Route path="/teacher/courses/:courseId/edit" element={<Navigate to="/teacher" replace />} />
           <Route path="/teacher/assignments" element={<TeacherRoute><TeacherAssignments /></TeacherRoute>} />
-          <Route path="/teacher/courses/new" element={<TeacherRoute><CreateCourse /></TeacherRoute>} />
-          <Route path="/teacher/courses/:courseId/edit" element={<TeacherRoute><CreateCourse /></TeacherRoute>} />
           <Route path="/teacher/students" element={<TeacherRoute><TeacherStudents /></TeacherRoute>} />
           <Route path="/teacher/students/:studentId" element={<TeacherRoute><TeacherStudentDetail /></TeacherRoute>} />
           <Route path="/teacher/notifications" element={<TeacherRoute><TeacherNotifications /></TeacherRoute>} />
