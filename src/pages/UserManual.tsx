@@ -136,22 +136,49 @@ const downloadManualPdf = (loc: LocalizedManual, lang: Lang) => {
   <div class="intro">${escapeHtml(loc.intro)}</div>
   ${sectionsHtml}
   <footer>${S.footer}</footer>
-  <script>
-    window.addEventListener("load", () => {
-      setTimeout(() => { window.focus(); window.print(); }, 300);
-    });
-  </script>
 </body>
 </html>`;
 
-  const w = window.open("", "_blank", "width=900,height=1100");
-  if (!w) {
-    alert("팝업이 차단되어 PDF를 생성할 수 없습니다. 팝업 차단을 해제해 주세요.\nPlease allow pop-ups to download the PDF.");
+  // 팝업 차단 없이 동작하도록 숨겨진 iframe으로 인쇄 다이얼로그 실행
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.setAttribute("aria-hidden", "true");
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!doc) {
+    document.body.removeChild(iframe);
+    alert("PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     return;
   }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const trigger = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch (e) {
+      console.error("print failed", e);
+    }
+    // 인쇄 다이얼로그가 닫힌 뒤 정리 (충분한 지연)
+    setTimeout(() => {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    }, 60_000);
+  };
+
+  // 폰트/스타일 로딩 시간 확보
+  if (iframe.contentWindow) {
+    iframe.onload = () => setTimeout(trigger, 400);
+    // onload가 늦게 잡히는 경우를 대비한 fallback
+    setTimeout(trigger, 800);
+  }
 };
 
 // ===== 학습자 매뉴얼 (한/영/일) — 매우 자세한 텍스트 기반 =====
