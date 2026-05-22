@@ -104,7 +104,7 @@ async function ensureAllowedReferrers(libraryId: string, apiKey: string | undefi
   await Promise.all(uniqueHosts.map(async (host) => {
     const res = await fetch(`https://api.bunny.net/videolibrary/${libraryId}/addAllowedReferrer`, {
       method: "POST",
-      headers: { AccessKey: apiKey!, "Content-Type": "application/json", accept: "application/json" },
+      headers: { AccessKey: accountKey!, "Content-Type": "application/json", accept: "application/json" },
       body: JSON.stringify({ Hostname: host }),
     }).catch(() => null);
     if (res && !res.ok) console.error(`Failed to add Bunny allowed referrer: ${host} (${res.status})`);
