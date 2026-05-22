@@ -142,9 +142,11 @@ export default function PlatformUpdateBanner() {
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           {update.require_reload && (
-            <Button size="sm" onClick={handleReload} className="h-8">
+            <Button size="sm" asChild className="h-8">
+              <a href={getReloadHref()} onClick={handleReload} target="_self">
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               지금 새로고침
+              </a>
             </Button>
           )}
           {update.severity !== "critical" && (
