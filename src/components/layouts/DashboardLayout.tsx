@@ -145,6 +145,7 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
     { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
     { key: "announcements", label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
     { key: "board", label: t("nav.board", "게시판"), href: "/student/board", icon: FileText, showNew: hasNewBoardPost },
+    { key: "userManual", label: t("nav.userManual", "사용자 매뉴얼"), href: "/manual", icon: BookMarked },
     { key: "myPage", label: t("nav.myPage"), href: "/mypage", icon: UserCircle, protected: true },
   ];
 
