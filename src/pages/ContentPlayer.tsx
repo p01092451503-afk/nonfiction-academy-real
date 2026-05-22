@@ -34,6 +34,7 @@ import {
   getContentVideoProvider,
   getCourseTitleByLangWithContentFallback,
   hasUploadedContent,
+  localizeLessonPrefix,
 } from "@/lib/courseContentI18n";
 
 const contentTypeIcon: Record<string, React.ElementType> = {
