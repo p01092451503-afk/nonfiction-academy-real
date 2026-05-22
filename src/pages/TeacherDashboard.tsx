@@ -409,7 +409,16 @@ const TeacherDashboard = () => {
                         {c.learners}{t("common.people")} · {c.avgProgress}%
                       </span>
                     </div>
-                    <Progress value={c.avgProgress} className="h-1.5" />
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${c.avgProgress}%`,
+                          background: `linear-gradient(to right, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.55), hsl(var(--primary)))`,
+                        }}
+                      />
+                    </div>
+
                   </div>
                 ))}
               </div>
