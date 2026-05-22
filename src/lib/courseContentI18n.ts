@@ -50,13 +50,37 @@ const containsHangul = (value: string | null | undefined) => /[가-힣]/.test(va
  */
 export function stripLessonPrefix(title: string | null | undefined): string {
   const s = (title || "")
-    .replace(/^\d+차시\.\s*/, "")
-    .replace(/^Lesson\s*\d+[\.:]?\s*/i, "")
-    .replace(/^第\s*\d+\s*课[.:：]?\s*/, "")
-    .replace(/^レッスン\s*\d+[.:：]?\s*/, "")
-    .replace(/^第\s*\d+\s*回[.:：]?\s*/, "")
+    .replace(/^\d+\s*차시[\.:：]?\s+/, "")
+    .replace(/^Lesson\s*\d+[\.:]?\s+/i, "")
+    .replace(/^第\s*\d+\s*课[.:：]?\s+/, "")
+    .replace(/^レッスン\s*\d+[.:：]?\s+/, "")
+    .replace(/^第\s*\d+\s*回[.:：]?\s+/, "")
     .trim();
   return s || (title || "");
+}
+
+/**
+ * Localize a lesson prefix according to the given language code.
+ * Strips any existing prefix variant first, then prepends the localized form.
+ *   ko    → "1차시. <title>"
+ *   en    → "Lesson 1. <title>"
+ *   ja    → "レッスン 1. <title>"
+ *   zh-*  → "第 1 课. <title>"
+ */
+export function localizeLessonPrefix(
+  title: string | null | undefined,
+  lang: string | null | undefined,
+  index: number,
+): string {
+  const stripped = stripLessonPrefix(title);
+  const n = index + 1;
+  const lc = (lang || "ko").toLowerCase();
+  let prefix: string;
+  if (lc.startsWith("zh")) prefix = `第 ${n} 课. `;
+  else if (lc === "ja") prefix = `レッスン ${n}. `;
+  else if (lc === "en") prefix = `Lesson ${n}. `;
+  else prefix = `${n}차시. `;
+  return `${prefix}${stripped}`;
 }
 
 /** Find legacy i18n row for a given content + row language. */
