@@ -175,6 +175,20 @@ describe("getCourseTitleByLang / getCourseDescByLang (course-level header)", () 
   });
 });
 
+describe("getCourseTitleByLangWithContentFallback", () => {
+  it("uses same-language content title when a course_i18n row still contains Korean", () => {
+    const title = getCourseTitleByLangWithContentFallback(
+      { title: "[제품] 더 플라워 컬렉션" },
+      [{ language_code: "ja", title: "[제품] 더 플라워 콜렉션" }],
+      [{ id: "ja-lesson", course_id: "course-1", language_code: "ja", title: "ザ・フラワーコレクション" } as CourseContentLike],
+      [],
+      "ja",
+    );
+
+    expect(title).toBe("ザ・フラワーコレクション");
+  });
+});
+
 describe("CreateCourse data model: 1 강의 = 4 차시 (one row per language)", () => {
   /**
    * The teacher CreateCourse form persists one row per language to
