@@ -37,6 +37,8 @@ interface VPItem {
 
 const STORAGE_KEY = (cid: string, vid: string) => `vp-progress:${cid}:${vid}`;
 const DONE_KEY = (cid: string, vid: string) => `vp-done:${cid}:${vid}`;
+const MAX_KEY = (cid: string, vid: string) => `vp-max:${cid}:${vid}`;
+const SEEK_TOLERANCE = 2;
 
 const formatTime = (s: number) => {
   if (!isFinite(s) || s < 0) return "0:00";
@@ -79,6 +81,8 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
+  const maxWatchedRef = useRef<number>(0);
+  const seekGuardRef = useRef<boolean>(false);
 
 
 
@@ -142,6 +146,14 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     setIframeStartTime(null);
     setShowResumeDialog(false);
     setProgress({ current: 0, duration: activeItem.duration_seconds || 0 });
+    // Hydrate per-item max-watched (for first-watch forward-seek limit)
+    try {
+      const rawMax = localStorage.getItem(MAX_KEY(contentId, activeItem.id));
+      const maxV = rawMax ? parseFloat(rawMax) : 0;
+      maxWatchedRef.current = isFinite(maxV) && maxV > 0 ? maxV : 0;
+    } catch {
+      maxWatchedRef.current = 0;
+    }
     try {
       const raw = localStorage.getItem(STORAGE_KEY(contentId, activeItem.id));
       const saved = raw ? parseFloat(raw) : 0;
@@ -262,12 +274,28 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     };
   }, [activeItem?.id, playbackUrl, t]);
 
+  const isItemDone = (id: string) => {
+    if (completedItems.has(id)) return true;
+    try {
+      return localStorage.getItem(DONE_KEY(contentId, id)) === "1";
+    } catch {
+      return false;
+    }
+  };
+
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v || !activeItem) return;
     const cur = v.currentTime;
     const dur = v.duration || 0;
     setProgress({ current: cur, duration: dur });
+    // Track max-watched (only forward via natural playback)
+    if (!seekGuardRef.current && cur > maxWatchedRef.current) {
+      maxWatchedRef.current = cur;
+      if (Math.floor(cur) % 5 === 0) {
+        try { localStorage.setItem(MAX_KEY(contentId, activeItem.id), String(cur)); } catch {}
+      }
+    }
     // Save position every ~5s
     if (Math.floor(cur) % 5 === 0) {
       try {
@@ -281,6 +309,20 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
         next.add(activeItem.id);
         return next;
       });
+    }
+  };
+
+  // Block forward seek during first watch; allow free seek after this item is completed.
+  const handleSeeking = () => {
+    const v = videoRef.current;
+    if (!v || !activeItem) return;
+    if (isItemDone(activeItem.id)) return;
+    if (seekGuardRef.current) return;
+    const limit = maxWatchedRef.current + SEEK_TOLERANCE;
+    if (v.currentTime > limit) {
+      seekGuardRef.current = true;
+      v.currentTime = Math.max(0, maxWatchedRef.current);
+      setTimeout(() => { seekGuardRef.current = false; }, 200);
     }
   };
 
@@ -349,6 +391,24 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
       const cur = isFinite(curRaw) && curRaw > 0 ? curRaw : 0;
       const dur = isFinite(durRaw || 0) && (durRaw || 0) > 0 ? durRaw || 0 : durationCache;
       if (dur > 0) durationCache = dur;
+
+      // First-watch forward-seek limit: if user scrubbed past max-watched, snap back.
+      const itemDone =
+        completedItems.has(activeItem.id) ||
+        (() => { try { return localStorage.getItem(DONE_KEY(contentId, activeItem.id)) === "1"; } catch { return false; } })();
+      if (!itemDone && cur > maxWatchedRef.current + SEEK_TOLERANCE && player?.setCurrentTime) {
+        try { player.setCurrentTime(Math.max(0, maxWatchedRef.current)); } catch {}
+        setProgress({ current: maxWatchedRef.current, duration: dur });
+        return;
+      }
+      if (cur > maxWatchedRef.current) {
+        maxWatchedRef.current = cur;
+        const sec0 = Math.floor(cur);
+        if (sec0 > 0 && sec0 % 5 === 0) {
+          try { localStorage.setItem(MAX_KEY(contentId, activeItem.id), String(cur)); } catch {}
+        }
+      }
+
       setProgress({ current: cur, duration: dur });
 
       const sec = Math.floor(cur);
@@ -520,6 +580,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
               preload="metadata"
               className="absolute inset-0 h-full w-full bg-black object-contain"
               onTimeUpdate={handleTimeUpdate}
+              onSeeking={handleSeeking}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
               aria-label={activeItem?.title || t("course.video", "영상")}
