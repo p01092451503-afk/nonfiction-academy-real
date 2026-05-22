@@ -18,7 +18,7 @@ import { normalizeLang } from "@/lib/i18nLang";
 
 const TeacherDashboard = () => {
   const { user } = useUser();
-  const { scopeIds, branch, hasDepartment } = useLeaderScope();
+  const { scopeIds, branch, hasDepartment, isLoading: scopeLoading } = useLeaderScope();
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
   const lang = normalizeLang(i18n.language);
