@@ -1085,36 +1085,69 @@ const ManualPanel = ({ manual, query }: { manual: RoleManual; query: string }) =
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{loc.intro}</p>
               </div>
               {availableLangs.length > 1 ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="shrink-0 gap-2 whitespace-nowrap">
-                      <Languages className="h-4 w-4" />
-                      PDF 다운로드
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {availableLangs.map((lng) => (
-                      <DropdownMenuItem
-                        key={lng}
-                        onClick={() => downloadManualPdf(manual.i18n[lng]!, lng)}
-                        className="gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        {LANG_LABEL[lng]}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="shrink-0 gap-2 whitespace-nowrap">
+                        <Languages className="h-4 w-4" />
+                        PDF 다운로드
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {availableLangs.map((lng) => (
+                        <DropdownMenuItem
+                          key={lng}
+                          onClick={() => downloadManualPdf(manual.i18n[lng]!, lng)}
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          {LANG_LABEL[lng]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="shrink-0 gap-2 whitespace-nowrap">
+                        <FileText className="h-4 w-4" />
+                        Word 다운로드
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {availableLangs.map((lng) => (
+                        <DropdownMenuItem
+                          key={lng}
+                          onClick={() => downloadManualDoc(manual.i18n[lng]!, lng)}
+                          className="gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          {LANG_LABEL[lng]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadManualPdf(loc, "ko")}
-                  className="shrink-0 gap-2 whitespace-nowrap"
-                >
-                  <Download className="h-4 w-4" />
-                  PDF 다운로드
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadManualPdf(loc, "ko")}
+                    className="shrink-0 gap-2 whitespace-nowrap"
+                  >
+                    <Download className="h-4 w-4" />
+                    PDF 다운로드
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadManualDoc(loc, "ko")}
+                    className="shrink-0 gap-2 whitespace-nowrap"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Word 다운로드
+                  </Button>
+                </div>
               )}
             </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
