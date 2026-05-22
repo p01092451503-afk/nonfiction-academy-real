@@ -125,14 +125,15 @@ Deno.serve(async (req) => {
     const ACCOUNT_KEY = Deno.env.get("BUNNY_ACCOUNT_API_KEY");
     if (ACCOUNT_KEY) {
       try {
-        const r = await fetch("https://api.bunny.net/billing/balance", {
+        const r = await fetch("https://api.bunny.net/billing", {
           headers: { AccessKey: ACCOUNT_KEY, accept: "application/json" },
         });
         if (r.ok) {
           const j = await r.json();
-          bunnyBalance.balance = typeof j === "number" ? j : Number(j.Balance ?? j.balance ?? 0);
+          bunnyBalance.balance = Number(j.Balance ?? j.balance ?? 0);
         } else {
-          bunnyBalance.error = `HTTP ${r.status}`;
+          const txt = await r.text().catch(() => "");
+          bunnyBalance.error = `HTTP ${r.status} ${txt.slice(0, 120)}`;
         }
       } catch (e) { bunnyBalance.error = String(e?.message || e); }
     } else {
