@@ -822,7 +822,7 @@ const CourseDetail = () => {
                                         }}
                                         aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
                                       >
-                                        {localizedTitle}
+                                        {localizeLessonPrefix(localizedTitle, content.language_code || langKey, idx)}
                                       </button>
                                       {isUnpublished && <Badge variant="outline" className="h-4 shrink-0 border-dashed text-[9px]">{t("course.draftStatus")}</Badge>}
                                       {content.is_preview && <Badge variant="secondary" className="h-4 shrink-0 text-[9px]">{t("course.allowPreview")}</Badge>}
