@@ -27,7 +27,20 @@ import { normalizeLang } from "@/lib/i18nLang";
 
 const badgeIcons: Record<string, React.ElementType> = {
   star: Star, flame: Flame, target: Target, award: Award, zap: Zap,
+  crown: Crown, medal: Medal, book: BookOpen, trending: TrendingUp,
 };
+
+const PLACEHOLDER_BADGES = [
+  { id: "ph-first-course", icon: "star", name: "첫 강의 완료", description: "첫 강의를 완료하면 획득" },
+  { id: "ph-streak-3", icon: "flame", name: "3일 연속 학습", description: "3일 연속 학습 시 획득" },
+  { id: "ph-streak-7", icon: "flame", name: "7일 연속 학습", description: "7일 연속 학습 시 획득" },
+  { id: "ph-perfect-quiz", icon: "target", name: "퀴즈 만점", description: "평가에서 만점을 받으면 획득" },
+  { id: "ph-five-courses", icon: "book", name: "강의 5개 완료", description: "강의 5개 완료 시 획득" },
+  { id: "ph-ten-courses", icon: "award", name: "강의 10개 완료", description: "강의 10개 완료 시 획득" },
+  { id: "ph-level-5", icon: "zap", name: "레벨 5 달성", description: "레벨 5에 도달하면 획득" },
+  { id: "ph-level-10", icon: "crown", name: "레벨 10 달성", description: "레벨 10에 도달하면 획득" },
+  { id: "ph-top-ranker", icon: "trending", name: "TOP 10 진입", description: "리더보드 TOP 10 진입" },
+];
 
 const StudentAchievements = () => {
   const { user } = useUser();
@@ -415,24 +428,25 @@ const StudentAchievements = () => {
                 <span>{t("achievements.badgeRemaining", { count: Math.max(allBadges.length - myBadges.length, 0) })}</span>
               </div>
             </div>
-            {allBadges.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("achievements.noBadges")}</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {allBadges.map((badge: any) => {
-                  const earned = earnedBadgeIds.has(badge.id);
-                  const Icon = badgeIcons[badge.icon] || Star;
-                  return (
-                    <div key={badge.id} className={`stat-card text-center !p-4 ${!earned ? "opacity-40 grayscale" : ""}`}>
-                      <Icon className={`h-8 w-8 mx-auto mb-2 ${earned ? "text-warning" : "text-muted-foreground"}`} />
-                      <h3 className="text-sm font-medium text-foreground">{badge.name}</h3>
-                      <p className="text-[10px] text-muted-foreground mt-1">{badge.description}</p>
-                      {earned && <p className="text-[10px] text-success font-medium mt-1.5">{t("achievements.earned")}</p>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {(() => {
+              const displayBadges = allBadges.length > 0 ? allBadges : PLACEHOLDER_BADGES;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {displayBadges.map((badge: any) => {
+                    const earned = earnedBadgeIds.has(badge.id);
+                    const Icon = badgeIcons[badge.icon] || Star;
+                    return (
+                      <div key={badge.id} className={`stat-card text-center !p-4 ${!earned ? "opacity-40 grayscale" : ""}`}>
+                        <Icon className={`h-8 w-8 mx-auto mb-2 ${earned ? "text-warning" : "text-muted-foreground"}`} />
+                        <h3 className="text-sm font-medium text-foreground">{badge.name}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-1">{badge.description}</p>
+                        {earned && <p className="text-[10px] text-success font-medium mt-1.5">{t("achievements.earned")}</p>}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
 
           <div className="space-y-4">
