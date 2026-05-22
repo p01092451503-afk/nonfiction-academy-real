@@ -5,6 +5,7 @@ import {
   getCourseTitleByLangWithContentFallback,
   getCourseDescByLang,
   hasUploadedContent,
+  localizeLessonPrefix,
 } from "@/lib/courseContentI18n";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
