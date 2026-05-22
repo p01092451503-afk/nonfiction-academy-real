@@ -538,7 +538,18 @@
     "badgeUnit": "{{count}}个",
     "weeksAgo": "{{count}}周前",
     "thisWeek": "本周",
-    "toLevel": "{{percent}}% 到达 Lv.{{level}}"
+    "toLevel": "{{percent}}% 到达 Lv.{{level}}",
+    "placeholderBadges": {
+      "firstCourse": { "name": "完成首门课程", "description": "完成第一门课程即可获得" },
+      "streak3": { "name": "连续学习3天", "description": "连续学习3天即可获得" },
+      "streak7": { "name": "连续学习7天", "description": "连续学习7天即可获得" },
+      "perfectQuiz": { "name": "测验满分", "description": "评估获得满分即可获得" },
+      "fiveCourses": { "name": "完成5门课程", "description": "完成5门课程即可获得" },
+      "tenCourses": { "name": "完成10门课程", "description": "完成10门课程即可获得" },
+      "level5": { "name": "达成等级5", "description": "达到等级5即可获得" },
+      "level10": { "name": "达成等级10", "description": "达到等级10即可获得" },
+      "topRanker": { "name": "TOP 10 排行", "description": "进入排行榜TOP 10即可获得" }
+    }
   },
   "admin": {
     "adminDashboard": "管理员仪表板",
