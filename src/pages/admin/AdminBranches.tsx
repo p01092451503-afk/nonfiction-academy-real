@@ -40,7 +40,7 @@ const AdminBranches = () => {
   const [uploadBranch, setUploadBranch] = useState<string>("__csv__");
   const [editStaffDialog, setEditStaffDialog] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any>(null);
-  const [staffForm, setStaffForm] = useState({ department_id: "__none__", position: "", role: "student" });
+  const [staffForm, setStaffForm] = useState<{ department_id: string; position: string; roles: ("student" | "teacher" | "admin")[] }>({ department_id: "__none__", position: "", roles: ["student"] });
 
   // Fetch all departments
   const { data: allDepts = [] } = useQuery({
