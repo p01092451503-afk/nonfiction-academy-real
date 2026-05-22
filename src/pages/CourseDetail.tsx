@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { translateKoToEn, translateKoTo } from "@/lib/translate";
 import {
   getContentTitle as pickContentTitle,
-  getCourseTitleByLang,
+  getCourseTitleByLangWithContentFallback,
   getCourseDescByLang,
   hasUploadedContent,
 } from "@/lib/courseContentI18n";
