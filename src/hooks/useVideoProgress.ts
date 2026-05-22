@@ -191,12 +191,25 @@ export function useVideoProgress({
           dur = (await vimeoPlayerRef.current.getDuration()) || 0;
         }
 
+        // First-watch forward-seek guard: snap back if user scrubbed past max-watched.
+        if (!isCompleted && !autoCompleted && !seekGuardRef.current && cur > maxWatchedRef.current + SEEK_TOLERANCE) {
+          const target = Math.max(0, maxWatchedRef.current);
+          seekGuardRef.current = true;
+          try {
+            if (type === "youtube" && ytPlayerRef.current?.seekTo) {
+              ytPlayerRef.current.seekTo(target, true);
+            } else if (type === "vimeo" && vimeoPlayerRef.current?.setCurrentTime) {
+              await vimeoPlayerRef.current.setCurrentTime(target);
+            }
+          } catch {}
+          warnSeekBlocked();
+          setTimeout(() => { seekGuardRef.current = false; }, 400);
+          cur = target;
+        }
+
         if (cur > maxWatchedRef.current) maxWatchedRef.current = cur;
         setCurrentTime(cur);
         setDuration(dur);
-
-
-
 
         // Auto-complete check
         if (dur > 0) {
