@@ -66,6 +66,13 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
 
   const activeRole = role || primaryRole;
 
+  // 현재 활성 역할 컨텍스트를 sessionStorage에 저장 (역할 비종속 페이지에서 활용)
+  useEffect(() => {
+    if (role) {
+      try { sessionStorage.setItem("lastDashboardRole", role); } catch {}
+    }
+  }, [role]);
+
   // Redirect away from teacher dashboard if teacher role is disabled
   useEffect(() => {
     if (activeRole === "teacher" && !teacherRoleEnabled) {
