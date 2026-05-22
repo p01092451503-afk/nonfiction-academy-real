@@ -478,9 +478,17 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
           ) : playbackUrl && isBunnyIframe(playbackUrl) ? (
             (() => {
               const sep = playbackUrl.includes("?") ? "&" : "?";
-              const params = [`preload=true`, `responsive=true`, `_vp=${encodeURIComponent(iframeInstanceKey)}`];
+              const params = [
+                `autoplay=false`,
+                `muted=false`,
+                `preload=true`,
+                `responsive=true`,
+                `playsinline=true`,
+                `disableIosPlayer=true`,
+                `_vp=${encodeURIComponent(iframeInstanceKey)}`,
+              ];
               if (iframeStartTime && iframeStartTime > 0) {
-                params.push(`t=${Math.floor(iframeStartTime)}`, `autoplay=true`);
+                params.push(`t=${Math.floor(iframeStartTime)}`);
               }
               const finalSrc = `${playbackUrl}${sep}${params.join("&")}`;
               return (
@@ -492,9 +500,9 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
                   height="100%"
                   className="absolute inset-0 h-full w-full border-0 bg-black"
                   style={{ aspectRatio: "16 / 9" }}
-                  allow="accelerometer *; autoplay *; encrypted-media *; gyroscope *; fullscreen *"
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                   allowFullScreen
-                  referrerPolicy="no-referrer"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   title={activeItem?.title || t("course.video", "영상")}
                 />
               );

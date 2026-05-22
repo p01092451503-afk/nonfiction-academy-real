@@ -76,6 +76,17 @@ const getVimeoVideoId = (url: string | null) => {
   return match?.[1] || null;
 };
 
+const getBunnyVideoId = (url: string | null) =>
+  url?.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1] || null;
+
+const isBunnyVideo = (url: string | null, provider: string | null) =>
+  provider === "bunny" || /(?:iframe|player)\.mediadelivery\.net|b-cdn\.net/i.test(url || "");
+
+const toBunnyEmbedUrl = (url: string) =>
+  url
+    .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
+    .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
+
 const ContentPlayer = () => {
   const { courseId, contentId } = useParams<{ courseId: string; contentId: string }>();
   const navigate = useNavigate();
@@ -258,6 +269,7 @@ const ContentPlayer = () => {
 
   const [cardIndex, setCardIndex] = useState(0);
   const [kollusEmbedUrl, setKollusEmbedUrl] = useState<string | null>(null);
+  const [bunnyEmbedUrl, setBunnyEmbedUrl] = useState<string | null>(null);
   const [kollusLoading, setKollusLoading] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const resumePromptedRef = useRef<string | null>(null);
@@ -454,10 +466,40 @@ const ContentPlayer = () => {
     return () => { cancelled = true; };
   }, [currentContent?.id, user?.id]);
 
+  useEffect(() => {
+    if (!currentContent) return;
+    const provider = getVideoProvider(currentContent);
+    const videoUrl = getVideoUrl(currentContent);
+    if (!isBunnyVideo(videoUrl, provider)) {
+      setBunnyEmbedUrl(null);
+      return;
+    }
+    const videoId = getBunnyVideoId(videoUrl);
+    if (!videoId) {
+      setBunnyEmbedUrl(null);
+      return;
+    }
+    let cancelled = false;
+    setBunnyEmbedUrl(null);
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("bunny-resolve-video", {
+        body: { videoId, url: videoUrl },
+      });
+      if (cancelled) return;
+      if (!error && (data?.embedUrl || data?.playUrl)) {
+        const resolvedUrl = toBunnyEmbedUrl(data.embedUrl || data.playUrl);
+        const sep = resolvedUrl.includes("?") ? "&" : "?";
+        setBunnyEmbedUrl(`${resolvedUrl}${sep}autoplay=false&muted=false&preload=true&responsive=true&playsinline=true&disableIosPlayer=true`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentContent?.id]);
+
   const getVideoEmbed = (url: string | null, provider: string | null) => {
     if (!url) return null;
     if (isMangoboard(url)) return normalizeMangoboardUrl(url);
     if (isKollus(provider)) return kollusEmbedUrl;
+    if (isBunnyVideo(url, provider)) return bunnyEmbedUrl;
 
     const resolvedYouTubeId = getYouTubeVideoId(url);
     if ((provider === "youtube" || url.includes("youtube.com") || url.includes("youtu.be")) && resolvedYouTubeId) {
@@ -623,7 +665,7 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "video" && embedUrl ? (
                 <div className="relative">
                   <div className="aspect-video w-full">
-                    <iframe key={`video-${contentId}`} ref={isTrackableVideo ? videoIframeCallback : undefined} id={`video-player-${contentId}`} src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; web-share; fullscreen" allowFullScreen referrerPolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" title={localTitle} />
+                    <iframe key={`video-${contentId}`} ref={isTrackableVideo ? videoIframeCallback : undefined} id={`video-player-${contentId}`} src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" title={localTitle} />
                   </div>
                   {isTrackableVideo && (
                     <div className="px-4 py-2.5 bg-secondary/60 flex items-center gap-3 text-xs">
