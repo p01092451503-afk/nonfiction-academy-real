@@ -1318,7 +1318,7 @@
     "providerUpload": "アップロード(CDN)",
     "providerYoutube": "YouTube",
     "providerVimeo": "Vimeo",
-    "providerBunny": "Bunny CDN",
+    "providerBunny": "Global CDN",
     "providerCloudflare": "Cloudflare Stream",
     "providerKollus": "Kollus (カテノイド)",
     "colTitle": "タイトル",

@@ -1318,7 +1318,7 @@
     "providerUpload": "上传 (CDN)",
     "providerYoutube": "YouTube",
     "providerVimeo": "Vimeo",
-    "providerBunny": "Bunny CDN",
+    "providerBunny": "Global CDN",
     "providerCloudflare": "Cloudflare Stream",
     "providerKollus": "Kollus (Catenoid)",
     "colTitle": "标题",
