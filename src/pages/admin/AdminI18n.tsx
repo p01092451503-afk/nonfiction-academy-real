@@ -394,6 +394,7 @@ const AdminI18n = () => {
   const [activeCategory, setActiveCategory] = useState<Category>("course");
   const [activeLang, setActiveLang] = useState<TargetLang | "all">("all");
   const [filter, setFilter] = useState<"missing" | "all">("missing");
+  const [audience, setAudience] = useState<Audience>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
