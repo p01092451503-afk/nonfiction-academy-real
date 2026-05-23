@@ -432,7 +432,7 @@ const AdminI18n = () => {
       if (needs.length === 0) continue;
       // Skip categories that don't support this language
       const supportsLang = (cat: Category) =>
-        ["course", "content", "assessment", "announcement", "board", "track", "track_stage"].includes(cat) || lc === "en";
+        ["course", "content", "assessment", "announcement", "board", "track", "track_stage", "ui_string"].includes(cat) || lc === "en";
       const supported = needs.filter((r) => supportsLang(r.category));
       const res = await translateRowsForLang(supported, lc);
       ok += res.ok; fail += res.fail;
@@ -447,6 +447,10 @@ const AdminI18n = () => {
       if (ok > 0) {
         toast.success(`${ok}건 번역이 완료되었습니다.${fail ? ` (${fail}건 실패)` : ""}`);
         await queryClient.invalidateQueries({ queryKey: ["admin-i18n-rows"] });
+        if (row.category === "ui_string") {
+          const { loadUiOverrides } = await import("@/i18n/uiOverrides");
+          await loadUiOverrides();
+        }
       } else {
         toast.error("번역에 실패했습니다.");
       }
@@ -472,6 +476,10 @@ const AdminI18n = () => {
       else toast.warning(`${ok}건 성공, ${fail}건 실패`);
       setSelected(new Set());
       await queryClient.invalidateQueries({ queryKey: ["admin-i18n-rows"] });
+      if (targets.some((r) => r.category === "ui_string")) {
+        const { loadUiOverrides } = await import("@/i18n/uiOverrides");
+        await loadUiOverrides();
+      }
     } finally {
       setBulkBusy(false);
     }
