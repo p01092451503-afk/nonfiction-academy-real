@@ -266,6 +266,42 @@ async function fetchAllRows(): Promise<Row[]> {
     "track_stage",
   );
 
+  // 12) UI strings — flatten ko.json keys; per-lang values come from DB overrides
+  //     or fall back to the corresponding static JSON file.
+  const koFlat = flattenKeys(koLocale);
+  const enFlat = flattenKeys(enLocale);
+  const jaFlat = flattenKeys(jaLocale);
+  const zhFlat = flattenKeys(zhLocale);
+  const { data: uiOverrides } = await supabase
+    .from("ui_translations" as any)
+    .select("key, language_code, value");
+  const overrideMap = new Map<string, Record<TargetLang, string>>();
+  (uiOverrides ?? []).forEach((r: any) => {
+    if (!TARGET_LANGS.includes(r.language_code)) return;
+    if (!overrideMap.has(r.key)) {
+      overrideMap.set(r.key, { en: "", "zh-CN": "", ja: "" });
+    }
+    overrideMap.get(r.key)![r.language_code as TargetLang] = r.value;
+  });
+
+  const staticByLang: Record<TargetLang, Record<string, string>> = {
+    en: enFlat,
+    ja: jaFlat,
+    "zh-CN": zhFlat,
+  };
+
+  Object.keys(koFlat).forEach((key) => {
+    const koVal = koFlat[key];
+    const langs = {} as Record<TargetLang, LangCell>;
+    TARGET_LANGS.forEach((lc) => {
+      const ovr = overrideMap.get(key)?.[lc];
+      const staticVal = staticByLang[lc][key];
+      const title = ovr || staticVal || null;
+      langs[lc] = { title, body: null, status: computeStatus(koVal, "", title, null) };
+    });
+    rows.push({ id: key, category: "ui_string", ko_title: koVal, ko_body: "", langs });
+  });
+
   return rows;
 }
 
@@ -304,6 +340,11 @@ async function upsertTranslation(row: Row, lang: TargetLang, tTitle: string, tBo
       return supabase.from("learning_tracks_i18n" as any).upsert({ track_id: row.id, language_code: lang, title: tTitle, description: tBody || null }, { onConflict: "track_id,language_code" });
     case "track_stage":
       return supabase.from("track_stages_i18n" as any).upsert({ stage_id: row.id, language_code: lang, name: tTitle, description: tBody || null }, { onConflict: "stage_id,language_code" });
+    case "ui_string":
+      return supabase.from("ui_translations" as any).upsert(
+        { key: row.id, language_code: lang, value: tTitle },
+        { onConflict: "key,language_code" },
+      );
   }
 }
 
