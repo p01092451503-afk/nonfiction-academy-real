@@ -423,8 +423,12 @@ const AdminI18n = () => {
   const visible = useMemo(() => {
     return rows
       .filter((r) => r.category === activeCategory)
+      .filter((r) => {
+        if (r.category !== "ui_string" || audience === "all") return true;
+        return classifyKey(r.id) === audience;
+      })
       .filter((r) => (filter === "missing" ? isRowIncomplete(r) : true));
-  }, [rows, activeCategory, filter, activeLang]);
+  }, [rows, activeCategory, filter, activeLang, audience]);
 
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id));
 
