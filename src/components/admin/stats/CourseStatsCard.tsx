@@ -5,6 +5,7 @@ import { RankBar } from "@/components/ui/rank-bar";
 import { BookOpen, CheckCircle2, AlertCircle, FileEdit, Users, GraduationCap, TrendingUp, Award, LayoutGrid, LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import StatsLoading from "./StatsLoading";
 
 type CourseStats = {
   total_courses: number;
