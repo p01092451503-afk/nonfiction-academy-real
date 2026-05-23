@@ -7,12 +7,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ChartTooltipContent, chartTooltipDefaults } from "@/components/ui/chart-tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
+import StatsLoading from "./StatsLoading";
 
 const BranchLearningStats = () => {
   const isMobile = useIsMobile();
   const { t } = useTranslation();
 
-  const { data: branches = [] } = useQuery({
+  const { data: branches = [], isLoading: l1 } = useQuery({
     queryKey: ["stat-branches"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,7 +28,7 @@ const BranchLearningStats = () => {
     },
   });
 
-  const { data: profiles = [] } = useQuery({
+  const { data: profiles = [], isLoading: l2 } = useQuery({
     queryKey: ["stat-branch-profiles"],
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles").select("user_id, department_id");
@@ -36,7 +37,7 @@ const BranchLearningStats = () => {
     },
   });
 
-  const { data: enrollments = [] } = useQuery({
+  const { data: enrollments = [], isLoading: l3 } = useQuery({
     queryKey: ["stat-branch-enrollments"],
     queryFn: async () => {
       const { data, error } = await supabase.from("enrollments").select("user_id, progress, completed_at");
@@ -45,7 +46,7 @@ const BranchLearningStats = () => {
     },
   });
 
-  const { data: contentProgress = [] } = useQuery({
+  const { data: contentProgress = [], isLoading: l4 } = useQuery({
     queryKey: ["stat-branch-content-progress"],
     queryFn: async () => {
       const { data, error } = await supabase.from("content_progress").select("user_id, completed").eq("completed", true);
@@ -53,6 +54,9 @@ const BranchLearningStats = () => {
       return data;
     },
   });
+
+  const isLoading = l1 || l2 || l3 || l4;
+
 
   const userBranchMap = new Map<string, string>();
   profiles.forEach((p: any) => {
@@ -119,7 +123,9 @@ const BranchLearningStats = () => {
         <CardTitle className="text-sm font-medium">{t("stats.branchLearning")}</CardTitle>
       </CardHeader>
       <CardContent className="px-3 sm:px-6 space-y-5">
-        {branchStats.length === 0 ? (
+        {isLoading ? (
+          <StatsLoading label={t("common.loading", "데이터를 불러오는 중입니다...")} height={300} />
+        ) : branchStats.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">{t("common.noData")}</p>
         ) : (
           <>
