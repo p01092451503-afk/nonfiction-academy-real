@@ -606,6 +606,17 @@ const AdminI18n = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                {activeCategory === "ui_string" && (
+                  <Tabs value={audience} onValueChange={(v) => { setAudience(v as Audience); setSelected(new Set()); }}>
+                    <TabsList className="h-8">
+                      {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => (
+                        <TabsTrigger key={a} value={a} className="text-xs h-6">
+                          {AUDIENCE_LABELS[a]}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                )}
                 <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
                   <TabsList className="h-8">
                     <TabsTrigger value="missing" className="text-xs h-6">누락/미번역</TabsTrigger>
