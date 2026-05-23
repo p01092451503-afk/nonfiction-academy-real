@@ -54,6 +54,47 @@ const CATEGORY_LABELS: Record<Category, string> = {
   ui_string: "UI 문구",
 };
 
+type Audience = "all" | "admin" | "student" | "teacher" | "common";
+
+const AUDIENCE_LABELS: Record<Audience, string> = {
+  all: "전체",
+  admin: "관리자",
+  teacher: "강사",
+  student: "학습자",
+  common: "공통",
+};
+
+// Map top-level i18n namespaces to an audience
+const AUDIENCE_BY_PREFIX: Record<string, Exclude<Audience, "all">> = {
+  admin: "admin",
+  deptAdmin: "admin",
+  branches: "admin",
+  branch: "admin",
+  videoMgmt: "admin",
+  stats: "admin",
+  globalDashboard: "admin",
+  teacher: "teacher",
+  students: "teacher",
+  studentDetail: "teacher",
+  createCourse: "teacher",
+  dashboard: "student",
+  course: "student",
+  assignments: "student",
+  achievements: "student",
+  contentPlayer: "student",
+  mandatory: "student",
+  catalog: "student",
+  enrollment: "student",
+  mypage: "student",
+  assessment: "student",
+  track: "student",
+};
+
+const classifyKey = (key: string): Exclude<Audience, "all"> => {
+  const prefix = key.split(".")[0];
+  return AUDIENCE_BY_PREFIX[prefix] ?? "common";
+};
+
 // Detect Korean Hangul characters. If source has no Hangul, it's already non-Korean
 // (English/Japanese/Chinese product names, codes, "Lesson 2", etc.) and translation
 // returning the same text should NOT be treated as "untranslated".
@@ -353,6 +394,7 @@ const AdminI18n = () => {
   const [activeCategory, setActiveCategory] = useState<Category>("course");
   const [activeLang, setActiveLang] = useState<TargetLang | "all">("all");
   const [filter, setFilter] = useState<"missing" | "all">("missing");
+  const [audience, setAudience] = useState<Audience>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
@@ -381,8 +423,12 @@ const AdminI18n = () => {
   const visible = useMemo(() => {
     return rows
       .filter((r) => r.category === activeCategory)
+      .filter((r) => {
+        if (r.category !== "ui_string" || audience === "all") return true;
+        return classifyKey(r.id) === audience;
+      })
       .filter((r) => (filter === "missing" ? isRowIncomplete(r) : true));
-  }, [rows, activeCategory, filter, activeLang]);
+  }, [rows, activeCategory, filter, activeLang, audience]);
 
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id));
 
@@ -560,6 +606,17 @@ const AdminI18n = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                {activeCategory === "ui_string" && (
+                  <Tabs value={audience} onValueChange={(v) => { setAudience(v as Audience); setSelected(new Set()); }}>
+                    <TabsList className="h-8">
+                      {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => (
+                        <TabsTrigger key={a} value={a} className="text-xs h-6">
+                          {AUDIENCE_LABELS[a]}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                )}
                 <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
                   <TabsList className="h-8">
                     <TabsTrigger value="missing" className="text-xs h-6">누락/미번역</TabsTrigger>
