@@ -66,4 +66,8 @@ const setHtmlLang = (lng: string) => {
 setHtmlLang(i18n.language);
 i18n.on('languageChanged', setHtmlLang);
 
+// Merge admin-edited UI string overrides from DB on top of static JSON.
+// Non-blocking — UI renders with static strings first, then re-renders when overrides arrive.
+import('./uiOverrides').then(({ loadUiOverrides }) => loadUiOverrides());
+
 export default i18n;
