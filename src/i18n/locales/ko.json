@@ -1411,7 +1411,7 @@
     "surveyResponses": "설문 응답",
     "memberDist": "회원 분포",
     "byRole": "역할별",
-    "byBranch": "조직/부서별",
+    "byBranch": "지점/부서별",
     "unassigned": "미지정",
     "otherLabel": "기타",
     "signupTrend": "신규 가입 추이 (최근 {{period}}일)",

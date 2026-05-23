@@ -1438,9 +1438,9 @@
     "lessonCompletions": "Lesson Completions",
     "realtimeUsers": "Current Online Users",
     "autoRefresh": "Auto-refreshing",
-    "branchLearning": "Learning Status by Organization",
-    "byBranch": "By Organization/Department",
-    "tabBranch": "Learning by Organization"
+    "branchLearning": "Learning Status by Branch",
+    "byBranch": "By Branch/Department",
+    "tabBranch": "Learning by Branch"
   },
   "track": {
     "myTracks": "My Learning Tracks",

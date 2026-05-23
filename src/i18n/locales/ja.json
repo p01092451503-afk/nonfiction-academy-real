@@ -1411,7 +1411,7 @@
     "surveyResponses": "アンケート回答",
     "memberDist": "会員分布",
     "byRole": "役割別",
-    "byBranch": "組織/部署別",
+    "byBranch": "支店/部署別",
     "unassigned": "未割り当て",
     "otherLabel": "その他",
     "signupTrend": "新規新規登録推移（過去{{period}}日間）",
