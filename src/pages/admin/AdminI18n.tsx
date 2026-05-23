@@ -54,6 +54,47 @@ const CATEGORY_LABELS: Record<Category, string> = {
   ui_string: "UI 문구",
 };
 
+type Audience = "all" | "admin" | "student" | "teacher" | "common";
+
+const AUDIENCE_LABELS: Record<Audience, string> = {
+  all: "전체",
+  admin: "관리자",
+  teacher: "강사",
+  student: "학습자",
+  common: "공통",
+};
+
+// Map top-level i18n namespaces to an audience
+const AUDIENCE_BY_PREFIX: Record<string, Exclude<Audience, "all">> = {
+  admin: "admin",
+  deptAdmin: "admin",
+  branches: "admin",
+  branch: "admin",
+  videoMgmt: "admin",
+  stats: "admin",
+  globalDashboard: "admin",
+  teacher: "teacher",
+  students: "teacher",
+  studentDetail: "teacher",
+  createCourse: "teacher",
+  dashboard: "student",
+  course: "student",
+  assignments: "student",
+  achievements: "student",
+  contentPlayer: "student",
+  mandatory: "student",
+  catalog: "student",
+  enrollment: "student",
+  mypage: "student",
+  assessment: "student",
+  track: "student",
+};
+
+const classifyKey = (key: string): Exclude<Audience, "all"> => {
+  const prefix = key.split(".")[0];
+  return AUDIENCE_BY_PREFIX[prefix] ?? "common";
+};
+
 // Detect Korean Hangul characters. If source has no Hangul, it's already non-Korean
 // (English/Japanese/Chinese product names, codes, "Lesson 2", etc.) and translation
 // returning the same text should NOT be treated as "untranslated".
