@@ -1318,7 +1318,7 @@
     "providerUpload": "업로드(CDN)",
     "providerYoutube": "YouTube",
     "providerVimeo": "Vimeo",
-    "providerBunny": "Bunny CDN",
+    "providerBunny": "Global CDN",
     "providerCloudflare": "Cloudflare Stream",
     "providerKollus": "Kollus (카테노이드)",
     "colTitle": "제목",
