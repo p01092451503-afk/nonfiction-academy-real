@@ -42,7 +42,7 @@ const RichTile = ({ label, value, unit, icon: Icon, tone, progress, hint }: Rich
   const t = TONE[tone];
   return (
     <div className="group relative overflow-hidden rounded-xl border border-border/60 bg-card p-4 transition-all hover:border-foreground/20 hover:shadow-sm">
-      <div className={cn("absolute inset-x-0 top-0 h-0.5", t.bg.replace("/10", "/40"))} />
+      
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className={cn("rounded-lg p-1.5 ring-1", t.bg, t.ring)}>
           <Icon className={cn("h-4 w-4", t.text)} />

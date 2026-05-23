@@ -119,7 +119,7 @@ const LearningActivityCard = () => {
                   "transition-all hover:border-foreground/20 hover:shadow-sm",
                 )}
               >
-                <div className={cn("absolute inset-x-0 top-0 h-0.5", tone.bg.replace("/10", "/40"))} />
+                
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <span className={cn("rounded-lg p-1.5 ring-1", tone.bg, tone.ring)}>
                     <item.icon className={cn("h-4 w-4", tone.text)} />
