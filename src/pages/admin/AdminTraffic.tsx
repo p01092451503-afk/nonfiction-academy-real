@@ -185,8 +185,8 @@ const AdminTraffic = () => {
           <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview" className="text-xs">{t("stats.tabOverview")}</TabsTrigger>
             <TabsTrigger value="branch" className="text-xs">{t("stats.tabBranch")}</TabsTrigger>
-            <TabsTrigger value="traffic" className="text-xs">{t("stats.tabTraffic")}</TabsTrigger>
             <TabsTrigger value="learning" className="text-xs">{t("stats.tabLearning")}</TabsTrigger>
+            <TabsTrigger value="traffic" className="text-xs">{t("stats.tabTraffic")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
