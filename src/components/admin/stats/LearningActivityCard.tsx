@@ -109,6 +109,9 @@ const LearningActivityCard = () => {
         </div>
       </CardHeader>
       <CardContent className="px-3 sm:px-6 pb-4">
+        {isLoading ? (
+          <StatsLoading label={t("common.loading", "데이터를 불러오는 중입니다...")} height={180} />
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {items.map((item) => {
             const tone = TONE[item.tone];
