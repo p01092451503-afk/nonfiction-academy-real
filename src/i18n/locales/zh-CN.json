@@ -1411,7 +1411,7 @@
     "surveyResponses": "问卷回答",
     "memberDist": "会员分布",
     "byRole": "按角色",
-    "byBranch": "按组织/部门",
+    "byBranch": "按分店/部门",
     "unassigned": "未指定",
     "otherLabel": "其他",
     "signupTrend": "新用户注册趋势 (最近 {{period}}天)",
