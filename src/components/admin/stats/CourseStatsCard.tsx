@@ -76,7 +76,7 @@ const RichTile = ({ label, value, unit, icon: Icon, tone, progress, hint }: Rich
 const CourseStatsCard = () => {
   const { t } = useTranslation();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["stat-course-stats-rpc"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_course_stats");
@@ -133,6 +133,10 @@ const CourseStatsCard = () => {
         </div>
       </CardHeader>
       <CardContent className="px-3 sm:px-6 pb-4 space-y-3">
+        {isLoading ? (
+          <StatsLoading label={t("common.loading", "데이터를 불러오는 중입니다...")} height={260} />
+        ) : (
+        <>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <RichTile
             label={t("stats.totalCoursesCount")}
