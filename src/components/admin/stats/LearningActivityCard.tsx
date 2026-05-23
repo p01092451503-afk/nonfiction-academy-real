@@ -5,6 +5,7 @@ import { RankBar } from "@/components/ui/rank-bar";
 import { BookOpen, FileCheck, ClipboardCheck, MessageSquare, ClipboardList, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import StatsLoading from "./StatsLoading";
 
 type Tone = "primary" | "success" | "info" | "warning" | "neutral";
 const TONE: Record<Tone, { text: string; bg: string; ring: string }> = {
@@ -18,7 +19,7 @@ const TONE: Record<Tone, { text: string; bg: string; ring: string }> = {
 const LearningActivityCard = () => {
   const { t } = useTranslation();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["stat-learning-activity"],
     queryFn: async () => {
       const [contentRes, attemptRes, passedRes, subRes, gradedRes, boardRes, surveyRes] = await Promise.all([
