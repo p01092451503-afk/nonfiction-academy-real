@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
 import { toast } from "sonner";
-import i18n from "@/i18n";
+
 import koLocale from "@/i18n/locales/ko.json";
 import enLocale from "@/i18n/locales/en.json";
 import jaLocale from "@/i18n/locales/ja.json";
