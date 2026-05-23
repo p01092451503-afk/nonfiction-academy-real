@@ -236,6 +236,8 @@ const CourseStatsCard = () => {
             </div>
           </div>
         )}
+        </>
+        )}
       </CardContent>
     </Card>
   );
