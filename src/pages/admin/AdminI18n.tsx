@@ -12,7 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
 import { toast } from "sonner";
 
-type Category = "course" | "content" | "assessment" | "announcement" | "board" | "category" | "assignment" | "survey" | "survey_question" | "track" | "track_stage";
+import koLocale from "@/i18n/locales/ko.json";
+import enLocale from "@/i18n/locales/en.json";
+import jaLocale from "@/i18n/locales/ja.json";
+import zhLocale from "@/i18n/locales/zh-CN.json";
+import { flattenKeys } from "@/i18n/uiOverrides";
+
+type Category = "course" | "content" | "assessment" | "announcement" | "board" | "category" | "assignment" | "survey" | "survey_question" | "track" | "track_stage" | "ui_string";
 
 const TARGET_LANGS: TargetLang[] = ["en", "zh-CN", "ja"];
 const LANG_LABELS: Record<TargetLang, string> = { en: "EN", "zh-CN": "ZH", ja: "JA" };
@@ -45,6 +51,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   survey_question: "설문 문항",
   track: "트랙",
   track_stage: "트랙 단계",
+  ui_string: "UI 문구",
 };
 
 // Detect Korean Hangul characters. If source has no Hangul, it's already non-Korean
@@ -259,6 +266,42 @@ async function fetchAllRows(): Promise<Row[]> {
     "track_stage",
   );
 
+  // 12) UI strings — flatten ko.json keys; per-lang values come from DB overrides
+  //     or fall back to the corresponding static JSON file.
+  const koFlat = flattenKeys(koLocale);
+  const enFlat = flattenKeys(enLocale);
+  const jaFlat = flattenKeys(jaLocale);
+  const zhFlat = flattenKeys(zhLocale);
+  const { data: uiOverrides } = await supabase
+    .from("ui_translations" as any)
+    .select("key, language_code, value");
+  const overrideMap = new Map<string, Record<TargetLang, string>>();
+  (uiOverrides ?? []).forEach((r: any) => {
+    if (!TARGET_LANGS.includes(r.language_code)) return;
+    if (!overrideMap.has(r.key)) {
+      overrideMap.set(r.key, { en: "", "zh-CN": "", ja: "" });
+    }
+    overrideMap.get(r.key)![r.language_code as TargetLang] = r.value;
+  });
+
+  const staticByLang: Record<TargetLang, Record<string, string>> = {
+    en: enFlat,
+    ja: jaFlat,
+    "zh-CN": zhFlat,
+  };
+
+  Object.keys(koFlat).forEach((key) => {
+    const koVal = koFlat[key];
+    const langs = {} as Record<TargetLang, LangCell>;
+    TARGET_LANGS.forEach((lc) => {
+      const ovr = overrideMap.get(key)?.[lc];
+      const staticVal = staticByLang[lc][key];
+      const title = ovr || staticVal || null;
+      langs[lc] = { title, body: null, status: computeStatus(koVal, "", title, null) };
+    });
+    rows.push({ id: key, category: "ui_string", ko_title: koVal, ko_body: "", langs });
+  });
+
   return rows;
 }
 
@@ -297,6 +340,11 @@ async function upsertTranslation(row: Row, lang: TargetLang, tTitle: string, tBo
       return supabase.from("learning_tracks_i18n" as any).upsert({ track_id: row.id, language_code: lang, title: tTitle, description: tBody || null }, { onConflict: "track_id,language_code" });
     case "track_stage":
       return supabase.from("track_stages_i18n" as any).upsert({ stage_id: row.id, language_code: lang, name: tTitle, description: tBody || null }, { onConflict: "stage_id,language_code" });
+    case "ui_string":
+      return supabase.from("ui_translations" as any).upsert(
+        { key: row.id, language_code: lang, value: tTitle },
+        { onConflict: "key,language_code" },
+      );
   }
 }
 
@@ -384,7 +432,7 @@ const AdminI18n = () => {
       if (needs.length === 0) continue;
       // Skip categories that don't support this language
       const supportsLang = (cat: Category) =>
-        ["course", "content", "assessment", "announcement", "board", "track", "track_stage"].includes(cat) || lc === "en";
+        ["course", "content", "assessment", "announcement", "board", "track", "track_stage", "ui_string"].includes(cat) || lc === "en";
       const supported = needs.filter((r) => supportsLang(r.category));
       const res = await translateRowsForLang(supported, lc);
       ok += res.ok; fail += res.fail;
@@ -399,6 +447,10 @@ const AdminI18n = () => {
       if (ok > 0) {
         toast.success(`${ok}건 번역이 완료되었습니다.${fail ? ` (${fail}건 실패)` : ""}`);
         await queryClient.invalidateQueries({ queryKey: ["admin-i18n-rows"] });
+        if (row.category === "ui_string") {
+          const { loadUiOverrides } = await import("@/i18n/uiOverrides");
+          await loadUiOverrides();
+        }
       } else {
         toast.error("번역에 실패했습니다.");
       }
@@ -424,6 +476,10 @@ const AdminI18n = () => {
       else toast.warning(`${ok}건 성공, ${fail}건 실패`);
       setSelected(new Set());
       await queryClient.invalidateQueries({ queryKey: ["admin-i18n-rows"] });
+      if (targets.some((r) => r.category === "ui_string")) {
+        const { loadUiOverrides } = await import("@/i18n/uiOverrides");
+        await loadUiOverrides();
+      }
     } finally {
       setBulkBusy(false);
     }
