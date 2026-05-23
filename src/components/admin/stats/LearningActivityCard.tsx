@@ -150,6 +150,7 @@ const LearningActivityCard = () => {
             );
           })}
         </div>
+        )}
       </CardContent>
     </Card>
   );
