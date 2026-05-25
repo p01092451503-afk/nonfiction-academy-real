@@ -22,21 +22,22 @@ export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
 }: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="ko" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
+    <Preview>{siteName} 로그인 링크</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
+        <Text style={brand}>NONFICTION</Text>
+        <Heading style={h1}>로그인 링크</Heading>
         <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
+          아래 버튼을 눌러 {siteName}에 로그인할 수 있습니다.
+          링크는 잠시 후 만료됩니다.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Log In
+          로그인하기
         </Button>
         <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
+          본인이 요청하지 않은 경우 이 메일은 무시하셔도 됩니다.
         </Text>
       </Container>
     </Body>
@@ -45,26 +46,27 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Noto Sans KR', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
 }
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+const container = { padding: '32px 28px', maxWidth: '560px' }
+const brand = {
+  fontFamily: "'Noto Serif KR', Georgia, serif",
+  fontSize: '13px',
+  letterSpacing: '0.18em',
+  color: '#5f574e',
+  margin: '0 0 28px',
 }
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#211d18', margin: '0 0 20px' }
+const text = { fontSize: '14px', color: '#5f574e', lineHeight: '1.6', margin: '0 0 24px' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
+  backgroundColor: '#211d18',
+  color: '#faf6ef',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  borderRadius: '12px',
+  padding: '12px 22px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = { fontSize: '12px', color: '#8a8278', margin: '32px 0 0' }

@@ -16,10 +16,6 @@ import {
 
 interface EmailChangeEmailProps {
   siteName: string
-  // oldEmail is the user's current address (HookData.OldEmail). For the
-  // NEW-recipient half of a secure email_change fanout, `email` equals the
-  // recipient (NEW), so the "from" line must render oldEmail to read
-  // "from OLD to NEW" instead of "from NEW to NEW".
   oldEmail: string
   email: string
   newEmail: string
@@ -32,32 +28,30 @@ export const EmailChangeEmail = ({
   newEmail,
   confirmationUrl,
 }: EmailChangeEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="ko" dir="ltr">
     <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
+    <Preview>{siteName} 이메일 변경 확인</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
+        <Text style={brand}>NONFICTION</Text>
+        <Heading style={h1}>이메일 변경 확인</Heading>
         <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
+          {siteName} 계정의 이메일 주소를{' '}
           <Link href={`mailto:${oldEmail}`} style={link}>
             {oldEmail}
-          </Link>{' '}
-          to{' '}
+          </Link>
+          에서{' '}
           <Link href={`mailto:${newEmail}`} style={link}>
             {newEmail}
           </Link>
-          .
+          (으)로 변경 요청하셨습니다.
         </Text>
-        <Text style={text}>
-          Click the button below to confirm this change:
-        </Text>
+        <Text style={text}>아래 버튼을 눌러 변경을 확인해 주세요.</Text>
         <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
+          이메일 변경 확인
         </Button>
         <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
+          본인이 요청하지 않은 경우 즉시 계정을 보호해 주세요.
         </Text>
       </Container>
     </Body>
@@ -66,27 +60,28 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Noto Sans KR', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
 }
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+const container = { padding: '32px 28px', maxWidth: '560px' }
+const brand = {
+  fontFamily: "'Noto Serif KR', Georgia, serif",
+  fontSize: '13px',
+  letterSpacing: '0.18em',
+  color: '#5f574e',
+  margin: '0 0 28px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#211d18', margin: '0 0 20px' }
+const text = { fontSize: '14px', color: '#5f574e', lineHeight: '1.6', margin: '0 0 20px' }
+const link = { color: '#211d18', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
+  backgroundColor: '#211d18',
+  color: '#faf6ef',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  borderRadius: '12px',
+  padding: '12px 22px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = { fontSize: '12px', color: '#8a8278', margin: '32px 0 0' }

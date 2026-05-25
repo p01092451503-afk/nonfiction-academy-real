@@ -27,31 +27,31 @@ export const SignupEmail = ({
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="ko" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>NONFICTION 이메일 인증을 완료해 주세요</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Text style={brand}>NONFICTION</Text>
+        <Heading style={h1}>이메일 인증을 완료해 주세요</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          !
+          에 가입해 주셔서 감사합니다.
         </Text>
         <Text style={text}>
-          Please confirm your email address (
+          아래 버튼을 눌러 이메일 주소(
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) by clicking the button below:
+          )를 인증해 주세요.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Verify Email
+          이메일 인증하기
         </Button>
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          본인이 가입하지 않은 경우 이 메일은 무시하셔도 됩니다.
         </Text>
       </Container>
     </Body>
@@ -60,27 +60,38 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Noto Sans KR', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
+}
+const container = { padding: '32px 28px', maxWidth: '560px' }
+const brand = {
+  fontFamily: "'Noto Serif KR', Georgia, serif",
+  fontSize: '13px',
+  letterSpacing: '0.18em',
+  color: '#5f574e',
+  margin: '0 0 28px',
+}
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#211d18',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  color: '#5f574e',
+  lineHeight: '1.6',
+  margin: '0 0 20px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: '#211d18', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
+  backgroundColor: '#211d18',
+  color: '#faf6ef',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  borderRadius: '12px',
+  padding: '12px 22px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = { fontSize: '12px', color: '#8a8278', margin: '32px 0 0' }

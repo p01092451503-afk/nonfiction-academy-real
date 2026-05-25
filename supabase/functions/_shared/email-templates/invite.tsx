@@ -25,26 +25,25 @@ export const InviteEmail = ({
   siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="ko" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>{siteName} 초대장이 도착했습니다</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Text style={brand}>NONFICTION</Text>
+        <Heading style={h1}>초대장이 도착했습니다</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          에 초대되셨습니다. 아래 버튼을 눌러 초대를 수락하고 계정을
+          생성해 주세요.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          초대 수락하기
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          본 초대를 예상하지 못하신 경우 이 메일은 무시하셔도 됩니다.
         </Text>
       </Container>
     </Body>
@@ -53,27 +52,28 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Noto Sans KR', -apple-system, BlinkMacSystemFont, Arial, sans-serif",
 }
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+const container = { padding: '32px 28px', maxWidth: '560px' }
+const brand = {
+  fontFamily: "'Noto Serif KR', Georgia, serif",
+  fontSize: '13px',
+  letterSpacing: '0.18em',
+  color: '#5f574e',
+  margin: '0 0 28px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#211d18', margin: '0 0 20px' }
+const text = { fontSize: '14px', color: '#5f574e', lineHeight: '1.6', margin: '0 0 24px' }
+const link = { color: '#211d18', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
+  backgroundColor: '#211d18',
+  color: '#faf6ef',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  borderRadius: '12px',
+  padding: '12px 22px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footer = { fontSize: '12px', color: '#8a8278', margin: '32px 0 0' }
