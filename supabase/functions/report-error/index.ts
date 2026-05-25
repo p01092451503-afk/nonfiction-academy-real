@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
           idempotency_key: `ops-error-${fingerprint}-${Date.now()}`,
         },
       }),
-      sendSlackDM(slackText),
+      sendSlackMessage(slackText),
     ]);
 
     const emailOk = emailRes.status === "fulfilled" && !emailRes.value.error;
