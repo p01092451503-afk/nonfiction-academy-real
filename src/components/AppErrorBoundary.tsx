@@ -1,6 +1,7 @@
 import { Component, ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { reportError } from "@/lib/errorReporter";
 
 interface AppErrorBoundaryProps {
   children: ReactNode;
@@ -19,6 +20,12 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
 
   componentDidCatch(error: Error) {
     console.error("App render error:", error);
+    reportError({
+      message: error.message || "React render error",
+      stack: error.stack || "",
+      source: "react-error-boundary",
+      severity: "critical",
+    });
   }
 
   render() {
