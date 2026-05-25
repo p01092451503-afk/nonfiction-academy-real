@@ -1,16 +1,15 @@
 project_id = "jabagvlhgxrwbnxyrmvv"
 
-[functions.translate-comment]
-verify_jwt = false
-
-[functions.seed-nonfiction-admins]
-verify_jwt = false
-
-[functions.pwa-manifest]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
-
-[functions.report-error]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.pwa-manifest]
+    verify_jwt = false
+  [functions.report-error]
+    verify_jwt = false
+  [functions.seed-nonfiction-admins]
+    verify_jwt = false
+  [functions.translate-comment]
+    verify_jwt = false
