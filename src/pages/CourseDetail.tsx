@@ -1017,11 +1017,28 @@ const CourseDetail = () => {
                 .filter(c => hasUploadedContent(c as any, mediaPackageContentIds, videoPackageContentIds));
 
               // 학생 화면에서는 현재 UI 언어에 해당하는 차시만 노출.
-              // 해당 언어의 차시가 없으면 한국어(원본)로 폴백.
+              // 해당 언어 차시가 업로드되어 있지 않으면 한국어 미디어를 폴백으로 사용하되,
+              // 제목/설명/언어 표시는 동일 order_index를 가진 현재 언어 행의 값으로 덮어쓴다.
+              // (동일 콘텐츠의 언어 변형이므로 미디어는 공유하고 메타데이터만 번역으로 표시.)
               const inLang = allPublished.filter(c => (c.language_code || "ko") === currentLang);
+              const allCurrentLangRows = (contents as any[]).filter(
+                (c) => (c.language_code || "ko") === currentLang
+              );
+              const koFallback = allPublished.filter(c => (c.language_code || "ko") === "ko");
               const publishedContents = inLang.length > 0
                 ? inLang
-                : allPublished.filter(c => (c.language_code || "ko") === "ko");
+                : koFallback.map((ko) => {
+                    const sibling = allCurrentLangRows.find(
+                      (r) => (r.order_index ?? -1) === (ko.order_index ?? -2)
+                    );
+                    if (!sibling) return ko;
+                    return {
+                      ...ko,
+                      title: sibling.title || ko.title,
+                      description: sibling.description || ko.description,
+                      language_code: sibling.language_code || ko.language_code,
+                    };
+                  });
 
               
               // Build assessment gate map: assessmentOrderIndex -> assessment
