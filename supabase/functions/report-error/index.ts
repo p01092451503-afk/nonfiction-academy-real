@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 const ALERT_EMAIL = "p01092451503@gmail.com";
-const SLACK_CHANNEL = "WEBHEADS";
+const SLACK_CHANNEL = "slack-전체";
 const DEBOUNCE_MINUTES = 5;
 const SLACK_GATEWAY = "https://connector-gateway.lovable.dev/slack/api";
 
