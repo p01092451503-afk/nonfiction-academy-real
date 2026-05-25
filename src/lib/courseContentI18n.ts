@@ -69,18 +69,11 @@ export function stripLessonPrefix(title: string | null | undefined): string {
  */
 export function localizeLessonPrefix(
   title: string | null | undefined,
-  lang: string | null | undefined,
-  index: number,
+  _lang: string | null | undefined,
+  _index: number,
 ): string {
-  const stripped = stripLessonPrefix(title);
-  const n = index + 1;
-  const lc = (lang || "ko").toLowerCase();
-  let prefix: string;
-  if (lc.startsWith("zh")) prefix = `第 ${n} 课. `;
-  else if (lc === "ja") prefix = `レッスン ${n}. `;
-  else if (lc === "en") prefix = `Lesson ${n}. `;
-  else prefix = `${n}차시. `;
-  return `${prefix}${stripped}`;
+  // 다국어 차시는 동일 콘텐츠의 언어 변형이므로 "1차시./Lesson 1." 같은 번호 접두사를 표시하지 않는다.
+  return stripLessonPrefix(title);
 }
 
 /** Find legacy i18n row for a given content + row language. */
