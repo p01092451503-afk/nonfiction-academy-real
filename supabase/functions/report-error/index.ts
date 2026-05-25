@@ -19,46 +19,23 @@ const sha1 = async (s: string): Promise<string> => {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 };
 
-const sendSlackDM = async (text: string): Promise<{ ok: boolean; error?: string }> => {
+const sendSlackMessage = async (text: string): Promise<{ ok: boolean; error?: string }> => {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const slackKey = Deno.env.get("SLACK_API_KEY");
   if (!lovableKey || !slackKey) return { ok: false, error: "Slack not configured" };
 
   try {
-    const headers = {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": slackKey,
-    };
-
-    // 1) lookup user by email
-    const luRes = await fetch(`${SLACK_GATEWAY}/users.lookupByEmail?email=${encodeURIComponent(SLACK_USER_EMAIL)}`, {
-      method: "POST",
-      headers,
-    });
-    const lu = await luRes.json();
-    if (!lu.ok) return { ok: false, error: `lookupByEmail: ${lu.error}` };
-    const userId = lu.user?.id;
-    if (!userId) return { ok: false, error: "user id missing" };
-
-    // 2) open DM channel
-    const openRes = await fetch(`${SLACK_GATEWAY}/conversations.open`, {
-      method: "POST",
-      headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ users: userId }),
-    });
-    const open = await openRes.json();
-    if (!open.ok) return { ok: false, error: `conversations.open: ${open.error}` };
-    const channel = open.channel?.id;
-
-    // 3) post message
     const postRes = await fetch(`${SLACK_GATEWAY}/chat.postMessage`, {
       method: "POST",
-      headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({ channel, text, mrkdwn: true }),
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": slackKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ channel: SLACK_CHANNEL, text, mrkdwn: true }),
     });
     const post = await postRes.json();
     if (!post.ok) return { ok: false, error: `chat.postMessage: ${post.error}` };
-
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
