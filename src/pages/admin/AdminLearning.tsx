@@ -351,9 +351,9 @@ const AdminLearning = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("admin.nameColumn")}</TableHead>
-                        <TableHead>{t("admin.courseLabel")}</TableHead>
-                        <TableHead>{t("admin.completionDate")}</TableHead>
+                        <TableHead><button type="button" onClick={() => toggleCompleterSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.nameColumn")} <SortIcon active={completerSort.key === "name"} dir={completerSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleCompleterSort("course")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.courseLabel")} <SortIcon active={completerSort.key === "course"} dir={completerSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleCompleterSort("completed_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.completionDate")} <SortIcon active={completerSort.key === "completed_at"} dir={completerSort.dir} /></button></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
