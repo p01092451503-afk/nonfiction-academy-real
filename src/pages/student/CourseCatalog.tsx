@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import CourseThumbnail from "@/components/CourseThumbnail";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const categoryGradients: Record<string, string> = {
   marketing: "from-orange-500 to-pink-500",
