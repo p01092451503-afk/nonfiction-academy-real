@@ -40,12 +40,12 @@ const BranchLearningStats = () => {
 
   const { data: enrollments = [], isLoading: l3 } = useQuery({
     queryKey: ["stat-branch-enrollments"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("user_id, progress, completed_at");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () =>
+      fetchAllPaged<any>((from, to) =>
+        supabase.from("enrollments").select("user_id, progress, completed_at").range(from, to),
+      ),
   });
+
 
   const { data: contentProgress = [], isLoading: l4 } = useQuery({
     queryKey: ["stat-branch-content-progress"],
