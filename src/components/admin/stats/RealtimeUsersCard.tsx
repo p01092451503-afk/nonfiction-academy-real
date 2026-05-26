@@ -52,10 +52,28 @@ const RealtimeUsersCard = () => {
   const last7 = sessions.slice(-7);
   const delta = computeDelta(sessions);
 
+  if (isLoading) {
+    return (
+      <div className="stat-card !p-4 sm:!p-5 flex flex-col gap-3 min-w-0" aria-busy="true" aria-live="polite">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <span>{t("common.loadingStats", "통계 데이터를 불러오는 중입니다...")}</span>
+        </div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-16" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <Skeleton className="h-8 w-20 shrink-0" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <StatCard
       label={t("stats.realtimeUsers", "현재 동시접속자")}
-      value={onlineCount.toLocaleString()}
+      value={(onlineCount ?? 0).toLocaleString()}
       unit={t("common.people")}
       icon={Wifi}
       tone="primary"
