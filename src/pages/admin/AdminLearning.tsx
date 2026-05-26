@@ -170,14 +170,30 @@ const AdminLearning = () => {
   };
 
   const exportCSV = () => {
-    const header = [t("admin.nameColumn"), t("admin.courseLabel"), t("admin.progressLabel"), t("admin.statusLabel"), t("admin.startDate"), t("admin.completionDate")];
+    const header = [
+      t("admin.countryColumn", "국가"),
+      t("admin.branchColumn", "매장명"),
+      t("admin.nameColumn"),
+      t("admin.courseLabel"),
+      t("admin.progressLabel"),
+      t("admin.statusLabel"),
+      t("admin.startDate"),
+      t("admin.completionDate"),
+    ];
+    const escape = (v: any) => {
+      const s = String(v ?? "-");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const rows = filtered.map((e: any) => {
       const p = profileMap.get(e.user_id);
       const c = courseMap.get(e.course_id);
+      const dept: any = p?.department_id ? departmentMap.get(p.department_id) : null;
+      const country = dept?.country || "-";
+      const branch = dept?.name || p?.department || "-";
       const status = e.completed_at ? t("common.complete") : (Number(e.progress) || 0) > 0 ? t("dashboard.inProgress") : t("admin.notStarted");
-      return [p?.full_name || "-", c?.title || "-", `${Math.round(Number(e.progress) || 0)}%`, status, formatDate(e.enrolled_at), formatDate(e.completed_at)];
+      return [country, branch, p?.full_name || "-", c?.title || "-", `${Math.round(Number(e.progress) || 0)}%`, status, formatDate(e.enrolled_at), formatDate(e.completed_at)];
     });
-    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const csv = [header, ...rows].map((r) => r.map(escape).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
