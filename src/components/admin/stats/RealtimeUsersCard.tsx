@@ -11,7 +11,7 @@ const RealtimeUsersCard = () => {
   const { t } = useTranslation();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: onlineCount = 0, refetch } = useQuery({
+  const { data: onlineCount, isLoading, refetch } = useQuery({
     queryKey: ["realtime-online-users"],
     queryFn: async () => {
       const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
