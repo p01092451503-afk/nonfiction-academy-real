@@ -107,7 +107,7 @@ const AdminLearning = () => {
       return dir === "asc" ? c : -c;
     });
     return arr;
-  }, [completerRows, completerSort, profileMap, courseMap, i18n.language]);
+  }, [completerRows, completerSort, completerSearch, profileMap, courseMap, i18n.language]);
 
   const visibleProgressRows = sortedProgressRows.slice(0, 50);
   const visibleCompleterRows = sortedCompleterRows.slice(0, 50);
