@@ -277,12 +277,12 @@ const AdminLearning = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("admin.nameColumn")}</TableHead>
-                        <TableHead>{t("admin.courseLabel")}</TableHead>
-                        <TableHead>{t("admin.progressLabel")}</TableHead>
-                        <TableHead>{t("admin.statusLabel")}</TableHead>
-                        <TableHead>{t("admin.startDate")}</TableHead>
-                        <TableHead>{t("admin.completionDate")}</TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.nameColumn")} <SortIcon active={progressSort.key === "name"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("course")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.courseLabel")} <SortIcon active={progressSort.key === "course"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("progress")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.progressLabel")} <SortIcon active={progressSort.key === "progress"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("status")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.statusLabel")} <SortIcon active={progressSort.key === "status"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("enrolled_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.startDate")} <SortIcon active={progressSort.key === "enrolled_at"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("completed_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.completionDate")} <SortIcon active={progressSort.key === "completed_at"} dir={progressSort.dir} /></button></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
