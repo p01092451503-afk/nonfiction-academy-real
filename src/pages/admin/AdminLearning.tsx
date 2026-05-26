@@ -62,7 +62,16 @@ const AdminLearning = () => {
   const { data: profiles = [], isPending: profilesPending } = useQuery({
     queryKey: ["admin-learning-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id, full_name, department");
+      const { data, error } = await supabase.from("profiles").select("user_id, full_name, department, department_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ["admin-learning-departments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("departments").select("id, name, country");
       if (error) throw error;
       return data;
     },
@@ -70,6 +79,7 @@ const AdminLearning = () => {
 
   const isLoading = coursesPending || enrollmentsPending || profilesPending;
 
+  const departmentMap = new Map(departments.map((d: any) => [d.id, d]));
   const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
   const courseMap = new Map(courses.map((c: any) => [c.id, c]));
 
