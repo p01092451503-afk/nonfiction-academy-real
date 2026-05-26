@@ -24,6 +24,8 @@ const AdminLearning = () => {
   const [courseFilter, setCourseFilter] = useState("all");
   const [progressSort, setProgressSort] = useState<{ key: ProgressSortKey; dir: SortDir }>({ key: "enrolled_at", dir: "desc" });
   const [completerSort, setCompleterSort] = useState<{ key: CompleterSortKey; dir: SortDir }>({ key: "completed_at", dir: "desc" });
+  const [completerSearch, setCompleterSearch] = useState("");
+
 
   const { data: courses = [], isPending: coursesPending } = useQuery({
     queryKey: ["admin-learning-courses"],
