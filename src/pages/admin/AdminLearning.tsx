@@ -1,4 +1,5 @@
-import { GraduationCap, Download, BarChart3, AlertTriangle, Users, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { GraduationCap, Download, BarChart3, AlertTriangle, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,8 @@ const AdminLearning = () => {
   const [courseFilter, setCourseFilter] = useState("all");
   const [progressSort, setProgressSort] = useState<{ key: ProgressSortKey; dir: SortDir }>({ key: "enrolled_at", dir: "desc" });
   const [completerSort, setCompleterSort] = useState<{ key: CompleterSortKey; dir: SortDir }>({ key: "completed_at", dir: "desc" });
+  const [completerSearch, setCompleterSearch] = useState("");
+
 
   const { data: courses = [], isPending: coursesPending } = useQuery({
     queryKey: ["admin-learning-courses"],
@@ -91,7 +94,11 @@ const AdminLearning = () => {
   }, [filtered, progressSort, profileMap, courseMap, i18n.language]);
 
   const sortedCompleterRows = useMemo(() => {
-    const arr = [...completerRows];
+    const q = completerSearch.trim().toLowerCase();
+    const base = q
+      ? completerRows.filter((e: any) => (profileMap.get(e.user_id)?.full_name || "").toLowerCase().includes(q))
+      : completerRows;
+    const arr = [...base];
     const { key, dir } = completerSort;
     arr.sort((a: any, b: any) => {
       let va: any, vb: any;
@@ -104,7 +111,7 @@ const AdminLearning = () => {
       return dir === "asc" ? c : -c;
     });
     return arr;
-  }, [completerRows, completerSort, profileMap, courseMap, i18n.language]);
+  }, [completerRows, completerSort, completerSearch, profileMap, courseMap, i18n.language]);
 
   const visibleProgressRows = sortedProgressRows.slice(0, 50);
   const visibleCompleterRows = sortedCompleterRows.slice(0, 50);
@@ -320,7 +327,20 @@ const AdminLearning = () => {
 
           <TabsContent value="completers" className="mt-0">
             <div className="stat-card !p-3 sm:!p-5">
-              <h3 className="text-sm sm:text-base font-semibold text-foreground mb-4">{t("admin.completersList")}</h3>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">{t("admin.completersList")}</h3>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <Input
+                    type="search"
+                    value={completerSearch}
+                    onChange={(e) => setCompleterSearch(e.target.value)}
+                    placeholder={t("admin.searchByName", "이름으로 검색")}
+                    className="pl-9 h-9"
+                    aria-label={t("admin.searchByName", "이름으로 검색")}
+                  />
+                </div>
+              </div>
 
               <div className="sm:hidden space-y-3" aria-label={t("admin.completersList")}>
                 {visibleCompleterRows.length === 0 ? (
