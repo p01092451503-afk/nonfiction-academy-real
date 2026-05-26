@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 interface Track { id: string; title: string; title_en: string | null; }
 interface Stage { id: string; track_id: string; }
