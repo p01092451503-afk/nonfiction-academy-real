@@ -351,23 +351,28 @@ const MyPage = () => {
 
         {/* Content */}
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-secondary/50 rounded-xl p-1">
-            <TabsTrigger value="profile" className="rounded-lg gap-1.5 text-sm">
-              <User className="h-4 w-4" /> {t("mypage.profileTab")}
-            </TabsTrigger>
-            <TabsTrigger value="avatar" className="rounded-lg gap-1.5 text-sm">
-              <Camera className="h-4 w-4" /> {t("mypage.avatarTab")}
-            </TabsTrigger>
-            <TabsTrigger value="certificates" className="rounded-lg gap-1.5 text-sm">
-              <Award className="h-4 w-4" /> {t("mypage.certificatesTab")}
-            </TabsTrigger>
-            <TabsTrigger value="legacy" className="rounded-lg gap-1.5 text-sm">
-              <Archive className="h-4 w-4" /> {t("mypage.legacyTab", "이전 학습 이력")}
-            </TabsTrigger>
-            <TabsTrigger value="password" className="rounded-lg gap-1.5 text-sm">
-              <Lock className="h-4 w-4" /> {t("mypage.passwordTab")}
-            </TabsTrigger>
-          </TabsList>
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto scrollbar-none">
+            <TabsList
+              className="bg-secondary/50 rounded-xl p-1 h-auto flex w-max min-w-full sm:w-auto sm:min-w-0"
+              aria-label={t("mypage.profileTab")}
+            >
+              <TabsTrigger value="profile" className="rounded-lg gap-1.5 text-sm whitespace-nowrap shrink-0">
+                <User className="h-4 w-4" /> {t("mypage.profileTab")}
+              </TabsTrigger>
+              <TabsTrigger value="avatar" className="rounded-lg gap-1.5 text-sm whitespace-nowrap shrink-0">
+                <Camera className="h-4 w-4" /> {t("mypage.avatarTab")}
+              </TabsTrigger>
+              <TabsTrigger value="certificates" className="rounded-lg gap-1.5 text-sm whitespace-nowrap shrink-0">
+                <Award className="h-4 w-4" /> {t("mypage.certificatesTab")}
+              </TabsTrigger>
+              <TabsTrigger value="legacy" className="rounded-lg gap-1.5 text-sm whitespace-nowrap shrink-0">
+                <Archive className="h-4 w-4" /> {t("mypage.legacyTab", "이전 학습 이력")}
+              </TabsTrigger>
+              <TabsTrigger value="password" className="rounded-lg gap-1.5 text-sm whitespace-nowrap shrink-0">
+                <Lock className="h-4 w-4" /> {t("mypage.passwordTab")}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
             {/* Profile Tab */}
             <TabsContent value="profile">
