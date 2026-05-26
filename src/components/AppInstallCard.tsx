@@ -90,7 +90,7 @@ const AppInstallCard = () => {
         )}
       </div>
 
-      {!installed && (showManual || !available) && (
+      {!installed && showManual && (
         <div className="rounded-lg bg-secondary/40 border border-border p-4 text-xs text-foreground/80 space-y-3">
           <p className="font-medium text-foreground">
             팝업이 차단되었거나 자동 설치 안내가 뜨지 않는 경우, 아래 방법으로 직접 설치해 주세요.
