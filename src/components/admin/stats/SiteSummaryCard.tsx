@@ -1,17 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, UserPlus, Globe, Monitor } from "lucide-react";
+import { Users, UserPlus, Globe, Monitor, Loader2 } from "lucide-react";
 import { startOfMonth, startOfDay } from "date-fns";
 import { useTranslation } from "react-i18next";
 import StatCard from "@/components/ui/stat-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
+
+const SummarySkeletonCard = () => (
+  <div className="stat-card !p-4 sm:!p-5 flex flex-col gap-3 min-w-0" aria-busy="true">
+    <div className="flex items-center gap-2 min-w-0">
+      <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+      <Skeleton className="h-3.5 w-24" />
+    </div>
+    <div className="flex items-end justify-between gap-3 min-w-0">
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-20" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+      <Skeleton className="h-8 w-20 sm:w-24 shrink-0" />
+    </div>
+  </div>
+);
 
 const SiteSummaryCard = () => {
   const { t } = useTranslation();
   const today = startOfDay(new Date()).toISOString();
   const monthStart = startOfMonth(new Date()).toISOString();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["stat-site-summary-rpc", today, monthStart],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_site_summary_today");
@@ -29,7 +46,7 @@ const SiteSummaryCard = () => {
 
   const stats = data || { todayVisitors: 0, monthNewMembers: 0, totalMembers: 0, todayPageViews: 0 };
 
-  const { data: spark } = useDashboardSparklines(14);
+  const { data: spark, isLoading: sparkLoading } = useDashboardSparklines(14);
   const sessions7 = (spark?.sessions ?? []).slice(-7);
   const signups7 = (spark?.signups ?? []).slice(-7);
   const pageviews7 = (spark?.pageviews ?? []).slice(-7);
@@ -38,8 +55,28 @@ const SiteSummaryCard = () => {
   const signupsDelta  = computeDelta(spark?.signups);
   const pageviewsDelta = computeDelta(spark?.pageviews);
 
+  // Show skeleton while the primary stats query is loading.
+  // (Sparklines are secondary — they fade in when ready.)
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <span>{t("common.loadingStats", "통계 데이터를 불러오는 중입니다...")}</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3" role="status" aria-live="polite">
+          <SummarySkeletonCard />
+          <SummarySkeletonCard />
+          <SummarySkeletonCard />
+          <SummarySkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+
       <StatCard
         label={t("stats.todayVisitors")}
         value={stats.todayVisitors.toLocaleString()}
