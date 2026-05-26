@@ -625,11 +625,33 @@ export default function AssessmentPage() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data: any) => {
       setCurrentAttemptId(null);
       setShowResults(true);
       setReviewMode(false);
       setCurrentQuestionIndex(0);
+
+      // 퀴즈 합격 시 강의 이수 처리 (enrollments.completed_at 갱신)
+      try {
+        const didPass = Array.isArray(data) ? data[0]?.passed : data?.passed;
+        if (didPass && user?.id && courseId) {
+          const { data: enr } = await supabase
+            .from("enrollments")
+            .select("id, completed_at")
+            .eq("user_id", user.id)
+            .eq("course_id", courseId)
+            .maybeSingle();
+          if (enr && !enr.completed_at) {
+            await supabase
+              .from("enrollments")
+              .update({ progress: 100, completed_at: new Date().toISOString() })
+              .eq("id", enr.id);
+          }
+        }
+      } catch (err) {
+        console.error("[assessment] enrollment sync failed", err);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["assessment-attempts", assessmentId, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["assessment-answers"] });
       queryClient.invalidateQueries({ queryKey: ["assessment-questions-review", assessmentId] });
