@@ -298,12 +298,12 @@ const CourseCatalog = () => {
 
   const { data: enrollmentCounts = [] } = useQuery({
     queryKey: ["catalog-enrollment-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("course_id");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () =>
+      fetchAllPaged<{ course_id: string }>((from, to) =>
+        supabase.from("enrollments").select("course_id").range(from, to),
+      ),
   });
+
 
   const { data: contentCounts = [] } = useQuery({
     queryKey: ["catalog-content-counts"],
