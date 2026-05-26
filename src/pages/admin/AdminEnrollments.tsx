@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const AdminEnrollments = () => {
   const { user } = useUser();
@@ -27,17 +28,17 @@ const AdminEnrollments = () => {
   const [bulkOpen, setBulkOpen] = useState(false);
 
 
-  // Fetch enrollments with course and profile info
+  // Fetch enrollments with course info (paginated to bypass Supabase 1000-row default limit)
   const { data: enrollments = [], isLoading } = useQuery({
     queryKey: ["admin-enrollments"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("enrollments")
-        .select("*, courses(id, title, thumbnail_url, category_id)")
-        .order("enrolled_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () =>
+      await fetchAllPaged<any>((from, to) =>
+        supabase
+          .from("enrollments")
+          .select("*, courses(id, title, thumbnail_url, category_id)")
+          .order("enrolled_at", { ascending: false })
+          .range(from, to),
+      ),
   });
 
   // Fetch student profiles
