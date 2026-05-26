@@ -94,7 +94,11 @@ const AdminLearning = () => {
   }, [filtered, progressSort, profileMap, courseMap, i18n.language]);
 
   const sortedCompleterRows = useMemo(() => {
-    const arr = [...completerRows];
+    const q = completerSearch.trim().toLowerCase();
+    const base = q
+      ? completerRows.filter((e: any) => (profileMap.get(e.user_id)?.full_name || "").toLowerCase().includes(q))
+      : completerRows;
+    const arr = [...base];
     const { key, dir } = completerSort;
     arr.sort((a: any, b: any) => {
       let va: any, vb: any;
