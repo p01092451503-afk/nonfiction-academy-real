@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import AvatarTab from "@/components/mypage/AvatarTab";
+import AppInstallCard from "@/components/AppInstallCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
@@ -371,6 +372,7 @@ const MyPage = () => {
             {/* Profile Tab */}
             <TabsContent value="profile">
               <div className="max-w-lg space-y-6">
+                <AppInstallCard />
                 <div className="space-y-1">
                   <h2 className="text-lg font-semibold">{t("mypage.profileInfo")}</h2>
                   <p className="text-sm text-muted-foreground">{t("mypage.profileInfoDesc")}</p>
