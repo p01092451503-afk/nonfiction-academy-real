@@ -39,9 +39,23 @@ const AdminLearning = () => {
   const { data: enrollments = [], isPending: enrollmentsPending } = useQuery({
     queryKey: ["admin-learning-enrollments"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("id, user_id, course_id, progress, enrolled_at, completed_at");
-      if (error) throw error;
-      return data;
+      // Supabase 기본 1000행 제한을 우회하기 위해 range로 페이지네이션
+      const pageSize = 1000;
+      let from = 0;
+      const all: any[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from("enrollments")
+          .select("id, user_id, course_id, progress, enrolled_at, completed_at")
+          .order("enrolled_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
   });
 
