@@ -60,7 +60,7 @@ const AdminLearning = () => {
   });
 
   const { data: profiles = [], isPending: profilesPending } = useQuery({
-    queryKey: ["admin-learning-profiles"],
+    queryKey: ["admin-learning-profiles", "v2-with-dept"],
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles").select("user_id, full_name, department, department_id");
       if (error) throw error;
@@ -69,7 +69,7 @@ const AdminLearning = () => {
   });
 
   const { data: departments = [] } = useQuery({
-    queryKey: ["admin-learning-departments"],
+    queryKey: ["admin-learning-departments", "v2-with-country"],
     queryFn: async () => {
       const { data, error } = await supabase.from("departments").select("id, name, country");
       if (error) throw error;
