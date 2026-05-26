@@ -21,6 +21,7 @@ import CourseCard from "@/components/CourseCard";
 import CourseThumbnail from "@/components/CourseThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 import StatCard from "@/components/ui/stat-card";
 
 const statusLabel: Record<string, string> = {
