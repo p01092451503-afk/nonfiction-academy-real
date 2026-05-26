@@ -8,6 +8,7 @@ import { ChartTooltipContent, chartTooltipDefaults } from "@/components/ui/chart
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 import StatsLoading from "./StatsLoading";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const BranchLearningStats = () => {
   const isMobile = useIsMobile();
@@ -39,12 +40,12 @@ const BranchLearningStats = () => {
 
   const { data: enrollments = [], isLoading: l3 } = useQuery({
     queryKey: ["stat-branch-enrollments"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("user_id, progress, completed_at");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () =>
+      fetchAllPaged<any>((from, to) =>
+        supabase.from("enrollments").select("user_id, progress, completed_at").range(from, to),
+      ),
   });
+
 
   const { data: contentProgress = [], isLoading: l4 } = useQuery({
     queryKey: ["stat-branch-content-progress"],

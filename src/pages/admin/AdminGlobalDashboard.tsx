@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 interface Track { id: string; title: string; title_en: string | null; }
 interface Stage { id: string; track_id: string; }
@@ -115,11 +116,16 @@ export default function AdminGlobalDashboard() {
 
   const { data: enrollments = [] } = useQuery({
     queryKey: ["gd-enrollments"],
-    queryFn: async () => {
-      const { data } = await supabase.from("enrollments").select("user_id,course_id,progress,completed_at");
-      return (data || []) as Enrollment[];
-    },
+    queryFn: async () =>
+      (await fetchAllPaged<Enrollment>((from, to) =>
+        supabase
+          .from("enrollments")
+          .select("user_id,course_id,progress,completed_at")
+          .order("enrolled_at", { ascending: false })
+          .range(from, to),
+      )) || [],
   });
+
 
   const { data: courseMeta = [] } = useQuery({
     queryKey: ["gd-courses-meta"],

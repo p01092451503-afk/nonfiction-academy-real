@@ -21,6 +21,7 @@ import CourseCard from "@/components/CourseCard";
 import CourseThumbnail from "@/components/CourseThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 import StatCard from "@/components/ui/stat-card";
 
 const statusLabel: Record<string, string> = {
@@ -96,8 +97,13 @@ const AdminCourses = () => {
     queryFn: async () => {
       const ids = courses.map((c: any) => c.id);
       if (ids.length === 0) return { counts: {}, uniqueStudents: 0 };
-      const { data, error } = await supabase.from("enrollments").select("course_id, user_id").in("course_id", ids);
-      if (error) throw error;
+      const data = await fetchAllPaged<any>((from, to) =>
+        supabase
+          .from("enrollments")
+          .select("course_id, user_id")
+          .in("course_id", ids)
+          .range(from, to),
+      );
       const counts: Record<string, number> = {};
       const userIds = new Set<string>();
       data.forEach((e: any) => {

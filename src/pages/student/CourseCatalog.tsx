@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import CourseThumbnail from "@/components/CourseThumbnail";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const categoryGradients: Record<string, string> = {
   marketing: "from-orange-500 to-pink-500",
@@ -297,12 +298,12 @@ const CourseCatalog = () => {
 
   const { data: enrollmentCounts = [] } = useQuery({
     queryKey: ["catalog-enrollment-counts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("course_id");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () =>
+      fetchAllPaged<{ course_id: string }>((from, to) =>
+        supabase.from("enrollments").select("course_id").range(from, to),
+      ),
   });
+
 
   const { data: contentCounts = [] } = useQuery({
     queryKey: ["catalog-content-counts"],

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const statusColor: Record<string, string> = {
   draft: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -87,8 +88,9 @@ const TeacherCourses = () => {
     queryFn: async () => {
       const ids = courses.map((c: any) => c.id);
       if (ids.length === 0) return {};
-      const { data, error } = await supabase.from("enrollments").select("course_id").in("course_id", ids);
-      if (error) throw error;
+      const data = await fetchAllPaged<any>((from, to) =>
+        supabase.from("enrollments").select("course_id").in("course_id", ids).range(from, to),
+      );
       const counts: Record<string, number> = {};
       data.forEach((e: any) => { counts[e.course_id] = (counts[e.course_id] || 0) + 1; });
       return counts;
