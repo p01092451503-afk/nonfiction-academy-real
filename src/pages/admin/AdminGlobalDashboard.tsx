@@ -116,11 +116,16 @@ export default function AdminGlobalDashboard() {
 
   const { data: enrollments = [] } = useQuery({
     queryKey: ["gd-enrollments"],
-    queryFn: async () => {
-      const { data } = await supabase.from("enrollments").select("user_id,course_id,progress,completed_at");
-      return (data || []) as Enrollment[];
-    },
+    queryFn: async () =>
+      (await fetchAllPaged<Enrollment>((from, to) =>
+        supabase
+          .from("enrollments")
+          .select("user_id,course_id,progress,completed_at")
+          .order("enrolled_at", { ascending: false })
+          .range(from, to),
+      )) || [],
   });
+
 
   const { data: courseMeta = [] } = useQuery({
     queryKey: ["gd-courses-meta"],
