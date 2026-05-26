@@ -33,11 +33,14 @@ const AdminCompletion = () => {
 
   const { data: enrollments = [] } = useQuery({
     queryKey: ["admin-comp-enrollments"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("enrollments").select("id, user_id, course_id, progress, completed_at");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () =>
+      fetchAllPaged<any>((from, to) =>
+        supabase
+          .from("enrollments")
+          .select("id, user_id, course_id, progress, completed_at")
+          .order("enrolled_at", { ascending: false })
+          .range(from, to),
+      ),
   });
 
   const { data: profiles = [] } = useQuery({
