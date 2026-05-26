@@ -14,9 +14,15 @@ import PageSkeleton from "@/components/PageSkeleton";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 
+type SortDir = "asc" | "desc";
+type ProgressSortKey = "name" | "course" | "progress" | "status" | "enrolled_at" | "completed_at";
+type CompleterSortKey = "name" | "course" | "completed_at";
+
 const AdminLearning = () => {
   const { t, i18n } = useTranslation();
   const [courseFilter, setCourseFilter] = useState("all");
+  const [progressSort, setProgressSort] = useState<{ key: ProgressSortKey; dir: SortDir }>({ key: "enrolled_at", dir: "desc" });
+  const [completerSort, setCompleterSort] = useState<{ key: CompleterSortKey; dir: SortDir }>({ key: "completed_at", dir: "desc" });
 
   const { data: courses = [], isPending: coursesPending } = useQuery({
     queryKey: ["admin-learning-courses"],
