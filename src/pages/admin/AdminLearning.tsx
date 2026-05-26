@@ -1,6 +1,6 @@
-import { GraduationCap, Download, BarChart3, AlertTriangle, Users } from "lucide-react";
+import { GraduationCap, Download, BarChart3, AlertTriangle, Users, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,9 +14,15 @@ import PageSkeleton from "@/components/PageSkeleton";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 
+type SortDir = "asc" | "desc";
+type ProgressSortKey = "name" | "course" | "progress" | "status" | "enrolled_at" | "completed_at";
+type CompleterSortKey = "name" | "course" | "completed_at";
+
 const AdminLearning = () => {
   const { t, i18n } = useTranslation();
   const [courseFilter, setCourseFilter] = useState("all");
+  const [progressSort, setProgressSort] = useState<{ key: ProgressSortKey; dir: SortDir }>({ key: "enrolled_at", dir: "desc" });
+  const [completerSort, setCompleterSort] = useState<{ key: CompleterSortKey; dir: SortDir }>({ key: "completed_at", dir: "desc" });
 
   const { data: courses = [], isPending: coursesPending } = useQuery({
     queryKey: ["admin-learning-courses"],
@@ -52,13 +58,72 @@ const AdminLearning = () => {
 
   const filtered = courseFilter === "all" ? enrollments : enrollments.filter((e: any) => e.course_id === courseFilter);
   const completerRows = filtered.filter((e: any) => e.completed_at);
-  const visibleProgressRows = filtered.slice(0, 50);
-  const visibleCompleterRows = completerRows.slice(0, 50);
+  const statusRank = (e: any) => {
+    if (e.completed_at) return 2;
+    if ((Number(e.progress) || 0) > 0) return 1;
+    return 0;
+  };
+  const cmp = (a: any, b: any) => {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (typeof a === "number" && typeof b === "number") return a - b;
+    return String(a).localeCompare(String(b), i18n.language || undefined);
+  };
+
+  const sortedProgressRows = useMemo(() => {
+    const arr = [...filtered];
+    const { key, dir } = progressSort;
+    arr.sort((a: any, b: any) => {
+      let va: any, vb: any;
+      switch (key) {
+        case "name": va = profileMap.get(a.user_id)?.full_name || ""; vb = profileMap.get(b.user_id)?.full_name || ""; break;
+        case "course": va = courseMap.get(a.course_id)?.title || ""; vb = courseMap.get(b.course_id)?.title || ""; break;
+        case "progress": va = Number(a.progress) || 0; vb = Number(b.progress) || 0; break;
+        case "status": va = statusRank(a); vb = statusRank(b); break;
+        case "enrolled_at": va = a.enrolled_at ? new Date(a.enrolled_at).getTime() : 0; vb = b.enrolled_at ? new Date(b.enrolled_at).getTime() : 0; break;
+        case "completed_at": va = a.completed_at ? new Date(a.completed_at).getTime() : 0; vb = b.completed_at ? new Date(b.completed_at).getTime() : 0; break;
+      }
+      const c = cmp(va, vb);
+      return dir === "asc" ? c : -c;
+    });
+    return arr;
+  }, [filtered, progressSort, profileMap, courseMap, i18n.language]);
+
+  const sortedCompleterRows = useMemo(() => {
+    const arr = [...completerRows];
+    const { key, dir } = completerSort;
+    arr.sort((a: any, b: any) => {
+      let va: any, vb: any;
+      switch (key) {
+        case "name": va = profileMap.get(a.user_id)?.full_name || ""; vb = profileMap.get(b.user_id)?.full_name || ""; break;
+        case "course": va = courseMap.get(a.course_id)?.title || ""; vb = courseMap.get(b.course_id)?.title || ""; break;
+        case "completed_at": va = a.completed_at ? new Date(a.completed_at).getTime() : 0; vb = b.completed_at ? new Date(b.completed_at).getTime() : 0; break;
+      }
+      const c = cmp(va, vb);
+      return dir === "asc" ? c : -c;
+    });
+    return arr;
+  }, [completerRows, completerSort, profileMap, courseMap, i18n.language]);
+
+  const visibleProgressRows = sortedProgressRows.slice(0, 50);
+  const visibleCompleterRows = sortedCompleterRows.slice(0, 50);
   const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
   const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
   const avgProgress = filtered.length > 0 ? Math.round(filtered.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / filtered.length) : 0;
   const atRisk = filtered.filter((e: any) => (Number(e.progress) || 0) < 20 && !e.completed_at).length;
+
+  const toggleProgressSort = (key: ProgressSortKey) => {
+    setProgressSort((s) => s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
+  };
+  const toggleCompleterSort = (key: CompleterSortKey) => {
+    setCompleterSort((s) => s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
+  };
+  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
+    if (!active) return <ArrowUpDown className="h-3 w-3 opacity-40" aria-hidden="true" />;
+    return dir === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />;
+  };
 
   const formatDate = (d: string | null) => {
     if (!d) return "-";
@@ -212,12 +277,12 @@ const AdminLearning = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("admin.nameColumn")}</TableHead>
-                        <TableHead>{t("admin.courseLabel")}</TableHead>
-                        <TableHead>{t("admin.progressLabel")}</TableHead>
-                        <TableHead>{t("admin.statusLabel")}</TableHead>
-                        <TableHead>{t("admin.startDate")}</TableHead>
-                        <TableHead>{t("admin.completionDate")}</TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.nameColumn")} <SortIcon active={progressSort.key === "name"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("course")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.courseLabel")} <SortIcon active={progressSort.key === "course"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("progress")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.progressLabel")} <SortIcon active={progressSort.key === "progress"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("status")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.statusLabel")} <SortIcon active={progressSort.key === "status"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("enrolled_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.startDate")} <SortIcon active={progressSort.key === "enrolled_at"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleProgressSort("completed_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.completionDate")} <SortIcon active={progressSort.key === "completed_at"} dir={progressSort.dir} /></button></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -286,9 +351,9 @@ const AdminLearning = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("admin.nameColumn")}</TableHead>
-                        <TableHead>{t("admin.courseLabel")}</TableHead>
-                        <TableHead>{t("admin.completionDate")}</TableHead>
+                        <TableHead><button type="button" onClick={() => toggleCompleterSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.nameColumn")} <SortIcon active={completerSort.key === "name"} dir={completerSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleCompleterSort("course")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.courseLabel")} <SortIcon active={completerSort.key === "course"} dir={completerSort.dir} /></button></TableHead>
+                        <TableHead><button type="button" onClick={() => toggleCompleterSort("completed_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.completionDate")} <SortIcon active={completerSort.key === "completed_at"} dir={completerSort.dir} /></button></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
