@@ -58,10 +58,6 @@ const AdminLearning = () => {
 
   const filtered = courseFilter === "all" ? enrollments : enrollments.filter((e: any) => e.course_id === courseFilter);
   const completerRows = filtered.filter((e: any) => e.completed_at);
-  const visibleProgressRows = filtered.slice(0, 50);
-  const visibleCompleterRows = completerRows.slice(0, 50);
-  const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
-  const completedCount = completerRows.length;
   const statusRank = (e: any) => {
     if (e.completed_at) return 2;
     if ((Number(e.progress) || 0) > 0) return 1;
