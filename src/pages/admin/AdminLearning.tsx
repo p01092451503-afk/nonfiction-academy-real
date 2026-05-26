@@ -62,9 +62,72 @@ const AdminLearning = () => {
   const visibleCompleterRows = completerRows.slice(0, 50);
   const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
   const completedCount = completerRows.length;
+  const statusRank = (e: any) => {
+    if (e.completed_at) return 2;
+    if ((Number(e.progress) || 0) > 0) return 1;
+    return 0;
+  };
+  const cmp = (a: any, b: any) => {
+    if (a == null && b == null) return 0;
+    if (a == null) return 1;
+    if (b == null) return -1;
+    if (typeof a === "number" && typeof b === "number") return a - b;
+    return String(a).localeCompare(String(b), i18n.language || undefined);
+  };
+
+  const sortedProgressRows = useMemo(() => {
+    const arr = [...filtered];
+    const { key, dir } = progressSort;
+    arr.sort((a: any, b: any) => {
+      let va: any, vb: any;
+      switch (key) {
+        case "name": va = profileMap.get(a.user_id)?.full_name || ""; vb = profileMap.get(b.user_id)?.full_name || ""; break;
+        case "course": va = courseMap.get(a.course_id)?.title || ""; vb = courseMap.get(b.course_id)?.title || ""; break;
+        case "progress": va = Number(a.progress) || 0; vb = Number(b.progress) || 0; break;
+        case "status": va = statusRank(a); vb = statusRank(b); break;
+        case "enrolled_at": va = a.enrolled_at ? new Date(a.enrolled_at).getTime() : 0; vb = b.enrolled_at ? new Date(b.enrolled_at).getTime() : 0; break;
+        case "completed_at": va = a.completed_at ? new Date(a.completed_at).getTime() : 0; vb = b.completed_at ? new Date(b.completed_at).getTime() : 0; break;
+      }
+      const c = cmp(va, vb);
+      return dir === "asc" ? c : -c;
+    });
+    return arr;
+  }, [filtered, progressSort, profileMap, courseMap, i18n.language]);
+
+  const sortedCompleterRows = useMemo(() => {
+    const arr = [...completerRows];
+    const { key, dir } = completerSort;
+    arr.sort((a: any, b: any) => {
+      let va: any, vb: any;
+      switch (key) {
+        case "name": va = profileMap.get(a.user_id)?.full_name || ""; vb = profileMap.get(b.user_id)?.full_name || ""; break;
+        case "course": va = courseMap.get(a.course_id)?.title || ""; vb = courseMap.get(b.course_id)?.title || ""; break;
+        case "completed_at": va = a.completed_at ? new Date(a.completed_at).getTime() : 0; vb = b.completed_at ? new Date(b.completed_at).getTime() : 0; break;
+      }
+      const c = cmp(va, vb);
+      return dir === "asc" ? c : -c;
+    });
+    return arr;
+  }, [completerRows, completerSort, profileMap, courseMap, i18n.language]);
+
+  const visibleProgressRows = sortedProgressRows.slice(0, 50);
+  const visibleCompleterRows = sortedCompleterRows.slice(0, 50);
+  const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
+  const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
   const avgProgress = filtered.length > 0 ? Math.round(filtered.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / filtered.length) : 0;
   const atRisk = filtered.filter((e: any) => (Number(e.progress) || 0) < 20 && !e.completed_at).length;
+
+  const toggleProgressSort = (key: ProgressSortKey) => {
+    setProgressSort((s) => s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
+  };
+  const toggleCompleterSort = (key: CompleterSortKey) => {
+    setCompleterSort((s) => s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
+  };
+  const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => {
+    if (!active) return <ArrowUpDown className="h-3 w-3 opacity-40" aria-hidden="true" />;
+    return dir === "asc" ? <ArrowUp className="h-3 w-3" aria-hidden="true" /> : <ArrowDown className="h-3 w-3" aria-hidden="true" />;
+  };
 
   const formatDate = (d: string | null) => {
     if (!d) return "-";
