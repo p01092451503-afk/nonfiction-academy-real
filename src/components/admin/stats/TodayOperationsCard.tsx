@@ -61,6 +61,29 @@ const TodayOperationsCard = () => {
     { label: t("stats.unreadNotif"), value: stats.unreadNotifications, color: "text-chart-5", chart: "hsl(var(--chart-5))", trend: [] as number[], hint: "" },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="stat-card !p-4 sm:!p-5 space-y-3" aria-busy="true" aria-live="polite">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">{t("stats.todayOps")}</h3>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {t("common.loadingStats", "통계 데이터를 불러오는 중입니다...")}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="p-2.5 rounded-lg border border-border space-y-2">
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-6 w-10" />
+              <Skeleton className="h-2 w-14" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="stat-card !p-4 sm:!p-5 space-y-3">
       <h3 className="text-sm font-semibold text-foreground">{t("stats.todayOps")}</h3>
