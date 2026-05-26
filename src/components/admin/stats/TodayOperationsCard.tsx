@@ -2,14 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
 import Sparkline from "@/components/ui/sparkline";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardSparklines } from "@/hooks/useDashboardSparklines";
 
 const TodayOperationsCard = () => {
   const { t } = useTranslation();
   const today = startOfDay(new Date()).toISOString();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["stat-today-operations", today],
     queryFn: async () => {
       const [enrollSelfRes, enrollBulkRes, complRes, subRes, assessRes, pendingRes, unreadRes] = await Promise.all([
