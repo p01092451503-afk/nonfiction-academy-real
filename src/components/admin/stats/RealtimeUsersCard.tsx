@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Wifi } from "lucide-react";
+import { Wifi, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import StatCard from "@/components/ui/stat-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 
 const RealtimeUsersCard = () => {
