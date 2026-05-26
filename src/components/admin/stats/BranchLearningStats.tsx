@@ -8,6 +8,7 @@ import { ChartTooltipContent, chartTooltipDefaults } from "@/components/ui/chart
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "react-i18next";
 import StatsLoading from "./StatsLoading";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const BranchLearningStats = () => {
   const isMobile = useIsMobile();
