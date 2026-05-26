@@ -56,15 +56,14 @@ const SiteSummaryCard = () => {
   const pageviewsDelta = computeDelta(spark?.pageviews);
 
   // Show skeleton while the primary stats query is loading.
-  // (Sparklines are secondary — they fade in when ready.)
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" aria-busy="true" aria-live="polite">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           <span>{t("common.loadingStats", "통계 데이터를 불러오는 중입니다...")}</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3" role="status" aria-live="polite">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           <SummarySkeletonCard />
           <SummarySkeletonCard />
           <SummarySkeletonCard />

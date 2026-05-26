@@ -2,14 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
 import Sparkline from "@/components/ui/sparkline";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardSparklines } from "@/hooks/useDashboardSparklines";
 
 const TodayOperationsCard = () => {
   const { t } = useTranslation();
   const today = startOfDay(new Date()).toISOString();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["stat-today-operations", today],
     queryFn: async () => {
       const [enrollSelfRes, enrollBulkRes, complRes, subRes, assessRes, pendingRes, unreadRes] = await Promise.all([
@@ -58,6 +60,29 @@ const TodayOperationsCard = () => {
     { label: t("stats.pendingGrade"), value: stats.pendingSubmissions, color: "text-destructive", chart: "hsl(var(--destructive))", trend: [] as number[], hint: "" },
     { label: t("stats.unreadNotif"), value: stats.unreadNotifications, color: "text-chart-5", chart: "hsl(var(--chart-5))", trend: [] as number[], hint: "" },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="stat-card !p-4 sm:!p-5 space-y-3" aria-busy="true" aria-live="polite">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">{t("stats.todayOps")}</h3>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            {t("common.loadingStats", "통계 데이터를 불러오는 중입니다...")}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="p-2.5 rounded-lg border border-border space-y-2">
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="h-6 w-10" />
+              <Skeleton className="h-2 w-14" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stat-card !p-4 sm:!p-5 space-y-3">
