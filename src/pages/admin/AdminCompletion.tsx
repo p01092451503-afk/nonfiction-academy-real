@@ -12,6 +12,7 @@ import CompletionCriteriaDialog from "@/components/admin/CompletionCriteriaDialo
 import CertificateTemplateDialog from "@/components/admin/CertificateTemplateDialog";
 import BulkCompletionSettingsDialog from "@/components/admin/BulkCompletionSettingsDialog";
 import { generateCertificateImage, downloadBlob } from "@/lib/certificateGenerator";
+import { fetchAllPaged } from "@/lib/fetchAllPaged";
 
 const AdminCompletion = () => {
   const { t } = useTranslation();
