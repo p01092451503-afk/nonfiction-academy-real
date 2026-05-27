@@ -413,14 +413,18 @@ const ContentPlayer = () => {
 
   const markCompleteMutation = useMutation({
     mutationFn: async () => {
-      const existing = currentProgress;
-      if (existing) {
-        const { error } = await supabase.from("content_progress").update({ completed: true, completed_at: new Date().toISOString(), progress_percentage: 100 }).eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("content_progress").insert({ user_id: user!.id, content_id: contentId!, completed: true, completed_at: new Date().toISOString(), progress_percentage: 100 });
-        if (error) throw error;
-      }
+      const { error } = await supabase.from("content_progress").upsert(
+        {
+          user_id: user!.id,
+          content_id: contentId!,
+          completed: true,
+          completed_at: new Date().toISOString(),
+          progress_percentage: 100,
+          last_accessed_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,content_id" }
+      );
+      if (error) throw error;
       // 차시 = 동일 콘텐츠의 다국어 버전. 한 차시 완료 시 강의 전체를 완료 처리.
       if (user?.id && courseId) {
         await syncEnrollmentOnContentCompleted({ userId: user.id, courseId });
@@ -443,32 +447,37 @@ const ContentPlayer = () => {
     async (completedCount: number, totalCount: number) => {
       if (!user?.id || !contentId || !totalCount) return;
       if (currentProgress?.completed) return;
+      if (completedCount >= totalCount) return;
       const pct = Math.max(0, Math.min(99, Math.round((completedCount / totalCount) * 100)));
       if (pct <= 0) return;
       if (pct === lastSavedPctRef.current) return;
       if (partialProgressInFlight.current) return;
       partialProgressInFlight.current = true;
       try {
-        if (currentProgress?.id) {
-          // Don't downgrade existing percentage
-          const existingPct = Number(currentProgress.progress_percentage) || 0;
-          if (pct <= existingPct) {
-            lastSavedPctRef.current = pct;
-            return;
-          }
-          await supabase
-            .from("content_progress")
-            .update({ progress_percentage: pct, last_accessed_at: new Date().toISOString() })
-            .eq("id", currentProgress.id);
-        } else {
-          await supabase.from("content_progress").insert({
-            user_id: user.id,
-            content_id: contentId,
-            completed: false,
-            progress_percentage: pct,
-            last_accessed_at: new Date().toISOString(),
-          });
+        // Don't downgrade existing percentage or completed rows.
+        const { data: latestProgress, error: latestError } = await supabase
+          .from("content_progress")
+          .select("id, completed, progress_percentage")
+          .eq("user_id", user.id)
+          .eq("content_id", contentId)
+          .maybeSingle();
+        if (latestError) throw latestError;
+
+        const existingPct = Number(latestProgress?.progress_percentage ?? currentProgress?.progress_percentage) || 0;
+        if (latestProgress?.completed || currentProgress?.completed || pct <= existingPct) {
+          lastSavedPctRef.current = pct;
+          return;
         }
+        const payload = { progress_percentage: pct, last_accessed_at: new Date().toISOString() };
+        const { error } = latestProgress?.id
+          ? await supabase.from("content_progress").update(payload).eq("id", latestProgress.id)
+          : await supabase.from("content_progress").insert({
+              user_id: user.id,
+              content_id: contentId,
+              completed: false,
+              ...payload,
+            });
+        if (error) throw error;
         lastSavedPctRef.current = pct;
         if (courseId) {
           await syncEnrollmentPartialProgress({ userId: user.id, courseId });
@@ -649,6 +658,7 @@ const ContentPlayer = () => {
                   contentId={currentContent.id}
                   title={getTitle(currentContent)}
                   isAlreadyCompleted={!!currentProgress?.completed}
+                  savedProgressPercentage={Number(currentProgress?.progress_percentage) || 0}
                   onPartialProgress={handlePartialProgress}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
