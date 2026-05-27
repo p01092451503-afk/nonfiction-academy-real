@@ -342,6 +342,9 @@ const AdminTracks = () => {
                       <Button variant="outline" size="sm" className="rounded-lg gap-1 h-8 text-xs" onClick={() => openAssign(track)}>
                         <UserPlus className="h-3.5 w-3.5" /> {t("track.assign", "배정")}
                       </Button>
+                      <Button variant="outline" size="sm" className="rounded-lg gap-1 h-8 text-xs" onClick={() => setMembersTrack(track)}>
+                        <Users className="h-3.5 w-3.5" /> {t("track.members", "인원")}
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEdit(track.id)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
