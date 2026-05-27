@@ -27,6 +27,7 @@ const loadProgress = (cid: string): StoredProgress | null => {
 interface MediaPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
+  onPartialProgress?: (completedCount: number, totalCount: number) => void;
 }
 
 interface PackageItem {
@@ -40,7 +41,7 @@ interface PackageItem {
 const isImageUrl = (url: string) =>
   /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url);
 
-const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) => {
+const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaPackagePlayerProps) => {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
@@ -133,15 +134,16 @@ const MediaPackagePlayer = ({ contentId, onComplete }: MediaPackagePlayerProps) 
   }, [contentId, index, visited, items.length]);
 
   useEffect(() => {
+    if (items.length === 0) return;
+    onPartialProgress?.(visited.size, items.length);
     if (
-      items.length > 0 &&
       visited.size >= items.length &&
       !completedRef.current
     ) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [visited, items.length, onComplete]);
+  }, [visited, items.length, onComplete, onPartialProgress]);
 
 
   // Keyboard navigation

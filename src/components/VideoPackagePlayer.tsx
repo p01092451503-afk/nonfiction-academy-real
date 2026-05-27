@@ -18,6 +18,7 @@ import { normalizeLang } from "@/lib/i18nLang";
 interface VideoPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
+  onPartialProgress?: (completedCount: number, totalCount: number) => void;
   title?: string;
   isAlreadyCompleted?: boolean;
 }
@@ -63,7 +64,7 @@ const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
 };
 const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted = false }: VideoPackagePlayerProps) => {
+const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, isAlreadyCompleted = false }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -384,17 +385,20 @@ const VideoPackagePlayer = ({ contentId, onComplete, title, isAlreadyCompleted =
     }
   };
 
-  // Trigger onComplete when all items completed (>=80% each)
+  // Trigger onComplete when all items completed (>=80% each).
+  // Also emit partial progress on every change so the parent can persist
+  // intermediate progress to content_progress (used by the course progress bar).
   useEffect(() => {
+    if (items.length === 0) return;
+    onPartialProgress?.(completedItems.size, items.length);
     if (
-      items.length > 0 &&
       completedItems.size >= items.length &&
       !completedRef.current
     ) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [completedItems, items.length, onComplete]);
+  }, [completedItems, items.length, onComplete, onPartialProgress]);
 
   // Bunny iframe progress tracking via Player.js postMessage protocol
   useEffect(() => {
