@@ -1721,21 +1721,23 @@ const CourseEditDialog = ({
     if (!form.title.trim() && !form.description.trim()) return;
     setTranslating(lc);
     try {
-      const [translatedTitle = "", translatedDesc = ""] = await translateKoTo(lc, [form.title, form.description]);
+      const [translatedTitle = "", translatedDesc = ""] = await translateKoTo(lc, [form.title.trim(), form.description.trim()]);
+      const safeTitle = form.title.trim() ? sanitizeCourseTranslation(translatedTitle, form.title).trim() : "";
+      const safeDesc = form.description.trim() ? sanitizeCourseTranslation(translatedDesc, form.description).trim() : "";
       setI18nForm((prev) => ({
         ...prev,
         [lc]: {
-          title: form.title.trim() ? translatedTitle || prev[lc].title : "",
-          description: form.description.trim() ? translatedDesc || prev[lc].description : "",
+          title: safeTitle || prev[lc].title,
+          description: safeDesc || prev[lc].description,
         },
       }));
       setManualEdits((prev) => ({ ...prev, [lc]: { title: true, description: true } }));
-      if (courseId && (translatedTitle || translatedDesc || form.title.trim() || form.description.trim())) {
+      if (courseId && safeTitle) {
         await supabase.from("course_i18n").upsert({
           course_id: courseId,
           language_code: lc,
-          title: form.title.trim() ? translatedTitle : "",
-          description: form.description.trim() ? translatedDesc || null : null,
+          title: safeTitle,
+          description: safeDesc || null,
         }, { onConflict: "course_id,language_code" });
       }
     } catch {
