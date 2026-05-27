@@ -8,6 +8,8 @@ import {
   getCourseTitleByLang,
   getCourseTitleByLangWithContentFallback,
   getCourseDescByLang,
+  isUnsafeCourseTranslation,
+  sanitizeCourseTranslation,
   type CourseContentLike,
   type ContentI18nRow,
   type CourseI18nRow,
@@ -199,6 +201,19 @@ describe("getCourseTitleByLangWithContentFallback", () => {
     );
 
     expect(title).toBe("ザ・フラワーコレクション");
+  });
+});
+
+describe("course edit translation safety", () => {
+  it("treats Korean copied into non-Korean course titles as unsafe", () => {
+    expect(isUnsafeCourseTranslation("[제품] 핸드로션", "[제품] 핸드로션")).toBe(true);
+    expect(isUnsafeCourseTranslation("딥케어 리추얼 라인 컨셉", "딥케어 리추얼 라인 컨셉")).toBe(true);
+    expect(sanitizeCourseTranslation("[제품] 핸드로션", "[제품] 핸드로션")).toBe("");
+  });
+
+  it("keeps valid translated product/course titles", () => {
+    expect(isUnsafeCourseTranslation("[Product] Hand Lotion", "[제품] 핸드로션")).toBe(false);
+    expect(sanitizeCourseTranslation("Deep Care Ritual Line Concept", "딥케어 리추얼 라인 컨셉")).toBe("Deep Care Ritual Line Concept");
   });
 });
 

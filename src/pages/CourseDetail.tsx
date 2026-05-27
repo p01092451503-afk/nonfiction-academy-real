@@ -5,7 +5,9 @@ import {
   getCourseTitleByLangWithContentFallback,
   getCourseDescByLang,
   hasUploadedContent,
+  isUnsafeCourseTranslation,
   localizeLessonPrefix,
+  sanitizeCourseTranslation,
 } from "@/lib/courseContentI18n";
 import AssessmentManager from "@/components/AssessmentManager";
 import StudentSurvey from "@/components/StudentSurvey";
@@ -49,6 +51,8 @@ const contentTypeIcon: Record<string, React.ElementType> = {
   video: Video, document: FileText, quiz: BarChart3, assignment: FileText, live: Video,
   video_package: Video, media_package: Images,
 };
+
+const COURSE_TRANSLATION_LANGS = ["en", "ja", "zh-CN"] as const;
 
 type ContentFormData = {
   title: string;
@@ -411,18 +415,53 @@ const CourseDetail = () => {
         is_sequential: vals.is_sequential,
       } as any).eq("id", courseId!);
       if (error) throw error;
-      // Upsert i18n rows for each non-Korean language that has at least a title
-      const i18nRows = (Object.keys(courseI18nForm) as CourseI18nLang[])
-        .filter((lc) => courseI18nForm[lc].title.trim().length > 0)
+      const resolvedI18nForm = { ...courseI18nForm };
+      await Promise.all(COURSE_TRANSLATION_LANGS.map(async (lc) => {
+        const title = (resolvedI18nForm[lc].title || "").trim();
+        const description = (resolvedI18nForm[lc].description || "").trim();
+        const needsTitle = !!vals.title.trim() && (!title || isUnsafeCourseTranslation(title, vals.title));
+        const needsDescription = !!vals.description.trim() && (!description || isUnsafeCourseTranslation(description, vals.description));
+        if (!needsTitle && !needsDescription) return;
+        const inputs: string[] = [];
+        if (needsTitle) inputs.push(vals.title.trim());
+        if (needsDescription) inputs.push(vals.description.trim());
+        try {
+          const translated = await translateKoTo(lc, inputs);
+          let idx = 0;
+          if (needsTitle) {
+            const safeTitle = sanitizeCourseTranslation(translated[idx++], vals.title).trim();
+            if (safeTitle) resolvedI18nForm[lc] = { ...resolvedI18nForm[lc], title: safeTitle };
+          }
+          if (needsDescription) {
+            const safeDescription = sanitizeCourseTranslation(translated[idx++], vals.description).trim();
+            resolvedI18nForm[lc] = { ...resolvedI18nForm[lc], description: safeDescription };
+          }
+        } catch {
+          // Keep existing safe translations only; never persist Korean fallback into non-KO rows.
+        }
+      }));
+
+      // Upsert i18n rows for each non-Korean language that has a safe translated title
+      const i18nRows = COURSE_TRANSLATION_LANGS
+        .map((lc) => ({
+          lc,
+          title: sanitizeCourseTranslation(resolvedI18nForm[lc].title, vals.title).trim(),
+          description: vals.description.trim()
+            ? sanitizeCourseTranslation(resolvedI18nForm[lc].description, vals.description).trim()
+            : "",
+        }))
+        .filter((row) => row.title.length > 0)
         .map((lc) => ({
           course_id: courseId!,
-          language_code: lc,
-          title: courseI18nForm[lc].title,
-          // Description translations are only valid when there is a Korean
-          // source description. This prevents stale/unrelated product titles
-          // from being re-saved under the course-description field.
-          description: vals.description.trim() ? courseI18nForm[lc].description || null : null,
+          language_code: lc.lc,
+          title: lc.title,
+          description: lc.description || null,
         }));
+      const langsWithRows = new Set(i18nRows.map((row) => row.language_code));
+      const langsToClear = COURSE_TRANSLATION_LANGS.filter((lc) => !langsWithRows.has(lc));
+      if (langsToClear.length > 0) {
+        await supabase.from("course_i18n").delete().eq("course_id", courseId!).in("language_code", langsToClear);
+      }
       if (i18nRows.length > 0) {
         await supabase
           .from("course_i18n")
@@ -555,7 +594,7 @@ const CourseDetail = () => {
     if (!course) return;
     const koDescription = course.description || "";
     const sanitizeTranslatedDescription = (value: string | null | undefined) =>
-      koDescription.trim() ? (value || "") : "";
+      koDescription.trim() ? sanitizeCourseTranslation(value, koDescription) : "";
     setCourseForm({
       title: course.title,
       description: koDescription,
@@ -571,9 +610,9 @@ const CourseDetail = () => {
     const findRow = (lc: CourseI18nLang) =>
       courseI18n?.find((i: any) => i.language_code === lc);
     setCourseI18nForm({
-      en: { title: findRow("en")?.title || "", description: sanitizeTranslatedDescription(findRow("en")?.description) },
-      ja: { title: findRow("ja")?.title || "", description: sanitizeTranslatedDescription(findRow("ja")?.description) },
-      "zh-CN": { title: findRow("zh-CN")?.title || "", description: sanitizeTranslatedDescription(findRow("zh-CN")?.description) },
+      en: { title: sanitizeCourseTranslation(findRow("en")?.title, course.title), description: sanitizeTranslatedDescription(findRow("en")?.description) },
+      ja: { title: sanitizeCourseTranslation(findRow("ja")?.title, course.title), description: sanitizeTranslatedDescription(findRow("ja")?.description) },
+      "zh-CN": { title: sanitizeCourseTranslation(findRow("zh-CN")?.title, course.title), description: sanitizeTranslatedDescription(findRow("zh-CN")?.description) },
     });
     setCourseThumbnailFile(null);
     setCourseThumbnailPreview(course.thumbnail_url || null);
@@ -1643,40 +1682,20 @@ const CourseEditDialog = ({
       return;
     }
     setManualEdits({
-      en: { title: !!i18nForm.en.title, description: !!i18nForm.en.description },
-      ja: { title: !!i18nForm.ja.title, description: !!i18nForm.ja.description },
-      "zh-CN": { title: !!i18nForm["zh-CN"].title, description: !!i18nForm["zh-CN"].description },
+      en: { title: !!sanitizeCourseTranslation(i18nForm.en.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.en.description, form.description).trim() },
+      ja: { title: !!sanitizeCourseTranslation(i18nForm.ja.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.ja.description, form.description).trim() },
+      "zh-CN": { title: !!sanitizeCourseTranslation(i18nForm["zh-CN"].title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm["zh-CN"].description, form.description).trim() },
     });
     // Seed previous KO snapshot so the sync effects below don't fire on initial open
     prevKoRef.current = { title: form.title, description: form.description };
   }, [open]);
 
-  // Sync KO → other-lang fields when not manually edited (only on actual KO changes after open)
+  // Never copy Korean text into non-Korean fields. Empty fields are translated on demand/save.
   useEffect(() => {
     if (!open || prevKoRef.current === null) return;
-    if (prevKoRef.current.title === form.title) return;
-    prevKoRef.current = { ...prevKoRef.current, title: form.title };
-    setI18nForm((prev) => {
-      const next = { ...prev };
-      COURSE_I18N_LANGS.forEach((lc) => {
-        if (!manualEdits[lc].title) next[lc] = { ...next[lc], title: form.title };
-      });
-      return next;
-    });
-  }, [form.title, open]);
-
-  useEffect(() => {
-    if (!open || prevKoRef.current === null) return;
-    if (prevKoRef.current.description === form.description) return;
-    prevKoRef.current = { ...prevKoRef.current, description: form.description };
-    setI18nForm((prev) => {
-      const next = { ...prev };
-      COURSE_I18N_LANGS.forEach((lc) => {
-        if (!manualEdits[lc].description) next[lc] = { ...next[lc], description: form.description };
-      });
-      return next;
-    });
-  }, [form.description, open]);
+    if (prevKoRef.current.title !== form.title) prevKoRef.current = { ...prevKoRef.current, title: form.title };
+    if (prevKoRef.current.description !== form.description) prevKoRef.current = { ...prevKoRef.current, description: form.description };
+  }, [form.title, form.description, open]);
 
   const updateLang = (lc: CourseI18nLang, patch: Partial<CourseI18nForm>) => {
     setI18nForm((prev) => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
@@ -1693,21 +1712,23 @@ const CourseEditDialog = ({
     if (!form.title.trim() && !form.description.trim()) return;
     setTranslating(lc);
     try {
-      const [translatedTitle = "", translatedDesc = ""] = await translateKoTo(lc, [form.title, form.description]);
+      const [translatedTitle = "", translatedDesc = ""] = await translateKoTo(lc, [form.title.trim(), form.description.trim()]);
+      const safeTitle = form.title.trim() ? sanitizeCourseTranslation(translatedTitle, form.title).trim() : "";
+      const safeDesc = form.description.trim() ? sanitizeCourseTranslation(translatedDesc, form.description).trim() : "";
       setI18nForm((prev) => ({
         ...prev,
         [lc]: {
-          title: form.title.trim() ? translatedTitle || prev[lc].title : "",
-          description: form.description.trim() ? translatedDesc || prev[lc].description : "",
+          title: safeTitle || prev[lc].title,
+          description: safeDesc || prev[lc].description,
         },
       }));
       setManualEdits((prev) => ({ ...prev, [lc]: { title: true, description: true } }));
-      if (courseId && (translatedTitle || translatedDesc || form.title.trim() || form.description.trim())) {
+      if (courseId && safeTitle) {
         await supabase.from("course_i18n").upsert({
           course_id: courseId,
           language_code: lc,
-          title: form.title.trim() ? translatedTitle : "",
-          description: form.description.trim() ? translatedDesc || null : null,
+          title: safeTitle,
+          description: safeDesc || null,
         }, { onConflict: "course_id,language_code" });
       }
     } catch {
