@@ -129,7 +129,8 @@ async function fetchAllRows(): Promise<Row[]> {
       const langs = {} as Record<TargetLang, LangCell>;
       TARGET_LANGS.forEach((lc) => {
         const v = it.perLang[lc] ?? { title: null, body: null };
-        langs[lc] = { title: v.title, body: v.body, status: computeStatus(it.ko_title, it.ko_body, v.title, v.body) };
+        const safeBody = it.ko_body.trim() ? v.body : null;
+        langs[lc] = { title: v.title, body: safeBody, status: computeStatus(it.ko_title, it.ko_body, v.title, safeBody) };
       });
       rows.push({ id: it.id, category, ko_title: it.ko_title, ko_body: it.ko_body, langs });
     });
@@ -347,13 +348,14 @@ async function fetchAllRows(): Promise<Row[]> {
 }
 
 async function upsertTranslation(row: Row, lang: TargetLang, tTitle: string, tBody: string) {
+  const safeBody = row.ko_body.trim() ? (tBody || null) : null;
   switch (row.category) {
     case "course":
-      return supabase.from("course_i18n" as any).upsert({ course_id: row.id, language_code: lang, title: tTitle, description: tBody }, { onConflict: "course_id,language_code" });
+      return supabase.from("course_i18n" as any).upsert({ course_id: row.id, language_code: lang, title: tTitle, description: safeBody }, { onConflict: "course_id,language_code" });
     case "content":
-      return supabase.from("course_content_i18n" as any).upsert({ content_id: row.id, language_code: lang, title: tTitle, description: tBody }, { onConflict: "content_id,language_code" });
+      return supabase.from("course_content_i18n" as any).upsert({ content_id: row.id, language_code: lang, title: tTitle, description: safeBody }, { onConflict: "content_id,language_code" });
     case "assessment":
-      return supabase.from("assessment_i18n" as any).upsert({ assessment_id: row.id, language_code: lang, title: tTitle, description: tBody }, { onConflict: "assessment_id,language_code" });
+      return supabase.from("assessment_i18n" as any).upsert({ assessment_id: row.id, language_code: lang, title: tTitle, description: safeBody }, { onConflict: "assessment_id,language_code" });
     case "announcement":
       return supabase.from("announcement_i18n" as any).upsert({ announcement_id: row.id, language_code: lang, title: tTitle, content: tBody }, { onConflict: "announcement_id,language_code" });
     case "board":
