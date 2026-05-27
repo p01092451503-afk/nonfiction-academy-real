@@ -18,6 +18,7 @@ import { normalizeLang } from "@/lib/i18nLang";
 interface VideoPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
+  onPartialProgress?: (completedCount: number, totalCount: number) => void;
   title?: string;
   isAlreadyCompleted?: boolean;
 }
