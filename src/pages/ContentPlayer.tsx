@@ -649,6 +649,7 @@ const ContentPlayer = () => {
                   contentId={currentContent.id}
                   title={getTitle(currentContent)}
                   isAlreadyCompleted={!!currentProgress?.completed}
+                  savedProgressPercentage={Number(currentProgress?.progress_percentage) || 0}
                   onPartialProgress={handlePartialProgress}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
