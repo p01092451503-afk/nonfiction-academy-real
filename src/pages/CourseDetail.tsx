@@ -1629,6 +1629,15 @@ const CourseEditDialog = ({
     "zh-CN": { title: false, description: false },
   });
 
+  useEffect(() => {
+    if (!open) return;
+    setManualEdits({
+      en: { title: !!i18nForm.en.title, description: !!i18nForm.en.description },
+      ja: { title: !!i18nForm.ja.title, description: !!i18nForm.ja.description },
+      "zh-CN": { title: !!i18nForm["zh-CN"].title, description: !!i18nForm["zh-CN"].description },
+    });
+  }, [open]);
+
   // Sync KO → other-lang fields when not manually edited
   useEffect(() => {
     setI18nForm((prev) => {
@@ -1662,28 +1671,24 @@ const CourseEditDialog = ({
   };
 
   const handleAutoTranslate = async (lc: CourseI18nLang) => {
-    const textsToTranslate = [form.title, form.description].filter(Boolean);
-    if (textsToTranslate.length === 0) return;
+    if (!form.title.trim() && !form.description.trim()) return;
     setTranslating(lc);
     try {
-      const results = await translateKoTo(lc, textsToTranslate);
-      let idx = 0;
-      const translatedTitle = form.title ? (results[idx++] || "") : "";
-      const translatedDesc = form.description ? (results[idx++] || "") : "";
+      const [translatedTitle = "", translatedDesc = ""] = await translateKoTo(lc, [form.title, form.description]);
       setI18nForm((prev) => ({
         ...prev,
         [lc]: {
-          title: translatedTitle || prev[lc].title,
-          description: translatedDesc || prev[lc].description,
+          title: form.title.trim() ? translatedTitle || prev[lc].title : "",
+          description: form.description.trim() ? translatedDesc || prev[lc].description : "",
         },
       }));
       setManualEdits((prev) => ({ ...prev, [lc]: { title: true, description: true } }));
-      if (courseId && translatedTitle) {
+      if (courseId && (translatedTitle || translatedDesc || form.title.trim() || form.description.trim())) {
         await supabase.from("course_i18n").upsert({
           course_id: courseId,
           language_code: lc,
-          title: translatedTitle,
-          description: translatedDesc || null,
+          title: form.title.trim() ? translatedTitle : "",
+          description: form.description.trim() ? translatedDesc || null : null,
         }, { onConflict: "course_id,language_code" });
       }
     } catch {

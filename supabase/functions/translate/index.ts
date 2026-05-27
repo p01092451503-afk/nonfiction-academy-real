@@ -20,18 +20,21 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const filtered = (texts as string[]).filter((t: string) => t.trim());
-    if (filtered.length === 0) {
-      return new Response(JSON.stringify({ translations: texts.map(() => "") }), {
+    const sourceTexts = Array.isArray(texts) ? texts.map((text) => (typeof text === "string" ? text : "")) : [];
+    const items = sourceTexts.map((text, index) => ({ index, text })).filter((item) => item.text.trim());
+    if (items.length === 0) {
+      return new Response(JSON.stringify({ translations: sourceTexts.map(() => "") }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const targetLabel = LANG_LABEL[targetLang] || "English";
 
-    const prompt = filtered.length === 1
-      ? `Translate the following Korean text to ${targetLabel}. Return ONLY the translated text, nothing else.\n\n${filtered[0]}`
-      : `Translate each of the following Korean texts to ${targetLabel}. Return a JSON array of translated strings in the same order. Return ONLY the JSON array, nothing else.\n\n${JSON.stringify(filtered)}`;
+    const prompt = `Translate each Korean text to ${targetLabel}.
+Return ONLY a JSON array with exactly ${items.length} translated strings, in the same order as the input array.
+If an input item is already a product name, keep the meaning and do not invent a different product.
+
+${JSON.stringify(items.map((item) => item.text))}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -71,17 +74,19 @@ serve(async (req) => {
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content?.trim() || "";
 
-    let translations: string[];
-    if (filtered.length === 1) {
-      translations = [content];
-    } else {
-      try {
-        const cleaned = content.replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
-        translations = JSON.parse(cleaned);
-      } catch {
-        translations = [content];
-      }
+    let translatedItems: string[];
+    try {
+      const cleaned = content.replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
+      const parsed = JSON.parse(cleaned);
+      translatedItems = Array.isArray(parsed) ? parsed.map((item) => (typeof item === "string" ? item : "")) : [];
+    } catch {
+      translatedItems = items.length === 1 ? [content] : [];
     }
+
+    const translations = sourceTexts.map(() => "");
+    items.forEach((item, translatedIndex) => {
+      translations[item.index] = translatedItems[translatedIndex] || "";
+    });
 
     return new Response(JSON.stringify({ translations }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
