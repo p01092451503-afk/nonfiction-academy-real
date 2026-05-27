@@ -683,15 +683,22 @@ const TrackEditorDialog = ({
         description: s.description.trim() || null,
         order_index: i,
       }));
-      const { data: insertedStages, error: stageErr } = await supabase
+      const { data: insertedStagesRaw, error: stageErr } = await supabase
         .from("track_stages" as any)
         .insert(stagesToInsert)
-        .select("id");
+        .select("id, order_index");
       if (stageErr) throw stageErr;
+      // CRITICAL: .insert().select() does NOT guarantee row order in PostgREST.
+      // Without sorting, stage i18n / course mappings get assigned to the wrong
+      // stage, producing "random" mismatched names (e.g. EN "Foundation" under
+      // KO "Week 2"). Sort by order_index to realign with draftStages[i].
+      const insertedStages = ((insertedStagesRaw as any[]) || [])
+        .slice()
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
       const stageRows: any[] = [];
       const stageI18nRows: any[] = [];
-      (insertedStages as any[]).forEach((s, i) => {
+      insertedStages.forEach((s, i) => {
         const draft = draftStages[i];
         if (!draft) return;
         draft.course_ids.forEach((cid, j) => {
