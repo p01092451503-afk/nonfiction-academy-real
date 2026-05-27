@@ -1678,17 +1678,17 @@ const CourseEditDialog = ({
       setI18nForm((prev) => ({
         ...prev,
         [lc]: {
-          title: translatedTitle || prev[lc].title,
-          description: translatedDesc || prev[lc].description,
+          title: form.title.trim() ? translatedTitle || prev[lc].title : "",
+          description: form.description.trim() ? translatedDesc || prev[lc].description : "",
         },
       }));
       setManualEdits((prev) => ({ ...prev, [lc]: { title: true, description: true } }));
-      if (courseId && translatedTitle) {
+      if (courseId && (translatedTitle || translatedDesc || form.title.trim() || form.description.trim())) {
         await supabase.from("course_i18n").upsert({
           course_id: courseId,
           language_code: lc,
-          title: translatedTitle,
-          description: translatedDesc || null,
+          title: form.title.trim() ? translatedTitle : "",
+          description: form.description.trim() ? translatedDesc || null : null,
         }, { onConflict: "course_id,language_code" });
       }
     } catch {
