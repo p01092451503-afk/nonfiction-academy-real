@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Layers, Plus, Pencil, Trash2, UserPlus, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle, Languages, Loader2 } from "lucide-react";
+import { Layers, Plus, Pencil, Trash2, UserPlus, Users, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle, Languages, Loader2 } from "lucide-react";
+import TrackMembersDialog from "@/components/admin/tracks/TrackMembersDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
