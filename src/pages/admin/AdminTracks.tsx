@@ -492,12 +492,14 @@ const TrackEditorDialog = ({
   ]);
   const [saving, setSaving] = useState(false);
 
-  // Load existing
-  useQuery({
-    queryKey: ["track-editor-load", trackId],
-    enabled: !!trackId,
-    queryFn: async () => {
-      if (!trackId) return null;
+  // Load existing track on mount / when trackId changes.
+  // NOTE: previously this used useQuery which cached the result; on second open
+  // the queryFn (which contains setState side-effects) was skipped, leaving
+  // the form at default values. useEffect guarantees a fresh load every time.
+  useEffect(() => {
+    if (!trackId) return;
+    let cancelled = false;
+    (async () => {
       const [
         { data: trk },
         { data: sts },
@@ -511,6 +513,7 @@ const TrackEditorDialog = ({
         supabase.from("learning_tracks_i18n" as any).select("*").eq("track_id", trackId),
         supabase.from("track_stages_i18n" as any).select("*"),
       ]);
+      if (cancelled) return;
       const track = trk as any;
       if (track) {
         const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
@@ -552,9 +555,9 @@ const TrackEditorDialog = ({
         };
       });
       if (stagesWithCourses.length) setDraftStages(stagesWithCourses);
-      return null;
-    },
-  });
+    })();
+    return () => { cancelled = true; };
+  }, [trackId]);
 
   const addStage = () => {
     setDraftStages((prev) => [
