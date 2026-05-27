@@ -418,7 +418,10 @@ const CourseDetail = () => {
           course_id: courseId!,
           language_code: lc,
           title: courseI18nForm[lc].title,
-          description: courseI18nForm[lc].description || null,
+          // Description translations are only valid when there is a Korean
+          // source description. This prevents stale/unrelated product titles
+          // from being re-saved under the course-description field.
+          description: vals.description.trim() ? courseI18nForm[lc].description || null : null,
         }));
       if (i18nRows.length > 0) {
         await supabase
