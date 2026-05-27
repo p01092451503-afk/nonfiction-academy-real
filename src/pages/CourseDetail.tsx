@@ -50,6 +50,19 @@ const contentTypeIcon: Record<string, React.ElementType> = {
   video_package: Video, media_package: Images,
 };
 
+const COURSE_TRANSLATION_LANGS = ["en", "ja", "zh-CN"] as const;
+const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+
+const hasHangulText = (value: string | null | undefined) => HANGUL_RE.test(value || "");
+const isUnsafeCourseTranslation = (value: string | null | undefined, koSource: string | null | undefined) => {
+  const translated = (value || "").trim();
+  const source = (koSource || "").trim();
+  if (!translated) return false;
+  return hasHangulText(translated) || (!!source && translated === source);
+};
+const sanitizeCourseTranslation = (value: string | null | undefined, koSource: string | null | undefined) =>
+  isUnsafeCourseTranslation(value, koSource) ? "" : (value || "");
+
 type ContentFormData = {
   title: string;
   content_type: string;
