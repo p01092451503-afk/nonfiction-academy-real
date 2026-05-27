@@ -26,7 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import MediaPackagePlayer from "@/components/MediaPackagePlayer";
 import VideoPackagePlayer from "@/components/VideoPackagePlayer";
 import CourseComments from "@/components/CourseComments";
-import { computeCourseProgress, syncEnrollmentOnContentCompleted } from "@/lib/courseCompletion";
+import { computeCourseProgress, syncEnrollmentOnContentCompleted, syncEnrollmentPartialProgress } from "@/lib/courseCompletion";
 import {
   getContentTitle,
   getContentDescription,
