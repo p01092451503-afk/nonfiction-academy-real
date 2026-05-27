@@ -454,21 +454,28 @@ const ContentPlayer = () => {
       partialProgressInFlight.current = true;
       try {
         // Don't downgrade existing percentage or completed rows.
-        const existingPct = Number(currentProgress?.progress_percentage) || 0;
-        if (currentProgress?.completed || pct <= existingPct) {
+        const { data: latestProgress, error: latestError } = await supabase
+          .from("content_progress")
+          .select("id, completed, progress_percentage")
+          .eq("user_id", user.id)
+          .eq("content_id", contentId)
+          .maybeSingle();
+        if (latestError) throw latestError;
+
+        const existingPct = Number(latestProgress?.progress_percentage ?? currentProgress?.progress_percentage) || 0;
+        if (latestProgress?.completed || currentProgress?.completed || pct <= existingPct) {
           lastSavedPctRef.current = pct;
           return;
         }
-        const { error } = await supabase.from("content_progress").upsert(
-          {
-            user_id: user.id,
-            content_id: contentId,
-            completed: false,
-            progress_percentage: pct,
-            last_accessed_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,content_id", ignoreDuplicates: true }
-        );
+        const payload = { progress_percentage: pct, last_accessed_at: new Date().toISOString() };
+        const { error } = latestProgress?.id
+          ? await supabase.from("content_progress").update(payload).eq("id", latestProgress.id)
+          : await supabase.from("content_progress").insert({
+              user_id: user.id,
+              content_id: contentId,
+              completed: false,
+              ...payload,
+            });
         if (error) throw error;
         lastSavedPctRef.current = pct;
         if (courseId) {
