@@ -385,17 +385,20 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
     }
   };
 
-  // Trigger onComplete when all items completed (>=80% each)
+  // Trigger onComplete when all items completed (>=80% each).
+  // Also emit partial progress on every change so the parent can persist
+  // intermediate progress to content_progress (used by the course progress bar).
   useEffect(() => {
+    if (items.length === 0) return;
+    onPartialProgress?.(completedItems.size, items.length);
     if (
-      items.length > 0 &&
       completedItems.size >= items.length &&
       !completedRef.current
     ) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [completedItems, items.length, onComplete]);
+  }, [completedItems, items.length, onComplete, onPartialProgress]);
 
   // Bunny iframe progress tracking via Player.js postMessage protocol
   useEffect(() => {
