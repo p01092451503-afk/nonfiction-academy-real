@@ -4,29 +4,40 @@ import { supabase } from "@/integrations/supabase/client";
  * 비즈니스 규칙:
  * - 1개 강의는 다국어 버전(KO/EN/ZH/JA 등) 차시들로 구성된다.
  * - 모든 차시는 동일한 콘텐츠의 다른 언어 버전이므로,
- *   학습자가 어떤 언어로든 첫 차시(또는 어느 한 차시)를 완료하면
- *   강의 전체가 학습완료로 처리된다.
+ *   학습자가 어떤 언어로든 한 차시(또는 그 차시의 모든 하위 항목)를
+ *   완료하면 강의 전체가 학습완료(100%)로 처리된다.
  *
  * 진도율 계산 정책:
- *   - 어느 한 차시라도 완료 → 100%
- *   - 그 외 → 0%
+ *   - 학생이 어떤 차시(다국어 버전 중 하나)의 하위 항목들을 부분
+ *     시청한 경우에도 진도율이 즉시 반영되어야 한다.
+ *   - 따라서 차시 단위로 저장된 progress_percentage 중 가장 높은
+ *     값을 강의 전체 진도율로 사용한다. (한 차시만 끝나도 100%)
+ *   - 어느 한 차시라도 completed=true 면 isCompleted=true.
  */
 
 export function computeCourseProgress(
   contents: Array<{ id: string }>,
-  progressData: Array<{ content_id: string; completed: boolean | null }>,
+  progressData: Array<{
+    content_id: string;
+    completed: boolean | null;
+    progress_percentage?: number | null;
+  }>,
 ): { percentage: number; isCompleted: boolean } {
   if (!contents || contents.length === 0) {
     return { percentage: 0, isCompleted: false };
   }
   const contentIds = new Set(contents.map((c) => c.id));
-  const anyCompleted = (progressData || []).some(
-    (p) => p.completed && contentIds.has(p.content_id),
-  );
-  return {
-    percentage: anyCompleted ? 100 : 0,
-    isCompleted: anyCompleted,
-  };
+  const relevant = (progressData || []).filter((p) => contentIds.has(p.content_id));
+  const anyCompleted = relevant.some((p) => p.completed);
+  if (anyCompleted) {
+    return { percentage: 100, isCompleted: true };
+  }
+  const maxPct = relevant.reduce((max, p) => {
+    const pct = Number(p.progress_percentage) || 0;
+    return pct > max ? pct : max;
+  }, 0);
+  const clamped = Math.max(0, Math.min(99, Math.round(maxPct)));
+  return { percentage: clamped, isCompleted: false };
 }
 
 /**
@@ -57,4 +68,51 @@ export async function syncEnrollmentOnContentCompleted(params: {
       completed_at: new Date().toISOString(),
     })
     .eq("id", enrollment.id);
+}
+
+/**
+ * 차시(content)가 부분 완료된 경우에도 enrollment.progress 를 갱신해
+ * 학생 목록/대시보드의 강의 진행률에 즉시 반영되도록 한다.
+ * - 이미 완료 처리된 enrollment 는 건드리지 않는다.
+ * - 강의에 속한 모든 content_progress 중 가장 큰 progress_percentage 를
+ *   취해 enrollment.progress 로 동기화 (감소 X).
+ */
+export async function syncEnrollmentPartialProgress(params: {
+  userId: string;
+  courseId: string;
+}) {
+  const { userId, courseId } = params;
+  if (!userId || !courseId) return;
+
+  const { data: enrollment } = await supabase
+    .from("enrollments")
+    .select("id, completed_at, progress")
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .maybeSingle();
+  if (!enrollment || enrollment.completed_at) return;
+
+  const { data: contents } = await supabase
+    .from("course_contents")
+    .select("id")
+    .eq("course_id", courseId);
+  const contentIds = (contents || []).map((c: any) => c.id);
+  if (contentIds.length === 0) return;
+
+  const { data: progressRows } = await supabase
+    .from("content_progress")
+    .select("progress_percentage, completed")
+    .eq("user_id", userId)
+    .in("content_id", contentIds);
+
+  const maxPct = (progressRows || []).reduce((max, p: any) => {
+    if (p.completed) return 100;
+    const pct = Number(p.progress_percentage) || 0;
+    return pct > max ? pct : max;
+  }, 0);
+
+  const next = Math.max(0, Math.min(99, Math.round(maxPct)));
+  if (next > (enrollment.progress ?? 0)) {
+    await supabase.from("enrollments").update({ progress: next }).eq("id", enrollment.id);
+  }
 }
