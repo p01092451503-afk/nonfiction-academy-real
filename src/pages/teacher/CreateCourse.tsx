@@ -998,8 +998,20 @@ const CreateCourse = () => {
       return { id: editCourseId!, title };
     },
     onSuccess: (course) => {
+      // Invalidate every cache that derives titles/descriptions from course/contents/i18n,
+      // so the course detail list ('차시 목록') and admin/teacher/catalog lists immediately
+      // reflect what we just saved (prevents stale list vs. edit-form mismatch).
       queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["course", editCourseId] });
+      queryClient.invalidateQueries({ queryKey: ["course-contents", editCourseId] });
+      queryClient.invalidateQueries({ queryKey: ["content-i18n", editCourseId] });
+      queryClient.invalidateQueries({ queryKey: ["course-i18n", editCourseId] });
+      queryClient.invalidateQueries({ queryKey: ["course-media-package-ids", editCourseId] });
+      queryClient.invalidateQueries({ queryKey: ["course-video-package-ids", editCourseId] });
+      queryClient.invalidateQueries({ queryKey: ["course-auto-thumbnail", editCourseId] });
       toast({ title: t("createCourse.courseUpdated", "강의가 수정되었습니다"), description: title });
       navigate(-1);
     },
@@ -1149,6 +1161,9 @@ const CreateCourse = () => {
     onSuccess: async (course) => {
       await deleteDraft();
       queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast({ title: t("createCourse.courseCreated"), description: t("createCourse.courseCreatedDesc", { title: course.title }) });
       navigate(`/courses/${course.id}`);
     },
