@@ -165,6 +165,18 @@ describe("getCourseTitleByLang / getCourseDescByLang (course-level header)", () 
     expect(got).toBe(i18n.find((r) => r.language_code === lang)!.title);
   });
 
+  it("does not show unrelated translated descriptions when the Korean description is empty", () => {
+    const polluted: CourseI18nRow[] = [
+      { language_code: "en", title: "[Product] Nourishing Hand Balm", description: "[Product] Firming Body Oil" },
+      { language_code: "ja", title: "[製品] ナリッシング ハンドバーム", description: "[製品] ファーミング ボディオイル" },
+      { language_code: "zh-CN", title: "[产品] 滋养护手霜", description: "[产品] 紧致身体油" },
+    ];
+
+    expect(getCourseDescByLang({ description: "" }, polluted, "en")).toBe("");
+    expect(getCourseDescByLang({ description: null }, polluted, "ja")).toBe("");
+    expect(getCourseDescByLang({ description: undefined }, polluted, "zh-CN")).toBe("");
+  });
+
   it("falls back to base when translation missing", () => {
     expect(getCourseTitleByLang(base, [], "en")).toBe("한국어 강의명");
     expect(getCourseTitleByLang(base, null, "ja")).toBe("한국어 강의명");
