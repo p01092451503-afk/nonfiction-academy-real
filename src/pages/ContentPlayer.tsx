@@ -413,14 +413,18 @@ const ContentPlayer = () => {
 
   const markCompleteMutation = useMutation({
     mutationFn: async () => {
-      const existing = currentProgress;
-      if (existing) {
-        const { error } = await supabase.from("content_progress").update({ completed: true, completed_at: new Date().toISOString(), progress_percentage: 100 }).eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("content_progress").insert({ user_id: user!.id, content_id: contentId!, completed: true, completed_at: new Date().toISOString(), progress_percentage: 100 });
-        if (error) throw error;
-      }
+      const { error } = await supabase.from("content_progress").upsert(
+        {
+          user_id: user!.id,
+          content_id: contentId!,
+          completed: true,
+          completed_at: new Date().toISOString(),
+          progress_percentage: 100,
+          last_accessed_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,content_id" }
+      );
+      if (error) throw error;
       // 차시 = 동일 콘텐츠의 다국어 버전. 한 차시 완료 시 강의 전체를 완료 처리.
       if (user?.id && courseId) {
         await syncEnrollmentOnContentCompleted({ userId: user.id, courseId });
@@ -449,26 +453,23 @@ const ContentPlayer = () => {
       if (partialProgressInFlight.current) return;
       partialProgressInFlight.current = true;
       try {
-        if (currentProgress?.id) {
-          // Don't downgrade existing percentage
-          const existingPct = Number(currentProgress.progress_percentage) || 0;
-          if (pct <= existingPct) {
-            lastSavedPctRef.current = pct;
-            return;
-          }
-          await supabase
-            .from("content_progress")
-            .update({ progress_percentage: pct, last_accessed_at: new Date().toISOString() })
-            .eq("id", currentProgress.id);
-        } else {
-          await supabase.from("content_progress").insert({
+        // Don't downgrade existing percentage or completed rows.
+        const existingPct = Number(currentProgress?.progress_percentage) || 0;
+        if (currentProgress?.completed || pct <= existingPct) {
+          lastSavedPctRef.current = pct;
+          return;
+        }
+        const { error } = await supabase.from("content_progress").upsert(
+          {
             user_id: user.id,
             content_id: contentId,
             completed: false,
             progress_percentage: pct,
             last_accessed_at: new Date().toISOString(),
-          });
-        }
+          },
+          { onConflict: "user_id,content_id", ignoreDuplicates: true }
+        );
+        if (error) throw error;
         lastSavedPctRef.current = pct;
         if (courseId) {
           await syncEnrollmentPartialProgress({ userId: user.id, courseId });
