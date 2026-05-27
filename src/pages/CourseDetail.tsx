@@ -1629,17 +1629,27 @@ const CourseEditDialog = ({
     "zh-CN": { title: false, description: false },
   });
 
+  const prevKoRef = useRef<{ title: string; description: string } | null>(null);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      prevKoRef.current = null;
+      return;
+    }
     setManualEdits({
       en: { title: !!i18nForm.en.title, description: !!i18nForm.en.description },
       ja: { title: !!i18nForm.ja.title, description: !!i18nForm.ja.description },
       "zh-CN": { title: !!i18nForm["zh-CN"].title, description: !!i18nForm["zh-CN"].description },
     });
+    // Seed previous KO snapshot so the sync effects below don't fire on initial open
+    prevKoRef.current = { title: form.title, description: form.description };
   }, [open]);
 
-  // Sync KO → other-lang fields when not manually edited
+  // Sync KO → other-lang fields when not manually edited (only on actual KO changes after open)
   useEffect(() => {
+    if (!open || prevKoRef.current === null) return;
+    if (prevKoRef.current.title === form.title) return;
+    prevKoRef.current = { ...prevKoRef.current, title: form.title };
     setI18nForm((prev) => {
       const next = { ...prev };
       COURSE_I18N_LANGS.forEach((lc) => {
@@ -1647,9 +1657,12 @@ const CourseEditDialog = ({
       });
       return next;
     });
-  }, [form.title]);
+  }, [form.title, open]);
 
   useEffect(() => {
+    if (!open || prevKoRef.current === null) return;
+    if (prevKoRef.current.description === form.description) return;
+    prevKoRef.current = { ...prevKoRef.current, description: form.description };
     setI18nForm((prev) => {
       const next = { ...prev };
       COURSE_I18N_LANGS.forEach((lc) => {
@@ -1657,7 +1670,7 @@ const CourseEditDialog = ({
       });
       return next;
     });
-  }, [form.description]);
+  }, [form.description, open]);
 
   const updateLang = (lc: CourseI18nLang, patch: Partial<CourseI18nForm>) => {
     setI18nForm((prev) => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
