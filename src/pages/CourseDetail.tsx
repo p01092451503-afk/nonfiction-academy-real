@@ -603,7 +603,7 @@ const CourseDetail = () => {
     if (!course) return;
     const koDescription = course.description || "";
     const sanitizeTranslatedDescription = (value: string | null | undefined) =>
-      koDescription.trim() ? (value || "") : "";
+      koDescription.trim() ? sanitizeCourseTranslation(value, koDescription) : "";
     setCourseForm({
       title: course.title,
       description: koDescription,
@@ -619,9 +619,9 @@ const CourseDetail = () => {
     const findRow = (lc: CourseI18nLang) =>
       courseI18n?.find((i: any) => i.language_code === lc);
     setCourseI18nForm({
-      en: { title: findRow("en")?.title || "", description: sanitizeTranslatedDescription(findRow("en")?.description) },
-      ja: { title: findRow("ja")?.title || "", description: sanitizeTranslatedDescription(findRow("ja")?.description) },
-      "zh-CN": { title: findRow("zh-CN")?.title || "", description: sanitizeTranslatedDescription(findRow("zh-CN")?.description) },
+      en: { title: sanitizeCourseTranslation(findRow("en")?.title, course.title), description: sanitizeTranslatedDescription(findRow("en")?.description) },
+      ja: { title: sanitizeCourseTranslation(findRow("ja")?.title, course.title), description: sanitizeTranslatedDescription(findRow("ja")?.description) },
+      "zh-CN": { title: sanitizeCourseTranslation(findRow("zh-CN")?.title, course.title), description: sanitizeTranslatedDescription(findRow("zh-CN")?.description) },
     });
     setCourseThumbnailFile(null);
     setCourseThumbnailPreview(course.thumbnail_url || null);
