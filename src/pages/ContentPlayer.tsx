@@ -649,6 +649,7 @@ const ContentPlayer = () => {
                   contentId={currentContent.id}
                   title={getTitle(currentContent)}
                   isAlreadyCompleted={!!currentProgress?.completed}
+                  onPartialProgress={handlePartialProgress}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
                       markCompleteMutation.mutate();
@@ -658,6 +659,7 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "media_package" ? (
                 <MediaPackagePlayer
                   contentId={currentContent.id}
+                  onPartialProgress={handlePartialProgress}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
                       markCompleteMutation.mutate();
