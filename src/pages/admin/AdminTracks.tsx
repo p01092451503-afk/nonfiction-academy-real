@@ -378,9 +378,6 @@ const AdminTracks = () => {
                                   STEP {String(idx + 1).padStart(2, "0")}
                                 </span>
                                 <span className="text-sm font-semibold text-foreground">{stageName(stage)}</span>
-                                {lang === "ko" && stage.name_en && (
-                                  <span className="text-[11px] text-muted-foreground">/ {stage.name_en}</span>
-                                )}
                                 <span className="ml-auto text-[10px] text-muted-foreground">
                                   {sCourses.length}{t("track.coursesCount", "개 강의")}
                                 </span>
