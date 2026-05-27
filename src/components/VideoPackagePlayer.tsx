@@ -21,6 +21,7 @@ interface VideoPackagePlayerProps {
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
   title?: string;
   isAlreadyCompleted?: boolean;
+  savedProgressPercentage?: number;
 }
 
 interface VPItem {
@@ -48,6 +49,16 @@ const formatTime = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
+const deriveCompletedCountFromPercentage = (percentage: number | undefined, total: number) => {
+  if (!total) return 0;
+  const pct = Math.max(0, Math.min(100, Math.round(Number(percentage) || 0)));
+  if (pct >= 100) return total;
+  for (let count = total - 1; count >= 1; count -= 1) {
+    if (pct >= Math.round((count / total) * 100)) return count;
+  }
+  return 0;
+};
+
 const isHls = (url: string) => /\.m3u8(\?|$)/i.test(url);
 const hasPlaceholderHost = (url: string) => /placeholder_value_to_be_replaced/i.test(url);
 const isBunnyIframe = (url: string) => /(?:iframe|player)\.mediadelivery\.net\/(embed|play)\//i.test(url);
@@ -64,7 +75,7 @@ const sanitizeBunnyAssetUrl = (url: string | null | undefined) => {
 };
 const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, isAlreadyCompleted = false }: VideoPackagePlayerProps) => {
+const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, isAlreadyCompleted = false, savedProgressPercentage = 0 }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -120,22 +131,25 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
     completedRef.current = false;
   }, [contentId, lang]);
 
-  // Hydrate per-item completion from localStorage (permanent "완료" badge across replays)
-  // and merge with content-level isAlreadyCompleted flag.
+  // Hydrate per-item completion from both DB content progress and localStorage.
+  // DB progress is the source that survives closing/reopening the player.
   useEffect(() => {
     if (items.length === 0) return;
     setCompletedItems((prev) => {
       const next = new Set(prev);
+      const serverCompletedCount = isAlreadyCompleted
+        ? items.length
+        : deriveCompletedCountFromPercentage(savedProgressPercentage, items.length);
       items.forEach((it) => {
         try {
           if (localStorage.getItem(DONE_KEY(contentId, it.id)) === "1") next.add(it.id);
         } catch {}
-        if (isAlreadyCompleted) next.add(it.id);
       });
+      items.slice(0, serverCompletedCount).forEach((it) => next.add(it.id));
       if (next.size === prev.size && items.every((it) => prev.has(it.id) === next.has(it.id))) return prev;
       return next;
     });
-  }, [isAlreadyCompleted, items, contentId]);
+  }, [isAlreadyCompleted, savedProgressPercentage, items, contentId]);
 
 
   const activeItem = items[activeIdx];
