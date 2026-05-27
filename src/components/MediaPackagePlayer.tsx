@@ -27,6 +27,7 @@ const loadProgress = (cid: string): StoredProgress | null => {
 interface MediaPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
+  onPartialProgress?: (completedCount: number, totalCount: number) => void;
 }
 
 interface PackageItem {
