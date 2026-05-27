@@ -147,10 +147,14 @@ export function getCourseDescByLang(
   i18n: CourseI18nRow[] | null | undefined,
   lang: string,
 ): string {
-  const baseDesc = base?.description || "";
+  const baseDesc = (base?.description || "").trim();
+  // Course descriptions are translated from the Korean source. If the Korean
+  // source is empty, never surface a non-Korean row: legacy bad data has used
+  // this slot to store unrelated course/product titles.
+  if (!baseDesc) return "";
   if (!lang || lang === "ko") return baseDesc;
   const tr = i18n?.find((r) => r.language_code === lang);
-  return tr?.description || baseDesc;
+  return tr?.description?.trim() || baseDesc;
 }
 
 /**
