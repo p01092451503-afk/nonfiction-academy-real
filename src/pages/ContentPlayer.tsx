@@ -434,6 +434,56 @@ const ContentPlayer = () => {
     },
   });
 
+  // Persist partial (per-item) progress for video/media packages so the
+  // course-level progress bar reflects intermediate completion. Skips writes
+  // once content is already fully completed in DB.
+  const partialProgressInFlight = useRef(false);
+  const lastSavedPctRef = useRef<number>(-1);
+  const handlePartialProgress = useCallback(
+    async (completedCount: number, totalCount: number) => {
+      if (!user?.id || !contentId || !totalCount) return;
+      if (currentProgress?.completed) return;
+      const pct = Math.max(0, Math.min(99, Math.round((completedCount / totalCount) * 100)));
+      if (pct <= 0) return;
+      if (pct === lastSavedPctRef.current) return;
+      if (partialProgressInFlight.current) return;
+      partialProgressInFlight.current = true;
+      try {
+        if (currentProgress?.id) {
+          // Don't downgrade existing percentage
+          const existingPct = Number(currentProgress.progress_percentage) || 0;
+          if (pct <= existingPct) {
+            lastSavedPctRef.current = pct;
+            return;
+          }
+          await supabase
+            .from("content_progress")
+            .update({ progress_percentage: pct, last_accessed_at: new Date().toISOString() })
+            .eq("id", currentProgress.id);
+        } else {
+          await supabase.from("content_progress").insert({
+            user_id: user.id,
+            content_id: contentId,
+            completed: false,
+            progress_percentage: pct,
+            last_accessed_at: new Date().toISOString(),
+          });
+        }
+        lastSavedPctRef.current = pct;
+        if (courseId) {
+          await syncEnrollmentPartialProgress({ userId: user.id, courseId });
+        }
+        queryClient.invalidateQueries({ queryKey: ["content-progress", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
+        queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
+      } finally {
+        partialProgressInFlight.current = false;
+      }
+    },
+    [user?.id, contentId, courseId, currentProgress?.id, currentProgress?.completed, currentProgress?.progress_percentage, queryClient]
+  );
+
+
   const normalizeMangoboardUrl = (url: string) => {
     let normalized = url.trim();
     if (!normalized.startsWith("http")) normalized = "https://" + normalized;
