@@ -40,7 +40,21 @@ export type CourseContentLike = {
   video_provider?: string | null;
 };
 
-const containsHangul = (value: string | null | undefined) => /[가-힣]/.test(value || "");
+const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+
+export const hasHangulText = (value: string | null | undefined) => HANGUL_RE.test(value || "");
+
+export function isUnsafeCourseTranslation(value: string | null | undefined, koSource: string | null | undefined): boolean {
+  const translated = (value || "").trim();
+  const source = (koSource || "").trim();
+  if (!translated) return false;
+  return hasHangulText(translated) || (!!source && translated === source);
+}
+
+export const sanitizeCourseTranslation = (value: string | null | undefined, koSource: string | null | undefined) =>
+  isUnsafeCourseTranslation(value, koSource) ? "" : (value || "");
+
+const containsHangul = hasHangulText;
 
 /**
  * Remove repetitive "n차시." / "Lesson N." / "第 N 课." / "レッスン N." /
