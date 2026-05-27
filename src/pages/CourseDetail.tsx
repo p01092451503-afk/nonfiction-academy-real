@@ -424,18 +424,53 @@ const CourseDetail = () => {
         is_sequential: vals.is_sequential,
       } as any).eq("id", courseId!);
       if (error) throw error;
-      // Upsert i18n rows for each non-Korean language that has at least a title
-      const i18nRows = (Object.keys(courseI18nForm) as CourseI18nLang[])
-        .filter((lc) => courseI18nForm[lc].title.trim().length > 0)
+      const resolvedI18nForm = { ...courseI18nForm };
+      await Promise.all(COURSE_TRANSLATION_LANGS.map(async (lc) => {
+        const title = (resolvedI18nForm[lc].title || "").trim();
+        const description = (resolvedI18nForm[lc].description || "").trim();
+        const needsTitle = !!vals.title.trim() && (!title || isUnsafeCourseTranslation(title, vals.title));
+        const needsDescription = !!vals.description.trim() && (!description || isUnsafeCourseTranslation(description, vals.description));
+        if (!needsTitle && !needsDescription) return;
+        const inputs: string[] = [];
+        if (needsTitle) inputs.push(vals.title.trim());
+        if (needsDescription) inputs.push(vals.description.trim());
+        try {
+          const translated = await translateKoTo(lc, inputs);
+          let idx = 0;
+          if (needsTitle) {
+            const safeTitle = sanitizeCourseTranslation(translated[idx++], vals.title).trim();
+            if (safeTitle) resolvedI18nForm[lc] = { ...resolvedI18nForm[lc], title: safeTitle };
+          }
+          if (needsDescription) {
+            const safeDescription = sanitizeCourseTranslation(translated[idx++], vals.description).trim();
+            resolvedI18nForm[lc] = { ...resolvedI18nForm[lc], description: safeDescription };
+          }
+        } catch {
+          // Keep existing safe translations only; never persist Korean fallback into non-KO rows.
+        }
+      }));
+
+      // Upsert i18n rows for each non-Korean language that has a safe translated title
+      const i18nRows = COURSE_TRANSLATION_LANGS
+        .map((lc) => ({
+          lc,
+          title: sanitizeCourseTranslation(resolvedI18nForm[lc].title, vals.title).trim(),
+          description: vals.description.trim()
+            ? sanitizeCourseTranslation(resolvedI18nForm[lc].description, vals.description).trim()
+            : "",
+        }))
+        .filter((row) => row.title.length > 0)
         .map((lc) => ({
           course_id: courseId!,
-          language_code: lc,
-          title: courseI18nForm[lc].title,
-          // Description translations are only valid when there is a Korean
-          // source description. This prevents stale/unrelated product titles
-          // from being re-saved under the course-description field.
-          description: vals.description.trim() ? courseI18nForm[lc].description || null : null,
+          language_code: lc.lc,
+          title: lc.title,
+          description: lc.description || null,
         }));
+      const langsWithRows = new Set(i18nRows.map((row) => row.language_code));
+      const langsToClear = COURSE_TRANSLATION_LANGS.filter((lc) => !langsWithRows.has(lc));
+      if (langsToClear.length > 0) {
+        await supabase.from("course_i18n").delete().eq("course_id", courseId!).in("language_code", langsToClear);
+      }
       if (i18nRows.length > 0) {
         await supabase
           .from("course_i18n")
