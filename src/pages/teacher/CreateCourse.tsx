@@ -713,6 +713,40 @@ const CreateCourse = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [koTitle, koDesc, contents.filter((c) => c.language_code !== "ko").map((c) => c.manual_translation_override ? "1" : "0").join(",")]);
 
+  /* ── Sync course-level (multilingual) title into each lesson slot title ──
+     When the course title for a given language changes (KO 입력 또는 자동 번역 결과),
+     mirror it into the matching 차시 슬롯 제목. 사용자가 차시 제목을 직접 수정한 경우
+     (=수동 편집된 경우)에는 덮어쓰지 않는다. */
+  const prevCourseTitlesRef = useRef<Record<LessonLang, string>>({ ko: "", en: "", "zh-CN": "", ja: "" });
+  useEffect(() => {
+    const courseTitlesByLang: Record<LessonLang, string> = {
+      ko: title || "",
+      en: enTitle || "",
+      "zh-CN": zhTitle || "",
+      ja: jaTitle || "",
+    };
+    const prev = prevCourseTitlesRef.current;
+
+    setContents((curr) =>
+      curr.map((c) => {
+        const lang = c.language_code as LessonLang;
+        const nextCourseTitle = courseTitlesByLang[lang] ?? "";
+        const prevCourseTitle = prev[lang] ?? "";
+        if (!nextCourseTitle || nextCourseTitle === prevCourseTitle) return c;
+        // KO 외 슬롯에서 사용자가 수동 편집했다면 덮어쓰지 않음.
+        if (lang !== "ko" && c.manual_translation_override) return c;
+        const currentSlotTitle = (c.title || "").trim();
+        // 비어있거나, 이전 강의 제목과 동일(=사용자가 손대지 않음)할 때만 동기화.
+        if (currentSlotTitle === "" || currentSlotTitle === prevCourseTitle.trim()) {
+          return { ...c, title: nextCourseTitle };
+        }
+        return c;
+      })
+    );
+
+    prevCourseTitlesRef.current = courseTitlesByLang;
+  }, [title, enTitle, zhTitle, jaTitle]);
+
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
     const ext = thumbnailFile.name.split(".").pop();
