@@ -186,25 +186,64 @@ const StudentDashboard = () => {
       // Get enrolled mandatory courses that are not completed
       const { data: myEnrollments } = await supabase
         .from("enrollments")
-        .select("course_id, progress")
+        .select("id, course_id, progress")
         .eq("user_id", user!.id)
         .is("completed_at", null);
 
       if (!myEnrollments || myEnrollments.length === 0) return [];
-      const enrolledMap = new Map(myEnrollments.map(e => [e.course_id, Number(e.progress) || 0]));
+      const enrolledMap = new Map(myEnrollments.map(e => [e.course_id, e]));
+      const courseIds = [...enrolledMap.keys()];
+
+      // 정책: 다국어 차시 중 하나라도 완료되면 강의 100% 완료.
+      // enrollment.progress 가 stale 일 수 있으므로 content_progress 로 실측한다.
+      const { data: contents } = await supabase
+        .from("course_contents")
+        .select("id, course_id")
+        .in("course_id", courseIds);
+      const contentIdToCourse = new Map((contents || []).map((c: any) => [c.id, c.course_id]));
+      const allContentIds = (contents || []).map((c: any) => c.id);
+      let completedCourses = new Set<string>();
+      if (allContentIds.length > 0) {
+        const { data: progress } = await supabase
+          .from("content_progress")
+          .select("content_id, completed")
+          .eq("user_id", user!.id)
+          .eq("completed", true)
+          .in("content_id", allContentIds);
+        (progress || []).forEach((p: any) => {
+          const cid = contentIdToCourse.get(p.content_id);
+          if (cid) completedCourses.add(cid);
+        });
+      }
+
+      // 완료된 강의는 대시보드 필수교육 안내에서 제외 + enrollment 자동 동기화
+      const stillPending = courseIds.filter(id => !completedCourses.has(id));
+      const toSync = [...completedCourses].filter(id => {
+        const e = enrolledMap.get(id) as any;
+        return e && (Number(e.progress) !== 100);
+      });
+      if (toSync.length > 0) {
+        await Promise.all(toSync.map(cid => {
+          const e = enrolledMap.get(cid) as any;
+          return supabase.from("enrollments")
+            .update({ progress: 100, completed_at: new Date().toISOString() })
+            .eq("id", e.id);
+        }));
+      }
+      if (stillPending.length === 0) return [];
 
       const { data: courses, error } = await supabase
         .from("courses")
         .select("id, title, deadline, is_mandatory, course_i18n(language_code, title)")
         .eq("is_mandatory", true)
         .eq("status", "published")
-        .in("id", [...enrolledMap.keys()])
+        .in("id", stillPending)
         .order("deadline", { ascending: true });
 
       if (error) throw error;
       return (courses || []).map(c => ({
         ...localizeCourse(c as any, lang),
-        progress: enrolledMap.get(c.id) || 0,
+        progress: 0,
         daysLeft: c.deadline ? Math.ceil((new Date(c.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null,
       }));
     },
