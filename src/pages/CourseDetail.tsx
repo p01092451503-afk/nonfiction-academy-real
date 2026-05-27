@@ -1662,14 +1662,10 @@ const CourseEditDialog = ({
   };
 
   const handleAutoTranslate = async (lc: CourseI18nLang) => {
-    const textsToTranslate = [form.title, form.description].filter(Boolean);
-    if (textsToTranslate.length === 0) return;
+    if (!form.title.trim() && !form.description.trim()) return;
     setTranslating(lc);
     try {
-      const results = await translateKoTo(lc, textsToTranslate);
-      let idx = 0;
-      const translatedTitle = form.title ? (results[idx++] || "") : "";
-      const translatedDesc = form.description ? (results[idx++] || "") : "";
+      const [translatedTitle = "", translatedDesc = ""] = await translateKoTo(lc, [form.title, form.description]);
       setI18nForm((prev) => ({
         ...prev,
         [lc]: {
