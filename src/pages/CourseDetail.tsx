@@ -1691,40 +1691,20 @@ const CourseEditDialog = ({
       return;
     }
     setManualEdits({
-      en: { title: !!i18nForm.en.title, description: !!i18nForm.en.description },
-      ja: { title: !!i18nForm.ja.title, description: !!i18nForm.ja.description },
-      "zh-CN": { title: !!i18nForm["zh-CN"].title, description: !!i18nForm["zh-CN"].description },
+      en: { title: !!sanitizeCourseTranslation(i18nForm.en.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.en.description, form.description).trim() },
+      ja: { title: !!sanitizeCourseTranslation(i18nForm.ja.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.ja.description, form.description).trim() },
+      "zh-CN": { title: !!sanitizeCourseTranslation(i18nForm["zh-CN"].title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm["zh-CN"].description, form.description).trim() },
     });
     // Seed previous KO snapshot so the sync effects below don't fire on initial open
     prevKoRef.current = { title: form.title, description: form.description };
   }, [open]);
 
-  // Sync KO → other-lang fields when not manually edited (only on actual KO changes after open)
+  // Never copy Korean text into non-Korean fields. Empty fields are translated on demand/save.
   useEffect(() => {
     if (!open || prevKoRef.current === null) return;
-    if (prevKoRef.current.title === form.title) return;
-    prevKoRef.current = { ...prevKoRef.current, title: form.title };
-    setI18nForm((prev) => {
-      const next = { ...prev };
-      COURSE_I18N_LANGS.forEach((lc) => {
-        if (!manualEdits[lc].title) next[lc] = { ...next[lc], title: form.title };
-      });
-      return next;
-    });
-  }, [form.title, open]);
-
-  useEffect(() => {
-    if (!open || prevKoRef.current === null) return;
-    if (prevKoRef.current.description === form.description) return;
-    prevKoRef.current = { ...prevKoRef.current, description: form.description };
-    setI18nForm((prev) => {
-      const next = { ...prev };
-      COURSE_I18N_LANGS.forEach((lc) => {
-        if (!manualEdits[lc].description) next[lc] = { ...next[lc], description: form.description };
-      });
-      return next;
-    });
-  }, [form.description, open]);
+    if (prevKoRef.current.title !== form.title) prevKoRef.current = { ...prevKoRef.current, title: form.title };
+    if (prevKoRef.current.description !== form.description) prevKoRef.current = { ...prevKoRef.current, description: form.description };
+  }, [form.title, form.description, open]);
 
   const updateLang = (lc: CourseI18nLang, patch: Partial<CourseI18nForm>) => {
     setI18nForm((prev) => ({ ...prev, [lc]: { ...prev[lc], ...patch } }));
