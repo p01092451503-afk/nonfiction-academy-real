@@ -486,9 +486,9 @@ const TrackEditorDialog = ({
   const [activeLang, setActiveLang] = useState<I18nLang>("ko");
   const [translating, setTranslating] = useState(false);
   const [draftStages, setDraftStages] = useState<DraftStage[]>([
-    { id: crypto.randomUUID(), names: { ko: "Foundation", en: "Foundation" }, description: "", order_index: 0, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), names: { ko: "Basic", en: "Basic" }, description: "", order_index: 1, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), names: { ko: "Advanced", en: "Advanced" }, description: "", order_index: 2, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 0, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 1, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 2, course_ids: [], _isNew: true },
   ]);
   const [saving, setSaving] = useState(false);
 
