@@ -447,6 +447,7 @@ const ContentPlayer = () => {
     async (completedCount: number, totalCount: number) => {
       if (!user?.id || !contentId || !totalCount) return;
       if (currentProgress?.completed) return;
+      if (completedCount >= totalCount) return;
       const pct = Math.max(0, Math.min(99, Math.round((completedCount / totalCount) * 100)));
       if (pct <= 0) return;
       if (pct === lastSavedPctRef.current) return;
