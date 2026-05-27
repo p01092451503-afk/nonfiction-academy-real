@@ -82,6 +82,7 @@ const AdminTracks = () => {
   const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignTrack, setAssignTrack] = useState<Track | null>(null);
+  const [membersTrack, setMembersTrack] = useState<Track | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { data: tracks = [], isLoading } = useQuery({
