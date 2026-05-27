@@ -134,15 +134,16 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
   }, [contentId, index, visited, items.length]);
 
   useEffect(() => {
+    if (items.length === 0) return;
+    onPartialProgress?.(visited.size, items.length);
     if (
-      items.length > 0 &&
       visited.size >= items.length &&
       !completedRef.current
     ) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [visited, items.length, onComplete]);
+  }, [visited, items.length, onComplete, onPartialProgress]);
 
 
   // Keyboard navigation
