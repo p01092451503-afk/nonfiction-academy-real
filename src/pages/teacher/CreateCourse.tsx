@@ -1161,6 +1161,9 @@ const CreateCourse = () => {
     onSuccess: async (course) => {
       await deleteDraft();
       queryClient.invalidateQueries({ queryKey: ["teacher-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["catalog-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast({ title: t("createCourse.courseCreated"), description: t("createCourse.courseCreatedDesc", { title: course.title }) });
       navigate(`/courses/${course.id}`);
     },
