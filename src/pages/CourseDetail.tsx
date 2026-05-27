@@ -1688,6 +1688,19 @@ const CourseEditDialog = ({
     });
     // Seed previous KO snapshot so the sync effects below don't fire on initial open
     prevKoRef.current = { title: form.title, description: form.description };
+    // Auto-fill any language whose stored translation is empty/unsafe (e.g. a Korean
+    // fallback was persisted). This prevents the dialog from rendering blank EN/JA/ZH
+    // tabs when the DB never received a real translation.
+    if (form.title.trim()) {
+      (["en", "ja", "zh-CN"] as CourseI18nLang[]).forEach((lc) => {
+        const hasTitle = !!sanitizeCourseTranslation(i18nForm[lc].title, form.title).trim();
+        const hasDesc = !form.description.trim() || !!sanitizeCourseTranslation(i18nForm[lc].description, form.description).trim();
+        if (!hasTitle || !hasDesc) {
+          void handleAutoTranslate(lc);
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Never copy Korean text into non-Korean fields. Empty fields are translated on demand/save.
