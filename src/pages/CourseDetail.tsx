@@ -1629,6 +1629,15 @@ const CourseEditDialog = ({
     "zh-CN": { title: false, description: false },
   });
 
+  useEffect(() => {
+    if (!open) return;
+    setManualEdits({
+      en: { title: !!i18nForm.en.title, description: !!i18nForm.en.description },
+      ja: { title: !!i18nForm.ja.title, description: !!i18nForm.ja.description },
+      "zh-CN": { title: !!i18nForm["zh-CN"].title, description: !!i18nForm["zh-CN"].description },
+    });
+  }, [open]);
+
   // Sync KO → other-lang fields when not manually edited
   useEffect(() => {
     setI18nForm((prev) => {
