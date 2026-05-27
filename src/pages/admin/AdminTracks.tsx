@@ -439,6 +439,14 @@ const AdminTracks = () => {
           onClose={() => setAssignOpen(false)}
         />
       )}
+
+      {membersTrack && (
+        <TrackMembersDialog
+          trackId={membersTrack.id}
+          trackTitle={trackTitle(membersTrack)}
+          onClose={() => setMembersTrack(null)}
+        />
+      )}
     </DashboardLayout>
   );
 };
