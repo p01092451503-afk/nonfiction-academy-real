@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Layers, Plus, Pencil, Trash2, UserPlus, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle, Languages, Loader2 } from "lucide-react";
+import { Layers, Plus, Pencil, Trash2, UserPlus, Users, Building2, GripVertical, ChevronDown, ChevronRight, BookOpen, Sparkles, AlertCircle, Languages, Loader2 } from "lucide-react";
+import TrackMembersDialog from "@/components/admin/tracks/TrackMembersDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
@@ -81,6 +82,7 @@ const AdminTracks = () => {
   const [editingTrackId, setEditingTrackId] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignTrack, setAssignTrack] = useState<Track | null>(null);
+  const [membersTrack, setMembersTrack] = useState<Track | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { data: tracks = [], isLoading } = useQuery({
@@ -340,6 +342,9 @@ const AdminTracks = () => {
                       <Button variant="outline" size="sm" className="rounded-lg gap-1 h-8 text-xs" onClick={() => openAssign(track)}>
                         <UserPlus className="h-3.5 w-3.5" /> {t("track.assign", "배정")}
                       </Button>
+                      <Button variant="outline" size="sm" className="rounded-lg gap-1 h-8 text-xs" onClick={() => setMembersTrack(track)}>
+                        <Users className="h-3.5 w-3.5" /> {t("track.members", "인원")}
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEdit(track.id)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -432,6 +437,14 @@ const AdminTracks = () => {
         <AssignDialog
           track={assignTrack}
           onClose={() => setAssignOpen(false)}
+        />
+      )}
+
+      {membersTrack && (
+        <TrackMembersDialog
+          trackId={membersTrack.id}
+          trackTitle={trackTitle(membersTrack)}
+          onClose={() => setMembersTrack(null)}
         />
       )}
     </DashboardLayout>
