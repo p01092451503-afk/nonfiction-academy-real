@@ -85,7 +85,9 @@ export function useVideoProgress({
           .update(payload)
           .eq("id", existingProgress.id);
       } else {
-        await supabase.from("content_progress").insert(payload);
+        await supabase
+          .from("content_progress")
+          .upsert(payload, { onConflict: "user_id,content_id" });
       }
 
       if (completed) {
