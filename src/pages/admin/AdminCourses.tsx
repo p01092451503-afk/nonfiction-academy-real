@@ -1,4 +1,5 @@
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit, FileSpreadsheet } from "lucide-react";
+import BulkCourseQuestionsUploadDialog from "@/components/admin/BulkCourseQuestionsUploadDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -51,6 +52,7 @@ const AdminCourses = () => {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [bulkQuestionsOpen, setBulkQuestionsOpen] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -183,12 +185,22 @@ const AdminCourses = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><BookOpen className="h-6 w-6" aria-hidden="true" />{t("admin.courseManagement")}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("admin.courseManagementDesc")}</p>
           </div>
-          <Link to="/admin/courses/new">
-            <Button className="rounded-xl gap-2 w-full sm:w-auto">
-              <Plus className="h-4 w-4" /> {t("admin.newCourse")}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="rounded-xl gap-2 flex-1 sm:flex-none"
+              onClick={() => setBulkQuestionsOpen(true)}
+            >
+              <FileSpreadsheet className="h-4 w-4" /> 평가문항 일괄등록
             </Button>
-          </Link>
+            <Link to="/admin/courses/new" className="flex-1 sm:flex-none">
+              <Button className="rounded-xl gap-2 w-full">
+                <Plus className="h-4 w-4" /> {t("admin.newCourse")}
+              </Button>
+            </Link>
+          </div>
         </div>
+        <BulkCourseQuestionsUploadDialog open={bulkQuestionsOpen} onOpenChange={setBulkQuestionsOpen} />
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
