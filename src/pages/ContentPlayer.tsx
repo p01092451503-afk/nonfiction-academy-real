@@ -471,12 +471,15 @@ const ContentPlayer = () => {
         const payload = { progress_percentage: pct, last_accessed_at: new Date().toISOString() };
         const { error } = latestProgress?.id
           ? await supabase.from("content_progress").update(payload).eq("id", latestProgress.id)
-          : await supabase.from("content_progress").insert({
-              user_id: user.id,
-              content_id: contentId,
-              completed: false,
-              ...payload,
-            });
+          : await supabase.from("content_progress").upsert(
+              {
+                user_id: user.id,
+                content_id: contentId,
+                completed: false,
+                ...payload,
+              },
+              { onConflict: "user_id,content_id" }
+            );
         if (error) throw error;
         lastSavedPctRef.current = pct;
         if (courseId) {
