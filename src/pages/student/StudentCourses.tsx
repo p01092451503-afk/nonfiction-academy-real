@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import { normalizeLang } from "@/lib/i18nLang";
+import { localizeCourse } from "@/lib/i18nCourse";
 import CourseThumbnail from "@/components/CourseThumbnail";
 
 const StudentCourses = () => {
@@ -31,21 +32,16 @@ const StudentCourses = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("*, courses(*, course_i18n(language_code, title, description))")
+        .select("*, courses(*, course_i18n(language_code, title, description), course_contents(language_code, title, is_published, order_index))")
         .eq("user_id", user!.id)
         .order("enrolled_at", { ascending: false });
       if (error) throw error;
       if (lang === "ko") return data;
       return (data || []).map((e: any) => {
         if (!e.courses) return e;
-        const tr = (e.courses.course_i18n || []).find((x: any) => x.language_code === lang);
         return {
           ...e,
-          courses: {
-            ...e.courses,
-            title: tr?.title || e.courses.title,
-            description: tr?.description || e.courses.description,
-          },
+          courses: localizeCourse(e.courses, lang),
         };
       });
     },
