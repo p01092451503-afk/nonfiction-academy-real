@@ -1,4 +1,4 @@
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit, FileSpreadsheet, ClipboardCheck, ClipboardX } from "lucide-react";
 import BulkCourseQuestionsUploadDialog from "@/components/admin/BulkCourseQuestionsUploadDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
