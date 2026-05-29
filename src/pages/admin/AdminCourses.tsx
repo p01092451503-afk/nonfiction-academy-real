@@ -331,6 +331,7 @@ const AdminCourses = () => {
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">{t("common.required") || "필수"}</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("admin.totalStudents") || "수강생"}</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("course.content") || "차시"}</th>
+                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">평가</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t("common.manage") || "관리"}</th>
                 </tr>
               </thead>
