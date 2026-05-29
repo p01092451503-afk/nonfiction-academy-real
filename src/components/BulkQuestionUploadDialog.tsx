@@ -1,6 +1,5 @@
 import { useState } from "react";
-import * as XLSX from "xlsx";
-import XLSXStyle from "xlsx-js-style";
+import * as XLSX from "xlsx-js-style";
 import { Download, Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -127,7 +126,7 @@ function downloadTemplate() {
 
   // Build sheet
   const aoa = [headers, ...examples];
-  const ws = XLSXStyle.utils.aoa_to_sheet(aoa);
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = headers.map(() => ({ wch: 18 }));
   ws["!freeze"] = { xSplit: 0, ySplit: 1 } as any;
   ws["!rows"] = [{ hpt: 28 }];
@@ -167,7 +166,7 @@ function downloadTemplate() {
   for (const g of GROUPS) {
     for (let c = g.start; c <= g.end; c++) {
       for (let r = 0; r < totalRows; r++) {
-        const addr = XLSXStyle.utils.encode_cell({ r, c });
+        const addr = XLSX.utils.encode_cell({ r, c });
         if (!ws[addr]) ws[addr] = { t: "s", v: "" };
         if (r === 0) {
           ws[addr].s = { ...headerBase, fill: { patternType: "solid", fgColor: { rgb: g.header } } };
@@ -179,7 +178,7 @@ function downloadTemplate() {
   }
 
   // Guide sheet with section styling
-  const wsGuide = XLSXStyle.utils.aoa_to_sheet(guide);
+  const wsGuide = XLSX.utils.aoa_to_sheet(guide);
   wsGuide["!cols"] = [{ wch: 95 }];
   const guideSectionFills: Record<number, string> = {
     0: "2D2D2D", // title
@@ -188,7 +187,7 @@ function downloadTemplate() {
     14: "FFF7ED", // Rules heading
   };
   guide.forEach((_, idx) => {
-    const addr = XLSXStyle.utils.encode_cell({ r: idx, c: 0 });
+    const addr = XLSX.utils.encode_cell({ r: idx, c: 0 });
     if (!wsGuide[addr]) return;
     const isTitle = idx === 0;
     wsGuide[addr].s = {
@@ -205,10 +204,10 @@ function downloadTemplate() {
     };
   });
 
-  const wb = XLSXStyle.utils.book_new();
-  XLSXStyle.utils.book_append_sheet(wb, ws, "문항");
-  XLSXStyle.utils.book_append_sheet(wb, wsGuide, "작성가이드");
-  XLSXStyle.writeFile(wb, "평가문항_다국어_업로드_템플릿.xlsx");
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "문항");
+  XLSX.utils.book_append_sheet(wb, wsGuide, "작성가이드");
+  XLSX.writeFile(wb, "평가문항_다국어_업로드_템플릿.xlsx");
 }
 
 function parseLangFields(row: any, suffix: string, type: QuestionType): I18nFields | null {
