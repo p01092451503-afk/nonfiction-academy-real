@@ -296,8 +296,7 @@ const AdminCourses = () => {
               className={`p-2.5 transition-colors ${viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"}`}
             >
               <List className="h-4 w-4" />
-                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("course.content") || "차시"}</th>
-                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">평가</th>
+            </button>
             <button
               onClick={() => setViewMode("grid")}
               className={`p-2.5 transition-colors ${viewMode === "grid" ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50"}`}
