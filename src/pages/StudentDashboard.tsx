@@ -26,7 +26,7 @@ const StudentDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("*, courses(id, title, instructor_id, difficulty_level, course_i18n(language_code, title))")
+        .select("*, courses(id, title, instructor_id, difficulty_level, course_i18n(language_code, title), course_contents(language_code, title, is_published, order_index))")
         .eq("user_id", user!.id)
         .is("completed_at", null)
         .order("enrolled_at", { ascending: false })
@@ -35,8 +35,7 @@ const StudentDashboard = () => {
       if (lang === "ko") return data;
       return (data || []).map((e: any) => {
         if (!e.courses) return e;
-        const tr = (e.courses.course_i18n || []).find((x: any) => x.language_code === lang);
-        return { ...e, courses: { ...e.courses, title: tr?.title || e.courses.title } };
+        return { ...e, courses: localizeCourse(e.courses, lang) };
       });
     },
     enabled: !!user?.id,
@@ -234,7 +233,7 @@ const StudentDashboard = () => {
 
       const { data: courses, error } = await supabase
         .from("courses")
-        .select("id, title, deadline, is_mandatory, course_i18n(language_code, title)")
+        .select("id, title, deadline, is_mandatory, course_i18n(language_code, title), course_contents(language_code, title, is_published, order_index)")
         .eq("is_mandatory", true)
         .eq("status", "published")
         .in("id", stillPending)
@@ -262,7 +261,7 @@ const StudentDashboard = () => {
 
       let query = supabase
         .from("courses")
-        .select("id, title, instructor_id, course_i18n(language_code, title)")
+        .select("id, title, instructor_id, course_i18n(language_code, title), course_contents(language_code, title, is_published, order_index)")
         .eq("status", "published")
         .limit(3);
 
@@ -270,7 +269,7 @@ const StudentDashboard = () => {
         // Filter out enrolled courses - use not.in
         const { data, error } = await supabase
           .from("courses")
-          .select("id, title, instructor_id, course_i18n(language_code, title)")
+          .select("id, title, instructor_id, course_i18n(language_code, title), course_contents(language_code, title, is_published, order_index)")
           .eq("status", "published")
           .not("id", "in", `(${enrolledIds.join(",")})`)
           .limit(3);
