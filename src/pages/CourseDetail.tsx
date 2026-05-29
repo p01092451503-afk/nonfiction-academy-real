@@ -309,15 +309,29 @@ const CourseDetail = () => {
   });
 
   // Assessments for this course (for inline display in student curriculum)
+  // 다국어 평가가 없으면 (한국어 외 언어에서) 노출하지 않음
   const { data: assessments = [] } = useQuery({
-    queryKey: ["course-assessments", courseId],
+    queryKey: ["course-assessments", courseId, currentLang],
     queryFn: async () => {
       const { data, error } = await supabase.from("assessments").select("*").eq("course_id", courseId!).eq("is_published", true).order("order_index", { ascending: true });
       if (error) throw error;
-      return data;
+      if (currentLang === "ko" || !data || data.length === 0) return data || [];
+      const ids = data.map((a: any) => a.id);
+      const { data: i18nRows } = await supabase
+        .from("assessment_i18n" as any)
+        .select("assessment_id, title")
+        .in("assessment_id", ids)
+        .eq("language_code", currentLang);
+      const translated = new Set(
+        (i18nRows || [])
+          .filter((r: any) => (r.title || "").trim())
+          .map((r: any) => r.assessment_id)
+      );
+      return data.filter((a: any) => translated.has(a.id));
     },
     enabled: !!courseId,
   });
+
 
   const { data: assessmentAttempts = [] } = useQuery({
     queryKey: ["assessment-attempts-all", courseId, user?.id],
