@@ -408,13 +408,13 @@ const AdminCourses = () => {
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell text-center">
                         {assess && assess.questions > 0 ? (
-                          <Badge variant="outline" className="text-[10px] h-5 gap-1 whitespace-nowrap border-green-500/40 text-green-700 dark:text-green-400">
+                          <Badge className="text-[10px] h-5 gap-1 whitespace-nowrap bg-success/10 text-success border-success/20 hover:bg-success/20">
                             <ClipboardCheck className="h-2.5 w-2.5" /> 등록 {assess.questions}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] h-5 gap-1 whitespace-nowrap text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground whitespace-nowrap">
                             <ClipboardX className="h-2.5 w-2.5" /> 미등록
-                          </Badge>
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
