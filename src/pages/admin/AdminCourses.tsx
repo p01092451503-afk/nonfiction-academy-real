@@ -136,6 +136,40 @@ const AdminCourses = () => {
     enabled: courses.length > 0,
   });
 
+  const { data: assessmentInfo = {} } = useQuery({
+    queryKey: ["admin-course-assessments", courses.map((c: any) => c.id)],
+    queryFn: async () => {
+      const ids = courses.map((c: any) => c.id);
+      if (ids.length === 0) return {};
+      const { data: assessments, error } = await supabase
+        .from("assessments")
+        .select("id, course_id, is_published")
+        .in("course_id", ids);
+      if (error) throw error;
+      const aIds = (assessments || []).map((a: any) => a.id);
+      let qCountByAssessment: Record<string, number> = {};
+      if (aIds.length > 0) {
+        const { data: qs } = await supabase
+          .from("assessment_questions")
+          .select("assessment_id")
+          .in("assessment_id", aIds);
+        (qs || []).forEach((q: any) => {
+          qCountByAssessment[q.assessment_id] = (qCountByAssessment[q.assessment_id] || 0) + 1;
+        });
+      }
+      const info: Record<string, { assessments: number; published: number; questions: number }> = {};
+      (assessments || []).forEach((a: any) => {
+        const cur = info[a.course_id] || { assessments: 0, published: 0, questions: 0 };
+        cur.assessments += 1;
+        if (a.is_published) cur.published += 1;
+        cur.questions += qCountByAssessment[a.id] || 0;
+        info[a.course_id] = cur;
+      });
+      return info;
+    },
+    enabled: courses.length > 0,
+  });
+
   const { data: instructorProfiles = [] } = useQuery({
     queryKey: ["instructor-profiles", courses.map((c: any) => c.instructor_id).filter(Boolean)],
     queryFn: async () => {
