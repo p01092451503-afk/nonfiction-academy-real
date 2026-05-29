@@ -13,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import CourseThumbnail from "@/components/CourseThumbnail";
 import { fetchAllPaged } from "@/lib/fetchAllPaged";
+import { localizeCourse } from "@/lib/i18nCourse";
+import { normalizeLang } from "@/lib/i18nLang";
 
 const categoryGradients: Record<string, string> = {
   marketing: "from-orange-500 to-pink-500",
@@ -234,16 +236,7 @@ const CourseCatalog = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { i18n } = useTranslation();
-  const normalizeLang = (l?: string): string => {
-    if (!l) return "ko";
-    if (l.startsWith("ko")) return "ko";
-    if (l.startsWith("en")) return "en";
-    if (l.startsWith("ja")) return "ja";
-    if (l.startsWith("zh")) return "zh-CN";
-    return "ko";
-  };
+  const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
@@ -255,19 +248,12 @@ const CourseCatalog = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("*, course_i18n(language_code, title, description)")
+        .select("*, course_i18n(language_code, title, description), course_contents(language_code, title, is_published, order_index)")
         .eq("status", "published")
         .order("created_at", { ascending: false });
       if (error) throw error;
       if (lang === "ko") return data;
-      return (data || []).map((c: any) => {
-        const tr = (c.course_i18n || []).find((x: any) => x.language_code === lang);
-        return {
-          ...c,
-          title: tr?.title || c.title,
-          description: tr?.description || c.description,
-        };
-      });
+      return (data || []).map((c: any) => localizeCourse(c, lang));
     },
   });
 
