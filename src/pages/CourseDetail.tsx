@@ -1258,7 +1258,7 @@ const StudentAssessmentSection = ({
     },
   });
 
-  const { data: assessmentI18n } = useQuery({
+  const { data: assessmentI18n, isLoading: assessmentI18nLoading } = useQuery({
     queryKey: ["assessment-i18n", assessment?.id, currentLang],
     queryFn: async () => {
       const { data } = await supabase
@@ -1284,6 +1284,12 @@ const StudentAssessmentSection = ({
   });
 
   if (!assessment) return null;
+  // 다국어 평가가 없는 경우 노출하지 않음 (한국어 외 언어에서 번역 누락 시 숨김)
+  if (currentLang !== "ko") {
+    if (assessmentI18nLoading) return null;
+    const hasTranslation = !!assessmentI18n?.title?.trim();
+    if (!hasTranslation) return null;
+  }
 
   const threshold = Number(assessment.completion_threshold);
   const meetsThreshold = overallProgress >= threshold;
@@ -1291,6 +1297,7 @@ const StudentAssessmentSection = ({
   const bestScore = completedAttempts.length > 0 ? Math.max(...completedAttempts.map((a: any) => Number(a.score) || 0)) : null;
   const passed = bestScore !== null ? bestScore >= assessment.passing_score : false;
   const displayTitle = (assessmentI18n?.title?.trim()) || assessment.title;
+
 
   return (
     <section className="space-y-3" aria-labelledby="student-assessment-heading">
