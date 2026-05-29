@@ -125,14 +125,90 @@ function downloadTemplate() {
     ["4. OX 정답은 모든 언어에서 O 또는 X (대문자) 로 입력하세요."],
   ];
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-  ws["!cols"] = headers.map(() => ({ wch: 16 }));
-  const wsGuide = XLSX.utils.aoa_to_sheet(guide);
-  wsGuide["!cols"] = [{ wch: 90 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "문항");
-  XLSX.utils.book_append_sheet(wb, wsGuide, "작성가이드");
-  XLSX.writeFile(wb, "평가문항_다국어_업로드_템플릿.xlsx");
+  // Build sheet
+  const aoa = [headers, ...examples];
+  const ws = XLSXStyle.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = headers.map(() => ({ wch: 18 }));
+  ws["!freeze"] = { xSplit: 0, ySplit: 1 } as any;
+  ws["!rows"] = [{ hpt: 28 }];
+
+  // Color groups: KO (charcoal), EN (blue), JA (rose), ZH (amber)
+  // Light fill for body rows, darker fill + white text for header row
+  const GROUPS = [
+    { name: "KO", start: 0, end: 10, header: "2D2D2D", body: "F4F1EC" }, // charcoal / cream
+    { name: "EN", start: 11, end: 19, header: "1E40AF", body: "E0E7FF" }, // blue
+    { name: "JA", start: 20, end: 28, header: "BE185D", body: "FCE7F3" }, // rose
+    { name: "ZH", start: 29, end: 37, header: "B45309", body: "FEF3C7" }, // amber
+  ];
+
+  const headerBase = {
+    font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11, name: "맑은 고딕" },
+    alignment: { horizontal: "center", vertical: "center", wrapText: true },
+    border: {
+      top: { style: "thin", color: { rgb: "FFFFFF" } },
+      bottom: { style: "thin", color: { rgb: "FFFFFF" } },
+      left: { style: "thin", color: { rgb: "FFFFFF" } },
+      right: { style: "thin", color: { rgb: "FFFFFF" } },
+    },
+  } as any;
+
+  const bodyBase = {
+    alignment: { vertical: "center", wrapText: true },
+    border: {
+      top: { style: "thin", color: { rgb: "E5E7EB" } },
+      bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+      left: { style: "thin", color: { rgb: "E5E7EB" } },
+      right: { style: "thin", color: { rgb: "E5E7EB" } },
+    },
+    font: { name: "맑은 고딕", sz: 10 },
+  } as any;
+
+  const totalRows = aoa.length;
+  for (const g of GROUPS) {
+    for (let c = g.start; c <= g.end; c++) {
+      for (let r = 0; r < totalRows; r++) {
+        const addr = XLSXStyle.utils.encode_cell({ r, c });
+        if (!ws[addr]) ws[addr] = { t: "s", v: "" };
+        if (r === 0) {
+          ws[addr].s = { ...headerBase, fill: { patternType: "solid", fgColor: { rgb: g.header } } };
+        } else {
+          ws[addr].s = { ...bodyBase, fill: { patternType: "solid", fgColor: { rgb: g.body } } };
+        }
+      }
+    }
+  }
+
+  // Guide sheet with section styling
+  const wsGuide = XLSXStyle.utils.aoa_to_sheet(guide);
+  wsGuide["!cols"] = [{ wch: 95 }];
+  const guideSectionFills: Record<number, string> = {
+    0: "2D2D2D", // title
+    2: "F4F1EC", // KO heading
+    10: "E0E7FF", // EN/JA/ZH heading area marker
+    14: "FFF7ED", // Rules heading
+  };
+  guide.forEach((_, idx) => {
+    const addr = XLSXStyle.utils.encode_cell({ r: idx, c: 0 });
+    if (!wsGuide[addr]) return;
+    const isTitle = idx === 0;
+    wsGuide[addr].s = {
+      font: {
+        name: "맑은 고딕",
+        sz: isTitle ? 13 : 10,
+        bold: isTitle || guideSectionFills[idx] !== undefined,
+        color: { rgb: isTitle ? "FFFFFF" : "1F2937" },
+      },
+      alignment: { vertical: "center", wrapText: true },
+      ...(guideSectionFills[idx]
+        ? { fill: { patternType: "solid", fgColor: { rgb: guideSectionFills[idx] } } }
+        : {}),
+    };
+  });
+
+  const wb = XLSXStyle.utils.book_new();
+  XLSXStyle.utils.book_append_sheet(wb, ws, "문항");
+  XLSXStyle.utils.book_append_sheet(wb, wsGuide, "작성가이드");
+  XLSXStyle.writeFile(wb, "평가문항_다국어_업로드_템플릿.xlsx");
 }
 
 function parseLangFields(row: any, suffix: string, type: QuestionType): I18nFields | null {
