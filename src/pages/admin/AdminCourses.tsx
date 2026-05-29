@@ -406,6 +406,17 @@ const AdminCourses = () => {
                           <BookOpen className="h-3 w-3" /> {contents}
                         </div>
                       </td>
+                      <td className="px-4 py-3 hidden md:table-cell text-center">
+                        {assess && assess.questions > 0 ? (
+                          <Badge variant="outline" className="text-[10px] h-5 gap-1 whitespace-nowrap border-green-500/40 text-green-700 dark:text-green-400">
+                            <ClipboardCheck className="h-2.5 w-2.5" /> 등록 {assess.questions}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] h-5 gap-1 whitespace-nowrap text-muted-foreground">
+                            <ClipboardX className="h-2.5 w-2.5" /> 미등록
+                          </Badge>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
