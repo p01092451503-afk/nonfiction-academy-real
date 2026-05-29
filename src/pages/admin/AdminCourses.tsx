@@ -340,6 +340,7 @@ const AdminCourses = () => {
                   const cat = categoryMap.get(course.category_id);
                   const students = (enrollmentCounts as any)[course.id] || 0;
                   const contents = (contentCounts as any)[course.id] || 0;
+                  const assess = (assessmentInfo as any)[course.id] as { assessments: number; published: number; questions: number } | undefined;
                   const instructor = instructorMap.get(course.instructor_id);
                   const daysLeft = course.deadline ? Math.ceil((new Date(course.deadline).getTime() - Date.now()) / 86400000) : null;
 
