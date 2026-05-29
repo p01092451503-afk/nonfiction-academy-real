@@ -1,4 +1,4 @@
-import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Users, BookOpen, Clock, LayoutGrid, List, AlertTriangle, CalendarClock, ArrowUpDown, CheckCircle2, FileEdit, FileSpreadsheet, ClipboardCheck, ClipboardX } from "lucide-react";
 import BulkCourseQuestionsUploadDialog from "@/components/admin/BulkCourseQuestionsUploadDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -132,6 +132,40 @@ const AdminCourses = () => {
       const counts: Record<string, number> = {};
       data.forEach((e: any) => { counts[e.course_id] = (counts[e.course_id] || 0) + 1; });
       return counts;
+    },
+    enabled: courses.length > 0,
+  });
+
+  const { data: assessmentInfo = {} } = useQuery({
+    queryKey: ["admin-course-assessments", courses.map((c: any) => c.id)],
+    queryFn: async () => {
+      const ids = courses.map((c: any) => c.id);
+      if (ids.length === 0) return {};
+      const { data: assessments, error } = await supabase
+        .from("assessments")
+        .select("id, course_id, is_published")
+        .in("course_id", ids);
+      if (error) throw error;
+      const aIds = (assessments || []).map((a: any) => a.id);
+      let qCountByAssessment: Record<string, number> = {};
+      if (aIds.length > 0) {
+        const { data: qs } = await supabase
+          .from("assessment_questions")
+          .select("assessment_id")
+          .in("assessment_id", aIds);
+        (qs || []).forEach((q: any) => {
+          qCountByAssessment[q.assessment_id] = (qCountByAssessment[q.assessment_id] || 0) + 1;
+        });
+      }
+      const info: Record<string, { assessments: number; published: number; questions: number }> = {};
+      (assessments || []).forEach((a: any) => {
+        const cur = info[a.course_id] || { assessments: 0, published: 0, questions: 0 };
+        cur.assessments += 1;
+        if (a.is_published) cur.published += 1;
+        cur.questions += qCountByAssessment[a.id] || 0;
+        info[a.course_id] = cur;
+      });
+      return info;
     },
     enabled: courses.length > 0,
   });
@@ -297,6 +331,7 @@ const AdminCourses = () => {
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">{t("common.required") || "필수"}</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("admin.totalStudents") || "수강생"}</th>
                   <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">{t("course.content") || "차시"}</th>
+                  <th className="text-center text-xs font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">평가</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">{t("common.manage") || "관리"}</th>
                 </tr>
               </thead>
@@ -305,6 +340,7 @@ const AdminCourses = () => {
                   const cat = categoryMap.get(course.category_id);
                   const students = (enrollmentCounts as any)[course.id] || 0;
                   const contents = (contentCounts as any)[course.id] || 0;
+                  const assess = (assessmentInfo as any)[course.id] as { assessments: number; published: number; questions: number } | undefined;
                   const instructor = instructorMap.get(course.instructor_id);
                   const daysLeft = course.deadline ? Math.ceil((new Date(course.deadline).getTime() - Date.now()) / 86400000) : null;
 
@@ -369,6 +405,17 @@ const AdminCourses = () => {
                         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
                           <BookOpen className="h-3 w-3" /> {contents}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell text-center">
+                        {assess && assess.questions > 0 ? (
+                          <Badge variant="outline" className="text-[10px] h-5 gap-1 whitespace-nowrap border-green-500/40 text-green-700 dark:text-green-400">
+                            <ClipboardCheck className="h-2.5 w-2.5" /> 등록 {assess.questions}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] h-5 gap-1 whitespace-nowrap text-muted-foreground">
+                            <ClipboardX className="h-2.5 w-2.5" /> 미등록
+                          </Badge>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <DropdownMenu>
