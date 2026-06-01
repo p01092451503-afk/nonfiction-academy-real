@@ -261,13 +261,31 @@ const AdminLearning = () => {
             icon={BarChart3}
             tone="info"
           />
-          <StatCard
-            label={t("admin.atRisk")}
-            value={atRisk}
-            icon={AlertTriangle}
-            tone="danger"
-            hint={t("admin.needsAttention")}
-          />
+          <div className="stat-card !p-4 sm:!p-5 flex flex-col gap-3 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="rounded-lg p-2 shrink-0 bg-chart-4/10">
+                <Globe className="h-4 w-4 text-chart-4" aria-hidden="true" />
+              </span>
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                {t("admin.countryProgress", "국가별 진도율")}
+              </p>
+            </div>
+            <div className="space-y-1.5 min-w-0">
+              {countryProgress.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("admin.noLearningData")}</p>
+              ) : (
+                countryProgress.slice(0, 4).map((c) => (
+                  <div key={c.country} className="flex items-center gap-2 min-w-0">
+                    <span className="text-[11px] sm:text-xs text-foreground truncate flex-1 min-w-0">{c.country}</span>
+                    <div className="h-1.5 w-16 sm:w-20 bg-muted rounded-full overflow-hidden shrink-0">
+                      <div className="h-full bg-chart-4 rounded-full" style={{ width: `${Math.min(100, c.avg)}%` }} />
+                    </div>
+                    <span className="text-[11px] sm:text-xs font-semibold tabular-nums text-foreground w-9 text-right shrink-0">{c.avg}%</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="progress" className="space-y-4">
