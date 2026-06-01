@@ -44,6 +44,27 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     },
   });
 
+  // Fetch departments for name resolution (department text on profiles is often empty)
+  const { data: departments = [] } = useQuery({
+    queryKey: ["att-departments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("departments").select("id, name, name_en");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  const departmentMap = useMemo(() => {
+    const m = new Map<string, { name: string; name_en: string }>();
+    departments.forEach((d: any) => m.set(d.id, { name: d.name, name_en: d.name_en }));
+    return m;
+  }, [departments]);
+  const getDeptName = (p: any) => {
+    if (!p) return "-";
+    const d = p.department_id ? departmentMap.get(p.department_id) : null;
+    if (d) return isKo ? (d.name || d.name_en) : (d.name_en || d.name);
+    return p.department || "-";
+  };
+
   // Set of user_ids visible to current teacher (used to filter sessions/progress)
   const scopedUserIds = useMemo(
     () => (isTeacher ? new Set(profiles.map((p: any) => p.user_id)) : null),
@@ -124,25 +145,32 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       completions: number;
     }>();
 
-    // Sessions: first login, last logout (scoped to leader's people when teacher)
+    // Sessions: first login, last logout, accumulate session duration (scoped)
+    const nowMs = Date.now();
     sessions.forEach((s: any) => {
       if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
-      const existing = map.get(s.user_id);
-      if (!existing) {
-        map.set(s.user_id, {
+      let entry = map.get(s.user_id);
+      if (!entry) {
+        entry = {
           userId: s.user_id,
           loginAt: s.login_at,
           logoutAt: s.logout_at,
           learningMinutes: 0,
           completions: 0,
-        });
+        };
+        map.set(s.user_id, entry);
       } else {
-        if (!existing.loginAt || s.login_at < existing.loginAt) existing.loginAt = s.login_at;
-        if (s.logout_at && (!existing.logoutAt || s.logout_at > existing.logoutAt)) existing.logoutAt = s.logout_at;
+        if (!entry.loginAt || s.login_at < entry.loginAt) entry.loginAt = s.login_at;
+        if (s.logout_at && (!entry.logoutAt || s.logout_at > entry.logoutAt)) entry.logoutAt = s.logout_at;
       }
+      // Session duration in minutes (use now if still online)
+      const startMs = new Date(s.login_at).getTime();
+      const endMs = s.logout_at ? new Date(s.logout_at).getTime() : nowMs;
+      const diffMin = Math.max(0, Math.round((endMs - startMs) / 60000));
+      entry.learningMinutes += diffMin;
     });
 
-    // Progress: completions and learning time
+    // Progress: completions only (learning time comes from sessions)
     dailyProgress.forEach((p: any) => {
       if (scopedUserIds && !scopedUserIds.has(p.user_id)) return;
       const content = contentMap.get(p.content_id);
@@ -157,12 +185,6 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       }
 
       if (p.completed) entry.completions += 1;
-
-      // Estimate learning time from content duration * progress
-      if (content?.duration_minutes) {
-        const pct = (p.progress_percentage || 0) / 100;
-        entry.learningMinutes += Math.round(content.duration_minutes * pct);
-      }
     });
 
     return Array.from(map.values());
@@ -219,7 +241,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       const p = profileMap.get(s.userId);
       return [
         p?.full_name || "-",
-        p?.department || "-",
+        getDeptName(p),
         formatTime(s.loginAt),
         formatTime(s.logoutAt),
         formatMinutes(s.learningMinutes),
@@ -294,7 +316,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-foreground">{p?.full_name || "-"}</p>
-                        <p className="text-[11px] text-muted-foreground">{p?.department || ""} {p?.position || ""}</p>
+                        <p className="text-[11px] text-muted-foreground">{getDeptName(p)} {p?.position || ""}</p>
                       </div>
                       {s.loginAt && !s.logoutAt && (
                         <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
@@ -354,7 +376,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                     return (
                       <TableRow key={s.userId}>
                         <TableCell className="text-sm font-medium">{p?.full_name || "-"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{p?.department || "-"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{getDeptName(p)}</TableCell>
                         <TableCell className="text-xs text-center">
                           <div className="flex items-center justify-center gap-1">
                             <LogIn className="h-3 w-3 text-muted-foreground" />
