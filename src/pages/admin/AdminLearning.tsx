@@ -1,4 +1,4 @@
-import { GraduationCap, Download, BarChart3, AlertTriangle, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
+import { GraduationCap, Download, BarChart3, Globe, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -143,7 +143,22 @@ const AdminLearning = () => {
   const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
   const avgProgress = filtered.length > 0 ? Math.round(filtered.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / filtered.length) : 0;
-  const atRisk = filtered.filter((e: any) => (Number(e.progress) || 0) < 20 && !e.completed_at).length;
+
+  const countryProgress = useMemo(() => {
+    const map = new Map<string, { total: number; sum: number }>();
+    filtered.forEach((e: any) => {
+      const p = profileMap.get(e.user_id);
+      const dept: any = p?.department_id ? departmentMap.get(p.department_id) : null;
+      const country = dept?.country || t("admin.unknownCountry", "미지정");
+      if (!map.has(country)) map.set(country, { total: 0, sum: 0 });
+      const v = map.get(country)!;
+      v.total++;
+      v.sum += Number(e.progress) || 0;
+    });
+    return Array.from(map.entries())
+      .map(([country, v]) => ({ country, avg: Math.round(v.sum / v.total), count: v.total }))
+      .sort((a, b) => b.avg - a.avg);
+  }, [filtered, profileMap, departmentMap, t]);
 
   const toggleProgressSort = (key: ProgressSortKey) => {
     setProgressSort((s) => s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
@@ -246,13 +261,31 @@ const AdminLearning = () => {
             icon={BarChart3}
             tone="info"
           />
-          <StatCard
-            label={t("admin.atRisk")}
-            value={atRisk}
-            icon={AlertTriangle}
-            tone="danger"
-            hint={t("admin.needsAttention")}
-          />
+          <div className="stat-card !p-4 sm:!p-5 flex flex-col gap-3 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="rounded-lg p-2 shrink-0 bg-chart-4/10">
+                <Globe className="h-4 w-4 text-chart-4" aria-hidden="true" />
+              </span>
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                {t("admin.countryProgress", "국가별 진도율")}
+              </p>
+            </div>
+            <div className="space-y-1.5 min-w-0">
+              {countryProgress.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("admin.noLearningData")}</p>
+              ) : (
+                countryProgress.slice(0, 4).map((c) => (
+                  <div key={c.country} className="flex items-center gap-2 min-w-0">
+                    <span className="text-[11px] sm:text-xs text-foreground truncate flex-1 min-w-0">{c.country}</span>
+                    <div className="h-1.5 w-16 sm:w-20 bg-muted rounded-full overflow-hidden shrink-0">
+                      <div className="h-full bg-chart-4 rounded-full" style={{ width: `${Math.min(100, c.avg)}%` }} />
+                    </div>
+                    <span className="text-[11px] sm:text-xs font-semibold tabular-nums text-foreground w-9 text-right shrink-0">{c.avg}%</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="progress" className="space-y-4">
