@@ -147,6 +147,31 @@ const AdminLearning = () => {
   const currentCompleterPage = Math.min(completerPage, completerTotalPages);
   const visibleProgressRows = sortedProgressRows.slice((currentProgressPage - 1) * PAGE_SIZE, currentProgressPage * PAGE_SIZE);
   const visibleCompleterRows = sortedCompleterRows.slice((currentCompleterPage - 1) * PAGE_SIZE, currentCompleterPage * PAGE_SIZE);
+
+  useEffect(() => { setProgressPage(1); }, [courseFilter, progressSort.key, progressSort.dir]);
+  useEffect(() => { setCompleterPage(1); }, [courseFilter, completerSort.key, completerSort.dir, completerSearch]);
+
+  const Pagination = ({ page, totalPages, total, onChange }: { page: number; totalPages: number; total: number; onChange: (p: number) => void }) => {
+    if (total === 0) return null;
+    const start = (page - 1) * PAGE_SIZE + 1;
+    const end = Math.min(page * PAGE_SIZE, total);
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-4 text-xs text-muted-foreground">
+        <span className="tabular-nums">
+          {start.toLocaleString()}–{end.toLocaleString()} / {total.toLocaleString()}
+        </span>
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="h-8 px-2" disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="prev">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="px-2 tabular-nums">{page} / {totalPages}</span>
+          <Button variant="outline" size="sm" className="h-8 px-2" disabled={page >= totalPages} onClick={() => onChange(page + 1)} aria-label="next">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
   const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
   const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
