@@ -143,7 +143,22 @@ const AdminLearning = () => {
   const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
   const avgProgress = filtered.length > 0 ? Math.round(filtered.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / filtered.length) : 0;
-  const atRisk = filtered.filter((e: any) => (Number(e.progress) || 0) < 20 && !e.completed_at).length;
+
+  const countryProgress = useMemo(() => {
+    const map = new Map<string, { total: number; sum: number }>();
+    filtered.forEach((e: any) => {
+      const p = profileMap.get(e.user_id);
+      const dept: any = p?.department_id ? departmentMap.get(p.department_id) : null;
+      const country = dept?.country || t("admin.unknownCountry", "미지정");
+      if (!map.has(country)) map.set(country, { total: 0, sum: 0 });
+      const v = map.get(country)!;
+      v.total++;
+      v.sum += Number(e.progress) || 0;
+    });
+    return Array.from(map.entries())
+      .map(([country, v]) => ({ country, avg: Math.round(v.sum / v.total), count: v.total }))
+      .sort((a, b) => b.avg - a.avg);
+  }, [filtered, profileMap, departmentMap, t]);
 
   const toggleProgressSort = (key: ProgressSortKey) => {
     setProgressSort((s) => s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" });
