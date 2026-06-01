@@ -44,6 +44,27 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     },
   });
 
+  // Fetch departments for name resolution (department text on profiles is often empty)
+  const { data: departments = [] } = useQuery({
+    queryKey: ["att-departments"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("departments").select("id, name, name_en");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  const departmentMap = useMemo(() => {
+    const m = new Map<string, { name: string; name_en: string }>();
+    departments.forEach((d: any) => m.set(d.id, { name: d.name, name_en: d.name_en }));
+    return m;
+  }, [departments]);
+  const getDeptName = (p: any) => {
+    if (!p) return "-";
+    const d = p.department_id ? departmentMap.get(p.department_id) : null;
+    if (d) return isKo ? (d.name || d.name_en) : (d.name_en || d.name);
+    return p.department || "-";
+  };
+
   // Set of user_ids visible to current teacher (used to filter sessions/progress)
   const scopedUserIds = useMemo(
     () => (isTeacher ? new Set(profiles.map((p: any) => p.user_id)) : null),
