@@ -241,7 +241,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       const p = profileMap.get(s.userId);
       return [
         p?.full_name || "-",
-        p?.department || "-",
+        getDeptName(p),
         formatTime(s.loginAt),
         formatTime(s.logoutAt),
         formatMinutes(s.learningMinutes),
@@ -316,7 +316,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-foreground">{p?.full_name || "-"}</p>
-                        <p className="text-[11px] text-muted-foreground">{p?.department || ""} {p?.position || ""}</p>
+                        <p className="text-[11px] text-muted-foreground">{getDeptName(p)} {p?.position || ""}</p>
                       </div>
                       {s.loginAt && !s.logoutAt && (
                         <span className="text-[10px] font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
@@ -376,7 +376,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
                     return (
                       <TableRow key={s.userId}>
                         <TableCell className="text-sm font-medium">{p?.full_name || "-"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{p?.department || "-"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{getDeptName(p)}</TableCell>
                         <TableCell className="text-xs text-center">
                           <div className="flex items-center justify-center gap-1">
                             <LogIn className="h-3 w-3 text-muted-foreground" />
