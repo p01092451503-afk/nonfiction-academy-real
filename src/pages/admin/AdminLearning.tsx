@@ -19,12 +19,16 @@ type SortDir = "asc" | "desc";
 type ProgressSortKey = "name" | "course" | "progress" | "status" | "enrolled_at" | "completed_at";
 type CompleterSortKey = "name" | "course" | "completed_at";
 
+const PAGE_SIZE = 50;
+
 const AdminLearning = () => {
   const { t, i18n } = useTranslation();
   const [courseFilter, setCourseFilter] = useState("all");
   const [progressSort, setProgressSort] = useState<{ key: ProgressSortKey; dir: SortDir }>({ key: "enrolled_at", dir: "desc" });
   const [completerSort, setCompleterSort] = useState<{ key: CompleterSortKey; dir: SortDir }>({ key: "completed_at", dir: "desc" });
   const [completerSearch, setCompleterSearch] = useState("");
+  const [progressPage, setProgressPage] = useState(1);
+  const [completerPage, setCompleterPage] = useState(1);
 
 
   const { data: courses = [], isPending: coursesPending } = useQuery({
