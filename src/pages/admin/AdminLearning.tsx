@@ -458,7 +458,10 @@ const AdminLearning = () => {
           <TabsContent value="completers" className="mt-0">
             <div className="stat-card !p-3 sm:!p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <h3 className="text-sm sm:text-base font-semibold text-foreground">{t("admin.completersList")}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">
+                  {t("admin.completersList")}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">({sortedCompleterRows.length.toLocaleString()})</span>
+                </h3>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Input
