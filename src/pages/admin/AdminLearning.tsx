@@ -451,6 +451,7 @@ const AdminLearning = () => {
                   </Table>
                 </div>
               </div>
+              <Pagination page={currentProgressPage} totalPages={progressTotalPages} total={sortedProgressRows.length} onChange={setProgressPage} />
             </div>
           </TabsContent>
 
