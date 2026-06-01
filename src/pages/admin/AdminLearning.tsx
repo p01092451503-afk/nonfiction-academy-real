@@ -1,7 +1,7 @@
-import { GraduationCap, Download, BarChart3, Globe, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
+import { GraduationCap, Download, BarChart3, Globe, Users, ArrowUp, ArrowDown, ArrowUpDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
