@@ -350,7 +350,10 @@ const AdminLearning = () => {
           <TabsContent value="progress" className="mt-0 space-y-4">
             <div className="stat-card !p-3 sm:!p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <h3 className="text-sm sm:text-base font-semibold text-foreground">{t("admin.studentProgressStatus")}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">
+                  {t("admin.studentProgressStatus")}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">({sortedProgressRows.length.toLocaleString()})</span>
+                </h3>
                 <Select value={courseFilter} onValueChange={setCourseFilter}>
                   <SelectTrigger className="w-full sm:w-48 h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
