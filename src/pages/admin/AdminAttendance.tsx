@@ -145,29 +145,54 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       completions: number;
     }>();
 
-    // Sessions: first login, last logout, accumulate session duration (scoped)
+    // Session interval bounds: clamp to selected day, cap open sessions to 30 min after last login of day
+    const dayStartMs = new Date(`${dateFilter}T00:00:00.000Z`).getTime();
+    const dayEndMs = new Date(`${dateFilter}T23:59:59.999Z`).getTime();
     const nowMs = Date.now();
+    const OPEN_SESSION_CAP_MIN = 30; // assume 30 minutes activity if no explicit logout
+
+    // Group sessions by user, then merge overlapping intervals to avoid double-counting
+    // (many sessions are created per page navigation and are never closed)
+    const sessionsByUser = new Map<string, { start: number; end: number }[]>();
     sessions.forEach((s: any) => {
       if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
+      const startMs = new Date(s.login_at).getTime();
+      const rawEndMs = s.logout_at
+        ? new Date(s.logout_at).getTime()
+        : Math.min(nowMs, startMs + OPEN_SESSION_CAP_MIN * 60000);
+      const start = Math.max(startMs, dayStartMs);
+      const end = Math.min(rawEndMs, dayEndMs);
+      if (end <= start) return;
+      const arr = sessionsByUser.get(s.user_id) ?? [];
+      arr.push({ start, end });
+      sessionsByUser.set(s.user_id, arr);
+
+      // Track first login / last logout for display
       let entry = map.get(s.user_id);
       if (!entry) {
-        entry = {
-          userId: s.user_id,
-          loginAt: s.login_at,
-          logoutAt: s.logout_at,
-          learningMinutes: 0,
-          completions: 0,
-        };
+        entry = { userId: s.user_id, loginAt: s.login_at, logoutAt: s.logout_at, learningMinutes: 0, completions: 0 };
         map.set(s.user_id, entry);
       } else {
         if (!entry.loginAt || s.login_at < entry.loginAt) entry.loginAt = s.login_at;
         if (s.logout_at && (!entry.logoutAt || s.logout_at > entry.logoutAt)) entry.logoutAt = s.logout_at;
       }
-      // Session duration in minutes (use now if still online)
-      const startMs = new Date(s.login_at).getTime();
-      const endMs = s.logout_at ? new Date(s.logout_at).getTime() : nowMs;
-      const diffMin = Math.max(0, Math.round((endMs - startMs) / 60000));
-      entry.learningMinutes += diffMin;
+    });
+
+    // Merge intervals & sum minutes per user
+    sessionsByUser.forEach((intervals, userId) => {
+      intervals.sort((a, b) => a.start - b.start);
+      const merged: { start: number; end: number }[] = [];
+      for (const iv of intervals) {
+        const last = merged[merged.length - 1];
+        if (last && iv.start <= last.end) {
+          last.end = Math.max(last.end, iv.end);
+        } else {
+          merged.push({ ...iv });
+        }
+      }
+      const totalMs = merged.reduce((a, b) => a + (b.end - b.start), 0);
+      const entry = map.get(userId);
+      if (entry) entry.learningMinutes = Math.round(totalMs / 60000);
     });
 
     // Progress: completions only (learning time comes from sessions)
