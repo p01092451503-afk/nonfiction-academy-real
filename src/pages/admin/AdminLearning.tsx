@@ -262,27 +262,47 @@ const AdminLearning = () => {
             tone="info"
           />
           <div className="stat-card !p-4 sm:!p-5 flex flex-col gap-3 min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="rounded-lg p-2 shrink-0 bg-chart-4/10">
-                <Globe className="h-4 w-4 text-chart-4" aria-hidden="true" />
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="rounded-lg p-2 shrink-0 bg-primary/10">
+                  <Globe className="h-4 w-4 text-primary" aria-hidden="true" />
+                </span>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                  {t("admin.countryProgress", "국가별 진도율")}
+                </p>
+              </div>
+              <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                {countryProgress.length}{t("admin.countriesUnit", "개국")}
               </span>
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-                {t("admin.countryProgress", "국가별 진도율")}
-              </p>
             </div>
-            <div className="space-y-1.5 min-w-0">
+            <div className="space-y-2 min-w-0">
               {countryProgress.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t("admin.noLearningData")}</p>
+                <p className="text-xs text-muted-foreground py-2">{t("admin.noLearningData")}</p>
               ) : (
-                countryProgress.slice(0, 4).map((c) => (
-                  <div key={c.country} className="flex items-center gap-2 min-w-0">
-                    <span className="text-[11px] sm:text-xs text-foreground truncate flex-1 min-w-0">{c.country}</span>
-                    <div className="h-1.5 w-16 sm:w-20 bg-muted rounded-full overflow-hidden shrink-0">
-                      <div className="h-full bg-chart-4 rounded-full" style={{ width: `${Math.min(100, c.avg)}%` }} />
+                countryProgress.slice(0, 4).map((c, i) => {
+                  const color =
+                    c.avg >= 80 ? "hsl(var(--success))"
+                    : c.avg >= 50 ? "hsl(var(--primary))"
+                    : "hsl(var(--muted-foreground))";
+                  return (
+                    <div key={c.country} className="min-w-0">
+                      <div className="flex items-center justify-between gap-2 min-w-0 mb-1">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-[10px] font-semibold tabular-nums text-muted-foreground w-3 shrink-0">{i + 1}</span>
+                          <span className="text-xs font-medium text-foreground truncate">{c.country}</span>
+                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">({c.count})</span>
+                        </div>
+                        <span className="text-xs font-bold tabular-nums shrink-0" style={{ color }}>{c.avg}%</span>
+                      </div>
+                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${Math.max(2, Math.min(100, c.avg))}%`, backgroundColor: color }}
+                        />
+                      </div>
                     </div>
-                    <span className="text-[11px] sm:text-xs font-semibold tabular-nums text-foreground w-9 text-right shrink-0">{c.avg}%</span>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
