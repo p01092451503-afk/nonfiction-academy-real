@@ -141,8 +141,12 @@ const AdminLearning = () => {
     return arr;
   }, [completerRows, completerSort, completerSearch, profileMap, courseMap, i18n.language]);
 
-  const visibleProgressRows = sortedProgressRows.slice(0, 50);
-  const visibleCompleterRows = sortedCompleterRows.slice(0, 50);
+  const progressTotalPages = Math.max(1, Math.ceil(sortedProgressRows.length / PAGE_SIZE));
+  const completerTotalPages = Math.max(1, Math.ceil(sortedCompleterRows.length / PAGE_SIZE));
+  const currentProgressPage = Math.min(progressPage, progressTotalPages);
+  const currentCompleterPage = Math.min(completerPage, completerTotalPages);
+  const visibleProgressRows = sortedProgressRows.slice((currentProgressPage - 1) * PAGE_SIZE, currentProgressPage * PAGE_SIZE);
+  const visibleCompleterRows = sortedCompleterRows.slice((currentCompleterPage - 1) * PAGE_SIZE, currentCompleterPage * PAGE_SIZE);
   const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
   const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
