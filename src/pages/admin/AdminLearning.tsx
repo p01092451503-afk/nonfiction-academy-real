@@ -531,6 +531,7 @@ const AdminLearning = () => {
                   </Table>
                 </div>
               </div>
+              <Pagination page={currentCompleterPage} totalPages={completerTotalPages} total={sortedCompleterRows.length} onChange={setCompleterPage} />
             </div>
           </TabsContent>
         </Tabs>
