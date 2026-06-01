@@ -293,6 +293,9 @@ const AdminLearning = () => {
             value={`${avgProgress}%`}
             icon={BarChart3}
             tone="info"
+            trend={(learnSpark?.completions ?? []).slice(-7)}
+            delta={computeDelta(learnSpark?.completions)}
+            hint={`${completedCount}/${totalStudents} ${t("admin.completedRatio", "이수")}`}
           />
           <div className="stat-card !p-4 sm:!p-5 flex flex-col gap-3 min-w-0">
             <div className="flex items-center justify-between gap-2 min-w-0">
