@@ -1,4 +1,4 @@
-import { GraduationCap, Download, BarChart3, AlertTriangle, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
+import { GraduationCap, Download, BarChart3, Globe, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
