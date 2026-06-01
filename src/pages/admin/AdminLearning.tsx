@@ -1,7 +1,7 @@
-import { GraduationCap, Download, BarChart3, Globe, Users, ArrowUp, ArrowDown, ArrowUpDown, Search } from "lucide-react";
+import { GraduationCap, Download, BarChart3, Globe, Users, ArrowUp, ArrowDown, ArrowUpDown, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,12 +19,16 @@ type SortDir = "asc" | "desc";
 type ProgressSortKey = "name" | "course" | "progress" | "status" | "enrolled_at" | "completed_at";
 type CompleterSortKey = "name" | "course" | "completed_at";
 
+const PAGE_SIZE = 50;
+
 const AdminLearning = () => {
   const { t, i18n } = useTranslation();
   const [courseFilter, setCourseFilter] = useState("all");
   const [progressSort, setProgressSort] = useState<{ key: ProgressSortKey; dir: SortDir }>({ key: "enrolled_at", dir: "desc" });
   const [completerSort, setCompleterSort] = useState<{ key: CompleterSortKey; dir: SortDir }>({ key: "completed_at", dir: "desc" });
   const [completerSearch, setCompleterSearch] = useState("");
+  const [progressPage, setProgressPage] = useState(1);
+  const [completerPage, setCompleterPage] = useState(1);
 
 
   const { data: courses = [], isPending: coursesPending } = useQuery({
@@ -137,8 +141,37 @@ const AdminLearning = () => {
     return arr;
   }, [completerRows, completerSort, completerSearch, profileMap, courseMap, i18n.language]);
 
-  const visibleProgressRows = sortedProgressRows.slice(0, 50);
-  const visibleCompleterRows = sortedCompleterRows.slice(0, 50);
+  const progressTotalPages = Math.max(1, Math.ceil(sortedProgressRows.length / PAGE_SIZE));
+  const completerTotalPages = Math.max(1, Math.ceil(sortedCompleterRows.length / PAGE_SIZE));
+  const currentProgressPage = Math.min(progressPage, progressTotalPages);
+  const currentCompleterPage = Math.min(completerPage, completerTotalPages);
+  const visibleProgressRows = sortedProgressRows.slice((currentProgressPage - 1) * PAGE_SIZE, currentProgressPage * PAGE_SIZE);
+  const visibleCompleterRows = sortedCompleterRows.slice((currentCompleterPage - 1) * PAGE_SIZE, currentCompleterPage * PAGE_SIZE);
+
+  useEffect(() => { setProgressPage(1); }, [courseFilter, progressSort.key, progressSort.dir]);
+  useEffect(() => { setCompleterPage(1); }, [courseFilter, completerSort.key, completerSort.dir, completerSearch]);
+
+  const Pagination = ({ page, totalPages, total, onChange }: { page: number; totalPages: number; total: number; onChange: (p: number) => void }) => {
+    if (total === 0) return null;
+    const start = (page - 1) * PAGE_SIZE + 1;
+    const end = Math.min(page * PAGE_SIZE, total);
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-4 text-xs text-muted-foreground">
+        <span className="tabular-nums">
+          {start.toLocaleString()}–{end.toLocaleString()} / {total.toLocaleString()}
+        </span>
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="h-8 px-2" disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="prev">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="px-2 tabular-nums">{page} / {totalPages}</span>
+          <Button variant="outline" size="sm" className="h-8 px-2" disabled={page >= totalPages} onClick={() => onChange(page + 1)} aria-label="next">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
   const totalStudents = new Set(filtered.map((e: any) => e.user_id)).size;
   const completedCount = completerRows.length;
   const { data: learnSpark } = useDashboardSparklines(14);
@@ -317,7 +350,10 @@ const AdminLearning = () => {
           <TabsContent value="progress" className="mt-0 space-y-4">
             <div className="stat-card !p-3 sm:!p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <h3 className="text-sm sm:text-base font-semibold text-foreground">{t("admin.studentProgressStatus")}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">
+                  {t("admin.studentProgressStatus")}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">({sortedProgressRows.length.toLocaleString()})</span>
+                </h3>
                 <Select value={courseFilter} onValueChange={setCourseFilter}>
                   <SelectTrigger className="w-full sm:w-48 h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -415,13 +451,17 @@ const AdminLearning = () => {
                   </Table>
                 </div>
               </div>
+              <Pagination page={currentProgressPage} totalPages={progressTotalPages} total={sortedProgressRows.length} onChange={setProgressPage} />
             </div>
           </TabsContent>
 
           <TabsContent value="completers" className="mt-0">
             <div className="stat-card !p-3 sm:!p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <h3 className="text-sm sm:text-base font-semibold text-foreground">{t("admin.completersList")}</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">
+                  {t("admin.completersList")}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground tabular-nums">({sortedCompleterRows.length.toLocaleString()})</span>
+                </h3>
                 <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Input
@@ -491,6 +531,7 @@ const AdminLearning = () => {
                   </Table>
                 </div>
               </div>
+              <Pagination page={currentCompleterPage} totalPages={completerTotalPages} total={sortedCompleterRows.length} onChange={setCompleterPage} />
             </div>
           </TabsContent>
         </Tabs>
