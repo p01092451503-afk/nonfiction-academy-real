@@ -145,25 +145,32 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       completions: number;
     }>();
 
-    // Sessions: first login, last logout (scoped to leader's people when teacher)
+    // Sessions: first login, last logout, accumulate session duration (scoped)
+    const nowMs = Date.now();
     sessions.forEach((s: any) => {
       if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
-      const existing = map.get(s.user_id);
-      if (!existing) {
-        map.set(s.user_id, {
+      let entry = map.get(s.user_id);
+      if (!entry) {
+        entry = {
           userId: s.user_id,
           loginAt: s.login_at,
           logoutAt: s.logout_at,
           learningMinutes: 0,
           completions: 0,
-        });
+        };
+        map.set(s.user_id, entry);
       } else {
-        if (!existing.loginAt || s.login_at < existing.loginAt) existing.loginAt = s.login_at;
-        if (s.logout_at && (!existing.logoutAt || s.logout_at > existing.logoutAt)) existing.logoutAt = s.logout_at;
+        if (!entry.loginAt || s.login_at < entry.loginAt) entry.loginAt = s.login_at;
+        if (s.logout_at && (!entry.logoutAt || s.logout_at > entry.logoutAt)) entry.logoutAt = s.logout_at;
       }
+      // Session duration in minutes (use now if still online)
+      const startMs = new Date(s.login_at).getTime();
+      const endMs = s.logout_at ? new Date(s.logout_at).getTime() : nowMs;
+      const diffMin = Math.max(0, Math.round((endMs - startMs) / 60000));
+      entry.learningMinutes += diffMin;
     });
 
-    // Progress: completions and learning time
+    // Progress: completions only (learning time comes from sessions)
     dailyProgress.forEach((p: any) => {
       if (scopedUserIds && !scopedUserIds.has(p.user_id)) return;
       const content = contentMap.get(p.content_id);
@@ -178,12 +185,6 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       }
 
       if (p.completed) entry.completions += 1;
-
-      // Estimate learning time from content duration * progress
-      if (content?.duration_minutes) {
-        const pct = (p.progress_percentage || 0) / 100;
-        entry.learningMinutes += Math.round(content.duration_minutes * pct);
-      }
     });
 
     return Array.from(map.values());
