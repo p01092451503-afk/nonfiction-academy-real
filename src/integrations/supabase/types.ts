@@ -1629,6 +1629,13 @@ export type Database = {
           item_type: string
           media_url: string
           order_index: number
+          overlay_h: number | null
+          overlay_thumbnail_url: string | null
+          overlay_video_provider: string | null
+          overlay_video_url: string | null
+          overlay_w: number | null
+          overlay_x: number | null
+          overlay_y: number | null
           thumbnail_url: string | null
           updated_at: string
         }
@@ -1641,6 +1648,13 @@ export type Database = {
           item_type: string
           media_url: string
           order_index?: number
+          overlay_h?: number | null
+          overlay_thumbnail_url?: string | null
+          overlay_video_provider?: string | null
+          overlay_video_url?: string | null
+          overlay_w?: number | null
+          overlay_x?: number | null
+          overlay_y?: number | null
           thumbnail_url?: string | null
           updated_at?: string
         }
@@ -1653,6 +1667,13 @@ export type Database = {
           item_type?: string
           media_url?: string
           order_index?: number
+          overlay_h?: number | null
+          overlay_thumbnail_url?: string | null
+          overlay_video_provider?: string | null
+          overlay_video_url?: string | null
+          overlay_w?: number | null
+          overlay_x?: number | null
+          overlay_y?: number | null
           thumbnail_url?: string | null
           updated_at?: string
         }
