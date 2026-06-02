@@ -2392,10 +2392,66 @@ const PackageItemsEditor = ({
                   rows={2}
                 />
               </div>
+
+              {/* Video overlay control – only for image items with a media_url */}
+              {isImage && it.media_url && (
+                <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  {it.overlay_video_url ? (
+                    <>
+                      <span className="inline-flex items-center gap-1 text-[11px] text-primary">
+                        <Video className="h-3 w-3" />
+                        {t("mediaOverlay.attached", "동영상 오버레이 적용됨")}
+                        {" · "}
+                        {((it.overlay_w || 0) * 100).toFixed(0)}% × {((it.overlay_h || 0) * 100).toFixed(0)}%
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-[11px] ml-auto"
+                        onClick={() => setOverlayEditIdx(idx)}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" /> {t("common.edit", "편집")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-[11px] text-destructive hover:text-destructive"
+                        onClick={() =>
+                          updateItem(idx, {
+                            overlay_video_url: null,
+                            overlay_video_provider: null,
+                            overlay_thumbnail_url: null,
+                            overlay_x: null,
+                            overlay_y: null,
+                            overlay_w: null,
+                            overlay_h: null,
+                          })
+                        }
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" /> {t("common.remove", "제거")}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1"
+                      onClick={() => setOverlayEditIdx(idx)}
+                    >
+                      <Video className="h-3 w-3" />
+                      {t("mediaOverlay.addBtn", "이미지 위에 동영상 삽입")}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
 
       <div className="flex gap-2 flex-wrap">
         <input
