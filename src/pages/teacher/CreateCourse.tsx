@@ -1143,6 +1143,13 @@ const CreateCourse = () => {
                   media_url: it.media_url,
                   caption: it.caption || null,
                   order_index: itIdx,
+                  overlay_video_url: it.overlay_video_url || null,
+                  overlay_video_provider: it.overlay_video_provider || null,
+                  overlay_thumbnail_url: it.overlay_thumbnail_url || null,
+                  overlay_x: it.overlay_x ?? null,
+                  overlay_y: it.overlay_y ?? null,
+                  overlay_w: it.overlay_w ?? null,
+                  overlay_h: it.overlay_h ?? null,
                 });
               });
             }
