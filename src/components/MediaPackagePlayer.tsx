@@ -276,7 +276,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
     return (
       <div key={key} className="w-full shrink-0 flex items-center justify-center relative overflow-hidden">
         {isImage ? (
-          <>
+          <div className="relative w-full">
             <img
               src={item.media_url}
               alt={item.caption || "슬라이드"}
@@ -284,7 +284,27 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
               style={transform ? { transform, transformOrigin: "center center", transition: inlinePinchStart.current || inlinePanStart.current ? "none" : "transform 0.15s ease-out" } : undefined}
               draggable={false}
             />
-          </>
+            {item.overlay_video_url &&
+              item.overlay_x != null && item.overlay_y != null &&
+              item.overlay_w != null && item.overlay_h != null && (
+              <video
+                src={item.overlay_video_url}
+                controls
+                controlsList="nodownload noplaybackrate noremoteplayback"
+                disablePictureInPicture
+                disableRemotePlayback
+                playsInline
+                poster={item.overlay_thumbnail_url || undefined}
+                className="absolute object-cover bg-black"
+                style={{
+                  left: `${item.overlay_x * 100}%`,
+                  top: `${item.overlay_y * 100}%`,
+                  width: `${item.overlay_w * 100}%`,
+                  height: `${item.overlay_h * 100}%`,
+                }}
+              />
+            )}
+          </div>
         ) : (
           <video
             src={item.media_url}
