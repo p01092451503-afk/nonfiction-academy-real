@@ -2019,6 +2019,7 @@ const PackageItemsEditor = ({
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const [queueOpen, setQueueOpen] = useState(false);
   const [queueFiles, setQueueFiles] = useState<File[]>([]);
+  const [overlayEditIdx, setOverlayEditIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
