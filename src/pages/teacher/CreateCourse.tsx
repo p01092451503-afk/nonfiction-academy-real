@@ -54,6 +54,14 @@ export interface PackageItemDraft {
   item_type: "image" | "video";
   media_url: string;
   caption: string;
+  // Optional video overlay (only used when item_type === "image")
+  overlay_video_url?: string | null;
+  overlay_video_provider?: string | null;
+  overlay_thumbnail_url?: string | null;
+  overlay_x?: number | null;
+  overlay_y?: number | null;
+  overlay_w?: number | null;
+  overlay_h?: number | null;
 }
 
 interface ContentItem {
