@@ -1629,10 +1629,20 @@ export type Database = {
           item_type: string
           media_url: string
           order_index: number
+          overlay_autoplay: boolean
+          overlay_delay_sec: number
+          overlay_end_sec: number | null
           overlay_h: number | null
+          overlay_loop: boolean
+          overlay_muted: boolean
+          overlay_opacity: number
+          overlay_playback_rate: number
+          overlay_show_controls: boolean
+          overlay_start_sec: number | null
           overlay_thumbnail_url: string | null
           overlay_video_provider: string | null
           overlay_video_url: string | null
+          overlay_volume: number
           overlay_w: number | null
           overlay_x: number | null
           overlay_y: number | null
@@ -1648,10 +1658,20 @@ export type Database = {
           item_type: string
           media_url: string
           order_index?: number
+          overlay_autoplay?: boolean
+          overlay_delay_sec?: number
+          overlay_end_sec?: number | null
           overlay_h?: number | null
+          overlay_loop?: boolean
+          overlay_muted?: boolean
+          overlay_opacity?: number
+          overlay_playback_rate?: number
+          overlay_show_controls?: boolean
+          overlay_start_sec?: number | null
           overlay_thumbnail_url?: string | null
           overlay_video_provider?: string | null
           overlay_video_url?: string | null
+          overlay_volume?: number
           overlay_w?: number | null
           overlay_x?: number | null
           overlay_y?: number | null
@@ -1667,10 +1687,20 @@ export type Database = {
           item_type?: string
           media_url?: string
           order_index?: number
+          overlay_autoplay?: boolean
+          overlay_delay_sec?: number
+          overlay_end_sec?: number | null
           overlay_h?: number | null
+          overlay_loop?: boolean
+          overlay_muted?: boolean
+          overlay_opacity?: number
+          overlay_playback_rate?: number
+          overlay_show_controls?: boolean
+          overlay_start_sec?: number | null
           overlay_thumbnail_url?: string | null
           overlay_video_provider?: string | null
           overlay_video_url?: string | null
+          overlay_volume?: number
           overlay_w?: number | null
           overlay_x?: number | null
           overlay_y?: number | null
