@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/integrations/supabase/types";
 import type { VideoPackageItemDraft } from "@/lib/videoPackageTypes";
 import VideoPackageItemsEditor from "@/components/admin/VideoPackageItemsEditor";
+import MediaOverlayVideoDialog from "@/components/admin/MediaOverlayVideoDialog";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
 type VideoProvider = Database["public"]["Enums"]["video_provider"];
