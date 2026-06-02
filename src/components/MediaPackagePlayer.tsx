@@ -36,6 +36,13 @@ interface PackageItem {
   media_url: string;
   caption: string | null;
   order_index: number;
+  overlay_video_url?: string | null;
+  overlay_video_provider?: string | null;
+  overlay_thumbnail_url?: string | null;
+  overlay_x?: number | null;
+  overlay_y?: number | null;
+  overlay_w?: number | null;
+  overlay_h?: number | null;
 }
 
 const isImageUrl = (url: string) =>
