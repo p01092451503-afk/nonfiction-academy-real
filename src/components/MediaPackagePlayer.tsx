@@ -43,7 +43,125 @@ interface PackageItem {
   overlay_y?: number | null;
   overlay_w?: number | null;
   overlay_h?: number | null;
+  overlay_autoplay?: boolean | null;
+  overlay_loop?: boolean | null;
+  overlay_muted?: boolean | null;
+  overlay_show_controls?: boolean | null;
+  overlay_volume?: number | null;
+  overlay_playback_rate?: number | null;
+  overlay_start_sec?: number | null;
+  overlay_end_sec?: number | null;
+  overlay_delay_sec?: number | null;
+  overlay_opacity?: number | null;
 }
+
+/**
+ * Overlay video with mango-board parity playback options:
+ * autoplay / loop / muted / controls / volume / playbackRate / trim (start–end) / delayed start / opacity.
+ */
+const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const autoplay = item.overlay_autoplay ?? true;
+  const loop = item.overlay_loop ?? true;
+  const muted = item.overlay_muted ?? true;
+  const showControls = item.overlay_show_controls ?? false;
+  const volume = (item.overlay_volume ?? 100) / 100;
+  const rate = item.overlay_playback_rate ?? 1.0;
+  const startSec = item.overlay_start_sec ?? 0;
+  const endSec = item.overlay_end_sec ?? null;
+  const delaySec = item.overlay_delay_sec ?? 0;
+  const opacity = (item.overlay_opacity ?? 100) / 100;
+
+  // Apply mutable props
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = muted;
+    v.volume = Math.max(0, Math.min(1, volume));
+    v.playbackRate = rate;
+  }, [muted, volume, rate]);
+
+  // Activate / deactivate playback when slide enters/leaves view
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (delayTimerRef.current) {
+      clearTimeout(delayTimerRef.current);
+      delayTimerRef.current = null;
+    }
+    if (!isActive) {
+      try { v.pause(); } catch {}
+      return;
+    }
+    const start = () => {
+      try {
+        if (startSec > 0 && Math.abs(v.currentTime - startSec) > 0.2) {
+          v.currentTime = startSec;
+        }
+        if (autoplay) v.play().catch(() => {});
+      } catch {}
+    };
+    if (delaySec > 0) {
+      delayTimerRef.current = setTimeout(start, delaySec * 1000);
+    } else {
+      start();
+    }
+    return () => {
+      if (delayTimerRef.current) clearTimeout(delayTimerRef.current);
+    };
+  }, [isActive, autoplay, delaySec, startSec]);
+
+  // Trim-aware timeupdate: loop or stop at endSec
+  const handleTimeUpdate = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (endSec != null && v.currentTime >= endSec) {
+      if (loop) {
+        v.currentTime = startSec;
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+      }
+    }
+  };
+
+  const handleEnded = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (loop) {
+      v.currentTime = startSec;
+      v.play().catch(() => {});
+    }
+  };
+
+  return (
+    <video
+      ref={videoRef}
+      src={item.overlay_video_url || undefined}
+      poster={item.overlay_thumbnail_url || undefined}
+      controls={showControls}
+      controlsList="nodownload noplaybackrate noremoteplayback"
+      disablePictureInPicture
+      disableRemotePlayback
+      playsInline
+      preload="metadata"
+      loop={loop && endSec == null}
+      onTimeUpdate={handleTimeUpdate}
+      onEnded={handleEnded}
+      className="absolute object-cover bg-black"
+      style={{
+        left: `${(item.overlay_x ?? 0) * 100}%`,
+        top: `${(item.overlay_y ?? 0) * 100}%`,
+        width: `${(item.overlay_w ?? 0) * 100}%`,
+        height: `${(item.overlay_h ?? 0) * 100}%`,
+        opacity,
+        pointerEvents: showControls ? "auto" : "none",
+      }}
+    />
+  );
+};
 
 const isImageUrl = (url: string) =>
   /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url);
