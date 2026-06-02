@@ -405,22 +405,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
             {item.overlay_video_url &&
               item.overlay_x != null && item.overlay_y != null &&
               item.overlay_w != null && item.overlay_h != null && (
-              <video
-                src={item.overlay_video_url}
-                controls
-                controlsList="nodownload noplaybackrate noremoteplayback"
-                disablePictureInPicture
-                disableRemotePlayback
-                playsInline
-                poster={item.overlay_thumbnail_url || undefined}
-                className="absolute object-cover bg-black"
-                style={{
-                  left: `${item.overlay_x * 100}%`,
-                  top: `${item.overlay_y * 100}%`,
-                  width: `${item.overlay_w * 100}%`,
-                  height: `${item.overlay_h * 100}%`,
-                }}
-              />
+              <OverlayVideo item={item} isActive={isCurrent} />
             )}
           </div>
         ) : (
