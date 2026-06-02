@@ -63,6 +63,17 @@ export interface PackageItemDraft {
   overlay_y?: number | null;
   overlay_w?: number | null;
   overlay_h?: number | null;
+  // Playback options (mango-board parity)
+  overlay_autoplay?: boolean | null;
+  overlay_loop?: boolean | null;
+  overlay_muted?: boolean | null;
+  overlay_show_controls?: boolean | null;
+  overlay_volume?: number | null;
+  overlay_playback_rate?: number | null;
+  overlay_start_sec?: number | null;
+  overlay_end_sec?: number | null;
+  overlay_delay_sec?: number | null;
+  overlay_opacity?: number | null;
 }
 
 interface ContentItem {
@@ -270,6 +281,16 @@ const CreateCourse = () => {
             overlay_y: it.overlay_y ?? null,
             overlay_w: it.overlay_w ?? null,
             overlay_h: it.overlay_h ?? null,
+            overlay_autoplay: it.overlay_autoplay ?? null,
+            overlay_loop: it.overlay_loop ?? null,
+            overlay_muted: it.overlay_muted ?? null,
+            overlay_show_controls: it.overlay_show_controls ?? null,
+            overlay_volume: it.overlay_volume ?? null,
+            overlay_playback_rate: it.overlay_playback_rate ?? null,
+            overlay_start_sec: it.overlay_start_sec ?? null,
+            overlay_end_sec: it.overlay_end_sec ?? null,
+            overlay_delay_sec: it.overlay_delay_sec ?? null,
+            overlay_opacity: it.overlay_opacity ?? null,
           });
           packageItemsMap.set(it.content_id, arr);
         });
@@ -983,6 +1004,16 @@ const CreateCourse = () => {
                   overlay_y: it.overlay_y ?? null,
                   overlay_w: it.overlay_w ?? null,
                   overlay_h: it.overlay_h ?? null,
+                  overlay_autoplay: it.overlay_autoplay ?? undefined,
+                  overlay_loop: it.overlay_loop ?? undefined,
+                  overlay_muted: it.overlay_muted ?? undefined,
+                  overlay_show_controls: it.overlay_show_controls ?? undefined,
+                  overlay_volume: it.overlay_volume ?? undefined,
+                  overlay_playback_rate: it.overlay_playback_rate ?? undefined,
+                  overlay_start_sec: it.overlay_start_sec ?? null,
+                  overlay_end_sec: it.overlay_end_sec ?? null,
+                  overlay_delay_sec: it.overlay_delay_sec ?? undefined,
+                  overlay_opacity: it.overlay_opacity ?? undefined,
                 });
               });
             }
@@ -1151,6 +1182,16 @@ const CreateCourse = () => {
                   overlay_y: it.overlay_y ?? null,
                   overlay_w: it.overlay_w ?? null,
                   overlay_h: it.overlay_h ?? null,
+                  overlay_autoplay: it.overlay_autoplay ?? undefined,
+                  overlay_loop: it.overlay_loop ?? undefined,
+                  overlay_muted: it.overlay_muted ?? undefined,
+                  overlay_show_controls: it.overlay_show_controls ?? undefined,
+                  overlay_volume: it.overlay_volume ?? undefined,
+                  overlay_playback_rate: it.overlay_playback_rate ?? undefined,
+                  overlay_start_sec: it.overlay_start_sec ?? null,
+                  overlay_end_sec: it.overlay_end_sec ?? null,
+                  overlay_delay_sec: it.overlay_delay_sec ?? undefined,
+                  overlay_opacity: it.overlay_opacity ?? undefined,
                 });
               });
             }
@@ -2429,6 +2470,16 @@ const PackageItemsEditor = ({
                             overlay_y: null,
                             overlay_w: null,
                             overlay_h: null,
+                            overlay_autoplay: null,
+                            overlay_loop: null,
+                            overlay_muted: null,
+                            overlay_show_controls: null,
+                            overlay_volume: null,
+                            overlay_playback_rate: null,
+                            overlay_start_sec: null,
+                            overlay_end_sec: null,
+                            overlay_delay_sec: null,
+                            overlay_opacity: null,
                           })
                         }
                       >
@@ -2538,6 +2589,16 @@ const PackageItemsEditor = ({
             overlay_y: items[overlayEditIdx].overlay_y,
             overlay_w: items[overlayEditIdx].overlay_w,
             overlay_h: items[overlayEditIdx].overlay_h,
+            overlay_autoplay: items[overlayEditIdx].overlay_autoplay,
+            overlay_loop: items[overlayEditIdx].overlay_loop,
+            overlay_muted: items[overlayEditIdx].overlay_muted,
+            overlay_show_controls: items[overlayEditIdx].overlay_show_controls,
+            overlay_volume: items[overlayEditIdx].overlay_volume,
+            overlay_playback_rate: items[overlayEditIdx].overlay_playback_rate,
+            overlay_start_sec: items[overlayEditIdx].overlay_start_sec,
+            overlay_end_sec: items[overlayEditIdx].overlay_end_sec,
+            overlay_delay_sec: items[overlayEditIdx].overlay_delay_sec,
+            overlay_opacity: items[overlayEditIdx].overlay_opacity,
           }}
           onSave={(next) => {
             updateItem(overlayEditIdx!, next);
