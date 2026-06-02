@@ -2523,6 +2523,27 @@ const PackageItemsEditor = ({
         files={queueFiles}
         onConfirm={(ordered) => { runUploadInOrder(ordered); }}
       />
+
+      {overlayEditIdx !== null && items[overlayEditIdx] && (
+        <MediaOverlayVideoDialog
+          open={overlayEditIdx !== null}
+          onOpenChange={(open) => { if (!open) setOverlayEditIdx(null); }}
+          imageUrl={items[overlayEditIdx].media_url}
+          value={{
+            overlay_video_url: items[overlayEditIdx].overlay_video_url,
+            overlay_video_provider: items[overlayEditIdx].overlay_video_provider,
+            overlay_thumbnail_url: items[overlayEditIdx].overlay_thumbnail_url,
+            overlay_x: items[overlayEditIdx].overlay_x,
+            overlay_y: items[overlayEditIdx].overlay_y,
+            overlay_w: items[overlayEditIdx].overlay_w,
+            overlay_h: items[overlayEditIdx].overlay_h,
+          }}
+          onSave={(next) => {
+            updateItem(overlayEditIdx!, next);
+            setOverlayEditIdx(null);
+          }}
+        />
+      )}
     </div>
   );
 };
