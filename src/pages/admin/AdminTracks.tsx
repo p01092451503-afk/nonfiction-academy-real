@@ -512,15 +512,27 @@ const TrackEditorDialog = ({
       ]);
       if (cancelled) return;
       const track = trk as any;
+      const trackI18nByLang = new Map<string, any>();
+      ((trackI18nRows as any[]) || []).forEach((row) => {
+        if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+          trackI18nByLang.set(row.language_code, row);
+        }
+      });
       if (track) {
         const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
         const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
-        if (track.title_en) nextTitles.en = track.title_en;
-        if (track.description_en) nextDescs.en = track.description_en;
-        ((trackI18nRows as any[]) || []).forEach((row) => {
-          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
-            nextTitles[row.language_code as I18nLang] = row.title || nextTitles[row.language_code as I18nLang] || "";
-            nextDescs[row.language_code as I18nLang] = row.description || nextDescs[row.language_code as I18nLang] || "";
+        // Only fall back to legacy *_en columns when there is NO i18n row for
+        // that language — otherwise stale legacy values (e.g. an old buggy
+        // "Week 4" in description_en) override the canonical i18n table.
+        if (!trackI18nByLang.has("en")) {
+          if (track.title_en) nextTitles.en = track.title_en;
+          if (track.description_en) nextDescs.en = track.description_en;
+        }
+        (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
+          const row = trackI18nByLang.get(lc);
+          if (row) {
+            nextTitles[lc] = row.title || "";
+            nextDescs[lc] = row.description || "";
           }
         });
         setTitles(nextTitles);
@@ -537,10 +549,14 @@ const TrackEditorDialog = ({
       });
       const stagesWithCourses: DraftStage[] = stageList.map((s) => {
         const names: LangMap = { ...emptyLangMap(), ko: s.name || "" };
-        if (s.name_en) names.en = s.name_en;
-        (stageI18nByStage.get(s.id) || []).forEach((row) => {
+        const i18nRows = stageI18nByStage.get(s.id) || [];
+        const hasEnI18n = i18nRows.some((r) => r.language_code === "en");
+        // Same legacy fallback rule for stage names: only use name_en if no
+        // i18n row exists for EN.
+        if (!hasEnI18n && s.name_en) names.en = s.name_en;
+        i18nRows.forEach((row) => {
           if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
-            names[row.language_code as I18nLang] = row.name || names[row.language_code as I18nLang] || "";
+            names[row.language_code as I18nLang] = row.name || "";
           }
         });
         return {
@@ -598,14 +614,32 @@ const TrackEditorDialog = ({
       const targets: TargetLang[] = ["en", "ja", "zh-CN"];
       const koDesc = (descriptions.ko || "").trim();
       const stageKoNames = draftStages.map((s) => (s.names.ko || "").trim());
+      // Fixed length payload [title, desc, ...stages] — the translate edge
+      // function preserves indices so positions never shift even if some
+      // entries are empty. Always overwrite target fields (including clearing
+      // them when KO source is empty) so previously corrupted/mis-shifted
+      // translations are wiped instead of persisting through future saves.
       const sourceTexts = [koTitle, koDesc, ...stageKoNames];
       for (const target of targets) {
         const translated = await translateKoTo(target, sourceTexts);
-        const [tTitle, tDesc, ...tStageNames] = translated;
+        const tTitle = translated[0] || "";
+        const tDesc = translated[1] || "";
+        const tStageNames = translated.slice(2);
         setTitles((prev) => ({ ...prev, [target]: tTitle || prev[target] || "" }));
-        if (koDesc) setDescriptions((prev) => ({ ...prev, [target]: tDesc || prev[target] || "" }));
+        // Always overwrite (empty KO desc -> clear target desc to remove stale data)
+        setDescriptions((prev) => ({ ...prev, [target]: koDesc ? tDesc : "" }));
         setDraftStages((prev) =>
-          prev.map((s, i) => ({ ...s, names: { ...s.names, [target]: tStageNames[i] || s.names[target] || "" } }))
+          prev.map((s, i) => {
+            const koName = (s.names.ko || "").trim();
+            return {
+              ...s,
+              names: {
+                ...s.names,
+                // Overwrite by position; clear when KO stage name is empty
+                [target]: koName ? (tStageNames[i] || "") : "",
+              },
+            };
+          })
         );
       }
       toast({ title: t("track.translated", "자동 번역이 완료되었습니다") });
