@@ -633,6 +633,8 @@ const AdminUsers = () => {
         saving={updateStaffMutation.isPending}
         onSave={() => staffEdit && updateStaffMutation.mutate(staffEdit)}
       />
+
+      <BulkEnrollDialog open={bulkEnrollOpen} onOpenChange={setBulkEnrollOpen} />
       <StaffBulkUploadDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
