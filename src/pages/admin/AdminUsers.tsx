@@ -1,5 +1,6 @@
-import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Users, Search, UserPlus, Trash2, Pencil, Activity, GraduationCap, Upload, KeyRound, ArrowUp, ArrowDown, ArrowUpDown, CheckCircle2 } from "lucide-react";
 import StaffBulkUploadDialog from "@/components/admin/StaffBulkUploadDialog";
+import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const AdminUsers = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; name: string } | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkEnrollOpen, setBulkEnrollOpen] = useState(false);
   const [staffEdit, setStaffEdit] = useState<StaffEditDraft | null>(null);
   const [resetTarget, setResetTarget] = useState<{ userId: string; name: string; email: string } | null>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -344,6 +346,9 @@ const AdminUsers = () => {
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("admin.userManagementDesc")}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setBulkEnrollOpen(true)}>
+              <CheckCircle2 className="h-4 w-4" /> 일괄 수강 등록
+            </Button>
             <Button variant="outline" className="rounded-xl gap-2 w-full sm:w-auto" onClick={() => setBulkOpen(true)}>
               <Upload className="h-4 w-4" /> 일괄 업로드
             </Button>
@@ -628,6 +633,8 @@ const AdminUsers = () => {
         saving={updateStaffMutation.isPending}
         onSave={() => staffEdit && updateStaffMutation.mutate(staffEdit)}
       />
+
+      <BulkEnrollDialog open={bulkEnrollOpen} onOpenChange={setBulkEnrollOpen} />
       <StaffBulkUploadDialog
         open={bulkOpen}
         onOpenChange={setBulkOpen}
