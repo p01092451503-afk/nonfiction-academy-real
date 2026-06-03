@@ -26,6 +26,7 @@ interface Profile { user_id: string; department_id: string | null; full_name: st
 interface Enrollment { user_id: string; course_id: string; progress: number | null; completed_at: string | null; }
 interface CourseMeta { id: string; is_mandatory: boolean | null; status: string | null; }
 interface Session { user_id: string; login_at: string; }
+interface TrackEnrollment { track_id: string; user_id: string; }
 
 const flag = (cc: string | null) => {
   if (!cc || cc.length !== 2) return "🌐";
@@ -135,6 +136,18 @@ export default function AdminGlobalDashboard() {
     },
   });
 
+  // Track enrollments — needed to scope dashboard to learners assigned to a
+  // specific track when one is selected (instead of showing every learner).
+  const { data: trackEnrollments = [] } = useQuery({
+    queryKey: ["gd-track-enrollments"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("track_enrollments")
+        .select("track_id,user_id");
+      return (data || []) as TrackEnrollment[];
+    },
+  });
+
   // Recent sessions (last 7 days) for activity
   const { data: recentSessions = [] } = useQuery({
     queryKey: ["gd-recent-sessions"],
@@ -156,6 +169,20 @@ export default function AdminGlobalDashboard() {
     () => (selectedTrackId === "all" ? tracks : tracks.filter((tr) => tr.id === selectedTrackId)),
     [tracks, selectedTrackId]
   );
+
+  // When a specific track is selected, restrict every metric pool to its
+  // assigned learners. `null` means "no restriction" (전체 트랙).
+  const trackScopeUserIds = useMemo<Set<string> | null>(() => {
+    if (selectedTrackId === "all") return null;
+    return new Set(
+      trackEnrollments
+        .filter((te) => te.track_id === selectedTrackId)
+        .map((te) => te.user_id)
+    );
+  }, [selectedTrackId, trackEnrollments]);
+
+  const scopeUserIds = (ids: string[]) =>
+    trackScopeUserIds ? ids.filter((id) => trackScopeUserIds.has(id)) : ids;
 
   // Required course IDs per track
   const trackRequiredCourseIds = useMemo(() => {
@@ -256,20 +283,24 @@ export default function AdminGlobalDashboard() {
   const countryStats = useMemo(() => {
     return countries.map((c) => {
       const deptIds = new Set(c.branches.map((b) => b.id));
-      const users = profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id);
+      const users = scopeUserIds(
+        profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id)
+      );
       return { country: c, ...computeMetrics(users) };
     }).sort((a, b) => b.userCount - a.userCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Per branch (for leaderboard)
   const branchStats = useMemo(() => {
     return departments.map((d) => {
-      const users = profiles.filter((p) => p.department_id === d.id).map((p) => p.user_id);
+      const users = scopeUserIds(
+        profiles.filter((p) => p.department_id === d.id).map((p) => p.user_id)
+      );
       return { branch: d, ...computeMetrics(users) };
     }).filter((b) => b.userCount >= 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departments, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [departments, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Drill-down branches
   const drilledBranches = useMemo(() => {
@@ -277,7 +308,12 @@ export default function AdminGlobalDashboard() {
     const c = countries.find((x) => x.id === drillCountry);
     if (!c) return [];
     return c.branches.map((b) => {
-      const users = profiles.filter((p) => p.department_id === b.id);
+      // Scope per-learner rows to track members too — so the learner
+      // breakdown only shows assignees of the selected track.
+      const allUsers = profiles.filter((p) => p.department_id === b.id);
+      const users = trackScopeUserIds
+        ? allUsers.filter((u) => trackScopeUserIds.has(u.user_id))
+        : allUsers;
       const m = computeMetrics(users.map((u) => u.user_id));
       const userRows = users.map((u) => {
         const userEnr = enrollments.filter((e) => e.user_id === u.user_id);
@@ -293,24 +329,29 @@ export default function AdminGlobalDashboard() {
       return { branch: b, ...m, userRows };
     }).sort((a, b) => b.userCount - a.userCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillCountry, countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [drillCountry, countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Overall
   const overall = useMemo(() => {
     const allCountryUserIds = countryStats.flatMap((cs) => {
       const deptIds = new Set(cs.country.branches.map((b) => b.id));
-      return profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id);
+      return scopeUserIds(
+        profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id)
+      );
     });
     return computeMetrics(allCountryUserIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryStats, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [countryStats, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Track × Country matrix
   const trackMatrix = useMemo(() => {
     return activeTracks.map((tr) => {
       const row = countryStats.map((cs) => {
         const deptIds = new Set(cs.country.branches.map((b) => b.id));
-        const users = profiles.filter((p) => p.department_id && deptIds.has(p.department_id));
+        const baseUsers = profiles.filter((p) => p.department_id && deptIds.has(p.department_id));
+        const users = trackScopeUserIds
+          ? baseUsers.filter((u) => trackScopeUserIds.has(u.user_id))
+          : baseUsers;
         let done = 0;
         for (const u of users) if (isUserTrackComplete(u.user_id, tr.id)) done += 1;
         const rate = users.length > 0 ? Math.round((done / users.length) * 100) : 0;
@@ -319,7 +360,9 @@ export default function AdminGlobalDashboard() {
       return { track: tr, row };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTracks, countryStats, profiles, enrollments, trackRequiredCourseIds]);
+  }, [activeTracks, countryStats, profiles, enrollments, trackRequiredCourseIds, trackScopeUserIds]);
+
+
 
   // Leaderboards
   const topBranches = useMemo(
@@ -386,6 +429,21 @@ export default function AdminGlobalDashboard() {
             <p className="text-sm text-muted-foreground mt-1">
               {t("globalDashboard.subtitleV2", "국가·지점별 학습 참여와 필수 교육 이수 현황을 한눈에 확인합니다.")}
             </p>
+            {trackScopeUserIds && (
+              <div className="mt-2 inline-flex items-center gap-2">
+                <Badge variant="outline" className="text-[11px] gap-1 border-primary/40 text-primary">
+                  <Layers className="h-3 w-3" />
+                  {(() => {
+                    const tr = tracks.find((x) => x.id === selectedTrackId);
+                    const name = (isEn ? tr?.title_en : tr?.title) || tr?.title || "";
+                    return t("globalDashboard.trackFilterActive", "{{name}} 트랙 등록 학습자만 표시 ({{count}}명)", {
+                      name,
+                      count: trackScopeUserIds.size,
+                    });
+                  })()}
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Select value={selectedTrackId} onValueChange={setSelectedTrackId}>
