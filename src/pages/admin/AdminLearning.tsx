@@ -620,7 +620,10 @@ const AdminLearning = () => {
                               <p className="text-xs text-muted-foreground mt-1 break-words">{c?.title || "-"}</p>
                             </div>
                           </div>
-                          <div className="shrink-0">{getStatusBadge(e)}</div>
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            {getStatusBadge(e)}
+                            <QuizBadge result={getQuizResult(e.user_id, e.course_id)} />
+                          </div>
                         </div>
                         <div className="mt-4">
                           <div className="flex items-center justify-between gap-3 text-xs">
