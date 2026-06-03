@@ -26,6 +26,7 @@ interface Profile { user_id: string; department_id: string | null; full_name: st
 interface Enrollment { user_id: string; course_id: string; progress: number | null; completed_at: string | null; }
 interface CourseMeta { id: string; is_mandatory: boolean | null; status: string | null; }
 interface Session { user_id: string; login_at: string; }
+interface TrackEnrollment { track_id: string; user_id: string; }
 
 const flag = (cc: string | null) => {
   if (!cc || cc.length !== 2) return "🌐";
