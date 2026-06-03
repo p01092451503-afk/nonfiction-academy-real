@@ -429,6 +429,21 @@ export default function AdminGlobalDashboard() {
             <p className="text-sm text-muted-foreground mt-1">
               {t("globalDashboard.subtitleV2", "국가·지점별 학습 참여와 필수 교육 이수 현황을 한눈에 확인합니다.")}
             </p>
+            {trackScopeUserIds && (
+              <div className="mt-2 inline-flex items-center gap-2">
+                <Badge variant="outline" className="text-[11px] gap-1 border-primary/40 text-primary">
+                  <Layers className="h-3 w-3" />
+                  {(() => {
+                    const tr = tracks.find((x) => x.id === selectedTrackId);
+                    const name = (isEn ? tr?.title_en : tr?.title) || tr?.title || "";
+                    return t("globalDashboard.trackFilterActive", "{{name}} 트랙 등록 학습자만 표시 ({{count}}명)", {
+                      name,
+                      count: trackScopeUserIds.size,
+                    });
+                  })()}
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Select value={selectedTrackId} onValueChange={setSelectedTrackId}>
