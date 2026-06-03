@@ -169,11 +169,45 @@ const AdminLearning = () => {
     },
   });
 
+  // Quiz attempts → pass/fail per (user_id, course_id)
+  const { data: quizPassMap = new Map<string, boolean>() } = useQuery({
+    queryKey: ["admin-learning-quiz-attempts"],
+    queryFn: async () => {
+      const [{ data: assessments }, { data: attempts }] = await Promise.all([
+        supabase.from("assessments").select("id, course_id"),
+        supabase.from("assessment_attempts").select("assessment_id, user_id, passed, completed_at").not("completed_at", "is", null),
+      ]);
+      const aToCourse = new Map<string, string>((assessments || []).map((a: any) => [a.id, a.course_id]));
+      const map = new Map<string, boolean>();
+      (attempts || []).forEach((at: any) => {
+        const courseId = aToCourse.get(at.assessment_id);
+        if (!courseId) return;
+        const key = `${at.user_id}::${courseId}`;
+        const prev = map.get(key);
+        const passed = !!at.passed;
+        if (prev === undefined) map.set(key, passed);
+        else if (passed && !prev) map.set(key, true);
+      });
+      return map;
+    },
+  });
+
   const isLoading = coursesPending || enrollmentsPending || profilesPending;
 
   const departmentMap = useMemo(() => new Map(departments.map((d: any) => [d.id, d])), [departments]);
   const profileMap = useMemo(() => new Map(profiles.map((p: any) => [p.user_id, p])), [profiles]);
   const courseMap = useMemo(() => new Map(courses.map((c: any) => [c.id, c])), [courses]);
+
+  const getQuizResult = (userId: string, courseId: string): "pass" | "fail" | null => {
+    const v = quizPassMap.get(`${userId}::${courseId}`);
+    if (v === undefined) return null;
+    return v ? "pass" : "fail";
+  };
+  const QuizBadge = ({ result }: { result: "pass" | "fail" | null }) => {
+    if (result === null) return <span className="text-xs text-muted-foreground">-</span>;
+    if (result === "pass") return <Badge variant="default" className="text-[10px]">합격</Badge>;
+    return <Badge variant="destructive" className="text-[10px]">불합격</Badge>;
+  };
 
   // Top-level branches only (parent_department_id IS NULL)
   const branches = useMemo(
@@ -355,6 +389,8 @@ const AdminLearning = () => {
     const branch = bId ? (departmentMap.get(bId) as any)?.name : (p?.department || "-");
     const country = userCountry(e.user_id) || "-";
     const status = e.completed_at ? t("common.complete") : (Number(e.progress) || 0) > 0 ? t("dashboard.inProgress") : t("admin.notStarted");
+    const qr = getQuizResult(e.user_id, e.course_id);
+    const quiz = qr === "pass" ? "합격" : qr === "fail" ? "불합격" : "-";
     return [
       country,
       branch || "-",
@@ -362,6 +398,7 @@ const AdminLearning = () => {
       p?.employee_id || "-",
       c?.title || "-",
       `${Math.round(Number(e.progress) || 0)}%`,
+      quiz,
       status,
       formatDate(e.enrolled_at),
       formatDate(e.completed_at),
@@ -375,6 +412,7 @@ const AdminLearning = () => {
     "ID",
     t("admin.courseLabel"),
     t("admin.progressLabel"),
+    "퀴즈 결과",
     t("admin.statusLabel"),
     t("admin.startDate"),
     t("admin.completionDate"),
@@ -586,7 +624,10 @@ const AdminLearning = () => {
                               <p className="text-xs text-muted-foreground mt-1 break-words">{c?.title || "-"}</p>
                             </div>
                           </div>
-                          <div className="shrink-0">{getStatusBadge(e)}</div>
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            {getStatusBadge(e)}
+                            <QuizBadge result={getQuizResult(e.user_id, e.course_id)} />
+                          </div>
                         </div>
                         <div className="mt-4">
                           <div className="flex items-center justify-between gap-3 text-xs">
@@ -621,6 +662,7 @@ const AdminLearning = () => {
                         <TableHead><button type="button" onClick={() => toggleProgressSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.nameColumn")} <SortIcon active={progressSort.key === "name"} dir={progressSort.dir} /></button></TableHead>
                         <TableHead><button type="button" onClick={() => toggleProgressSort("course")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.courseLabel")} <SortIcon active={progressSort.key === "course"} dir={progressSort.dir} /></button></TableHead>
                         <TableHead><button type="button" onClick={() => toggleProgressSort("progress")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.progressLabel")} <SortIcon active={progressSort.key === "progress"} dir={progressSort.dir} /></button></TableHead>
+                        <TableHead>퀴즈 결과</TableHead>
                         <TableHead><button type="button" onClick={() => toggleProgressSort("status")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.statusLabel")} <SortIcon active={progressSort.key === "status"} dir={progressSort.dir} /></button></TableHead>
                         <TableHead><button type="button" onClick={() => toggleProgressSort("enrolled_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.startDate")} <SortIcon active={progressSort.key === "enrolled_at"} dir={progressSort.dir} /></button></TableHead>
                         <TableHead><button type="button" onClick={() => toggleProgressSort("completed_at")} className="inline-flex items-center gap-1 hover:text-foreground">{t("admin.completionDate")} <SortIcon active={progressSort.key === "completed_at"} dir={progressSort.dir} /></button></TableHead>
@@ -628,7 +670,7 @@ const AdminLearning = () => {
                     </TableHeader>
                     <TableBody>
                       {visibleProgressRows.length === 0 ? (
-                        <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{t("admin.noLearningData")}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t("admin.noLearningData")}</TableCell></TableRow>
                       ) : (
                         visibleProgressRows.map((e: any) => {
                           const p: any = profileMap.get(e.user_id);
@@ -654,6 +696,7 @@ const AdminLearning = () => {
                                   <span className="text-xs">{Math.round(Number(e.progress) || 0)}%</span>
                                 </div>
                               </TableCell>
+                              <TableCell><QuizBadge result={getQuizResult(e.user_id, e.course_id)} /></TableCell>
                               <TableCell>{getStatusBadge(e)}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{formatDate(e.enrolled_at)}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{formatDate(e.completed_at)}</TableCell>
