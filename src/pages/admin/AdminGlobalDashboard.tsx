@@ -136,6 +136,18 @@ export default function AdminGlobalDashboard() {
     },
   });
 
+  // Track enrollments — needed to scope dashboard to learners assigned to a
+  // specific track when one is selected (instead of showing every learner).
+  const { data: trackEnrollments = [] } = useQuery({
+    queryKey: ["gd-track-enrollments"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("track_enrollments")
+        .select("track_id,user_id");
+      return (data || []) as TrackEnrollment[];
+    },
+  });
+
   // Recent sessions (last 7 days) for activity
   const { data: recentSessions = [] } = useQuery({
     queryKey: ["gd-recent-sessions"],
@@ -157,6 +169,20 @@ export default function AdminGlobalDashboard() {
     () => (selectedTrackId === "all" ? tracks : tracks.filter((tr) => tr.id === selectedTrackId)),
     [tracks, selectedTrackId]
   );
+
+  // When a specific track is selected, restrict every metric pool to its
+  // assigned learners. `null` means "no restriction" (전체 트랙).
+  const trackScopeUserIds = useMemo<Set<string> | null>(() => {
+    if (selectedTrackId === "all") return null;
+    return new Set(
+      trackEnrollments
+        .filter((te) => te.track_id === selectedTrackId)
+        .map((te) => te.user_id)
+    );
+  }, [selectedTrackId, trackEnrollments]);
+
+  const scopeUserIds = (ids: string[]) =>
+    trackScopeUserIds ? ids.filter((id) => trackScopeUserIds.has(id)) : ids;
 
   // Required course IDs per track
   const trackRequiredCourseIds = useMemo(() => {
