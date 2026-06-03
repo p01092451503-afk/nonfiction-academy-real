@@ -169,11 +169,45 @@ const AdminLearning = () => {
     },
   });
 
+  // Quiz attempts → pass/fail per (user_id, course_id)
+  const { data: quizPassMap = new Map<string, boolean>() } = useQuery({
+    queryKey: ["admin-learning-quiz-attempts"],
+    queryFn: async () => {
+      const [{ data: assessments }, { data: attempts }] = await Promise.all([
+        supabase.from("assessments").select("id, course_id"),
+        supabase.from("assessment_attempts").select("assessment_id, user_id, passed, completed_at").not("completed_at", "is", null),
+      ]);
+      const aToCourse = new Map<string, string>((assessments || []).map((a: any) => [a.id, a.course_id]));
+      const map = new Map<string, boolean>();
+      (attempts || []).forEach((at: any) => {
+        const courseId = aToCourse.get(at.assessment_id);
+        if (!courseId) return;
+        const key = `${at.user_id}::${courseId}`;
+        const prev = map.get(key);
+        const passed = !!at.passed;
+        if (prev === undefined) map.set(key, passed);
+        else if (passed && !prev) map.set(key, true);
+      });
+      return map;
+    },
+  });
+
   const isLoading = coursesPending || enrollmentsPending || profilesPending;
 
   const departmentMap = useMemo(() => new Map(departments.map((d: any) => [d.id, d])), [departments]);
   const profileMap = useMemo(() => new Map(profiles.map((p: any) => [p.user_id, p])), [profiles]);
   const courseMap = useMemo(() => new Map(courses.map((c: any) => [c.id, c])), [courses]);
+
+  const getQuizResult = (userId: string, courseId: string): "pass" | "fail" | null => {
+    const v = quizPassMap.get(`${userId}::${courseId}`);
+    if (v === undefined) return null;
+    return v ? "pass" : "fail";
+  };
+  const QuizBadge = ({ result }: { result: "pass" | "fail" | null }) => {
+    if (result === null) return <span className="text-xs text-muted-foreground">-</span>;
+    if (result === "pass") return <Badge variant="default" className="text-[10px]">합격</Badge>;
+    return <Badge variant="destructive" className="text-[10px]">불합격</Badge>;
+  };
 
   // Top-level branches only (parent_department_id IS NULL)
   const branches = useMemo(
