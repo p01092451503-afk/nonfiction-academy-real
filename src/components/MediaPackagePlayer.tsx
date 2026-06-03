@@ -136,10 +136,43 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
     }
   };
 
+  const url = item.overlay_video_url || "";
+  const isIframeUrl = /(?:iframe|player)\.mediadelivery\.net\/(embed|play)\//i.test(url);
+  const overlayStyle: React.CSSProperties = {
+    left: `${(item.overlay_x ?? 0) * 100}%`,
+    top: `${(item.overlay_y ?? 0) * 100}%`,
+    width: `${(item.overlay_w ?? 0) * 100}%`,
+    height: `${(item.overlay_h ?? 0) * 100}%`,
+    opacity,
+    pointerEvents: showControls ? "auto" : "none",
+  };
+
+  if (isIframeUrl) {
+    const embedUrl = url
+      .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
+      .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
+    const params: string[] = [];
+    if (autoplay) params.push("autoplay=true");
+    if (muted) params.push("muted=true");
+    if (loop) params.push("loop=true");
+    const finalUrl = params.length
+      ? `${embedUrl}${embedUrl.includes("?") ? "&" : "?"}${params.join("&")}`
+      : embedUrl;
+    return (
+      <iframe
+        src={isActive ? finalUrl : "about:blank"}
+        className="absolute bg-black border-0"
+        style={overlayStyle}
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+        allowFullScreen
+      />
+    );
+  }
+
   return (
     <video
       ref={videoRef}
-      src={item.overlay_video_url || undefined}
+      src={url || undefined}
       poster={item.overlay_thumbnail_url || undefined}
       controls={showControls}
       controlsList="nodownload noplaybackrate noremoteplayback"
@@ -151,14 +184,7 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
       className="absolute object-cover bg-black"
-      style={{
-        left: `${(item.overlay_x ?? 0) * 100}%`,
-        top: `${(item.overlay_y ?? 0) * 100}%`,
-        width: `${(item.overlay_w ?? 0) * 100}%`,
-        height: `${(item.overlay_h ?? 0) * 100}%`,
-        opacity,
-        pointerEvents: showControls ? "auto" : "none",
-      }}
+      style={overlayStyle}
     />
   );
 };
