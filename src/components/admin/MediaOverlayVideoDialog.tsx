@@ -441,22 +441,50 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
               </p>
             </div>
 
-            {videoUrl && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">{t("mediaOverlay.preview", "미리보기")} {duration != null && <span className="text-muted-foreground">({fmtSec(duration)})</span>}</Label>
-                <video
-                  ref={previewVideoRef}
-                  key={videoUrl}
-                  src={videoUrl}
-                  controls
-                  className="w-full rounded-md bg-black max-h-44"
-                  onLoadedMetadata={(e) => {
-                    const d = (e.currentTarget as HTMLVideoElement).duration;
-                    if (isFinite(d)) setDuration(d);
-                  }}
-                />
-              </div>
-            )}
+            {videoUrl && (() => {
+              const isIframeUrl = /(?:iframe|player)\.mediadelivery\.net\/(embed|play)\//i.test(videoUrl);
+              const embedUrl = isIframeUrl
+                ? videoUrl
+                    .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
+                    .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/")
+                : null;
+              return (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">
+                    {t("mediaOverlay.preview", "미리보기")}{" "}
+                    {duration != null && <span className="text-muted-foreground">({fmtSec(duration)})</span>}
+                  </Label>
+                  {embedUrl ? (
+                    <div className="relative w-full overflow-hidden rounded-md bg-black" style={{ paddingTop: "56.25%" }}>
+                      <iframe
+                        key={embedUrl}
+                        src={embedUrl}
+                        className="absolute inset-0 h-full w-full"
+                        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <video
+                      ref={previewVideoRef}
+                      key={videoUrl}
+                      src={videoUrl}
+                      controls
+                      className="w-full rounded-md bg-black max-h-44"
+                      onLoadedMetadata={(e) => {
+                        const d = (e.currentTarget as HTMLVideoElement).duration;
+                        if (isFinite(d)) setDuration(d);
+                      }}
+                    />
+                  )}
+                  {embedUrl && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {t("mediaOverlay.bunnyPreviewNote", "Bunny 임베드는 미리보기에서만 재생됩니다. 재생 구간/속도/볼륨 등 세부 옵션은 학습자 화면에서 적용됩니다.")}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* RIGHT: playback options */}
