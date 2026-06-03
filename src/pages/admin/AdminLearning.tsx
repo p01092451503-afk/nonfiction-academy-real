@@ -689,6 +689,7 @@ const AdminLearning = () => {
                                   <span className="text-xs">{Math.round(Number(e.progress) || 0)}%</span>
                                 </div>
                               </TableCell>
+                              <TableCell><QuizBadge result={getQuizResult(e.user_id, e.course_id)} /></TableCell>
                               <TableCell>{getStatusBadge(e)}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{formatDate(e.enrolled_at)}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">{formatDate(e.completed_at)}</TableCell>
