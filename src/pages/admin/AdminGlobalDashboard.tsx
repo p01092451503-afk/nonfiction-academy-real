@@ -283,20 +283,24 @@ export default function AdminGlobalDashboard() {
   const countryStats = useMemo(() => {
     return countries.map((c) => {
       const deptIds = new Set(c.branches.map((b) => b.id));
-      const users = profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id);
+      const users = scopeUserIds(
+        profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id)
+      );
       return { country: c, ...computeMetrics(users) };
     }).sort((a, b) => b.userCount - a.userCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Per branch (for leaderboard)
   const branchStats = useMemo(() => {
     return departments.map((d) => {
-      const users = profiles.filter((p) => p.department_id === d.id).map((p) => p.user_id);
+      const users = scopeUserIds(
+        profiles.filter((p) => p.department_id === d.id).map((p) => p.user_id)
+      );
       return { branch: d, ...computeMetrics(users) };
     }).filter((b) => b.userCount >= 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [departments, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [departments, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Drill-down branches
   const drilledBranches = useMemo(() => {
@@ -304,7 +308,12 @@ export default function AdminGlobalDashboard() {
     const c = countries.find((x) => x.id === drillCountry);
     if (!c) return [];
     return c.branches.map((b) => {
-      const users = profiles.filter((p) => p.department_id === b.id);
+      // Scope per-learner rows to track members too — so the learner
+      // breakdown only shows assignees of the selected track.
+      const allUsers = profiles.filter((p) => p.department_id === b.id);
+      const users = trackScopeUserIds
+        ? allUsers.filter((u) => trackScopeUserIds.has(u.user_id))
+        : allUsers;
       const m = computeMetrics(users.map((u) => u.user_id));
       const userRows = users.map((u) => {
         const userEnr = enrollments.filter((e) => e.user_id === u.user_id);
@@ -320,24 +329,29 @@ export default function AdminGlobalDashboard() {
       return { branch: b, ...m, userRows };
     }).sort((a, b) => b.userCount - a.userCount);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillCountry, countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [drillCountry, countries, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Overall
   const overall = useMemo(() => {
     const allCountryUserIds = countryStats.flatMap((cs) => {
       const deptIds = new Set(cs.country.branches.map((b) => b.id));
-      return profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id);
+      return scopeUserIds(
+        profiles.filter((p) => p.department_id && deptIds.has(p.department_id)).map((p) => p.user_id)
+      );
     });
     return computeMetrics(allCountryUserIds);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countryStats, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds]);
+  }, [countryStats, profiles, enrollments, activeUserIds, mandatoryCourseIds, activeTracks, trackRequiredCourseIds, trackScopeUserIds]);
 
   // Track × Country matrix
   const trackMatrix = useMemo(() => {
     return activeTracks.map((tr) => {
       const row = countryStats.map((cs) => {
         const deptIds = new Set(cs.country.branches.map((b) => b.id));
-        const users = profiles.filter((p) => p.department_id && deptIds.has(p.department_id));
+        const baseUsers = profiles.filter((p) => p.department_id && deptIds.has(p.department_id));
+        const users = trackScopeUserIds
+          ? baseUsers.filter((u) => trackScopeUserIds.has(u.user_id))
+          : baseUsers;
         let done = 0;
         for (const u of users) if (isUserTrackComplete(u.user_id, tr.id)) done += 1;
         const rate = users.length > 0 ? Math.round((done / users.length) * 100) : 0;
@@ -346,7 +360,9 @@ export default function AdminGlobalDashboard() {
       return { track: tr, row };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTracks, countryStats, profiles, enrollments, trackRequiredCourseIds]);
+  }, [activeTracks, countryStats, profiles, enrollments, trackRequiredCourseIds, trackScopeUserIds]);
+
+
 
   // Leaderboards
   const topBranches = useMemo(
