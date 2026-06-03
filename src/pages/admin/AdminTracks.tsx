@@ -598,14 +598,32 @@ const TrackEditorDialog = ({
       const targets: TargetLang[] = ["en", "ja", "zh-CN"];
       const koDesc = (descriptions.ko || "").trim();
       const stageKoNames = draftStages.map((s) => (s.names.ko || "").trim());
+      // Fixed length payload [title, desc, ...stages] — the translate edge
+      // function preserves indices so positions never shift even if some
+      // entries are empty. Always overwrite target fields (including clearing
+      // them when KO source is empty) so previously corrupted/mis-shifted
+      // translations are wiped instead of persisting through future saves.
       const sourceTexts = [koTitle, koDesc, ...stageKoNames];
       for (const target of targets) {
         const translated = await translateKoTo(target, sourceTexts);
-        const [tTitle, tDesc, ...tStageNames] = translated;
+        const tTitle = translated[0] || "";
+        const tDesc = translated[1] || "";
+        const tStageNames = translated.slice(2);
         setTitles((prev) => ({ ...prev, [target]: tTitle || prev[target] || "" }));
-        if (koDesc) setDescriptions((prev) => ({ ...prev, [target]: tDesc || prev[target] || "" }));
+        // Always overwrite (empty KO desc -> clear target desc to remove stale data)
+        setDescriptions((prev) => ({ ...prev, [target]: koDesc ? tDesc : "" }));
         setDraftStages((prev) =>
-          prev.map((s, i) => ({ ...s, names: { ...s.names, [target]: tStageNames[i] || s.names[target] || "" } }))
+          prev.map((s, i) => {
+            const koName = (s.names.ko || "").trim();
+            return {
+              ...s,
+              names: {
+                ...s.names,
+                // Overwrite by position; clear when KO stage name is empty
+                [target]: koName ? (tStageNames[i] || "") : "",
+              },
+            };
+          })
         );
       }
       toast({ title: t("track.translated", "자동 번역이 완료되었습니다") });
