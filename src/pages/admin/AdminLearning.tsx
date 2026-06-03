@@ -389,6 +389,8 @@ const AdminLearning = () => {
     const branch = bId ? (departmentMap.get(bId) as any)?.name : (p?.department || "-");
     const country = userCountry(e.user_id) || "-";
     const status = e.completed_at ? t("common.complete") : (Number(e.progress) || 0) > 0 ? t("dashboard.inProgress") : t("admin.notStarted");
+    const qr = getQuizResult(e.user_id, e.course_id);
+    const quiz = qr === "pass" ? "합격" : qr === "fail" ? "불합격" : "-";
     return [
       country,
       branch || "-",
@@ -396,6 +398,7 @@ const AdminLearning = () => {
       p?.employee_id || "-",
       c?.title || "-",
       `${Math.round(Number(e.progress) || 0)}%`,
+      quiz,
       status,
       formatDate(e.enrolled_at),
       formatDate(e.completed_at),
@@ -409,6 +412,7 @@ const AdminLearning = () => {
     "ID",
     t("admin.courseLabel"),
     t("admin.progressLabel"),
+    "퀴즈 결과",
     t("admin.statusLabel"),
     t("admin.startDate"),
     t("admin.completionDate"),
