@@ -30,11 +30,12 @@ serve(async (req) => {
 
     const targetLabel = LANG_LABEL[targetLang] || "English";
 
+    const keyedItems = Object.fromEntries(items.map((item) => [String(item.index), item.text]));
     const prompt = `Translate each Korean text to ${targetLabel}.
-Return ONLY a JSON array with exactly ${items.length} translated strings, in the same order as the input array.
+Return ONLY a JSON object whose keys exactly match the input keys and whose values are translated strings.
 If an input item is already a product name, keep the meaning and do not invent a different product.
 
-${JSON.stringify(items.map((item) => item.text))}`;
+${JSON.stringify(keyedItems)}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -74,18 +75,28 @@ ${JSON.stringify(items.map((item) => item.text))}`;
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content?.trim() || "";
 
-    let translatedItems: string[];
+    const translatedByIndex: Record<string, string> = {};
     try {
       const cleaned = content.replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
       const parsed = JSON.parse(cleaned);
-      translatedItems = Array.isArray(parsed) ? parsed.map((item) => (typeof item === "string" ? item : "")) : [];
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        items.forEach((item) => {
+          const translated = parsed[String(item.index)];
+          translatedByIndex[String(item.index)] = typeof translated === "string" ? translated : "";
+        });
+      } else if (Array.isArray(parsed)) {
+        parsed.forEach((item, translatedIndex) => {
+          const source = items[translatedIndex];
+          if (source) translatedByIndex[String(source.index)] = typeof item === "string" ? item : "";
+        });
+      }
     } catch {
-      translatedItems = items.length === 1 ? [content] : [];
+      if (items.length === 1) translatedByIndex[String(items[0].index)] = content;
     }
 
     const translations = sourceTexts.map(() => "");
-    items.forEach((item, translatedIndex) => {
-      translations[item.index] = translatedItems[translatedIndex] || "";
+    items.forEach((item) => {
+      translations[item.index] = translatedByIndex[String(item.index)] || "";
     });
 
     return new Response(JSON.stringify({ translations }), {

@@ -453,6 +453,15 @@ const AdminTracks = () => {
 type LangMap = Partial<Record<I18nLang, string>>;
 const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
 
+const translateSingleKoText = async (target: TargetLang, text: string) => {
+  const source = text.trim();
+  if (!source) return "";
+  const [translated] = await translateKoTo(target, [source]);
+  const result = (translated || "").trim();
+  if (!result) throw new Error("자동 번역 결과를 확인할 수 없습니다. 다시 시도해주세요.");
+  return result;
+};
+
 type DraftStage = {
   id: string; // local or db id
   names: LangMap;
@@ -613,35 +622,45 @@ const TrackEditorDialog = ({
     try {
       const targets: TargetLang[] = ["en", "ja", "zh-CN"];
       const koDesc = (descriptions.ko || "").trim();
-      const stageKoNames = draftStages.map((s) => (s.names.ko || "").trim());
-      // Fixed length payload [title, desc, ...stages] — the translate edge
-      // function preserves indices so positions never shift even if some
-      // entries are empty. Always overwrite target fields (including clearing
-      // them when KO source is empty) so previously corrupted/mis-shifted
-      // translations are wiped instead of persisting through future saves.
-      const sourceTexts = [koTitle, koDesc, ...stageKoNames];
-      for (const target of targets) {
-        const translated = await translateKoTo(target, sourceTexts);
-        const tTitle = translated[0] || "";
-        const tDesc = translated[1] || "";
-        const tStageNames = translated.slice(2);
-        setTitles((prev) => ({ ...prev, [target]: tTitle || prev[target] || "" }));
-        // Always overwrite (empty KO desc -> clear target desc to remove stale data)
-        setDescriptions((prev) => ({ ...prev, [target]: koDesc ? tDesc : "" }));
-        setDraftStages((prev) =>
-          prev.map((s, i) => {
-            const koName = (s.names.ko || "").trim();
-            return {
-              ...s,
-              names: {
-                ...s.names,
-                // Overwrite by position; clear when KO stage name is empty
-                [target]: koName ? (tStageNames[i] || "") : "",
-              },
-            };
-          })
-        );
-      }
+      const stageSources = draftStages.map((s) => ({ id: s.id, text: (s.names.ko || "").trim() }));
+      // Never bundle title/description/stage names into one translation array.
+      // A model response that reorders even once can put a stage name into the
+      // description field. Translate each source independently and map stages
+      // back by stable draft ID, not by array position.
+      const translatedByTarget = await Promise.all(
+        targets.map(async (target) => {
+          const [title, description, stagePairs] = await Promise.all([
+            translateSingleKoText(target, koTitle),
+            translateSingleKoText(target, koDesc),
+            Promise.all(
+              stageSources.map(async (stage) => ({
+                id: stage.id,
+                name: await translateSingleKoText(target, stage.text),
+              }))
+            ),
+          ]);
+          return { target, title, description, stageNameById: new Map(stagePairs.map((stage) => [stage.id, stage.name])) };
+        })
+      );
+
+      const nextTitles = { ...titles };
+      const nextDescriptions = { ...descriptions };
+      translatedByTarget.forEach(({ target, title, description }) => {
+        nextTitles[target] = title;
+        nextDescriptions[target] = koDesc ? description : "";
+      });
+      setTitles(nextTitles);
+      setDescriptions(nextDescriptions);
+      setDraftStages((prev) =>
+        prev.map((stage) => {
+          const koName = (stage.names.ko || "").trim();
+          const names = { ...stage.names };
+          translatedByTarget.forEach(({ target, stageNameById }) => {
+            names[target] = koName ? stageNameById.get(stage.id) || "" : "";
+          });
+          return { ...stage, names };
+        })
+      );
       toast({ title: t("track.translated", "자동 번역이 완료되었습니다") });
     } catch (e: any) {
       toast({ title: t("common.error", "오류"), description: e.message, variant: "destructive" });
@@ -679,7 +698,8 @@ const TrackEditorDialog = ({
       if (trackId) {
         const { error } = await supabase.from("learning_tracks" as any).update(trackPayload).eq("id", trackId);
         if (error) throw error;
-        await supabase.from("track_stages" as any).delete().eq("track_id", trackId);
+        const { error: deleteStagesError } = await supabase.from("track_stages" as any).delete().eq("track_id", trackId);
+        if (deleteStagesError) throw deleteStagesError;
       } else {
         const { data, error } = await supabase
           .from("learning_tracks" as any)
@@ -708,36 +728,27 @@ const TrackEditorDialog = ({
       }
 
       const stagesToInsert = draftStages.map((s, i) => ({
+        id: s.id,
         track_id: savedTrackId!,
         name: (s.names.ko || "").trim() || `Stage ${i + 1}`,
         name_en: (s.names.en || "").trim() || null,
         description: s.description.trim() || null,
         order_index: i,
       }));
-      const { data: insertedStagesRaw, error: stageErr } = await supabase
+      const { error: stageErr } = await supabase
         .from("track_stages" as any)
-        .insert(stagesToInsert)
-        .select("id, order_index");
+        .insert(stagesToInsert);
       if (stageErr) throw stageErr;
-      // CRITICAL: .insert().select() does NOT guarantee row order in PostgREST.
-      // Without sorting, stage i18n / course mappings get assigned to the wrong
-      // stage, producing "random" mismatched names (e.g. EN "Foundation" under
-      // KO "Week 2"). Sort by order_index to realign with draftStages[i].
-      const insertedStages = ((insertedStagesRaw as any[]) || [])
-        .slice()
-        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
       const stageRows: any[] = [];
       const stageI18nRows: any[] = [];
-      insertedStages.forEach((s, i) => {
-        const draft = draftStages[i];
-        if (!draft) return;
+      draftStages.forEach((draft) => {
         draft.course_ids.forEach((cid, j) => {
-          stageRows.push({ stage_id: s.id, course_id: cid, order_index: j });
+          stageRows.push({ stage_id: draft.id, course_id: cid, order_index: j });
         });
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const name = (draft.names[lc] || "").trim();
-          if (name) stageI18nRows.push({ stage_id: s.id, language_code: lc, name });
+          if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name });
         });
       });
       if (stageRows.length) {
