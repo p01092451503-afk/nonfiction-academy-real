@@ -453,6 +453,15 @@ const AdminTracks = () => {
 type LangMap = Partial<Record<I18nLang, string>>;
 const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
 
+const translateSingleKoText = async (target: TargetLang, text: string) => {
+  const source = text.trim();
+  if (!source) return "";
+  const [translated] = await translateKoTo(target, [source]);
+  const result = (translated || "").trim();
+  if (!result) throw new Error("자동 번역 결과를 확인할 수 없습니다. 다시 시도해주세요.");
+  return result;
+};
+
 type DraftStage = {
   id: string; // local or db id
   names: LangMap;
@@ -613,35 +622,45 @@ const TrackEditorDialog = ({
     try {
       const targets: TargetLang[] = ["en", "ja", "zh-CN"];
       const koDesc = (descriptions.ko || "").trim();
-      const stageKoNames = draftStages.map((s) => (s.names.ko || "").trim());
-      // Fixed length payload [title, desc, ...stages] — the translate edge
-      // function preserves indices so positions never shift even if some
-      // entries are empty. Always overwrite target fields (including clearing
-      // them when KO source is empty) so previously corrupted/mis-shifted
-      // translations are wiped instead of persisting through future saves.
-      const sourceTexts = [koTitle, koDesc, ...stageKoNames];
-      for (const target of targets) {
-        const translated = await translateKoTo(target, sourceTexts);
-        const tTitle = translated[0] || "";
-        const tDesc = translated[1] || "";
-        const tStageNames = translated.slice(2);
-        setTitles((prev) => ({ ...prev, [target]: tTitle || prev[target] || "" }));
-        // Always overwrite (empty KO desc -> clear target desc to remove stale data)
-        setDescriptions((prev) => ({ ...prev, [target]: koDesc ? tDesc : "" }));
-        setDraftStages((prev) =>
-          prev.map((s, i) => {
-            const koName = (s.names.ko || "").trim();
-            return {
-              ...s,
-              names: {
-                ...s.names,
-                // Overwrite by position; clear when KO stage name is empty
-                [target]: koName ? (tStageNames[i] || "") : "",
-              },
-            };
-          })
-        );
-      }
+      const stageSources = draftStages.map((s) => ({ id: s.id, text: (s.names.ko || "").trim() }));
+      // Never bundle title/description/stage names into one translation array.
+      // A model response that reorders even once can put a stage name into the
+      // description field. Translate each source independently and map stages
+      // back by stable draft ID, not by array position.
+      const translatedByTarget = await Promise.all(
+        targets.map(async (target) => {
+          const [title, description, stagePairs] = await Promise.all([
+            translateSingleKoText(target, koTitle),
+            translateSingleKoText(target, koDesc),
+            Promise.all(
+              stageSources.map(async (stage) => ({
+                id: stage.id,
+                name: await translateSingleKoText(target, stage.text),
+              }))
+            ),
+          ]);
+          return { target, title, description, stageNameById: new Map(stagePairs.map((stage) => [stage.id, stage.name])) };
+        })
+      );
+
+      const nextTitles = { ...titles };
+      const nextDescriptions = { ...descriptions };
+      translatedByTarget.forEach(({ target, title, description }) => {
+        nextTitles[target] = title;
+        nextDescriptions[target] = koDesc ? description : "";
+      });
+      setTitles(nextTitles);
+      setDescriptions(nextDescriptions);
+      setDraftStages((prev) =>
+        prev.map((stage) => {
+          const koName = (stage.names.ko || "").trim();
+          const names = { ...stage.names };
+          translatedByTarget.forEach(({ target, stageNameById }) => {
+            names[target] = koName ? stageNameById.get(stage.id) || "" : "";
+          });
+          return { ...stage, names };
+        })
+      );
       toast({ title: t("track.translated", "자동 번역이 완료되었습니다") });
     } catch (e: any) {
       toast({ title: t("common.error", "오류"), description: e.message, variant: "destructive" });
