@@ -79,21 +79,19 @@ const MultiSelectPopover = ({
             </button>
           )}
         </div>
-        <ScrollArea className="max-h-[260px]">
-          <div className="p-1">
-            {filtered.length === 0 ? (
-              <p className="text-xs text-muted-foreground p-3 text-center">결과 없음</p>
-            ) : (
-              filtered.map((o) => (
-                <label key={o.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-xs">
-                  <Checkbox checked={selected.includes(o.id)} onCheckedChange={() => toggle(o.id)} />
-                  <span className="flex-1 truncate">{o.label}</span>
-                  {o.sub && <span className="text-[10px] text-muted-foreground shrink-0">{o.sub}</span>}
-                </label>
-              ))
-            )}
-          </div>
-        </ScrollArea>
+        <div className="max-h-[320px] overflow-y-auto overscroll-contain p-1">
+          {filtered.length === 0 ? (
+            <p className="text-xs text-muted-foreground p-3 text-center">결과 없음</p>
+          ) : (
+            filtered.map((o) => (
+              <label key={o.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-xs">
+                <Checkbox checked={selected.includes(o.id)} onCheckedChange={() => toggle(o.id)} />
+                <span className="flex-1 truncate">{o.label}</span>
+                {o.sub && <span className="text-[10px] text-muted-foreground shrink-0">{o.sub}</span>}
+              </label>
+            ))
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
