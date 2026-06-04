@@ -698,7 +698,8 @@ const TrackEditorDialog = ({
       if (trackId) {
         const { error } = await supabase.from("learning_tracks" as any).update(trackPayload).eq("id", trackId);
         if (error) throw error;
-        await supabase.from("track_stages" as any).delete().eq("track_id", trackId);
+        const { error: deleteStagesError } = await supabase.from("track_stages" as any).delete().eq("track_id", trackId);
+        if (deleteStagesError) throw deleteStagesError;
       } else {
         const { data, error } = await supabase
           .from("learning_tracks" as any)
