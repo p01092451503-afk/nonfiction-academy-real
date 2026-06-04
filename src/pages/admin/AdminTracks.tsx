@@ -727,36 +727,27 @@ const TrackEditorDialog = ({
       }
 
       const stagesToInsert = draftStages.map((s, i) => ({
+        id: s.id,
         track_id: savedTrackId!,
         name: (s.names.ko || "").trim() || `Stage ${i + 1}`,
         name_en: (s.names.en || "").trim() || null,
         description: s.description.trim() || null,
         order_index: i,
       }));
-      const { data: insertedStagesRaw, error: stageErr } = await supabase
+      const { error: stageErr } = await supabase
         .from("track_stages" as any)
-        .insert(stagesToInsert)
-        .select("id, order_index");
+        .insert(stagesToInsert);
       if (stageErr) throw stageErr;
-      // CRITICAL: .insert().select() does NOT guarantee row order in PostgREST.
-      // Without sorting, stage i18n / course mappings get assigned to the wrong
-      // stage, producing "random" mismatched names (e.g. EN "Foundation" under
-      // KO "Week 2"). Sort by order_index to realign with draftStages[i].
-      const insertedStages = ((insertedStagesRaw as any[]) || [])
-        .slice()
-        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
       const stageRows: any[] = [];
       const stageI18nRows: any[] = [];
-      insertedStages.forEach((s, i) => {
-        const draft = draftStages[i];
-        if (!draft) return;
+      draftStages.forEach((draft) => {
         draft.course_ids.forEach((cid, j) => {
-          stageRows.push({ stage_id: s.id, course_id: cid, order_index: j });
+          stageRows.push({ stage_id: draft.id, course_id: cid, order_index: j });
         });
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const name = (draft.names[lc] || "").trim();
-          if (name) stageI18nRows.push({ stage_id: s.id, language_code: lc, name });
+          if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name });
         });
       });
       if (stageRows.length) {
