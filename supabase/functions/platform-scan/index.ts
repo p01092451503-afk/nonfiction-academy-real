@@ -297,7 +297,96 @@ Deno.serve(async (req) => {
         };
       },
     ),
+
+    // 6) Published courses with 0 contents
+    check("empty_published_courses", "data",
+      "차시 없는 게시 강의",
+      "published 상태인데 course_contents가 0개인 강의를 찾습니다.",
+      async () => {
+        const { data: courses, error } = await svc
+          .from("courses")
+          .select("id, title")
+          .eq("status", "published");
+        if (error) throw error;
+        const ids = (courses ?? []).map((c: any) => c.id);
+        if (ids.length === 0) return { severity: "ok" as const, findings: [] };
+        const { data: contents } = await svc
+          .from("course_contents")
+          .select("course_id")
+          .in("course_id", ids);
+        const have = new Set((contents ?? []).map((c: any) => c.course_id));
+        const findings: Finding[] = [];
+        for (const c of courses ?? []) {
+          if (!have.has((c as any).id)) {
+            findings.push({ rowId: (c as any).id, label: (c as any).title || "(제목 없음)", detail: "차시 0개" });
+          }
+        }
+        return {
+          severity: findings.length === 0 ? "ok" : "error",
+          findings,
+          suggestion: "차시를 추가하거나 강의를 비공개(draft)로 전환하세요.",
+        };
+      },
+    ),
+
+    // 7) Published assessments with 0 questions
+    check("empty_published_assessments", "data",
+      "문항 없는 게시 평가",
+      "is_published=true인데 문항이 0개인 평가를 찾습니다.",
+      async () => {
+        const { data: assessments, error } = await svc
+          .from("assessments")
+          .select("id, title")
+          .eq("is_published", true);
+        if (error) throw error;
+        const ids = (assessments ?? []).map((a: any) => a.id);
+        if (ids.length === 0) return { severity: "ok" as const, findings: [] };
+        const { data: qs } = await svc
+          .from("assessment_questions")
+          .select("assessment_id")
+          .in("assessment_id", ids);
+        const have = new Set((qs ?? []).map((q: any) => q.assessment_id));
+        const findings: Finding[] = [];
+        for (const a of assessments ?? []) {
+          if (!have.has((a as any).id)) {
+            findings.push({ rowId: (a as any).id, label: (a as any).title || "(제목 없음)", detail: "문항 0개" });
+          }
+        }
+        return {
+          severity: findings.length === 0 ? "ok" : "error",
+          findings,
+          suggestion: "문항을 추가하거나 평가를 비공개로 전환하세요.",
+        };
+      },
+    ),
+
+    // 8) Stale enrollments — approved 90+ days ago, 0% progress
+    check("stale_enrollments", "ops",
+      "장기 미진행 수강 신청",
+      "승인된 지 90일 이상 지났는데 진도율이 0%인 수강 신청을 찾습니다.",
+      async () => {
+        const cutoff = new Date(Date.now() - 90 * 86400_000).toISOString();
+        const { data, error } = await svc
+          .from("enrollments")
+          .select("id, user_id, course_id, enrolled_at, progress, courses(title)")
+          .eq("status", "approved")
+          .lte("enrolled_at", cutoff)
+          .lte("progress", 0);
+        if (error) throw error;
+        const findings: Finding[] = ((data as any[]) ?? []).map((e) => ({
+          rowId: e.id,
+          label: e.courses?.title ?? e.course_id,
+          detail: `등록일 ${new Date(e.enrolled_at).toLocaleDateString("ko-KR")} · 진도 0%`,
+        }));
+        return {
+          severity: findings.length === 0 ? "ok" : "warning",
+          findings,
+          suggestion: "독려 알림을 보내거나 수강 신청을 정리하세요.",
+        };
+      },
+    ),
   ]);
+
 
   const summary = {
     ok: results.filter(r => r.severity === "ok").length,
