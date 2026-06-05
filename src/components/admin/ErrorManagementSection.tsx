@@ -45,6 +45,38 @@ const STATUS_META: Record<ErrorStatus, { label: string; className: string }> = {
 
 const STATUS_OPTIONS: ErrorStatus[] = ["open", "in_progress", "resolved", "ignored"];
 
+// 신호등 단계: 긴급(빨강) / 주의(노랑) / 정보(초록)
+type Sev = "urgent" | "warning" | "info";
+const SEV_META: Record<Sev, { label: string; dot: string; ring: string; text: string }> = {
+  urgent:  { label: "긴급", dot: "bg-destructive",                ring: "ring-destructive/30",          text: "text-destructive" },
+  warning: { label: "주의", dot: "bg-warning",                    ring: "ring-warning/30",              text: "text-warning" },
+  info:    { label: "정보", dot: "bg-success",                    ring: "ring-success/30",              text: "text-success" },
+};
+
+const detectSeverity = (row: { severity: string | null; message: string; occurrence_count: number | null; stack: string | null }): Sev => {
+  const raw = (row.severity || "").toLowerCase();
+  if (["critical", "fatal", "urgent", "high", "error"].includes(raw)) {
+    // 'error'는 메시지 분석으로 한 번 더 분류
+    if (raw !== "error") return "urgent";
+  }
+  if (["warning", "warn", "medium"].includes(raw)) return "warning";
+  if (["info", "low", "debug"].includes(raw)) return "info";
+
+  const text = `${row.message}\n${row.stack ?? ""}`.toLowerCase();
+  const urgentPatterns = [
+    "referenceerror", "typeerror", "syntaxerror", "rangeerror",
+    "cannot read", "is not defined", "is not a function", "undefined is not",
+    "failed to fetch", "network error", "500", "503", "crash", "unhandled",
+    "permission denied", "rls", "auth session missing",
+  ];
+  const warnPatterns = ["warn", "deprecat", "slow", "timeout", "404", "abort", "retry"];
+  if (urgentPatterns.some((p) => text.includes(p))) return "urgent";
+  if (warnPatterns.some((p) => text.includes(p))) return "warning";
+  if ((row.occurrence_count ?? 1) >= 10) return "urgent";
+  if ((row.occurrence_count ?? 1) >= 3) return "warning";
+  return "info";
+};
+
 const fallbackCopy = (text: string): boolean => {
   try {
     const ta = document.createElement("textarea");
