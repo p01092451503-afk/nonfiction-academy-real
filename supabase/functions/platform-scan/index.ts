@@ -308,6 +308,21 @@ Deno.serve(async (req) => {
     durationMs: results.reduce((s, r) => s + r.durationMs, 0),
   };
 
+  // Persist scan history (for trend chart). Failure here must NOT break the scan response.
+  try {
+    await svc.from("scan_results").insert({
+      scanned_by: uid,
+      ok_count: summary.ok,
+      warning_count: summary.warning,
+      error_count: summary.error,
+      total_findings: summary.totalFindings,
+      duration_ms: summary.durationMs,
+      results: results as any,
+    });
+  } catch (e) {
+    console.error("[platform-scan] failed to persist scan_results", e);
+  }
+
   return new Response(JSON.stringify({ summary, results }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" },

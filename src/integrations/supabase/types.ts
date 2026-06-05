@@ -2035,6 +2035,84 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_fix_audit: {
+        Row: {
+          affected_count: number
+          applied_at: string
+          applied_by: string | null
+          check_id: string
+          error_message: string | null
+          fix_action: string
+          id: string
+          request_payload: Json | null
+          result_payload: Json | null
+          success: boolean
+        }
+        Insert: {
+          affected_count?: number
+          applied_at?: string
+          applied_by?: string | null
+          check_id: string
+          error_message?: string | null
+          fix_action: string
+          id?: string
+          request_payload?: Json | null
+          result_payload?: Json | null
+          success?: boolean
+        }
+        Update: {
+          affected_count?: number
+          applied_at?: string
+          applied_by?: string | null
+          check_id?: string
+          error_message?: string | null
+          fix_action?: string
+          id?: string
+          request_payload?: Json | null
+          result_payload?: Json | null
+          success?: boolean
+        }
+        Relationships: []
+      }
+      scan_results: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          error_count: number
+          id: string
+          ok_count: number
+          results: Json
+          scanned_at: string
+          scanned_by: string | null
+          total_findings: number
+          warning_count: number
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number
+          error_count?: number
+          id?: string
+          ok_count?: number
+          results?: Json
+          scanned_at?: string
+          scanned_by?: string | null
+          total_findings?: number
+          warning_count?: number
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          error_count?: number
+          id?: string
+          ok_count?: number
+          results?: Json
+          scanned_at?: string
+          scanned_by?: string | null
+          total_findings?: number
+          warning_count?: number
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
