@@ -530,18 +530,11 @@ const TrackEditorDialog = ({
       if (track) {
         const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
         const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
-        // Only fall back to legacy *_en columns when there is NO i18n row for
-        // that language — otherwise stale legacy values (e.g. an old buggy
-        // "Week 4" in description_en) override the canonical i18n table.
-        if (!trackI18nByLang.has("en")) {
-          if (track.title_en) nextTitles.en = track.title_en;
-          if (track.description_en) nextDescs.en = track.description_en;
-        }
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const row = trackI18nByLang.get(lc);
           if (row) {
             nextTitles[lc] = row.title || "";
-            nextDescs[lc] = row.description || "";
+            nextDescs[lc] = nextDescs.ko ? row.description || "" : "";
           }
         });
         setTitles(nextTitles);
@@ -559,10 +552,6 @@ const TrackEditorDialog = ({
       const stagesWithCourses: DraftStage[] = stageList.map((s) => {
         const names: LangMap = { ...emptyLangMap(), ko: s.name || "" };
         const i18nRows = stageI18nByStage.get(s.id) || [];
-        const hasEnI18n = i18nRows.some((r) => r.language_code === "en");
-        // Same legacy fallback rule for stage names: only use name_en if no
-        // i18n row exists for EN.
-        if (!hasEnI18n && s.name_en) names.en = s.name_en;
         i18nRows.forEach((row) => {
           if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
             names[row.language_code as I18nLang] = row.name || "";
