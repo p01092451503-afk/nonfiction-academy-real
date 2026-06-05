@@ -158,7 +158,9 @@ const AdminPlatformHealth = () => {
   };
 
   useEffect(() => {
-    runScan();
+    // 자동 스캔 비활성화: 진입 시에는 이전 추세/감사 로그만 로드하고, 스캔은 버튼 클릭 시 실행
+    loadTrend();
+    loadAudit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
