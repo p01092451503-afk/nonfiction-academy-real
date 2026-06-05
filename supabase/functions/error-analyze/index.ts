@@ -95,12 +95,12 @@ Deno.serve(async (req) => {
     const e = row as ErrorRow;
 
     const systemPrompt =
-      "당신은 React/TypeScript/Supabase(Lovable Cloud) 기반 LMS 플랫폼의 시니어 엔지니어입니다. " +
+      "당신은 React/TypeScript/Supabase 기반 LMS 플랫폼의 시니어 엔지니어입니다. " +
       "운영 중 발생한 런타임 오류 로그를 받아서, (1) 한국어로 원인과 영향 범위를 비기술자도 이해할 수 있도록 간결히 설명하고, " +
-      "(2) Lovable AI 빌더(러버블)에 그대로 붙여넣어 수정 작업을 지시할 수 있는 한국어 작업 프롬프트를 작성합니다. " +
+      "(2) AI 코드 빌더에 그대로 붙여넣어 수정 작업을 지시할 수 있는 한국어 작업 프롬프트를 작성합니다. " +
       "프롬프트는 명령형으로, 어떤 파일/함수/조건을 확인하고 어떻게 고쳐야 하는지 단계별로 적되 추측은 분명히 표시하세요. " +
       "반드시 아래 JSON 스키마로만 응답하세요. 코드블록/마크다운/설명 금지." +
-      ' 스키마: {"explanation": string, "lovable_prompt": string}';
+      ' 스키마: {"explanation": string, "fix_prompt": string}';
 
     const userPrompt = `다음은 운영 환경에서 캡처된 오류 로그입니다.
 
