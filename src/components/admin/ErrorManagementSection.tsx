@@ -256,15 +256,30 @@ const ErrorManagementSection = () => {
             const isOpen = expanded[row.id];
             const meta = STATUS_META[row.status];
             const busy = !!analyzing[row.id];
+            const sev = detectSeverity(row);
+            const sevMeta = SEV_META[sev];
             return (
               <Card key={row.id}>
                 <CardHeader className="p-4 cursor-pointer" onClick={() => setExpanded((p) => ({ ...p, [row.id]: !p[row.id] }))}>
                   <div className="flex items-start gap-3">
+                    {/* 신호등 (긴급/주의/정보) */}
+                    <span
+                      title={`민감도: ${sevMeta.label}`}
+                      className={cn(
+                        "shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-full ring-4",
+                        sevMeta.ring
+                      )}
+                    >
+                      <span className={cn("h-3 w-3 rounded-full", sevMeta.dot)} />
+                    </span>
                     <span className="rounded-md p-1.5 shrink-0 bg-destructive/10">
                       <Bug className="h-4 w-4 text-destructive" />
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className={cn("text-[10px] font-semibold", sevMeta.text, "border-current")}>
+                          {sevMeta.label}
+                        </Badge>
                         <CardTitle className="text-sm font-medium truncate max-w-full">
                           {row.message.split("\n")[0]}
                         </CardTitle>
