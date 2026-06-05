@@ -182,6 +182,8 @@ const CreateCourse = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [editDataLoaded, setEditDataLoaded] = useState(false);
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
+  const [packageUploads, setPackageUploads] = useState<Record<string, boolean>>({});
+  const hasPackageUploadInProgress = Object.values(packageUploads).some(Boolean);
 
   // Load existing course data for edit mode
   useEffect(() => {
@@ -701,6 +703,10 @@ const CreateCourse = () => {
     );
   };
 
+  const setPackageUploading = (tempId: string, uploading: boolean) => {
+    setPackageUploads((prev) => ({ ...prev, [tempId]: uploading }));
+  };
+
   const removeContent = (tempId: string) => {
     setContents((prev) => prev.filter((c) => c.tempId !== tempId));
   };
@@ -1019,7 +1025,8 @@ const CreateCourse = () => {
             }
           });
           if (pkgRows.length) {
-            await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            if (pkgError) throw pkgError;
           }
 
           // Save video package items
@@ -1197,7 +1204,8 @@ const CreateCourse = () => {
             }
           });
           if (pkgRows.length) {
-            await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            if (pkgError) throw pkgError;
           }
 
           // Save video package items
@@ -1245,6 +1253,26 @@ const CreateCourse = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasPackageUploadInProgress) {
+      toast({
+        title: t("common.error"),
+        description: t("createCourse.waitForImageUpload", "이미지 일괄 업로드가 끝난 후 저장해 주세요."),
+        variant: "destructive",
+      });
+      return;
+    }
+    const invalidPackageSlot = contents.find((c) =>
+      (c.source === "images" || c.source === "package") &&
+      ((c.package_items || []).length === 0 || (c.package_items || []).some((it) => !(it.media_url || "").trim()))
+    );
+    if (invalidPackageSlot) {
+      toast({
+        title: t("common.error"),
+        description: t("createCourse.packageItemsRequired", "이미지/미디어 차시는 모든 업로드가 완료되어야 저장할 수 있습니다."),
+        variant: "destructive",
+      });
+      return;
+    }
     if (!title.trim()) {
       toast({ title: t("common.error"), description: t("createCourse.titleRequired2"), variant: "destructive" });
       return;
@@ -1513,6 +1541,7 @@ const CreateCourse = () => {
                 content={content}
                 index={idx}
                 onChange={(field, value) => updateContent(content.tempId, field, value)}
+              onUploadStateChange={(uploading) => setPackageUploading(content.tempId, uploading)}
                 onRemove={() => { /* fixed 4 slots — removal disabled */ }}
                 contentTypeOptions={contentTypeOptions}
                 videoProviderOptions={videoProviderOptions}
@@ -1534,7 +1563,7 @@ const CreateCourse = () => {
               {savingDraft ? t("createCourse.savingBtn") : t("createCourse.saveDraftBtn")}
             </Button>
           )}
-          <Button type="submit" variant="login" size="xl" disabled={isEditMode ? updateMutation.isPending : createMutation.isPending}>
+          <Button type="submit" variant="login" size="xl" disabled={hasPackageUploadInProgress || (isEditMode ? updateMutation.isPending : createMutation.isPending)}>
             {isEditMode
               ? (updateMutation.isPending ? t("createCourse.updatingBtn", "수정 중...") : t("createCourse.updateBtn", "수정하기"))
               : (createMutation.isPending ? t("createCourse.creatingBtn") : t("createCourse.createBtn"))
@@ -1554,11 +1583,12 @@ const CreateCourse = () => {
 /* ───── Unified Content Editor ───── */
 
 const UnifiedContentEditor = ({
-  content, index, onChange, onRemove, contentTypeOptions, videoProviderOptions, t, isAutoTranslating,
+  content, index, onChange, onUploadStateChange, onRemove, contentTypeOptions, videoProviderOptions, t, isAutoTranslating,
 }: {
   content: ContentItem;
   index: number;
   onChange: (field: keyof ContentItem, value: any) => void;
+  onUploadStateChange: (uploading: boolean) => void;
   onRemove: () => void;
   contentTypeOptions: { value: ContentType; label: string; icon: React.ElementType }[];
   videoProviderOptions: { value: VideoProvider; label: string }[];
@@ -1741,6 +1771,7 @@ const UnifiedContentEditor = ({
           <PackageItemsEditor
             items={content.package_items || []}
             onChange={(items) => onChange("package_items", items)}
+            onUploadStateChange={onUploadStateChange}
             imagesOnly={isImages}
           />
         ) : isMango ? (
@@ -2048,10 +2079,12 @@ function normalizeMangoboardUrl(url: string): string {
 const PackageItemsEditor = ({
   items,
   onChange,
+  onUploadStateChange,
   imagesOnly = false,
 }: {
   items: PackageItemDraft[];
   onChange: (items: PackageItemDraft[]) => void;
+  onUploadStateChange?: (uploading: boolean) => void;
   imagesOnly?: boolean;
 }) => {
   const { t } = useTranslation();
@@ -2194,6 +2227,7 @@ const PackageItemsEditor = ({
     }
 
     setBulkUploading(true);
+    onUploadStateChange?.(true);
     setBulkProgress({ done: 0, total: unique.length });
 
     // Pre-create placeholders so user sees order immediately
@@ -2254,6 +2288,7 @@ const PackageItemsEditor = ({
     }
 
     setBulkUploading(false);
+    onUploadStateChange?.(false);
     if (failed.length > 0) {
       toast({
         title: t("createCourse.uploadResult", { done: unique.length - failed.length, failed: failed.length }),
