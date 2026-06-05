@@ -105,6 +105,62 @@ WHERE content_type IN ('image_package','video_package')
       return { action, mode, affectedCount: preview.length, preview: preview.slice(0, 100), sqlPreview, appliedAt: new Date().toISOString() };
     }
 
+    // ──────────────────────────────────────────────────────────────────
+    // 3) Unpublish published courses that have 0 contents
+    case "course_unpublish_empty": {
+      const sqlPreview = `UPDATE courses SET status = 'draft'
+WHERE status = 'published'
+  AND id NOT IN (SELECT course_id FROM course_contents);`;
+      const { data: courses } = await svc.from("courses").select("id, title").eq("status", "published");
+      const ids = (courses ?? []).map((c: any) => c.id);
+      if (ids.length === 0) {
+        return { action, mode, affectedCount: 0, preview: [], sqlPreview, message: "게시 강의가 없습니다." };
+      }
+      const { data: contents } = await svc.from("course_contents").select("course_id").in("course_id", ids);
+      const have = new Set((contents ?? []).map((c: any) => c.course_id));
+      const targets = (courses ?? []).filter((c: any) => !have.has(c.id));
+      const preview = targets.map((c: any) => ({
+        id: c.id, label: c.title || "(제목 없음)", detail: "차시 0개 → draft 전환",
+      }));
+      if (mode === "preview") {
+        return { action, mode, affectedCount: preview.length, preview: preview.slice(0, 100), sqlPreview };
+      }
+      if (preview.length === 0) {
+        return { action, mode, affectedCount: 0, preview: [], sqlPreview, appliedAt: new Date().toISOString(), message: "변경할 행이 없습니다." };
+      }
+      const { error } = await svc.from("courses").update({ status: "draft" }).in("id", preview.map((p) => p.id));
+      if (error) throw error;
+      return { action, mode, affectedCount: preview.length, preview: preview.slice(0, 100), sqlPreview, appliedAt: new Date().toISOString() };
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // 4) Unpublish published assessments with 0 questions
+    case "assessment_unpublish_empty": {
+      const sqlPreview = `UPDATE assessments SET is_published = false
+WHERE is_published = true
+  AND id NOT IN (SELECT assessment_id FROM assessment_questions);`;
+      const { data: assessments } = await svc.from("assessments").select("id, title").eq("is_published", true);
+      const ids = (assessments ?? []).map((a: any) => a.id);
+      if (ids.length === 0) {
+        return { action, mode, affectedCount: 0, preview: [], sqlPreview, message: "게시된 평가가 없습니다." };
+      }
+      const { data: qs } = await svc.from("assessment_questions").select("assessment_id").in("assessment_id", ids);
+      const have = new Set((qs ?? []).map((q: any) => q.assessment_id));
+      const targets = (assessments ?? []).filter((a: any) => !have.has(a.id));
+      const preview = targets.map((a: any) => ({
+        id: a.id, label: a.title || "(제목 없음)", detail: "문항 0개 → 비공개 전환",
+      }));
+      if (mode === "preview") {
+        return { action, mode, affectedCount: preview.length, preview: preview.slice(0, 100), sqlPreview };
+      }
+      if (preview.length === 0) {
+        return { action, mode, affectedCount: 0, preview: [], sqlPreview, appliedAt: new Date().toISOString(), message: "변경할 행이 없습니다." };
+      }
+      const { error } = await svc.from("assessments").update({ is_published: false }).in("id", preview.map((p) => p.id));
+      if (error) throw error;
+      return { action, mode, affectedCount: preview.length, preview: preview.slice(0, 100), sqlPreview, appliedAt: new Date().toISOString() };
+    }
+
     default:
       throw new Error(`알 수 없는 fix action: ${action}`);
   }
