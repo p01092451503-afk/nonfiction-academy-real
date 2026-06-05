@@ -195,16 +195,15 @@ const AdminTracks = () => {
       (r) => r.track_id === track.id && r.language_code === lang
     );
     if (tr?.title) return tr.title;
-    if (lang === "en" && track.title_en) return track.title_en;
     return track.title;
   };
   const trackDescription = (track: Track) => {
     if (lang === "ko") return track.description;
+    if (!(track.description || "").trim()) return null;
     const tr = (tracksI18n as any[]).find(
       (r) => r.track_id === track.id && r.language_code === lang
     );
     if (tr?.description) return tr.description;
-    if (lang === "en" && (track as any).description_en) return (track as any).description_en;
     return track.description;
   };
   const stageName = (stage: Stage) => {
@@ -213,7 +212,6 @@ const AdminTracks = () => {
       (r) => r.stage_id === stage.id && r.language_code === lang
     );
     if (tr?.name) return tr.name;
-    if (lang === "en" && stage.name_en) return stage.name_en;
     return stage.name;
   };
   const courseTitleLocalized = (course: { id: string; title: string }) => {
