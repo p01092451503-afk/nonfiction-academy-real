@@ -1025,7 +1025,8 @@ const CreateCourse = () => {
             }
           });
           if (pkgRows.length) {
-            await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            if (pkgError) throw pkgError;
           }
 
           // Save video package items
@@ -1203,7 +1204,8 @@ const CreateCourse = () => {
             }
           });
           if (pkgRows.length) {
-            await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            if (pkgError) throw pkgError;
           }
 
           // Save video package items
@@ -1251,6 +1253,14 @@ const CreateCourse = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (hasPackageUploadInProgress) {
+      toast({
+        title: t("common.error"),
+        description: t("createCourse.waitForImageUpload", "이미지 일괄 업로드가 끝난 후 저장해 주세요."),
+        variant: "destructive",
+      });
+      return;
+    }
     if (!title.trim()) {
       toast({ title: t("common.error"), description: t("createCourse.titleRequired2"), variant: "destructive" });
       return;
