@@ -218,6 +218,31 @@ const ErrorManagementSection = () => {
     }
   };
 
+  const [bulkIgnoring, setBulkIgnoring] = useState(false);
+
+  const testRows = useMemo(() => rows.filter(isTestRow), [rows]);
+
+  const bulkIgnoreTests = async () => {
+    if (testRows.length === 0) return;
+    setBulkIgnoring(true);
+    try {
+      const ids = testRows.map((r) => r.id);
+      const { error } = await supabase
+        .from("error_alert_log")
+        .update({ status: "ignored", resolved_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast({ title: "일괄 무시 완료", description: `${ids.length}건의 테스트/더미 오류를 무시 처리했습니다.` });
+      qc.invalidateQueries({ queryKey: ["error-alert-log"] });
+      qc.invalidateQueries({ queryKey: ["error-alert-log-counts"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: "일괄 무시 실패", description: msg, variant: "destructive" });
+    } finally {
+      setBulkIgnoring(false);
+    }
+  };
+
   const buildFallbackPrompt = (row: ErrorRow) =>
     `다음 운영 오류를 추적하고 수정해줘.\n\n` +
     `[메시지]\n${row.message}\n\n` +
