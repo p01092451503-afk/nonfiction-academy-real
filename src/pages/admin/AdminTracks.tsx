@@ -534,8 +534,10 @@ const TrackEditorDialog = ({
         const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const row = trackI18nByLang.get(lc);
-          if (row) {
+          if (matchesSource(row, "source_title", nextTitles.ko)) {
             nextTitles[lc] = row.title || "";
+          }
+          if (matchesSource(row, "source_description", nextDescs.ko)) {
             nextDescs[lc] = nextDescs.ko ? row.description || "" : "";
           }
         });
@@ -555,7 +557,7 @@ const TrackEditorDialog = ({
         const names: LangMap = { ...emptyLangMap(), ko: s.name || "" };
         const i18nRows = stageI18nByStage.get(s.id) || [];
         i18nRows.forEach((row) => {
-          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+          if ((I18N_LANGS as readonly string[]).includes(row.language_code) && matchesSource(row, "source_name", names.ko)) {
             names[row.language_code as I18nLang] = row.name || "";
           }
         });
@@ -721,6 +723,8 @@ const TrackEditorDialog = ({
           language_code: lc,
           title: (titles[lc] || "").trim(),
           description: koDescription ? (descriptions[lc] || "").trim() || null : null,
+          source_title: koTitle,
+          source_description: koDescription || null,
         }))
         .filter((r) => r.title);
       if (trackI18nRows.length) {
@@ -749,7 +753,7 @@ const TrackEditorDialog = ({
         });
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const name = (draft.names[lc] || "").trim();
-          if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name });
+          if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name, source_name: (draft.names.ko || "").trim() });
         });
       });
       if (stageRows.length) {
