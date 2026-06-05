@@ -279,10 +279,24 @@ const ErrorManagementSection = () => {
             ))}
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-7 text-xs">
-          {isLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCcw className="h-3 w-3 mr-1" />}
-          새로고침
-        </Button>
+        <div className="flex items-center gap-2">
+          {testRows.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={bulkIgnoreTests}
+              disabled={bulkIgnoring}
+            >
+              {bulkIgnoring ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Trash2 className="h-3 w-3 mr-1" />}
+              테스트 항목 {testRows.length}건 일괄 무시
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-7 text-xs">
+            {isLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCcw className="h-3 w-3 mr-1" />}
+            새로고침
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
