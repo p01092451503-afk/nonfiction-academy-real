@@ -450,6 +450,8 @@ const AdminTracks = () => {
 
 type LangMap = Partial<Record<I18nLang, string>>;
 const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const clearTranslations = (values: LangMap): LangMap => ({ ...values, en: "", ja: "", "zh-CN": "" });
 
 const translateSingleKoText = async (target: TargetLang, text: string) => {
   const source = text.trim();
@@ -490,9 +492,9 @@ const TrackEditorDialog = ({
   const [activeLang, setActiveLang] = useState<I18nLang>("ko");
   const [translating, setTranslating] = useState(false);
   const [draftStages, setDraftStages] = useState<DraftStage[]>([
-    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 0, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 1, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 2, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: 0, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: 1, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: 2, course_ids: [], _isNew: true },
   ]);
   const [saving, setSaving] = useState(false);
 
