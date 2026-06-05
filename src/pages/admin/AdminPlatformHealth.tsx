@@ -99,6 +99,16 @@ const CHECK_TO_FIX: Record<string, { action: string; label: string; description:
     label: "빈 패키지 게시 해제",
     description: "image_package / video_package인데 항목이 0개인 게시 차시를 비공개로 전환합니다. (멱등 · 안전)",
   },
+  empty_published_courses: {
+    action: "course_unpublish_empty",
+    label: "빈 강의 비공개",
+    description: "차시가 0개인 게시 강의를 draft로 전환합니다. (멱등 · 안전)",
+  },
+  empty_published_assessments: {
+    action: "assessment_unpublish_empty",
+    label: "빈 평가 비공개",
+    description: "문항이 0개인 게시 평가를 is_published=false로 전환합니다. (멱등 · 안전)",
+  },
 };
 
 const AdminPlatformHealth = () => {
