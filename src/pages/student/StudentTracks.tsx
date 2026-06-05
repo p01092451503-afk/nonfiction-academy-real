@@ -116,7 +116,7 @@ const StudentTracks = () => {
             ...s,
             localizedName:
               stageTr?.name ||
-              (lang === "en" && s.name_en ? s.name_en : s.name),
+              s.name,
             courses: (stageCoursesByStage.get(s.id) || []).map((sc: any) => ({
               ...sc.courses,
               localizedTitle: pickCourseTitle(sc.courses),
@@ -133,10 +133,9 @@ const StudentTracks = () => {
           ...track,
           localizedTitle:
             trackTr?.title ||
-            (lang === "en" && track.title_en ? track.title_en : track.title),
+            track.title,
           localizedDescription:
-            trackTr?.description ||
-            (lang === "en" && track.description_en ? track.description_en : track.description),
+            track.description ? trackTr?.description || track.description : null,
           assigned_at: te.assigned_at,
           stages: stagesWithCourses,
           progress,
