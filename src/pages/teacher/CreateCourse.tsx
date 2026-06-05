@@ -182,6 +182,8 @@ const CreateCourse = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [editDataLoaded, setEditDataLoaded] = useState(false);
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
+  const [packageUploads, setPackageUploads] = useState<Record<string, boolean>>({});
+  const hasPackageUploadInProgress = Object.values(packageUploads).some(Boolean);
 
   // Load existing course data for edit mode
   useEffect(() => {
@@ -699,6 +701,10 @@ const CreateCourse = () => {
         return updated;
       })
     );
+  };
+
+  const setPackageUploading = (tempId: string, uploading: boolean) => {
+    setPackageUploads((prev) => ({ ...prev, [tempId]: uploading }));
   };
 
   const removeContent = (tempId: string) => {
