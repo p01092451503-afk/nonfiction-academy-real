@@ -167,23 +167,24 @@ ${e.stack ?? "(없음)"}
 
     const aiJson = await aiRes.json();
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let parsed: { explanation?: string; lovable_prompt?: string } = {};
-    try { parsed = JSON.parse(content); } catch { parsed = { explanation: content, lovable_prompt: "" }; }
+    let parsed: { explanation?: string; fix_prompt?: string; lovable_prompt?: string } = {};
+    try { parsed = JSON.parse(content); } catch { parsed = { explanation: content, fix_prompt: "" }; }
 
     const explanation = (parsed.explanation ?? "").toString().slice(0, 8000);
-    const lovablePrompt = (parsed.lovable_prompt ?? "").toString().slice(0, 8000);
+    // 신/구 키 모두 지원 (fix_prompt 우선)
+    const fixPrompt = ((parsed.fix_prompt ?? parsed.lovable_prompt) ?? "").toString().slice(0, 8000);
     const now = new Date().toISOString();
 
     await svc.from("error_alert_log").update({
       ai_explanation: explanation,
-      ai_lovable_prompt: lovablePrompt,
+      ai_lovable_prompt: fixPrompt,
       ai_generated_at: now,
     }).eq("id", errorId);
 
     return new Response(JSON.stringify({
       ok: true,
       explanation,
-      lovable_prompt: lovablePrompt,
+      fix_prompt: fixPrompt,
       generated_at: now,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
