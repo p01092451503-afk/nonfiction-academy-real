@@ -233,8 +233,10 @@ const ErrorManagementSection = () => {
   };
 
   const [bulkIgnoring, setBulkIgnoring] = useState(false);
+  const [bulkResolving, setBulkResolving] = useState(false);
 
   const testRows = useMemo(() => rows.filter(isTestRow), [rows]);
+  const resolvedRows = useMemo(() => rows.filter(isResolvedRow), [rows]);
 
   const bulkIgnoreTests = async () => {
     if (testRows.length === 0) return;
@@ -254,6 +256,27 @@ const ErrorManagementSection = () => {
       toast({ title: "일괄 무시 실패", description: msg, variant: "destructive" });
     } finally {
       setBulkIgnoring(false);
+    }
+  };
+
+  const bulkResolveFixed = async () => {
+    if (resolvedRows.length === 0) return;
+    setBulkResolving(true);
+    try {
+      const ids = resolvedRows.map((r) => r.id);
+      const { error } = await supabase
+        .from("error_alert_log")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast({ title: "일괄 해결 완료", description: `${ids.length}건의 이미 수정된 오류를 해결 처리했습니다.` });
+      qc.invalidateQueries({ queryKey: ["error-alert-log"] });
+      qc.invalidateQueries({ queryKey: ["error-alert-log-counts"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: "일괄 해결 실패", description: msg, variant: "destructive" });
+    } finally {
+      setBulkResolving(false);
     }
   };
 
