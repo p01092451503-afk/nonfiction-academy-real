@@ -1261,14 +1261,14 @@ const CreateCourse = () => {
       });
       return;
     }
-    const emptyPackageSlot = contents.find((c) =>
+    const invalidPackageSlot = contents.find((c) =>
       (c.source === "images" || c.source === "package") &&
-      !(c.package_items || []).some((it) => (it.media_url || "").trim())
+      ((c.package_items || []).length === 0 || (c.package_items || []).some((it) => !(it.media_url || "").trim()))
     );
-    if (emptyPackageSlot) {
+    if (invalidPackageSlot) {
       toast({
         title: t("common.error"),
-        description: t("createCourse.packageItemsRequired", "이미지/미디어 차시는 업로드된 자료가 있어야 저장할 수 있습니다."),
+        description: t("createCourse.packageItemsRequired", "이미지/미디어 차시는 모든 업로드가 완료되어야 저장할 수 있습니다."),
         variant: "destructive",
       });
       return;
