@@ -64,13 +64,13 @@ const StudentCourses = () => {
     queryFn: async () => {
       const { data: te } = await supabase
         .from("track_enrollments")
-        .select("track_id, learning_tracks(id, title, title_en)")
+          .select("track_id, learning_tracks(id, title)")
         .eq("user_id", user!.id);
       const trackIds = (te || []).map((r: any) => r.track_id);
       if (trackIds.length === 0) return new Map();
 
       const [{ data: stages }, { data: stageCourses }, { data: tracksI18n }, { data: stagesI18n }] = await Promise.all([
-        supabase.from("track_stages").select("id, track_id, name, name_en, order_index").in("track_id", trackIds).order("order_index"),
+        supabase.from("track_stages").select("id, track_id, name, order_index").in("track_id", trackIds).order("order_index"),
         supabase.from("track_stage_courses").select("stage_id, course_id, order_index"),
         supabase.from("learning_tracks_i18n").select("track_id, language_code, title").in("track_id", trackIds),
         supabase.from("track_stages_i18n").select("stage_id, language_code, name"),
@@ -87,12 +87,12 @@ const StudentCourses = () => {
       const trackTitle = (trackId: string) => {
         const tr = (tracksI18n || []).find((r: any) => r.track_id === trackId && r.language_code === lang);
         const base = trackById.get(trackId);
-        return tr?.title || (lang === "en" && base?.title_en ? base.title_en : base?.title) || "";
+        return tr?.title || base?.title || "";
       };
       const stageName = (stage: any) => {
         if (!stage) return "";
         const tr = (stagesI18n || []).find((r: any) => r.stage_id === stage.id && r.language_code === lang);
-        return tr?.name || (lang === "en" && stage.name_en ? stage.name_en : stage.name) || "";
+        return tr?.name || stage.name || "";
       };
 
       const map = new Map<string, Array<{ trackId: string; trackTitle: string; stageIdx: number; stageName: string }>>();
