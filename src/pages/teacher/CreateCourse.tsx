@@ -1261,6 +1261,18 @@ const CreateCourse = () => {
       });
       return;
     }
+    const emptyPackageSlot = contents.find((c) =>
+      (c.source === "images" || c.source === "package") &&
+      !(c.package_items || []).some((it) => (it.media_url || "").trim())
+    );
+    if (emptyPackageSlot) {
+      toast({
+        title: t("common.error"),
+        description: t("createCourse.packageItemsRequired", "이미지/미디어 차시는 업로드된 자료가 있어야 저장할 수 있습니다."),
+        variant: "destructive",
+      });
+      return;
+    }
     if (!title.trim()) {
       toast({ title: t("common.error"), description: t("createCourse.titleRequired2"), variant: "destructive" });
       return;
@@ -1551,7 +1563,7 @@ const CreateCourse = () => {
               {savingDraft ? t("createCourse.savingBtn") : t("createCourse.saveDraftBtn")}
             </Button>
           )}
-          <Button type="submit" variant="login" size="xl" disabled={isEditMode ? updateMutation.isPending : createMutation.isPending}>
+          <Button type="submit" variant="login" size="xl" disabled={hasPackageUploadInProgress || (isEditMode ? updateMutation.isPending : createMutation.isPending)}>
             {isEditMode
               ? (updateMutation.isPending ? t("createCourse.updatingBtn", "수정 중...") : t("createCourse.updateBtn", "수정하기"))
               : (createMutation.isPending ? t("createCourse.creatingBtn") : t("createCourse.createBtn"))
