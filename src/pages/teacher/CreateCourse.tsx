@@ -2067,10 +2067,12 @@ function normalizeMangoboardUrl(url: string): string {
 const PackageItemsEditor = ({
   items,
   onChange,
+  onUploadStateChange,
   imagesOnly = false,
 }: {
   items: PackageItemDraft[];
   onChange: (items: PackageItemDraft[]) => void;
+  onUploadStateChange?: (uploading: boolean) => void;
   imagesOnly?: boolean;
 }) => {
   const { t } = useTranslation();
@@ -2213,6 +2215,7 @@ const PackageItemsEditor = ({
     }
 
     setBulkUploading(true);
+    onUploadStateChange?.(true);
     setBulkProgress({ done: 0, total: unique.length });
 
     // Pre-create placeholders so user sees order immediately
@@ -2273,6 +2276,7 @@ const PackageItemsEditor = ({
     }
 
     setBulkUploading(false);
+    onUploadStateChange?.(false);
     if (failed.length > 0) {
       toast({
         title: t("createCourse.uploadResult", { done: unique.length - failed.length, failed: failed.length }),
