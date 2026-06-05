@@ -45,12 +45,48 @@ const STATUS_META: Record<ErrorStatus, { label: string; className: string }> = {
 
 const STATUS_OPTIONS: ErrorStatus[] = ["open", "in_progress", "resolved", "ignored"];
 
-const copy = async (text: string, label = "복사됨") => {
+const fallbackCopy = (text: string): boolean => {
   try {
-    await navigator.clipboard.writeText(text);
-    toast({ title: label, description: `${text.length}자가 클립보드에 복사되었습니다.` });
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
   } catch {
-    toast({ title: "복사 실패", description: "브라우저가 클립보드 접근을 거부했습니다.", variant: "destructive" });
+    return false;
+  }
+};
+
+const copy = async (text: string, label = "복사됨") => {
+  let success = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      success = true;
+    }
+  } catch {
+    success = false;
+  }
+  if (!success) success = fallbackCopy(text);
+  if (success) {
+    toast({ title: label, description: `${text.length}자가 클립보드에 복사되었습니다.` });
+  } else {
+    toast({
+      title: "자동 복사 실패",
+      description: "아래 텍스트 영역에서 수동으로 복사(Ctrl/Cmd+C)해 주세요.",
+      variant: "destructive",
+    });
+    // 수동 복사 가능하도록 prompt 띄움
+    try { window.prompt("아래 내용을 복사하세요 (Ctrl/Cmd+C → Enter):", text); } catch {}
   }
 };
 
