@@ -1041,7 +1041,10 @@ const CreateCourse = () => {
           });
           if (pkgRows.length) {
             const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows, { defaultToNull: false });
-            if (pkgError) throw pkgError;
+            if (pkgError) {
+              const detail = `${pkgError.message || ""}${pkgError.details ? ` | ${pkgError.details}` : ""}${pkgError.hint ? ` | hint: ${pkgError.hint}` : ""} (총 ${pkgRows.length}행 저장 시도)`;
+              throw new Error(`이미지/미디어 차시 저장 실패: ${detail}`);
+            }
           }
 
           // Save video package items
