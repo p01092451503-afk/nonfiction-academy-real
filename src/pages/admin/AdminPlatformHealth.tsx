@@ -299,6 +299,11 @@ const AdminPlatformHealth = () => {
           </Card>
         )}
 
+        {/* Operational error management (Slack-fed) */}
+        <ErrorManagementSection />
+
+
+
         {/* Loading state */}
         {loading && !data && (
           <Card><CardContent className="p-8 flex items-center justify-center gap-2 text-muted-foreground">
