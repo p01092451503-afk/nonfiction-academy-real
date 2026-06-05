@@ -96,6 +96,20 @@ const isTestRow = (row: ErrorRow): boolean => {
   return TEST_PATTERNS.some((p) => hay.includes(p.toLowerCase()));
 };
 
+// 이미 코드로 수정 완료된(=재발 가능성이 낮은) 패턴
+const RESOLVED_PATTERNS = [
+  "fragment is not defined",
+  "cannot read properties of undefined", // reading 'item_type' 포함
+  "atrisk is not defined",
+  "alerttriangle is not defined",
+  "failed to fetch dynamically imported module",
+];
+
+const isResolvedRow = (row: ErrorRow): boolean => {
+  const hay = `${row.message}\n${row.stack ?? ""}\n${row.source ?? ""}`.toLowerCase();
+  return RESOLVED_PATTERNS.some((p) => hay.includes(p.toLowerCase()));
+};
+
 const fallbackCopy = (text: string): boolean => {
   try {
     const ta = document.createElement("textarea");
@@ -219,8 +233,10 @@ const ErrorManagementSection = () => {
   };
 
   const [bulkIgnoring, setBulkIgnoring] = useState(false);
+  const [bulkResolving, setBulkResolving] = useState(false);
 
   const testRows = useMemo(() => rows.filter(isTestRow), [rows]);
+  const resolvedRows = useMemo(() => rows.filter(isResolvedRow), [rows]);
 
   const bulkIgnoreTests = async () => {
     if (testRows.length === 0) return;
@@ -240,6 +256,27 @@ const ErrorManagementSection = () => {
       toast({ title: "일괄 무시 실패", description: msg, variant: "destructive" });
     } finally {
       setBulkIgnoring(false);
+    }
+  };
+
+  const bulkResolveFixed = async () => {
+    if (resolvedRows.length === 0) return;
+    setBulkResolving(true);
+    try {
+      const ids = resolvedRows.map((r) => r.id);
+      const { error } = await supabase
+        .from("error_alert_log")
+        .update({ status: "resolved", resolved_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast({ title: "일괄 해결 완료", description: `${ids.length}건의 이미 수정된 오류를 해결 처리했습니다.` });
+      qc.invalidateQueries({ queryKey: ["error-alert-log"] });
+      qc.invalidateQueries({ queryKey: ["error-alert-log-counts"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: "일괄 해결 실패", description: msg, variant: "destructive" });
+    } finally {
+      setBulkResolving(false);
     }
   };
 
@@ -280,6 +317,18 @@ const ErrorManagementSection = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {resolvedRows.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs border-success/40 text-success hover:bg-success/10"
+              onClick={bulkResolveFixed}
+              disabled={bulkResolving}
+            >
+              {bulkResolving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+              해결된 항목 {resolvedRows.length}건 일괄 처리
+            </Button>
+          )}
           {testRows.length > 0 && (
             <Button
               size="sm"
