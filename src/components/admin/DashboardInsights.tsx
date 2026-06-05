@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -74,21 +75,28 @@ const Heatmap = ({ cells }: { cells: { dow: number; hr: number; n: number }[] })
   cells.forEach((c) => { grid[c.dow][c.hr] = c.n; });
   const days = ["일", "월", "화", "수", "목", "금", "토"];
   return (
-    <div className="overflow-x-auto">
-      <div className="inline-grid gap-px" style={{ gridTemplateColumns: "auto repeat(24, minmax(14px, 1fr))" }}>
+    <div className="w-full">
+      <div className="grid w-full gap-1" style={{ gridTemplateColumns: "auto repeat(24, minmax(0, 1fr))" }}>
         <div />
         {Array.from({ length: 24 }, (_, h) => (
-          <div key={h} className="text-[9px] text-muted-foreground text-center">{h % 3 === 0 ? h : ""}</div>
+          <div key={h} className="text-[10px] text-muted-foreground text-center">{h % 3 === 0 ? h : ""}</div>
         ))}
         {grid.map((row, d) => (
-          <>
-            <div key={`d${d}`} className="text-[10px] text-muted-foreground pr-1 text-right self-center">{days[d]}</div>
+          <Fragment key={`r${d}`}>
+            <div className="text-[11px] text-muted-foreground pr-2 text-right self-center">{days[d]}</div>
             {row.map((n, h) => {
               const intensity = n / max;
               const bg = n === 0 ? "hsl(var(--muted))" : `hsl(var(--primary) / ${0.15 + intensity * 0.85})`;
-              return <div key={`${d}-${h}`} title={`${days[d]} ${h}시: ${n}회`} className="h-3.5 rounded-sm" style={{ background: bg }} />;
+              return (
+                <div
+                  key={`${d}-${h}`}
+                  title={`${days[d]} ${h}시: ${n}회`}
+                  className="aspect-square w-full rounded-sm"
+                  style={{ background: bg }}
+                />
+              );
             })}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
