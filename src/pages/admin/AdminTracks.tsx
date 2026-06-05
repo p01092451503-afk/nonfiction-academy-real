@@ -452,6 +452,8 @@ type LangMap = Partial<Record<I18nLang, string>>;
 const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
 const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
 const clearTranslations = (values: LangMap): LangMap => ({ ...values, en: "", ja: "", "zh-CN": "" });
+const matchesSource = (row: any, field: string, source: string | null | undefined) =>
+  !!row && !!(source || "").trim() && typeof row[field] === "string" && row[field].trim() === (source || "").trim();
 
 const translateSingleKoText = async (target: TargetLang, text: string) => {
   const source = text.trim();
