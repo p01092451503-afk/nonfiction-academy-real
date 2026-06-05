@@ -194,7 +194,7 @@ const AdminTracks = () => {
     const tr = (tracksI18n as any[]).find(
       (r) => r.track_id === track.id && r.language_code === lang
     );
-    if (tr?.title) return tr.title;
+    if (matchesSource(tr, "source_title", track.title) && tr?.title) return tr.title;
     return track.title;
   };
   const trackDescription = (track: Track) => {
@@ -203,7 +203,7 @@ const AdminTracks = () => {
     const tr = (tracksI18n as any[]).find(
       (r) => r.track_id === track.id && r.language_code === lang
     );
-    if (tr?.description) return tr.description;
+    if (matchesSource(tr, "source_description", track.description) && tr?.description) return tr.description;
     return track.description;
   };
   const stageName = (stage: Stage) => {
@@ -211,7 +211,7 @@ const AdminTracks = () => {
     const tr = (stagesI18n as any[]).find(
       (r) => r.stage_id === stage.id && r.language_code === lang
     );
-    if (tr?.name) return tr.name;
+    if (matchesSource(tr, "source_name", stage.name) && tr?.name) return tr.name;
     return stage.name;
   };
   const courseTitleLocalized = (course: { id: string; title: string }) => {
