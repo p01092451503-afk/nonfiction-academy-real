@@ -1262,21 +1262,35 @@ const CreateCourse = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (hasPackageUploadInProgress) {
+      const pendingKeys = Object.entries(packageUploads).filter(([, v]) => v).map(([k]) => k);
       toast({
         title: t("common.error"),
-        description: t("createCourse.waitForImageUpload", "이미지 일괄 업로드가 끝난 후 저장해 주세요."),
+        description: `${t("createCourse.waitForImageUpload", "이미지 일괄 업로드가 끝난 후 저장해 주세요.")}\n진행 중인 슬롯: ${pendingKeys.join(", ") || "-"}`,
         variant: "destructive",
       });
       return;
     }
-    const invalidPackageSlot = contents.find((c) =>
-      (c.source === "images" || c.source === "package") &&
-      ((c.package_items || []).length === 0 || (c.package_items || []).some((it) => !(it.media_url || "").trim()))
-    );
-    if (invalidPackageSlot) {
+    // 누락 정보 상세 수집
+    const invalidIssues: string[] = [];
+    contents.forEach((c, idx) => {
+      if (c.source !== "images" && c.source !== "package") return;
+      const items = c.package_items || [];
+      const rowLabel = `[${idx + 1}차시${c.title ? ` · ${c.title}` : ""}]`;
+      if (items.length === 0) {
+        invalidIssues.push(`${rowLabel} 업로드된 이미지/미디어가 없습니다.`);
+        return;
+      }
+      const missingIndexes = items
+        .map((it, i) => (!(it.media_url || "").trim() ? i + 1 : null))
+        .filter((v): v is number => v !== null);
+      if (missingIndexes.length > 0) {
+        invalidIssues.push(`${rowLabel} 업로드 미완료 슬롯: ${missingIndexes.join(", ")}번 (총 ${items.length}개 중 ${missingIndexes.length}개 누락)`);
+      }
+    });
+    if (invalidIssues.length > 0) {
       toast({
-        title: t("common.error"),
-        description: t("createCourse.packageItemsRequired", "이미지/미디어 차시는 모든 업로드가 완료되어야 저장할 수 있습니다."),
+        title: t("createCourse.packageItemsRequired", "이미지/미디어 차시는 모든 업로드가 완료되어야 저장할 수 있습니다."),
+        description: invalidIssues.slice(0, 5).join("\n") + (invalidIssues.length > 5 ? `\n…외 ${invalidIssues.length - 5}건` : ""),
         variant: "destructive",
       });
       return;
