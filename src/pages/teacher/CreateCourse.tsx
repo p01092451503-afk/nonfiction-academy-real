@@ -1032,16 +1032,9 @@ const CreateCourse = () => {
                   overlay_y: it.overlay_y ?? null,
                   overlay_w: it.overlay_w ?? null,
                   overlay_h: it.overlay_h ?? null,
-                  overlay_autoplay: it.overlay_autoplay ?? undefined,
-                  overlay_loop: it.overlay_loop ?? undefined,
-                  overlay_muted: it.overlay_muted ?? undefined,
-                  overlay_show_controls: it.overlay_show_controls ?? undefined,
-                  overlay_volume: it.overlay_volume ?? undefined,
-                  overlay_playback_rate: it.overlay_playback_rate ?? undefined,
+                  ...packageOverlayOptionsForSave(it),
                   overlay_start_sec: it.overlay_start_sec ?? null,
                   overlay_end_sec: it.overlay_end_sec ?? null,
-                  overlay_delay_sec: it.overlay_delay_sec ?? undefined,
-                  overlay_opacity: it.overlay_opacity ?? undefined,
                 });
               });
             }
@@ -1211,16 +1204,9 @@ const CreateCourse = () => {
                   overlay_y: it.overlay_y ?? null,
                   overlay_w: it.overlay_w ?? null,
                   overlay_h: it.overlay_h ?? null,
-                  overlay_autoplay: it.overlay_autoplay ?? undefined,
-                  overlay_loop: it.overlay_loop ?? undefined,
-                  overlay_muted: it.overlay_muted ?? undefined,
-                  overlay_show_controls: it.overlay_show_controls ?? undefined,
-                  overlay_volume: it.overlay_volume ?? undefined,
-                  overlay_playback_rate: it.overlay_playback_rate ?? undefined,
+                  ...packageOverlayOptionsForSave(it),
                   overlay_start_sec: it.overlay_start_sec ?? null,
                   overlay_end_sec: it.overlay_end_sec ?? null,
-                  overlay_delay_sec: it.overlay_delay_sec ?? undefined,
-                  overlay_opacity: it.overlay_opacity ?? undefined,
                 });
               });
             }
