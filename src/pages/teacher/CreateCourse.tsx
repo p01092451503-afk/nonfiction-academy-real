@@ -76,6 +76,28 @@ export interface PackageItemDraft {
   overlay_opacity?: number | null;
 }
 
+const DEFAULT_PACKAGE_OVERLAY_OPTIONS = {
+  overlay_autoplay: true,
+  overlay_loop: true,
+  overlay_muted: true,
+  overlay_show_controls: false,
+  overlay_volume: 100,
+  overlay_playback_rate: 1.0,
+  overlay_delay_sec: 0,
+  overlay_opacity: 100,
+} as const;
+
+const packageOverlayOptionsForSave = (item: PackageItemDraft) => ({
+  overlay_autoplay: item.overlay_autoplay ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_autoplay,
+  overlay_loop: item.overlay_loop ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_loop,
+  overlay_muted: item.overlay_muted ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_muted,
+  overlay_show_controls: item.overlay_show_controls ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_show_controls,
+  overlay_volume: item.overlay_volume ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_volume,
+  overlay_playback_rate: item.overlay_playback_rate ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_playback_rate,
+  overlay_delay_sec: item.overlay_delay_sec ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_delay_sec,
+  overlay_opacity: item.overlay_opacity ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_opacity,
+});
+
 interface ContentItem {
   tempId: string;
   title: string;
