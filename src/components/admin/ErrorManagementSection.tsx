@@ -317,6 +317,18 @@ const ErrorManagementSection = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {resolvedRows.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs border-success/40 text-success hover:bg-success/10"
+              onClick={bulkResolveFixed}
+              disabled={bulkResolving}
+            >
+              {bulkResolving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+              해결된 항목 {resolvedRows.length}건 일괄 처리
+            </Button>
+          )}
           {testRows.length > 0 && (
             <Button
               size="sm"
