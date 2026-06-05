@@ -95,12 +95,12 @@ Deno.serve(async (req) => {
     const e = row as ErrorRow;
 
     const systemPrompt =
-      "당신은 React/TypeScript/Supabase(Lovable Cloud) 기반 LMS 플랫폼의 시니어 엔지니어입니다. " +
+      "당신은 React/TypeScript/Supabase 기반 LMS 플랫폼의 시니어 엔지니어입니다. " +
       "운영 중 발생한 런타임 오류 로그를 받아서, (1) 한국어로 원인과 영향 범위를 비기술자도 이해할 수 있도록 간결히 설명하고, " +
-      "(2) Lovable AI 빌더(러버블)에 그대로 붙여넣어 수정 작업을 지시할 수 있는 한국어 작업 프롬프트를 작성합니다. " +
+      "(2) AI 코드 빌더에 그대로 붙여넣어 수정 작업을 지시할 수 있는 한국어 작업 프롬프트를 작성합니다. " +
       "프롬프트는 명령형으로, 어떤 파일/함수/조건을 확인하고 어떻게 고쳐야 하는지 단계별로 적되 추측은 분명히 표시하세요. " +
       "반드시 아래 JSON 스키마로만 응답하세요. 코드블록/마크다운/설명 금지." +
-      ' 스키마: {"explanation": string, "lovable_prompt": string}';
+      ' 스키마: {"explanation": string, "fix_prompt": string}';
 
     const userPrompt = `다음은 운영 환경에서 캡처된 오류 로그입니다.
 
@@ -127,7 +127,7 @@ ${e.stack ?? "(없음)"}
 
 요청:
 1. "explanation" 필드에 원인 추정, 영향 범위, 재현 조건, 우선순위를 한국어로 6~10줄 이내로 정리.
-2. "lovable_prompt" 필드에 Lovable에 그대로 붙여넣을 한국어 작업 지시문을 작성. 다음을 포함:
+2. "fix_prompt" 필드에 AI 코드 빌더에 그대로 붙여넣을 한국어 작업 지시문을 작성. 다음을 포함:
    - 수정해야 할 추정 파일/함수
    - 재현/검증 절차
    - 안전한 가드(예: null 체크, optional chaining, RLS/권한 점검 등)
@@ -158,7 +158,7 @@ ${e.stack ?? "(없음)"}
         });
       }
       if (aiRes.status === 402) {
-        return new Response(JSON.stringify({ error: "Lovable AI 크레딧이 부족합니다. 워크스페이스 설정에서 충전 후 다시 시도하세요." }), {
+        return new Response(JSON.stringify({ error: "AI 사용 크레딧이 부족합니다. 워크스페이스 설정에서 충전 후 다시 시도하세요." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -167,23 +167,24 @@ ${e.stack ?? "(없음)"}
 
     const aiJson = await aiRes.json();
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let parsed: { explanation?: string; lovable_prompt?: string } = {};
-    try { parsed = JSON.parse(content); } catch { parsed = { explanation: content, lovable_prompt: "" }; }
+    let parsed: { explanation?: string; fix_prompt?: string; lovable_prompt?: string } = {};
+    try { parsed = JSON.parse(content); } catch { parsed = { explanation: content, fix_prompt: "" }; }
 
     const explanation = (parsed.explanation ?? "").toString().slice(0, 8000);
-    const lovablePrompt = (parsed.lovable_prompt ?? "").toString().slice(0, 8000);
+    // 신/구 키 모두 지원 (fix_prompt 우선)
+    const fixPrompt = ((parsed.fix_prompt ?? parsed.lovable_prompt) ?? "").toString().slice(0, 8000);
     const now = new Date().toISOString();
 
     await svc.from("error_alert_log").update({
       ai_explanation: explanation,
-      ai_lovable_prompt: lovablePrompt,
+      ai_lovable_prompt: fixPrompt,
       ai_generated_at: now,
     }).eq("id", errorId);
 
     return new Response(JSON.stringify({
       ok: true,
       explanation,
-      lovable_prompt: lovablePrompt,
+      fix_prompt: fixPrompt,
       generated_at: now,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {

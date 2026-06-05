@@ -45,6 +45,38 @@ const STATUS_META: Record<ErrorStatus, { label: string; className: string }> = {
 
 const STATUS_OPTIONS: ErrorStatus[] = ["open", "in_progress", "resolved", "ignored"];
 
+// 신호등 단계: 긴급(빨강) / 주의(노랑) / 정보(초록)
+type Sev = "urgent" | "warning" | "info";
+const SEV_META: Record<Sev, { label: string; dot: string; ring: string; text: string }> = {
+  urgent:  { label: "긴급", dot: "bg-destructive",                ring: "ring-destructive/30",          text: "text-destructive" },
+  warning: { label: "주의", dot: "bg-warning",                    ring: "ring-warning/30",              text: "text-warning" },
+  info:    { label: "정보", dot: "bg-success",                    ring: "ring-success/30",              text: "text-success" },
+};
+
+const detectSeverity = (row: { severity: string | null; message: string; occurrence_count: number | null; stack: string | null }): Sev => {
+  const raw = (row.severity || "").toLowerCase();
+  if (["critical", "fatal", "urgent", "high", "error"].includes(raw)) {
+    // 'error'는 메시지 분석으로 한 번 더 분류
+    if (raw !== "error") return "urgent";
+  }
+  if (["warning", "warn", "medium"].includes(raw)) return "warning";
+  if (["info", "low", "debug"].includes(raw)) return "info";
+
+  const text = `${row.message}\n${row.stack ?? ""}`.toLowerCase();
+  const urgentPatterns = [
+    "referenceerror", "typeerror", "syntaxerror", "rangeerror",
+    "cannot read", "is not defined", "is not a function", "undefined is not",
+    "failed to fetch", "network error", "500", "503", "crash", "unhandled",
+    "permission denied", "rls", "auth session missing",
+  ];
+  const warnPatterns = ["warn", "deprecat", "slow", "timeout", "404", "abort", "retry"];
+  if (urgentPatterns.some((p) => text.includes(p))) return "urgent";
+  if (warnPatterns.some((p) => text.includes(p))) return "warning";
+  if ((row.occurrence_count ?? 1) >= 10) return "urgent";
+  if ((row.occurrence_count ?? 1) >= 3) return "warning";
+  return "info";
+};
+
 const fallbackCopy = (text: string): boolean => {
   try {
     const ta = document.createElement("textarea");
@@ -156,7 +188,7 @@ const ErrorManagementSection = () => {
       }>("error-analyze", { body: { error_id: row.id } });
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || "분석 실패");
-      toast({ title: "AI 분석 완료", description: "설명과 Lovable 프롬프트가 생성되었습니다." });
+      toast({ title: "AI 분석 완료", description: "원인 설명과 작업 프롬프트가 생성되었습니다." });
       qc.invalidateQueries({ queryKey: ["error-alert-log"] });
       setExpanded((p) => ({ ...p, [row.id]: true }));
     } catch (e) {
@@ -224,15 +256,30 @@ const ErrorManagementSection = () => {
             const isOpen = expanded[row.id];
             const meta = STATUS_META[row.status];
             const busy = !!analyzing[row.id];
+            const sev = detectSeverity(row);
+            const sevMeta = SEV_META[sev];
             return (
               <Card key={row.id}>
                 <CardHeader className="p-4 cursor-pointer" onClick={() => setExpanded((p) => ({ ...p, [row.id]: !p[row.id] }))}>
                   <div className="flex items-start gap-3">
+                    {/* 신호등 (긴급/주의/정보) */}
+                    <span
+                      title={`민감도: ${sevMeta.label}`}
+                      className={cn(
+                        "shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-full ring-4",
+                        sevMeta.ring
+                      )}
+                    >
+                      <span className={cn("h-3 w-3 rounded-full", sevMeta.dot)} />
+                    </span>
                     <span className="rounded-md p-1.5 shrink-0 bg-destructive/10">
                       <Bug className="h-4 w-4 text-destructive" />
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className={cn("text-[10px] font-semibold", sevMeta.text, "border-current")}>
+                          {sevMeta.label}
+                        </Badge>
                         <CardTitle className="text-sm font-medium truncate max-w-full">
                           {row.message.split("\n")[0]}
                         </CardTitle>
@@ -273,10 +320,10 @@ const ErrorManagementSection = () => {
                       </Button>
                       <Button
                         size="sm" variant="outline" className="h-8 text-xs"
-                        onClick={() => copy(row.ai_lovable_prompt || buildFallbackPrompt(row), "Lovable 프롬프트 복사됨")}
+                        onClick={() => copy(row.ai_lovable_prompt || buildFallbackPrompt(row), "AI 수정 프롬프트 복사됨")}
                       >
                         <Copy className="h-3 w-3 mr-1" />
-                        Lovable 프롬프트 복사
+                        AI 수정 프롬프트 복사
                       </Button>
                     </div>
 
@@ -295,20 +342,20 @@ const ErrorManagementSection = () => {
                       </div>
                     ) : (
                       <div className="text-[11px] text-muted-foreground">
-                        AI 분석을 실행하면 오류 원인 설명과 Lovable 작업 프롬프트가 자동 생성됩니다.
+                        AI 분석을 실행하면 오류 원인 설명과 AI 수정 프롬프트가 자동 생성됩니다.
                       </div>
                     )}
 
-                    {/* Lovable prompt */}
+                    {/* AI fix prompt */}
                     {row.ai_lovable_prompt && (
                       <div className="border border-border rounded-md p-3 bg-background">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs font-semibold flex items-center gap-1">
-                            <Copy className="h-3 w-3" /> Lovable 작업 프롬프트
+                            <Copy className="h-3 w-3" /> AI 수정 프롬프트
                           </span>
                           <Button
                             size="sm" variant="ghost" className="h-6 text-[11px]"
-                            onClick={() => copy(row.ai_lovable_prompt!, "Lovable 프롬프트 복사됨")}
+                            onClick={() => copy(row.ai_lovable_prompt!, "AI 수정 프롬프트 복사됨")}
                           >
                             복사
                           </Button>
