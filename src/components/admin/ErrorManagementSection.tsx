@@ -320,10 +320,10 @@ const ErrorManagementSection = () => {
                       </Button>
                       <Button
                         size="sm" variant="outline" className="h-8 text-xs"
-                        onClick={() => copy(row.ai_lovable_prompt || buildFallbackPrompt(row), "Lovable 프롬프트 복사됨")}
+                        onClick={() => copy(row.ai_lovable_prompt || buildFallbackPrompt(row), "AI 수정 프롬프트 복사됨")}
                       >
                         <Copy className="h-3 w-3 mr-1" />
-                        Lovable 프롬프트 복사
+                        AI 수정 프롬프트 복사
                       </Button>
                     </div>
 
