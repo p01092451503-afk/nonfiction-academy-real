@@ -76,6 +76,28 @@ export interface PackageItemDraft {
   overlay_opacity?: number | null;
 }
 
+const DEFAULT_PACKAGE_OVERLAY_OPTIONS = {
+  overlay_autoplay: true,
+  overlay_loop: true,
+  overlay_muted: true,
+  overlay_show_controls: false,
+  overlay_volume: 100,
+  overlay_playback_rate: 1.0,
+  overlay_delay_sec: 0,
+  overlay_opacity: 100,
+} as const;
+
+const packageOverlayOptionsForSave = (item: PackageItemDraft) => ({
+  overlay_autoplay: item.overlay_autoplay ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_autoplay,
+  overlay_loop: item.overlay_loop ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_loop,
+  overlay_muted: item.overlay_muted ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_muted,
+  overlay_show_controls: item.overlay_show_controls ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_show_controls,
+  overlay_volume: item.overlay_volume ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_volume,
+  overlay_playback_rate: item.overlay_playback_rate ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_playback_rate,
+  overlay_delay_sec: item.overlay_delay_sec ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_delay_sec,
+  overlay_opacity: item.overlay_opacity ?? DEFAULT_PACKAGE_OVERLAY_OPTIONS.overlay_opacity,
+});
+
 interface ContentItem {
   tempId: string;
   title: string;
@@ -1010,22 +1032,15 @@ const CreateCourse = () => {
                   overlay_y: it.overlay_y ?? null,
                   overlay_w: it.overlay_w ?? null,
                   overlay_h: it.overlay_h ?? null,
-                  overlay_autoplay: it.overlay_autoplay ?? undefined,
-                  overlay_loop: it.overlay_loop ?? undefined,
-                  overlay_muted: it.overlay_muted ?? undefined,
-                  overlay_show_controls: it.overlay_show_controls ?? undefined,
-                  overlay_volume: it.overlay_volume ?? undefined,
-                  overlay_playback_rate: it.overlay_playback_rate ?? undefined,
+                  ...packageOverlayOptionsForSave(it),
                   overlay_start_sec: it.overlay_start_sec ?? null,
                   overlay_end_sec: it.overlay_end_sec ?? null,
-                  overlay_delay_sec: it.overlay_delay_sec ?? undefined,
-                  overlay_opacity: it.overlay_opacity ?? undefined,
                 });
               });
             }
           });
           if (pkgRows.length) {
-            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows, { defaultToNull: false });
             if (pkgError) throw pkgError;
           }
 
@@ -1189,22 +1204,15 @@ const CreateCourse = () => {
                   overlay_y: it.overlay_y ?? null,
                   overlay_w: it.overlay_w ?? null,
                   overlay_h: it.overlay_h ?? null,
-                  overlay_autoplay: it.overlay_autoplay ?? undefined,
-                  overlay_loop: it.overlay_loop ?? undefined,
-                  overlay_muted: it.overlay_muted ?? undefined,
-                  overlay_show_controls: it.overlay_show_controls ?? undefined,
-                  overlay_volume: it.overlay_volume ?? undefined,
-                  overlay_playback_rate: it.overlay_playback_rate ?? undefined,
+                  ...packageOverlayOptionsForSave(it),
                   overlay_start_sec: it.overlay_start_sec ?? null,
                   overlay_end_sec: it.overlay_end_sec ?? null,
-                  overlay_delay_sec: it.overlay_delay_sec ?? undefined,
-                  overlay_opacity: it.overlay_opacity ?? undefined,
                 });
               });
             }
           });
           if (pkgRows.length) {
-            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows, { defaultToNull: false });
             if (pkgError) throw pkgError;
           }
 
