@@ -1040,7 +1040,7 @@ const CreateCourse = () => {
             }
           });
           if (pkgRows.length) {
-            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows, { defaultToNull: false });
             if (pkgError) throw pkgError;
           }
 
@@ -1212,7 +1212,7 @@ const CreateCourse = () => {
             }
           });
           if (pkgRows.length) {
-            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows);
+            const { error: pkgError } = await (supabase as any).from("media_package_items").insert(pkgRows, { defaultToNull: false });
             if (pkgError) throw pkgError;
           }
 
