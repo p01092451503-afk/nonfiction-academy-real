@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertOctagon, Bug, ChevronDown, Copy, Loader2, RefreshCcw, Sparkles, CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,24 @@ const detectSeverity = (row: { severity: string | null; message: string; occurre
   if ((row.occurrence_count ?? 1) >= 10) return "urgent";
   if ((row.occurrence_count ?? 1) >= 3) return "warning";
   return "info";
+};
+
+// 테스트 / 더미 / Slack 테스트 등을 탐지
+const TEST_PATTERNS = [
+  "\u{1F9EA}",          // 🧪
+  "test",
+  "dummy",
+  "slack test",
+  "슬랙 테스트",
+  "hello from slack",
+  "sample error",
+  "에러 테스트",
+  "오류 테스트",
+];
+
+const isTestRow = (row: ErrorRow): boolean => {
+  const hay = `${row.message}\n${row.stack ?? ""}\n${row.source ?? ""}`.toLowerCase();
+  return TEST_PATTERNS.some((p) => hay.includes(p.toLowerCase()));
 };
 
 const fallbackCopy = (text: string): boolean => {
@@ -199,6 +218,31 @@ const ErrorManagementSection = () => {
     }
   };
 
+  const [bulkIgnoring, setBulkIgnoring] = useState(false);
+
+  const testRows = useMemo(() => rows.filter(isTestRow), [rows]);
+
+  const bulkIgnoreTests = async () => {
+    if (testRows.length === 0) return;
+    setBulkIgnoring(true);
+    try {
+      const ids = testRows.map((r) => r.id);
+      const { error } = await supabase
+        .from("error_alert_log")
+        .update({ status: "ignored", resolved_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+      toast({ title: "일괄 무시 완료", description: `${ids.length}건의 테스트/더미 오류를 무시 처리했습니다.` });
+      qc.invalidateQueries({ queryKey: ["error-alert-log"] });
+      qc.invalidateQueries({ queryKey: ["error-alert-log-counts"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: "일괄 무시 실패", description: msg, variant: "destructive" });
+    } finally {
+      setBulkIgnoring(false);
+    }
+  };
+
   const buildFallbackPrompt = (row: ErrorRow) =>
     `다음 운영 오류를 추적하고 수정해줘.\n\n` +
     `[메시지]\n${row.message}\n\n` +
@@ -235,10 +279,24 @@ const ErrorManagementSection = () => {
             ))}
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-7 text-xs">
-          {isLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCcw className="h-3 w-3 mr-1" />}
-          새로고침
-        </Button>
+        <div className="flex items-center gap-2">
+          {testRows.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={bulkIgnoreTests}
+              disabled={bulkIgnoring}
+            >
+              {bulkIgnoring ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Trash2 className="h-3 w-3 mr-1" />}
+              테스트 항목 {testRows.length}건 일괄 무시
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading} className="h-7 text-xs">
+            {isLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCcw className="h-3 w-3 mr-1" />}
+            새로고침
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
