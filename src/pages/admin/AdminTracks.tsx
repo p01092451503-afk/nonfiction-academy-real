@@ -609,7 +609,6 @@ const TrackEditorDialog = ({
     }
     setTranslating(true);
     try {
-      const targets: TargetLang[] = ["en", "ja", "zh-CN"];
       const koDesc = (descriptions.ko || "").trim();
       const stageSources = draftStages.map((s) => ({ id: s.id, text: (s.names.ko || "").trim() }));
       // Never bundle title/description/stage names into one translation array.
@@ -617,7 +616,7 @@ const TrackEditorDialog = ({
       // description field. Translate each source independently and map stages
       // back by stable draft ID, not by array position.
       const translatedByTarget = await Promise.all(
-        targets.map(async (target) => {
+        TARGET_LANGS.map(async (target) => {
           const [title, description, stagePairs] = await Promise.all([
             translateSingleKoText(target, koTitle),
             translateSingleKoText(target, koDesc),
@@ -674,11 +673,12 @@ const TrackEditorDialog = ({
       const userId = userData.user?.id;
 
       let savedTrackId = trackId;
+      const koDescription = (descriptions.ko || "").trim();
       const trackPayload = {
         title: koTitle,
         title_en: (titles.en || "").trim() || null,
-        description: (descriptions.ko || "").trim() || null,
-        description_en: (descriptions.en || "").trim() || null,
+        description: koDescription || null,
+        description_en: koDescription ? (descriptions.en || "").trim() || null : null,
         is_sequential: isSequential,
         status,
         ...(trackId ? {} : { created_by: userId }),
@@ -708,7 +708,7 @@ const TrackEditorDialog = ({
           track_id: savedTrackId!,
           language_code: lc,
           title: (titles[lc] || "").trim(),
-          description: (descriptions[lc] || "").trim() || null,
+          description: koDescription ? (descriptions[lc] || "").trim() || null : null,
         }))
         .filter((r) => r.title);
       if (trackI18nRows.length) {
