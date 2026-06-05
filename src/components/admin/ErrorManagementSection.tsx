@@ -342,20 +342,20 @@ const ErrorManagementSection = () => {
                       </div>
                     ) : (
                       <div className="text-[11px] text-muted-foreground">
-                        AI 분석을 실행하면 오류 원인 설명과 Lovable 작업 프롬프트가 자동 생성됩니다.
+                        AI 분석을 실행하면 오류 원인 설명과 AI 수정 프롬프트가 자동 생성됩니다.
                       </div>
                     )}
 
-                    {/* Lovable prompt */}
+                    {/* AI fix prompt */}
                     {row.ai_lovable_prompt && (
                       <div className="border border-border rounded-md p-3 bg-background">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs font-semibold flex items-center gap-1">
-                            <Copy className="h-3 w-3" /> Lovable 작업 프롬프트
+                            <Copy className="h-3 w-3" /> AI 수정 프롬프트
                           </span>
                           <Button
                             size="sm" variant="ghost" className="h-6 text-[11px]"
-                            onClick={() => copy(row.ai_lovable_prompt!, "Lovable 프롬프트 복사됨")}
+                            onClick={() => copy(row.ai_lovable_prompt!, "AI 수정 프롬프트 복사됨")}
                           >
                             복사
                           </Button>
