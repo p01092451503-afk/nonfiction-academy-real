@@ -78,6 +78,24 @@ const detectSeverity = (row: { severity: string | null; message: string; occurre
   return "info";
 };
 
+// 테스트 / 더미 / Slack 테스트 등을 탐지
+const TEST_PATTERNS = [
+  "\u{1F9EA}",          // 🧪
+  "test",
+  "dummy",
+  "slack test",
+  "슬랙 테스트",
+  "hello from slack",
+  "sample error",
+  "에러 테스트",
+  "오류 테스트",
+];
+
+const isTestRow = (row: ErrorRow): boolean => {
+  const hay = `${row.message}\n${row.stack ?? ""}\n${row.source ?? ""}`.toLowerCase();
+  return TEST_PATTERNS.some((p) => hay.includes(p.toLowerCase()));
+};
+
 const fallbackCopy = (text: string): boolean => {
   try {
     const ta = document.createElement("textarea");
