@@ -158,7 +158,7 @@ ${e.stack ?? "(없음)"}
         });
       }
       if (aiRes.status === 402) {
-        return new Response(JSON.stringify({ error: "Lovable AI 크레딧이 부족합니다. 워크스페이스 설정에서 충전 후 다시 시도하세요." }), {
+        return new Response(JSON.stringify({ error: "AI 사용 크레딧이 부족합니다. 워크스페이스 설정에서 충전 후 다시 시도하세요." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
