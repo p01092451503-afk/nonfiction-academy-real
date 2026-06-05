@@ -667,6 +667,16 @@ const TrackEditorDialog = ({
       toast({ title: t("track.atLeastOneStage", "최소 1개 단계가 필요합니다"), variant: "destructive" });
       return;
     }
+    const emptyStageIndex = draftStages.findIndex((stage) => !(stage.names.ko || "").trim());
+    if (emptyStageIndex >= 0) {
+      toast({
+        title: t("track.stageNameRequired", "한국어 단계명을 입력해주세요"),
+        description: `STEP ${String(emptyStageIndex + 1).padStart(2, "0")}`,
+        variant: "destructive",
+      });
+      setActiveLang("ko");
+      return;
+    }
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -676,9 +686,9 @@ const TrackEditorDialog = ({
       const koDescription = (descriptions.ko || "").trim();
       const trackPayload = {
         title: koTitle,
-        title_en: (titles.en || "").trim() || null,
+        title_en: null,
         description: koDescription || null,
-        description_en: koDescription ? (descriptions.en || "").trim() || null : null,
+        description_en: null,
         is_sequential: isSequential,
         status,
         ...(trackId ? {} : { created_by: userId }),
@@ -720,7 +730,7 @@ const TrackEditorDialog = ({
         id: s.id,
         track_id: savedTrackId!,
         name: (s.names.ko || "").trim() || `Stage ${i + 1}`,
-        name_en: (s.names.en || "").trim() || null,
+        name_en: null,
         description: s.description.trim() || null,
         order_index: i,
       }));
