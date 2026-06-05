@@ -115,7 +115,7 @@ const StudentTracks = () => {
           return {
             ...s,
             localizedName:
-              stageTr?.name ||
+              (stageTr?.source_name === s.name ? stageTr?.name : "") ||
               s.name,
             courses: (stageCoursesByStage.get(s.id) || []).map((sc: any) => ({
               ...sc.courses,
@@ -135,7 +135,7 @@ const StudentTracks = () => {
             trackTr?.title ||
             track.title,
           localizedDescription:
-            track.description ? trackTr?.description || track.description : null,
+            track.description ? (trackTr?.source_description === track.description ? trackTr?.description : "") || track.description : null,
           assigned_at: te.assigned_at,
           stages: stagesWithCourses,
           progress,

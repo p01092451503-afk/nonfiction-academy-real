@@ -73,7 +73,7 @@ const StudentCourses = () => {
         supabase.from("track_stages").select("id, track_id, name, order_index").in("track_id", trackIds).order("order_index"),
         supabase.from("track_stage_courses").select("stage_id, course_id, order_index"),
         supabase.from("learning_tracks_i18n").select("track_id, language_code, title").in("track_id", trackIds),
-        supabase.from("track_stages_i18n").select("stage_id, language_code, name"),
+        supabase.from("track_stages_i18n").select("stage_id, language_code, name, source_name"),
       ]);
 
       const trackById = new Map((te || []).map((r: any) => [r.track_id, r.learning_tracks]));
@@ -92,7 +92,7 @@ const StudentCourses = () => {
       const stageName = (stage: any) => {
         if (!stage) return "";
         const tr = (stagesI18n || []).find((r: any) => r.stage_id === stage.id && r.language_code === lang);
-        return tr?.name || stage.name || "";
+        return (tr?.source_name === stage.name ? tr?.name : "") || stage.name || "";
       };
 
       const map = new Map<string, Array<{ trackId: string; trackTitle: string; stageIdx: number; stageName: string }>>();

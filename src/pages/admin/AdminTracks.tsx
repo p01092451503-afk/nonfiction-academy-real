@@ -194,7 +194,7 @@ const AdminTracks = () => {
     const tr = (tracksI18n as any[]).find(
       (r) => r.track_id === track.id && r.language_code === lang
     );
-    if (matchesSource(tr, "source_title", track.title) && tr?.title) return tr.title;
+    if (tr?.title) return tr.title;
     return track.title;
   };
   const trackDescription = (track: Track) => {
@@ -534,7 +534,7 @@ const TrackEditorDialog = ({
         const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const row = trackI18nByLang.get(lc);
-          if (matchesSource(row, "source_title", nextTitles.ko)) {
+          if (row) {
             nextTitles[lc] = row.title || "";
           }
           if (matchesSource(row, "source_description", nextDescs.ko)) {
