@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import ErrorManagementSection from "@/components/admin/ErrorManagementSection";
 
 type Severity = "ok" | "warning" | "error";
 type Category = "data" | "media" | "i18n" | "security" | "ops";
@@ -297,6 +298,11 @@ const AdminPlatformHealth = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Operational error management (Slack-fed) */}
+        <ErrorManagementSection />
+
+
 
         {/* Loading state */}
         {loading && !data && (

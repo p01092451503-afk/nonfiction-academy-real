@@ -1439,45 +1439,66 @@ export type Database = {
       }
       error_alert_log: {
         Row: {
+          admin_notes: string | null
+          ai_explanation: string | null
+          ai_generated_at: string | null
+          ai_lovable_prompt: string | null
           created_at: string
           fingerprint: string
           id: string
           last_alerted_at: string
           message: string | null
           occurrence_count: number
+          resolved_at: string | null
+          resolved_by: string | null
           severity: string | null
           source: string | null
           stack: string | null
+          status: string
           url: string | null
           user_agent: string | null
           user_email: string | null
           user_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
+          ai_explanation?: string | null
+          ai_generated_at?: string | null
+          ai_lovable_prompt?: string | null
           created_at?: string
           fingerprint: string
           id?: string
           last_alerted_at?: string
           message?: string | null
           occurrence_count?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: string | null
           source?: string | null
           stack?: string | null
+          status?: string
           url?: string | null
           user_agent?: string | null
           user_email?: string | null
           user_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
+          ai_explanation?: string | null
+          ai_generated_at?: string | null
+          ai_lovable_prompt?: string | null
           created_at?: string
           fingerprint?: string
           id?: string
           last_alerted_at?: string
           message?: string | null
           occurrence_count?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
           severity?: string | null
           source?: string | null
           stack?: string | null
+          status?: string
           url?: string | null
           user_agent?: string | null
           user_email?: string | null
