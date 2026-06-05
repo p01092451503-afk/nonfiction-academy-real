@@ -1519,6 +1519,7 @@ const CreateCourse = () => {
                 content={content}
                 index={idx}
                 onChange={(field, value) => updateContent(content.tempId, field, value)}
+              onUploadStateChange={(uploading) => setPackageUploading(content.tempId, uploading)}
                 onRemove={() => { /* fixed 4 slots — removal disabled */ }}
                 contentTypeOptions={contentTypeOptions}
                 videoProviderOptions={videoProviderOptions}
@@ -1560,11 +1561,12 @@ const CreateCourse = () => {
 /* ───── Unified Content Editor ───── */
 
 const UnifiedContentEditor = ({
-  content, index, onChange, onRemove, contentTypeOptions, videoProviderOptions, t, isAutoTranslating,
+  content, index, onChange, onUploadStateChange, onRemove, contentTypeOptions, videoProviderOptions, t, isAutoTranslating,
 }: {
   content: ContentItem;
   index: number;
   onChange: (field: keyof ContentItem, value: any) => void;
+  onUploadStateChange: (uploading: boolean) => void;
   onRemove: () => void;
   contentTypeOptions: { value: ContentType; label: string; icon: React.ElementType }[];
   videoProviderOptions: { value: VideoProvider; label: string }[];
@@ -1747,6 +1749,7 @@ const UnifiedContentEditor = ({
           <PackageItemsEditor
             items={content.package_items || []}
             onChange={(items) => onChange("package_items", items)}
+            onUploadStateChange={onUploadStateChange}
             imagesOnly={isImages}
           />
         ) : isMango ? (
