@@ -803,7 +803,11 @@ const TrackEditorDialog = ({
                 <TabsContent key={lc} value={lc} className="space-y-2 mt-3">
                   <Input
                     value={titles[lc] || ""}
-                    onChange={(e) => setTitles((prev) => ({ ...prev, [lc]: e.target.value }))}
+                    onChange={(e) =>
+                      setTitles((prev) =>
+                        lc === "ko" ? { ...clearTranslations(prev), ko: e.target.value } : { ...prev, [lc]: e.target.value }
+                      )
+                    }
                     className="h-9 rounded-lg text-sm"
                     placeholder={
                       lc === "ko"
@@ -813,7 +817,11 @@ const TrackEditorDialog = ({
                   />
                   <Textarea
                     value={descriptions[lc] || ""}
-                    onChange={(e) => setDescriptions((prev) => ({ ...prev, [lc]: e.target.value }))}
+                    onChange={(e) =>
+                      setDescriptions((prev) =>
+                        lc === "ko" ? { ...clearTranslations(prev), ko: e.target.value } : { ...prev, [lc]: e.target.value }
+                      )
+                    }
                     className="min-h-[60px] rounded-lg text-xs"
                     placeholder={
                       lc === "ko"
@@ -872,7 +880,10 @@ const TrackEditorDialog = ({
                     value={stage.names[activeLang] || ""}
                     onChange={(e) =>
                       updateStage(stage.id, {
-                        names: { ...stage.names, [activeLang]: e.target.value },
+                        names:
+                          activeLang === "ko"
+                            ? { ...clearTranslations(stage.names), ko: e.target.value }
+                            : { ...stage.names, [activeLang]: e.target.value },
                       })
                     }
                     placeholder={
