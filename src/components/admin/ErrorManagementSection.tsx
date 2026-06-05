@@ -188,7 +188,7 @@ const ErrorManagementSection = () => {
       }>("error-analyze", { body: { error_id: row.id } });
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.error || "분석 실패");
-      toast({ title: "AI 분석 완료", description: "설명과 Lovable 프롬프트가 생성되었습니다." });
+      toast({ title: "AI 분석 완료", description: "원인 설명과 작업 프롬프트가 생성되었습니다." });
       qc.invalidateQueries({ queryKey: ["error-alert-log"] });
       setExpanded((p) => ({ ...p, [row.id]: true }));
     } catch (e) {
