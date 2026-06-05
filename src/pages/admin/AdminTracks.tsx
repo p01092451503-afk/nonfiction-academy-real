@@ -195,16 +195,15 @@ const AdminTracks = () => {
       (r) => r.track_id === track.id && r.language_code === lang
     );
     if (tr?.title) return tr.title;
-    if (lang === "en" && track.title_en) return track.title_en;
     return track.title;
   };
   const trackDescription = (track: Track) => {
     if (lang === "ko") return track.description;
+    if (!(track.description || "").trim()) return null;
     const tr = (tracksI18n as any[]).find(
       (r) => r.track_id === track.id && r.language_code === lang
     );
-    if (tr?.description) return tr.description;
-    if (lang === "en" && (track as any).description_en) return (track as any).description_en;
+    if (matchesSource(tr, "source_description", track.description) && tr?.description) return tr.description;
     return track.description;
   };
   const stageName = (stage: Stage) => {
@@ -212,8 +211,7 @@ const AdminTracks = () => {
     const tr = (stagesI18n as any[]).find(
       (r) => r.stage_id === stage.id && r.language_code === lang
     );
-    if (tr?.name) return tr.name;
-    if (lang === "en" && stage.name_en) return stage.name_en;
+    if (matchesSource(tr, "source_name", stage.name) && tr?.name) return tr.name;
     return stage.name;
   };
   const courseTitleLocalized = (course: { id: string; title: string }) => {
@@ -452,6 +450,10 @@ const AdminTracks = () => {
 
 type LangMap = Partial<Record<I18nLang, string>>;
 const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const clearTranslations = (values: LangMap): LangMap => ({ ...values, en: "", ja: "", "zh-CN": "" });
+const matchesSource = (row: any, field: string, source: string | null | undefined) =>
+  !!row && !!(source || "").trim() && typeof row[field] === "string" && row[field].trim() === (source || "").trim();
 
 const translateSingleKoText = async (target: TargetLang, text: string) => {
   const source = text.trim();
@@ -492,9 +494,9 @@ const TrackEditorDialog = ({
   const [activeLang, setActiveLang] = useState<I18nLang>("ko");
   const [translating, setTranslating] = useState(false);
   const [draftStages, setDraftStages] = useState<DraftStage[]>([
-    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 0, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 1, course_ids: [], _isNew: true },
-    { id: crypto.randomUUID(), names: { ko: "", en: "" }, description: "", order_index: 2, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: 0, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: 1, course_ids: [], _isNew: true },
+    { id: crypto.randomUUID(), names: emptyLangMap(), description: "", order_index: 2, course_ids: [], _isNew: true },
   ]);
   const [saving, setSaving] = useState(false);
 
@@ -530,18 +532,13 @@ const TrackEditorDialog = ({
       if (track) {
         const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
         const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
-        // Only fall back to legacy *_en columns when there is NO i18n row for
-        // that language — otherwise stale legacy values (e.g. an old buggy
-        // "Week 4" in description_en) override the canonical i18n table.
-        if (!trackI18nByLang.has("en")) {
-          if (track.title_en) nextTitles.en = track.title_en;
-          if (track.description_en) nextDescs.en = track.description_en;
-        }
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const row = trackI18nByLang.get(lc);
           if (row) {
             nextTitles[lc] = row.title || "";
-            nextDescs[lc] = row.description || "";
+          }
+          if (matchesSource(row, "source_description", nextDescs.ko)) {
+            nextDescs[lc] = nextDescs.ko ? row.description || "" : "";
           }
         });
         setTitles(nextTitles);
@@ -559,12 +556,8 @@ const TrackEditorDialog = ({
       const stagesWithCourses: DraftStage[] = stageList.map((s) => {
         const names: LangMap = { ...emptyLangMap(), ko: s.name || "" };
         const i18nRows = stageI18nByStage.get(s.id) || [];
-        const hasEnI18n = i18nRows.some((r) => r.language_code === "en");
-        // Same legacy fallback rule for stage names: only use name_en if no
-        // i18n row exists for EN.
-        if (!hasEnI18n && s.name_en) names.en = s.name_en;
         i18nRows.forEach((row) => {
-          if ((I18N_LANGS as readonly string[]).includes(row.language_code)) {
+          if ((I18N_LANGS as readonly string[]).includes(row.language_code) && matchesSource(row, "source_name", names.ko)) {
             names[row.language_code as I18nLang] = row.name || "";
           }
         });
@@ -620,7 +613,6 @@ const TrackEditorDialog = ({
     }
     setTranslating(true);
     try {
-      const targets: TargetLang[] = ["en", "ja", "zh-CN"];
       const koDesc = (descriptions.ko || "").trim();
       const stageSources = draftStages.map((s) => ({ id: s.id, text: (s.names.ko || "").trim() }));
       // Never bundle title/description/stage names into one translation array.
@@ -628,7 +620,7 @@ const TrackEditorDialog = ({
       // description field. Translate each source independently and map stages
       // back by stable draft ID, not by array position.
       const translatedByTarget = await Promise.all(
-        targets.map(async (target) => {
+        TARGET_LANGS.map(async (target) => {
           const [title, description, stagePairs] = await Promise.all([
             translateSingleKoText(target, koTitle),
             translateSingleKoText(target, koDesc),
@@ -679,17 +671,28 @@ const TrackEditorDialog = ({
       toast({ title: t("track.atLeastOneStage", "최소 1개 단계가 필요합니다"), variant: "destructive" });
       return;
     }
+    const emptyStageIndex = draftStages.findIndex((stage) => !(stage.names.ko || "").trim());
+    if (emptyStageIndex >= 0) {
+      toast({
+        title: t("track.stageNameRequired", "한국어 단계명을 입력해주세요"),
+        description: `STEP ${String(emptyStageIndex + 1).padStart(2, "0")}`,
+        variant: "destructive",
+      });
+      setActiveLang("ko");
+      return;
+    }
     setSaving(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
 
       let savedTrackId = trackId;
+      const koDescription = (descriptions.ko || "").trim();
       const trackPayload = {
         title: koTitle,
-        title_en: (titles.en || "").trim() || null,
-        description: (descriptions.ko || "").trim() || null,
-        description_en: (descriptions.en || "").trim() || null,
+        title_en: null,
+        description: koDescription || null,
+        description_en: null,
         is_sequential: isSequential,
         status,
         ...(trackId ? {} : { created_by: userId }),
@@ -719,7 +722,9 @@ const TrackEditorDialog = ({
           track_id: savedTrackId!,
           language_code: lc,
           title: (titles[lc] || "").trim(),
-          description: (descriptions[lc] || "").trim() || null,
+          description: koDescription ? (descriptions[lc] || "").trim() || null : null,
+          source_title: koTitle,
+          source_description: koDescription || null,
         }))
         .filter((r) => r.title);
       if (trackI18nRows.length) {
@@ -731,7 +736,7 @@ const TrackEditorDialog = ({
         id: s.id,
         track_id: savedTrackId!,
         name: (s.names.ko || "").trim() || `Stage ${i + 1}`,
-        name_en: (s.names.en || "").trim() || null,
+        name_en: null,
         description: s.description.trim() || null,
         order_index: i,
       }));
@@ -748,7 +753,7 @@ const TrackEditorDialog = ({
         });
         (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
           const name = (draft.names[lc] || "").trim();
-          if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name });
+          if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name, source_name: (draft.names.ko || "").trim() });
         });
       });
       if (stageRows.length) {
@@ -814,7 +819,11 @@ const TrackEditorDialog = ({
                 <TabsContent key={lc} value={lc} className="space-y-2 mt-3">
                   <Input
                     value={titles[lc] || ""}
-                    onChange={(e) => setTitles((prev) => ({ ...prev, [lc]: e.target.value }))}
+                    onChange={(e) =>
+                      setTitles((prev) =>
+                        lc === "ko" ? { ...clearTranslations(prev), ko: e.target.value } : { ...prev, [lc]: e.target.value }
+                      )
+                    }
                     className="h-9 rounded-lg text-sm"
                     placeholder={
                       lc === "ko"
@@ -824,7 +833,11 @@ const TrackEditorDialog = ({
                   />
                   <Textarea
                     value={descriptions[lc] || ""}
-                    onChange={(e) => setDescriptions((prev) => ({ ...prev, [lc]: e.target.value }))}
+                    onChange={(e) =>
+                      setDescriptions((prev) =>
+                        lc === "ko" ? { ...clearTranslations(prev), ko: e.target.value } : { ...prev, [lc]: e.target.value }
+                      )
+                    }
                     className="min-h-[60px] rounded-lg text-xs"
                     placeholder={
                       lc === "ko"
@@ -883,7 +896,10 @@ const TrackEditorDialog = ({
                     value={stage.names[activeLang] || ""}
                     onChange={(e) =>
                       updateStage(stage.id, {
-                        names: { ...stage.names, [activeLang]: e.target.value },
+                        names:
+                          activeLang === "ko"
+                            ? { ...clearTranslations(stage.names), ko: e.target.value }
+                            : { ...stage.names, [activeLang]: e.target.value },
                       })
                     }
                     placeholder={

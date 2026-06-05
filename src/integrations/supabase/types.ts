@@ -1539,6 +1539,8 @@ export type Database = {
           description: string | null
           id: string
           language_code: string
+          source_description: string | null
+          source_title: string | null
           title: string
           track_id: string
           updated_at: string
@@ -1548,6 +1550,8 @@ export type Database = {
           description?: string | null
           id?: string
           language_code: string
+          source_description?: string | null
+          source_title?: string | null
           title: string
           track_id: string
           updated_at?: string
@@ -1557,6 +1561,8 @@ export type Database = {
           description?: string | null
           id?: string
           language_code?: string
+          source_description?: string | null
+          source_title?: string | null
           title?: string
           track_id?: string
           updated_at?: string
@@ -2415,6 +2421,7 @@ export type Database = {
           id: string
           language_code: string
           name: string
+          source_name: string | null
           stage_id: string
           updated_at: string
         }
@@ -2424,6 +2431,7 @@ export type Database = {
           id?: string
           language_code: string
           name: string
+          source_name?: string | null
           stage_id: string
           updated_at?: string
         }
@@ -2433,6 +2441,7 @@ export type Database = {
           id?: string
           language_code?: string
           name?: string
+          source_name?: string | null
           stage_id?: string
           updated_at?: string
         }
