@@ -96,6 +96,20 @@ const isTestRow = (row: ErrorRow): boolean => {
   return TEST_PATTERNS.some((p) => hay.includes(p.toLowerCase()));
 };
 
+// 이미 코드로 수정 완료된(=재발 가능성이 낮은) 패턴
+const RESOLVED_PATTERNS = [
+  "fragment is not defined",
+  "cannot read properties of undefined", // reading 'item_type' 포함
+  "atrisk is not defined",
+  "alerttriangle is not defined",
+  "failed to fetch dynamically imported module",
+];
+
+const isResolvedRow = (row: ErrorRow): boolean => {
+  const hay = `${row.message}\n${row.stack ?? ""}\n${row.source ?? ""}`.toLowerCase();
+  return RESOLVED_PATTERNS.some((p) => hay.includes(p.toLowerCase()));
+};
+
 const fallbackCopy = (text: string): boolean => {
   try {
     const ta = document.createElement("textarea");
