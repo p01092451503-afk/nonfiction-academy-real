@@ -185,6 +185,33 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
     }
   };
 
+  const openLibrary = async () => {
+    setLibraryOpen(true);
+    setLibraryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("video_assets")
+        .select("id, title, video_url, thumbnail_url, created_at")
+        .eq("video_provider", "bunny")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      setLibraryItems(data || []);
+    } catch (e: any) {
+      toast({ title: "라이브러리 불러오기 실패", description: e?.message || "", variant: "destructive" });
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  const pickLibraryItem = (it: { video_url: string; thumbnail_url: string | null }) => {
+    setVideoUrl(it.video_url);
+    setVideoProvider("bunny");
+    setThumbnailUrl(it.thumbnail_url || "");
+    setLibraryOpen(false);
+    toast({ title: "동영상이 선택되었습니다." });
+  };
+
   const beginDrag = (e: React.PointerEvent, mode: DragMode) => {
     if (!stageRef.current) return;
     e.preventDefault();
