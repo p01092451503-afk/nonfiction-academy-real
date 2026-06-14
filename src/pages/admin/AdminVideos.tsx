@@ -91,9 +91,7 @@ const AdminVideos = () => {
       const payload = {
         title: form.title,
         video_url: form.video_url,
-        video_provider: form.video_provider,
-        duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null,
-        file_size_mb: form.file_size_mb ? parseFloat(form.file_size_mb) : null,
+        video_provider: "bunny",
         description: form.description || null,
         thumbnail_url: form.thumbnail_url || null,
         uploaded_by: user!.id,
