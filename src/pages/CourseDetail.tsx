@@ -18,7 +18,7 @@ import {
   FileText, Video, ChevronRight, BarChart3, Plus, Pencil,
   Trash2, Eye, EyeOff, Settings, ChevronUp, ChevronDown,
   GripVertical, ExternalLink, Copy, MoreHorizontal,
-  ClipboardCheck, AlertTriangle, Upload, X, Image, Images, Languages, UserPlus,
+  ClipboardCheck, AlertTriangle, Upload, X, Image, Images, Languages, UserPlus, PlayCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
@@ -113,6 +113,8 @@ const CourseDetail = () => {
   const isLangSwitching = useLanguageSwitching();
 
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
+  const [previewContentId, setPreviewContentId] = useState<string | null>(null);
+  const [previewContentTitle, setPreviewContentTitle] = useState<string>("");
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
   const [contentI18nForm, setContentI18nForm] = useState<Record<ContentI18nLang, ContentI18nData>>(emptyI18nAll);
@@ -898,6 +900,18 @@ const CourseDetail = () => {
                                     <button
                                       type="button"
                                       className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                      onClick={() => {
+                                        setPreviewContentId(content.id);
+                                        setPreviewContentTitle(localizedTitle);
+                                      }}
+                                      aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
+                                      title={isEn ? "Preview" : "미리보기"}
+                                    >
+                                      <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                       onClick={() => togglePublishMutation.mutate({ id: content.id, published: !content.is_published })}
                                       aria-label={content.is_published ? (isEn ? `Hide ${localizedTitle}` : `${localizedTitle} 비공개`) : (isEn ? `Publish ${localizedTitle}` : `${localizedTitle} 공개`)}
                                     >
@@ -1000,6 +1014,27 @@ const CourseDetail = () => {
           }}
           categories={categories}
         />
+
+        <Dialog open={!!previewContentId} onOpenChange={(open) => { if (!open) setPreviewContentId(null); }}>
+          <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+            <DialogHeader className="px-6 py-4 border-b">
+              <DialogTitle className="text-base font-semibold truncate pr-8">
+                {previewContentTitle || (isEn ? "Preview" : "미리보기")}
+              </DialogTitle>
+            </DialogHeader>
+            {previewContentId && (
+              <div className="w-full bg-background" style={{ height: "75vh" }}>
+                <iframe
+                  src={`${routePrefix}/courses/${courseId}/content/${previewContentId}?preview=1`}
+                  className="w-full h-full border-0"
+                  title={previewContentTitle}
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
     );
   }
