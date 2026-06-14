@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Upload, Trash2, Video as VideoIcon, Loader2, Settings2 } from "lucide-react";
+import { Upload, Trash2, Video as VideoIcon, Loader2, Settings2, Library, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 export interface OverlayVideoData {
   overlay_video_url?: string | null;
@@ -75,6 +76,10 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<Array<{ id: string; title: string; video_url: string; thumbnail_url: string | null; created_at: string }>>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
   const videoInputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
@@ -178,6 +183,33 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
       setUploadProgress(0);
       if (videoInputRef.current) videoInputRef.current.value = "";
     }
+  };
+
+  const openLibrary = async () => {
+    setLibraryOpen(true);
+    setLibraryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("video_assets")
+        .select("id, title, video_url, thumbnail_url, created_at")
+        .eq("video_provider", "bunny")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      setLibraryItems(data || []);
+    } catch (e: any) {
+      toast({ title: "라이브러리 불러오기 실패", description: e?.message || "", variant: "destructive" });
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  const pickLibraryItem = (it: { video_url: string; thumbnail_url: string | null }) => {
+    setVideoUrl(it.video_url);
+    setVideoProvider("bunny");
+    setThumbnailUrl(it.thumbnail_url || "");
+    setLibraryOpen(false);
+    toast({ title: "동영상이 선택되었습니다." });
   };
 
   const beginDrag = (e: React.PointerEvent, mode: DragMode) => {
@@ -379,6 +411,16 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
                   ) : (
                     <><Upload className="h-3.5 w-3.5" /> {t("mediaOverlay.uploadVideo", "동영상 업로드")}</>
                   )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 shrink-0"
+                  onClick={openLibrary}
+                  title="동영상 관리에 업로드된 동영상 불러오기"
+                >
+                  <Library className="h-3.5 w-3.5" /> 라이브러리
                 </Button>
               </div>
             </div>
@@ -626,6 +668,64 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Library picker */}
+      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>동영상 라이브러리</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="제목 또는 URL 검색"
+              className="pl-9 h-9"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto border rounded-md divide-y">
+            {libraryLoading ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> 불러오는 중...
+              </div>
+            ) : libraryItems.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                업로드된 동영상이 없습니다. 관리자 - 동영상 관리에서 먼저 업로드하세요.
+              </div>
+            ) : (
+              libraryItems
+                .filter((it) => {
+                  const q = librarySearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return (it.title || "").toLowerCase().includes(q) || (it.video_url || "").toLowerCase().includes(q);
+                })
+                .map((it) => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => pickLibraryItem(it)}
+                    className="w-full flex items-center gap-3 p-2.5 text-left hover:bg-muted/60 transition"
+                  >
+                    <VideoThumbnail src={it.thumbnail_url} className="h-10 w-16 rounded shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{it.title}</p>
+                      <p className="text-[11px] text-muted-foreground truncate font-mono">{it.video_url}</p>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      {new Date(it.created_at).toLocaleDateString("ko")}
+                    </span>
+                  </button>
+                ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setLibraryOpen(false)}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
