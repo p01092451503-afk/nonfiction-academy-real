@@ -188,7 +188,7 @@ export default function BunnyBulkUploadDialog({ open, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            {t("bunnyUpload.title", "다중 미디어 업로드 (Bunny CDN)")}
+            {t("bunnyUpload.title", "다중 미디어 업로드 (Global CDN)")}
           </DialogTitle>
         </DialogHeader>
 
