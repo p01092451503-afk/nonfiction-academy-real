@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Upload, Trash2, Video as VideoIcon, Loader2, Settings2 } from "lucide-react";
+import { Upload, Trash2, Video as VideoIcon, Loader2, Settings2, Library, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 export interface OverlayVideoData {
   overlay_video_url?: string | null;
