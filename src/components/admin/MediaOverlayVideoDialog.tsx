@@ -668,6 +668,64 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Library picker */}
+      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>동영상 라이브러리</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="제목 또는 URL 검색"
+              className="pl-9 h-9"
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto border rounded-md divide-y">
+            {libraryLoading ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                <Loader2 className="inline h-4 w-4 animate-spin mr-2" /> 불러오는 중...
+              </div>
+            ) : libraryItems.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                업로드된 동영상이 없습니다. 관리자 - 동영상 관리에서 먼저 업로드하세요.
+              </div>
+            ) : (
+              libraryItems
+                .filter((it) => {
+                  const q = librarySearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return (it.title || "").toLowerCase().includes(q) || (it.video_url || "").toLowerCase().includes(q);
+                })
+                .map((it) => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() => pickLibraryItem(it)}
+                    className="w-full flex items-center gap-3 p-2.5 text-left hover:bg-muted/60 transition"
+                  >
+                    <VideoThumbnail src={it.thumbnail_url} className="h-10 w-16 rounded shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{it.title}</p>
+                      <p className="text-[11px] text-muted-foreground truncate font-mono">{it.video_url}</p>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      {new Date(it.created_at).toLocaleDateString("ko")}
+                    </span>
+                  </button>
+                ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setLibraryOpen(false)}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
