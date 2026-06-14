@@ -412,6 +412,16 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
                     <><Upload className="h-3.5 w-3.5" /> {t("mediaOverlay.uploadVideo", "동영상 업로드")}</>
                   )}
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 shrink-0"
+                  onClick={openLibrary}
+                  title="동영상 관리에 업로드된 동영상 불러오기"
+                >
+                  <Library className="h-3.5 w-3.5" /> 라이브러리
+                </Button>
               </div>
             </div>
 
