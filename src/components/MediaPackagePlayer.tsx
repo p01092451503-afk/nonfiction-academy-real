@@ -144,7 +144,7 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
     width: `${(item.overlay_w ?? 0) * 100}%`,
     height: `${(item.overlay_h ?? 0) * 100}%`,
     opacity,
-    pointerEvents: showControls ? "auto" : "none",
+    pointerEvents: "auto",
   };
 
   if (isIframeUrl) {
