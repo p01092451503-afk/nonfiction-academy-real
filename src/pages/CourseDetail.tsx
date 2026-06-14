@@ -113,6 +113,8 @@ const CourseDetail = () => {
   const isLangSwitching = useLanguageSwitching();
 
   const [contentDialogOpen, setContentDialogOpen] = useState(false);
+  const [previewContentId, setPreviewContentId] = useState<string | null>(null);
+  const [previewContentTitle, setPreviewContentTitle] = useState<string>("");
   const [editingContentId, setEditingContentId] = useState<string | null>(null);
   const [contentForm, setContentForm] = useState<ContentFormData>(emptyContent);
   const [contentI18nForm, setContentI18nForm] = useState<Record<ContentI18nLang, ContentI18nData>>(emptyI18nAll);
