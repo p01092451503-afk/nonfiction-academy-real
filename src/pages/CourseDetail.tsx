@@ -18,7 +18,7 @@ import {
   FileText, Video, ChevronRight, BarChart3, Plus, Pencil,
   Trash2, Eye, EyeOff, Settings, ChevronUp, ChevronDown,
   GripVertical, ExternalLink, Copy, MoreHorizontal,
-  ClipboardCheck, AlertTriangle, Upload, X, Image, Images, Languages, UserPlus,
+  ClipboardCheck, AlertTriangle, Upload, X, Image, Images, Languages, UserPlus, PlayCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
