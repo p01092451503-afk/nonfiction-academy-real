@@ -189,11 +189,8 @@ const AdminVideos = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setBulkOpen(true)}>
-              <Upload className="h-4 w-4 mr-1" /> {t("bunnyUpload.button", "다중 업로드")}
-            </Button>
-            <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> {t("videoMgmt.addVideo")}
+            <Button onClick={() => setBulkOpen(true)}>
+              <Upload className="h-4 w-4 mr-1" /> 동영상 업로드
             </Button>
           </div>
         </div>
