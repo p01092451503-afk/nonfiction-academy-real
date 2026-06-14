@@ -327,42 +327,15 @@ const AdminVideos = () => {
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t("videoMgmt.fieldTitlePlaceholder")} />
             </div>
             <div>
-              <label className="text-sm font-medium">{form.video_provider === "kollus" ? t("videoMgmt.fieldKollusKey") : t("videoMgmt.fieldUrl")}</label>
-              <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder={form.video_provider === "kollus" ? t("videoMgmt.fieldKollusPlaceholder") : t("videoMgmt.fieldUrlPlaceholder")} />
-              {form.video_provider === "kollus" && (
-                <p className="text-xs text-muted-foreground mt-1">{t("videoMgmt.fieldKollusHint")}</p>
-              )}
+              <label className="text-sm font-medium">{t("videoMgmt.fieldUrl")}</label>
+              <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder={t("videoMgmt.fieldUrlPlaceholder")} />
+              <p className="text-xs text-muted-foreground mt-1">
+                Bunny CDN 재생 URL을 입력하세요. (대용량 파일은 상단의 "다중 업로드"를 사용)
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">{t("videoMgmt.fieldProvider")}</label>
-                <Select value={form.video_provider} onValueChange={(v) => setForm({ ...form, video_provider: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">{t("videoMgmt.providerCustom")}</SelectItem>
-                    <SelectItem value="upload">{t("videoMgmt.providerUpload")}</SelectItem>
-                    <SelectItem value="youtube">{t("videoMgmt.providerYoutube")}</SelectItem>
-                    <SelectItem value="vimeo">{t("videoMgmt.providerVimeo")}</SelectItem>
-                    <SelectItem value="bunny">{t("videoMgmt.providerBunny")}</SelectItem>
-                    <SelectItem value="cloudflare">{t("videoMgmt.providerCloudflare")}</SelectItem>
-                    <SelectItem value="kollus">{t("videoMgmt.providerKollus")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">{t("videoMgmt.fieldDuration")}</label>
-                <Input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })} placeholder="30" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">{t("videoMgmt.fieldSize")}</label>
-                <Input type="number" value={form.file_size_mb} onChange={(e) => setForm({ ...form, file_size_mb: e.target.value })} placeholder="200" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">{t("videoMgmt.fieldThumbnail")}</label>
-                <Input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} placeholder="https://..." />
-              </div>
+            <div>
+              <label className="text-sm font-medium">{t("videoMgmt.fieldThumbnail")}</label>
+              <Input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} placeholder="https://..." />
             </div>
             <div>
               <label className="text-sm font-medium">{t("videoMgmt.fieldDescription")}</label>
