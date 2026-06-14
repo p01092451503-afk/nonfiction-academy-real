@@ -76,6 +76,10 @@ const MediaOverlayVideoDialog = ({ open, onOpenChange, imageUrl, value, onSave }
 
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryItems, setLibraryItems] = useState<Array<{ id: string; title: string; video_url: string; thumbnail_url: string | null; created_at: string }>>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
   const videoInputRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
