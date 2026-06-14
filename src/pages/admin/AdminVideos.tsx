@@ -65,15 +65,12 @@ const AdminVideos = () => {
   const [form, setForm] = useState({
     title: "",
     video_url: "",
-    video_provider: "custom",
-    duration_minutes: "",
-    file_size_mb: "",
     description: "",
     thumbnail_url: "",
   });
 
   const resetForm = () => {
-    setForm({ title: "", video_url: "", video_provider: "custom", duration_minutes: "", file_size_mb: "", description: "", thumbnail_url: "" });
+    setForm({ title: "", video_url: "", description: "", thumbnail_url: "" });
     setEditingId(null);
   };
 
