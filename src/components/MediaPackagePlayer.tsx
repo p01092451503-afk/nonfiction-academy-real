@@ -65,8 +65,8 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
 
   const autoplay = item.overlay_autoplay ?? true;
   const loop = item.overlay_loop ?? true;
-  const muted = item.overlay_muted ?? true;
-  const showControls = item.overlay_show_controls ?? false;
+  const muted = item.overlay_muted ?? false;
+  const showControls = item.overlay_show_controls ?? true;
   const volume = (item.overlay_volume ?? 100) / 100;
   const rate = item.overlay_playback_rate ?? 1.0;
   const startSec = item.overlay_start_sec ?? 0;
