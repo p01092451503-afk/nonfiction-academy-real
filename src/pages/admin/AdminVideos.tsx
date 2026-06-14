@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Video, Plus, Search, Trash2, Copy, Edit, ExternalLink, Upload } from "lucide-react";
+import { Video, Search, Trash2, Copy, Edit, ExternalLink, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -189,11 +189,8 @@ const AdminVideos = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setBulkOpen(true)}>
-              <Upload className="h-4 w-4 mr-1" /> {t("bunnyUpload.button", "다중 업로드")}
-            </Button>
-            <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> {t("videoMgmt.addVideo")}
+            <Button onClick={() => setBulkOpen(true)}>
+              <Upload className="h-4 w-4 mr-1" /> 동영상 업로드
             </Button>
           </div>
         </div>
