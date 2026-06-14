@@ -160,9 +160,6 @@ const AdminVideos = () => {
     setForm({
       title: v.title,
       video_url: v.video_url,
-      video_provider: v.video_provider,
-      duration_minutes: v.duration_minutes?.toString() || "",
-      file_size_mb: v.file_size_mb?.toString() || "",
       description: v.description || "",
       thumbnail_url: v.thumbnail_url || "",
     });
