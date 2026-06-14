@@ -1014,6 +1014,27 @@ const CourseDetail = () => {
           }}
           categories={categories}
         />
+
+        <Dialog open={!!previewContentId} onOpenChange={(open) => { if (!open) setPreviewContentId(null); }}>
+          <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+            <DialogHeader className="px-6 py-4 border-b">
+              <DialogTitle className="text-base font-semibold truncate pr-8">
+                {previewContentTitle || (isEn ? "Preview" : "미리보기")}
+              </DialogTitle>
+            </DialogHeader>
+            {previewContentId && (
+              <div className="w-full bg-background" style={{ height: "75vh" }}>
+                <iframe
+                  src={`${routePrefix}/courses/${courseId}/content/${previewContentId}?preview=1`}
+                  className="w-full h-full border-0"
+                  title={previewContentTitle}
+                  allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </DashboardLayout>
     );
   }
