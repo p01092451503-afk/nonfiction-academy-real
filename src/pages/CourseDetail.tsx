@@ -900,6 +900,18 @@ const CourseDetail = () => {
                                     <button
                                       type="button"
                                       className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                      onClick={() => {
+                                        setPreviewContentId(content.id);
+                                        setPreviewContentTitle(localizedTitle);
+                                      }}
+                                      aria-label={isEn ? `Preview ${localizedTitle}` : `${localizedTitle} 미리보기`}
+                                      title={isEn ? "Preview" : "미리보기"}
+                                    >
+                                      <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                       onClick={() => togglePublishMutation.mutate({ id: content.id, published: !content.is_published })}
                                       aria-label={content.is_published ? (isEn ? `Hide ${localizedTitle}` : `${localizedTitle} 비공개`) : (isEn ? `Publish ${localizedTitle}` : `${localizedTitle} 공개`)}
                                     >
