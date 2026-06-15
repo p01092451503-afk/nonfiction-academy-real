@@ -129,7 +129,11 @@
     "studentLabel": "학습자",
     "superAdminLabel": "슈퍼관리자",
     "learnerVersion": "학습자 버전",
-    "teacherVersion": "강사 버전"
+    "teacherVersion": "강사 버전",
+    "learningLeader": "러닝 리더",
+    "learningManager": "러닝 매니저",
+    "teacherSubtype": "강사 유형",
+    "teacherSubtypeHint": "러닝 리더 / 러닝 매니저를 선택하세요"
   },
   "dashboard": {
     "learningDashboard": "학습 대시보드",

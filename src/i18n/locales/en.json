@@ -132,7 +132,11 @@
     "studentLabel": "Learner",
     "superAdminLabel": "Super Admin",
     "learnerVersion": "Learner View",
-    "teacherVersion": "Leader View"
+    "teacherVersion": "Leader View",
+    "learningLeader": "Learning Leader",
+    "learningManager": "Learning Manager",
+    "teacherSubtype": "Teacher Type",
+    "teacherSubtypeHint": "Choose Learning Leader or Learning Manager"
   },
   "dashboard": {
     "learningDashboard": "Learning Dashboard",
