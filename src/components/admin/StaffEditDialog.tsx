@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getTeacherSubtype } from "@/lib/teacherSubtype";
 
 export type StaffRole = "admin" | "teacher" | "student" | "super_admin";
 export type AssignableStaffRole = Exclude<StaffRole, "super_admin">;
