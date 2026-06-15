@@ -12,6 +12,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
 import { supabase } from "@/integrations/supabase/client";
+import { getTeacherRoleLabelKey } from "@/lib/teacherSubtype";
 import LanguageToggle from "@/components/LanguageToggle";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import NotificationBell from "@/components/NotificationBell";
@@ -239,7 +240,9 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (label: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  const roleLabel = t(`roles.${activeRole}`);
+  const roleLabel = activeRole === "teacher"
+    ? t(getTeacherRoleLabelKey(profile?.position))
+    : t(`roles.${activeRole}`);
 
   const handleSignOut = async () => {
     await signOut();
@@ -392,7 +395,9 @@ const DashboardLayout = ({ children, role = "student", contentClassName }: Dashb
               <div className="px-2 py-2">
                 <p className="text-sm font-semibold text-foreground leading-tight">{profile?.full_name || t("common.user")}</p>
                 <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                  {t(`roles.${primaryRole}`, primaryRole || "student")}
+                  {primaryRole === "teacher"
+                    ? t(getTeacherRoleLabelKey(profile?.position))
+                    : t(`roles.${primaryRole}`, primaryRole || "student")}
                 </p>
               </div>
               <DropdownMenuSeparator />
