@@ -557,6 +557,8 @@
     "pointTrend": "8周积分增长趋势",
     "totalPt": "总计 {{count}}pt",
     "courseProgress": "按课程学习进度",
+    "sortByProgress": "进度从高到低",
+    "sortByRecent": "最近学习",
     "untilNextLevel": "距离下一等级",
     "xpProgress": "XP进度",
     "xpRemaining": "距离 Lv.{{level}} 还剩 {{xp}} XP",

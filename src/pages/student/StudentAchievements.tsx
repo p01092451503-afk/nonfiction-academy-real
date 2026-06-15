@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Award, Flame, Star, Target, TrendingUp, Zap, Crown, Medal, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -45,6 +47,7 @@ const PLACEHOLDER_BADGES: { id: string; icon: string; key: string }[] = [
 const StudentAchievements = () => {
   const { user } = useUser();
   const { t, i18n } = useTranslation();
+  const [courseSortBy, setCourseSortBy] = useState<"progress" | "recent">("progress");
 
   const { data: gamification } = useQuery({
     queryKey: ["my-gamification", user?.id],
@@ -119,9 +122,7 @@ const StudentAchievements = () => {
         .from("enrollments")
         .select("course_id, progress, courses(id, title, course_i18n(language_code, title))")
         .eq("user_id", user!.id)
-        .eq("status", "approved")
-        .order("progress", { ascending: false })
-        .limit(7);
+        .eq("status", "approved");
       if (error) throw error;
       const courseIds = (data || []).map((e: any) => e.course_id).filter(Boolean);
       if (courseIds.length === 0) return data || [];
@@ -135,14 +136,36 @@ const StudentAchievements = () => {
       if (contentsError) throw contentsError;
 
       const contentMap = new Map<string, any[]>();
+      const contentToCourse = new Map<string, string>();
       (contents || []).forEach((content: any) => {
         const list = contentMap.get(content.course_id) || [];
         list.push(content);
         contentMap.set(content.course_id, list);
+        contentToCourse.set(content.id, content.course_id);
       });
+
+      // Recent learning date per course
+      const contentIds = Array.from(contentToCourse.keys());
+      const lastAccessMap = new Map<string, string>();
+      if (contentIds.length > 0) {
+        const { data: progressRows } = await supabase
+          .from("content_progress")
+          .select("content_id, last_accessed_at, completed_at")
+          .eq("user_id", user!.id)
+          .in("content_id", contentIds);
+        (progressRows || []).forEach((row: any) => {
+          const courseId = contentToCourse.get(row.content_id);
+          if (!courseId) return;
+          const ts = row.last_accessed_at || row.completed_at;
+          if (!ts) return;
+          const prev = lastAccessMap.get(courseId);
+          if (!prev || new Date(ts) > new Date(prev)) lastAccessMap.set(courseId, ts);
+        });
+      }
 
       return (data || []).map((enrollment: any) => ({
         ...enrollment,
+        lastAccessedAt: lastAccessMap.get(enrollment.course_id) || null,
         localizedTitle: getCourseTitleByLangWithContentFallback(
           enrollment.courses,
           enrollment.courses?.course_i18n || [],
@@ -193,8 +216,16 @@ const StudentAchievements = () => {
   const levelDonut = [{ name: "level", value: xpProgress, fill: "hsl(var(--foreground))" }];
   const badgeDonut = [{ name: "badges", value: badgePercent, fill: "hsl(var(--warning))" }];
 
-  // Course progress chart with color by progress
-  const courseChartData = courseProgress.map((c: any) => {
+  // Course progress chart with sort + color
+  const sortedCourses = [...courseProgress].sort((a: any, b: any) => {
+    if (courseSortBy === "recent") {
+      const at = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0;
+      const bt = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0;
+      return bt - at;
+    }
+    return (b.progress || 0) - (a.progress || 0);
+  }).slice(0, 7);
+  const courseChartData = sortedCourses.map((c: any) => {
     const localized = stripLessonPrefix(c.localizedTitle || c.courses?.title || "-");
     return {
       name: localized,
@@ -357,9 +388,20 @@ const StudentAchievements = () => {
         {/* Course progress + Next level */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div className="stat-card !p-4 sm:!p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h3 className="text-sm font-semibold text-foreground">{t("achievements.courseProgress")}</h3>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <Target className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+                <h3 className="text-sm font-semibold text-foreground truncate">{t("achievements.courseProgress")}</h3>
+              </div>
+              <Select value={courseSortBy} onValueChange={(v) => setCourseSortBy(v as "progress" | "recent")}>
+                <SelectTrigger className="h-8 w-[140px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="progress" className="text-xs">{t("achievements.sortByProgress", "진행률 높은순")}</SelectItem>
+                  <SelectItem value="recent" className="text-xs">{t("achievements.sortByRecent", "최근 학습순")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             {courseChartData.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("common.noData")}</p>

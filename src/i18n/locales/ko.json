@@ -557,6 +557,8 @@
     "pointTrend": "8주간 포인트 성장 추이",
     "totalPt": "총 {{count}}pt",
     "courseProgress": "강의별 학습 진도",
+    "sortByProgress": "진행률 높은순",
+    "sortByRecent": "최근 학습순",
     "untilNextLevel": "다음 레벨까지",
     "xpProgress": "XP 진행도",
     "xpRemaining": "Lv.{{level}}까지 {{xp}} XP 남음",

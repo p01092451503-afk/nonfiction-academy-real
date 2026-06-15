@@ -557,6 +557,8 @@
     "pointTrend": "8週間ポイント成長推移",
     "totalPt": "合計 {{count}}pt",
     "courseProgress": "コース別学習進捗",
+    "sortByProgress": "進捗率が高い順",
+    "sortByRecent": "最近学習した順",
     "untilNextLevel": "次のレベルまで",
     "xpProgress": "XP進捗度",
     "xpRemaining": "Lv.{{level}}まで残り{{xp}} XP",
