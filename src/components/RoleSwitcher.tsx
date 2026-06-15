@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Shield, GraduationCap, Users } from "lucide-react";
+import { Shield, GraduationCap, Users, ArrowLeftRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,8 +8,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { getTeacherRoleLabelKey } from "@/lib/teacherSubtype";
 
 const roleConfig = {
   admin: { icon: Shield, path: "/admin", labelKey: "roles.admin" },
@@ -19,33 +21,13 @@ const roleConfig = {
 
 const RoleSwitcher = () => {
   const { roles, primaryRole, isAdmin, isTeacher, isStudent } = useUserRole();
+  const { profile } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const { teacherRoleEnabled } = useSystemSettings();
 
-  // Special case: user is student + teacher (러닝 리더) but NOT admin.
-  // Show a single toggle button between learner version and teacher version.
-  if (!isAdmin && isStudent && isTeacher && teacherRoleEnabled) {
-    const onTeacher = location.pathname.startsWith("/teacher");
-    const target = onTeacher ? "/student" : "/teacher";
-    const Icon = onTeacher ? GraduationCap : Users;
-    const label = onTeacher
-      ? t("roles.learnerVersion", "학습자 버전")
-      : t("roles.teacherVersion", "강사 버전");
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-9 gap-1.5 rounded-full text-xs"
-        onClick={() => navigate(target)}
-        aria-label={label}
-      >
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        {label}
-      </Button>
-    );
-  }
+  const teacherLabelKey = getTeacherRoleLabelKey(profile?.position);
 
   // Map roles to switchable dashboard roles (super_admin → admin)
   const switchableRoles = (Array.from(
@@ -55,20 +37,29 @@ const RoleSwitcher = () => {
 
   if (switchableRoles.length <= 1) return null;
 
-  const CurrentIcon = roleConfig[primaryRole]?.icon || GraduationCap;
+  // Trigger button: shield + arrows + "역할 전환"
+  const Trigger = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-9 gap-1.5 rounded-full px-3 text-xs font-medium"
+      aria-label={t("roles.switchRole", "역할 전환")}
+    >
+      <Shield className="h-3.5 w-3.5" aria-hidden="true" />
+      <ArrowLeftRight className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+      <span>{t("roles.switchRole", "역할 전환")}</span>
+    </Button>
+  );
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" aria-label="Switch role">
-          <CurrentIcon className="h-[18px] w-[18px]" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]">
+      <DropdownMenuTrigger asChild>{Trigger}</DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[160px]">
         {switchableRoles.map((role) => {
           const config = roleConfig[role];
           if (!config) return null;
           const Icon = config.icon;
+          const labelKey = role === "teacher" ? teacherLabelKey : config.labelKey;
           return (
             <DropdownMenuItem
               key={role}
@@ -76,7 +67,7 @@ const RoleSwitcher = () => {
               className="text-xs gap-2"
             >
               <Icon className="h-3.5 w-3.5" />
-              {t(config.labelKey)}
+              {t(labelKey)}
             </DropdownMenuItem>
           );
         })}

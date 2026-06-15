@@ -133,7 +133,8 @@
     "learningLeader": "Learning Leader",
     "learningManager": "Learning Manager",
     "teacherSubtype": "讲师类型",
-    "teacherSubtypeHint": "请选择 Learning Leader 或 Learning Manager"
+    "teacherSubtypeHint": "请选择 Learning Leader 或 Learning Manager",
+    "switchRole": "切换角色"
   },
   "dashboard": {
     "learningDashboard": "学习仪表板",
