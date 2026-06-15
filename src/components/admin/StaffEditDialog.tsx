@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getTeacherSubtype } from "@/lib/teacherSubtype";
 
 export type StaffRole = "admin" | "teacher" | "student" | "super_admin";
 export type AssignableStaffRole = Exclude<StaffRole, "super_admin">;
@@ -46,8 +47,6 @@ interface StaffEditDialogProps {
   saving: boolean;
 }
 
-const ASSIGNABLE_ROLES: AssignableStaffRole[] = ["student", "teacher", "admin"];
-
 const StaffEditDialog = ({
   open,
   onOpenChange,
@@ -73,12 +72,6 @@ const StaffEditDialog = ({
 
   const selectedBranch = branches.find((b) => b.id === draft.branchId);
 
-  const roleLabel = (role: AssignableStaffRole) => {
-    if (role === "student") return t("roles.studentLabel", "학습자");
-    if (role === "teacher") return t("roles.teacherLabel", "강사");
-    return t("roles.adminLabel", "관리자");
-  };
-
   const toggleRole = (role: AssignableStaffRole, checked: boolean) => {
     const current = new Set(draft.roles);
     if (checked) current.add(role);
@@ -86,6 +79,26 @@ const StaffEditDialog = ({
     // Always keep at least one role; default back to student if empty
     const next = current.size === 0 ? (["student"] as AssignableStaffRole[]) : Array.from(current);
     onDraftChange({ ...draft, roles: next });
+  };
+
+  const toggleTeacherSubtype = (subtype: "leader" | "manager", checked: boolean) => {
+    if (draft.roleLocked) return;
+    const current = new Set(draft.roles);
+    if (checked) {
+      current.add("teacher");
+      onDraftChange({
+        ...draft,
+        roles: Array.from(current),
+        position: subtype === "manager" ? "러닝매니저" : "러닝리더",
+      });
+    } else {
+      current.delete("teacher");
+      onDraftChange({
+        ...draft,
+        roles: Array.from(current),
+        position: "",
+      });
+    }
   };
 
   return (
@@ -145,57 +158,53 @@ const StaffEditDialog = ({
               <Label>{t("admin.roleColumn")}</Label>
               <span className="text-xs text-muted-foreground">{t("admin.rolesMultiHint", "여러 역할을 동시에 지정할 수 있습니다")}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 rounded-md border border-border p-3">
-              {ASSIGNABLE_ROLES.map((role) => {
-                const checked = draft.roles.includes(role);
-                return (
-                  <label
-                    key={role}
-                    className={`flex items-center gap-2 text-sm ${draft.roleLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      disabled={draft.roleLocked}
-                      onCheckedChange={(v) => toggleRole(role, v === true)}
-                    />
-                    <span>{roleLabel(role)}</span>
-                  </label>
-                );
-              })}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-md border border-border p-3">
+              <label
+                className={`flex items-center gap-2 text-sm ${draft.roleLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <Checkbox
+                  checked={draft.roles.includes("student")}
+                  disabled={draft.roleLocked}
+                  onCheckedChange={(v) => toggleRole("student", v === true)}
+                />
+                <span>{t("roles.studentLabel", "학습자")}</span>
+              </label>
+
+              <label
+                className={`flex items-center gap-2 text-sm ${draft.roleLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <Checkbox
+                  checked={draft.roles.includes("teacher") && getTeacherSubtype(draft.position) === "leader"}
+                  disabled={draft.roleLocked}
+                  onCheckedChange={(v) => toggleTeacherSubtype("leader", v === true)}
+                />
+                <span>{t("roles.learningLeader", "러닝 리더")}</span>
+              </label>
+
+              <label
+                className={`flex items-center gap-2 text-sm ${draft.roleLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <Checkbox
+                  checked={draft.roles.includes("teacher") && getTeacherSubtype(draft.position) === "manager"}
+                  disabled={draft.roleLocked}
+                  onCheckedChange={(v) => toggleTeacherSubtype("manager", v === true)}
+                />
+                <span>{t("roles.learningManager", "러닝 매니저")}</span>
+              </label>
+
+              <label
+                className={`flex items-center gap-2 text-sm ${draft.roleLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <Checkbox
+                  checked={draft.roles.includes("admin")}
+                  disabled={draft.roleLocked}
+                  onCheckedChange={(v) => toggleRole("admin", v === true)}
+                />
+                <span>{t("roles.adminLabel", "관리자")}</span>
+              </label>
             </div>
             {draft.roleLocked && <p className="text-xs text-muted-foreground">{t("admin.roleLockedHint")}</p>}
           </div>
-
-          {draft.roles.includes("teacher") && (
-            <div className="space-y-2">
-              <Label>{t("roles.teacherSubtype", "강사 유형")}</Label>
-              <Select
-                value={
-                  (draft.position || "").toLowerCase().includes("매니저") ||
-                  (draft.position || "").toLowerCase().includes("manager")
-                    ? "manager"
-                    : "leader"
-                }
-                onValueChange={(v) =>
-                  onDraftChange({
-                    ...draft,
-                    position: v === "manager" ? "러닝매니저" : "러닝리더",
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="leader">{t("roles.learningLeader", "러닝 리더")}</SelectItem>
-                  <SelectItem value="manager">{t("roles.learningManager", "러닝 매니저")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {t("roles.teacherSubtypeHint", "러닝 리더 / 러닝 매니저를 선택하세요")}
-              </p>
-            </div>
-          )}
 
           <div className="space-y-2">
             <Label>{t("admin.positionColumn")}</Label>
@@ -206,7 +215,6 @@ const StaffEditDialog = ({
             />
           </div>
         </div>
-
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
