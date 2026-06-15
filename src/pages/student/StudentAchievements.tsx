@@ -47,6 +47,7 @@ const PLACEHOLDER_BADGES: { id: string; icon: string; key: string }[] = [
 const StudentAchievements = () => {
   const { user } = useUser();
   const { t, i18n } = useTranslation();
+  const [courseSortBy, setCourseSortBy] = useState<"progress" | "recent">("progress");
 
   const { data: gamification } = useQuery({
     queryKey: ["my-gamification", user?.id],
