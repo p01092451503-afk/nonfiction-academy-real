@@ -133,7 +133,8 @@
     "learningLeader": "러닝 리더",
     "learningManager": "러닝 매니저",
     "teacherSubtype": "강사 유형",
-    "teacherSubtypeHint": "러닝 리더 / 러닝 매니저를 선택하세요"
+    "teacherSubtypeHint": "러닝 리더 / 러닝 매니저를 선택하세요",
+    "switchRole": "역할 전환"
   },
   "dashboard": {
     "learningDashboard": "학습 대시보드",
