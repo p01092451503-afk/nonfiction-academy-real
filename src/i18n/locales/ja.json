@@ -133,7 +133,8 @@
     "learningLeader": "Learning Leader",
     "learningManager": "Learning Manager",
     "teacherSubtype": "講師タイプ",
-    "teacherSubtypeHint": "Learning Leader / Learning Manager を選択"
+    "teacherSubtypeHint": "Learning Leader / Learning Manager を選択",
+    "switchRole": "役割切替"
   },
   "dashboard": {
     "learningDashboard": "学習ダッシュボード",
