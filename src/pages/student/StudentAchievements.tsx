@@ -388,9 +388,20 @@ const StudentAchievements = () => {
         {/* Course progress + Next level */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div className="stat-card !p-4 sm:!p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="h-4 w-4 text-primary" aria-hidden="true" />
-              <h3 className="text-sm font-semibold text-foreground">{t("achievements.courseProgress")}</h3>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <Target className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+                <h3 className="text-sm font-semibold text-foreground truncate">{t("achievements.courseProgress")}</h3>
+              </div>
+              <Select value={courseSortBy} onValueChange={(v) => setCourseSortBy(v as "progress" | "recent")}>
+                <SelectTrigger className="h-8 w-[140px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="progress" className="text-xs">{t("achievements.sortByProgress", "진행률 높은순")}</SelectItem>
+                  <SelectItem value="recent" className="text-xs">{t("achievements.sortByRecent", "최근 학습순")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             {courseChartData.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("common.noData")}</p>
