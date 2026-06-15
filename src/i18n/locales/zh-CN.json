@@ -129,7 +129,11 @@
     "studentLabel": "学员",
     "superAdminLabel": "超级管理员",
     "learnerVersion": "学员视图",
-    "teacherVersion": "讲师视图"
+    "teacherVersion": "讲师视图",
+    "learningLeader": "Learning Leader",
+    "learningManager": "Learning Manager",
+    "teacherSubtype": "讲师类型",
+    "teacherSubtypeHint": "请选择 Learning Leader 或 Learning Manager"
   },
   "dashboard": {
     "learningDashboard": "学习仪表板",

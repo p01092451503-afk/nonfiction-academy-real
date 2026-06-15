@@ -166,6 +166,37 @@ const StaffEditDialog = ({
             {draft.roleLocked && <p className="text-xs text-muted-foreground">{t("admin.roleLockedHint")}</p>}
           </div>
 
+          {draft.roles.includes("teacher") && (
+            <div className="space-y-2">
+              <Label>{t("roles.teacherSubtype", "강사 유형")}</Label>
+              <Select
+                value={
+                  (draft.position || "").toLowerCase().includes("매니저") ||
+                  (draft.position || "").toLowerCase().includes("manager")
+                    ? "manager"
+                    : "leader"
+                }
+                onValueChange={(v) =>
+                  onDraftChange({
+                    ...draft,
+                    position: v === "manager" ? "러닝매니저" : "러닝리더",
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leader">{t("roles.learningLeader", "러닝 리더")}</SelectItem>
+                  <SelectItem value="manager">{t("roles.learningManager", "러닝 매니저")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t("roles.teacherSubtypeHint", "러닝 리더 / 러닝 매니저를 선택하세요")}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>{t("admin.positionColumn")}</Label>
             <Input
@@ -175,6 +206,7 @@ const StaffEditDialog = ({
             />
           </div>
         </div>
+
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
