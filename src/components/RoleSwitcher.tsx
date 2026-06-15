@@ -18,8 +18,6 @@ const roleConfig = {
   teacher: { icon: Users, path: "/teacher", labelKey: "roles.teacher" },
   student: { icon: GraduationCap, path: "/student", labelKey: "roles.student" },
 } as const;
-  student: { icon: GraduationCap, path: "/student", labelKey: "roles.student" },
-} as const;
 
 const RoleSwitcher = () => {
   const { roles, primaryRole, isAdmin, isTeacher, isStudent } = useUserRole();
