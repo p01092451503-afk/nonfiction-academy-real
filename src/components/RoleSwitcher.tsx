@@ -8,12 +8,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { getTeacherRoleLabelKey } from "@/lib/teacherSubtype";
 
 const roleConfig = {
   admin: { icon: Shield, path: "/admin", labelKey: "roles.admin" },
   teacher: { icon: Users, path: "/teacher", labelKey: "roles.teacher" },
+  student: { icon: GraduationCap, path: "/student", labelKey: "roles.student" },
+} as const;
   student: { icon: GraduationCap, path: "/student", labelKey: "roles.student" },
 } as const;
 
