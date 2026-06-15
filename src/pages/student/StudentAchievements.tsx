@@ -216,8 +216,16 @@ const StudentAchievements = () => {
   const levelDonut = [{ name: "level", value: xpProgress, fill: "hsl(var(--foreground))" }];
   const badgeDonut = [{ name: "badges", value: badgePercent, fill: "hsl(var(--warning))" }];
 
-  // Course progress chart with color by progress
-  const courseChartData = courseProgress.map((c: any) => {
+  // Course progress chart with sort + color
+  const sortedCourses = [...courseProgress].sort((a: any, b: any) => {
+    if (courseSortBy === "recent") {
+      const at = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0;
+      const bt = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0;
+      return bt - at;
+    }
+    return (b.progress || 0) - (a.progress || 0);
+  }).slice(0, 7);
+  const courseChartData = sortedCourses.map((c: any) => {
     const localized = stripLessonPrefix(c.localizedTitle || c.courses?.title || "-");
     return {
       name: localized,
