@@ -136,7 +136,8 @@
     "learningLeader": "Learning Leader",
     "learningManager": "Learning Manager",
     "teacherSubtype": "Teacher Type",
-    "teacherSubtypeHint": "Choose Learning Leader or Learning Manager"
+    "teacherSubtypeHint": "Choose Learning Leader or Learning Manager",
+    "switchRole": "Switch role"
   },
   "dashboard": {
     "learningDashboard": "Learning Dashboard",
