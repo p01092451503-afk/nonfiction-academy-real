@@ -560,6 +560,8 @@
     "pointTrend": "8-Week Point Growth",
     "totalPt": "Total {{count}}pt",
     "courseProgress": "Course Progress",
+    "sortByProgress": "Highest progress",
+    "sortByRecent": "Most recent",
     "untilNextLevel": "To Next Level",
     "xpProgress": "XP Progress",
     "xpRemaining": "{{xp}} XP to Lv.{{level}}",
