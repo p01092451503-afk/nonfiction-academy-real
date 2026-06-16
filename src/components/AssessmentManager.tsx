@@ -376,17 +376,71 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
 
       if (!questionId) return;
 
+      const isMcqOpts = ["multiple_choice_4", "multiple_choice_5"].includes(questionForm.question_type);
+
+      // Auto-translate KO → each language for fields the user hasn't manually edited
+      const koQ = (questionForm.question_text || "").trim();
+      const koA = (questionForm.correct_answer || "").trim();
+      const koE = (questionForm.explanation || "").trim();
+      const koH = (questionForm.hint || "").trim();
+      const autoTr: Record<string, Partial<QuestionI18nForm>> = {};
+      await Promise.all(I18N_LANGS.map(async (lc) => {
+        const f = questionI18nForm[lc];
+        const m = questionManual[lc];
+        const fields: { key: string; src: string; idx?: number }[] = [];
+        if (koQ && (!m.question_text || !f.question_text?.trim() || f.question_text.trim() === koQ)) {
+          fields.push({ key: "question_text", src: koQ });
+        }
+        if (koA && questionForm.question_type !== "ox" && (!m.correct_answer || !f.correct_answer?.trim() || f.correct_answer.trim() === koA)) {
+          fields.push({ key: "correct_answer", src: koA });
+        }
+        if (koE && (!m.explanation || !f.explanation?.trim() || f.explanation.trim() === koE)) {
+          fields.push({ key: "explanation", src: koE });
+        }
+        if (koH && (!m.hint || !f.hint?.trim() || f.hint.trim() === koH)) {
+          fields.push({ key: "hint", src: koH });
+        }
+        if (isMcqOpts) {
+          questionForm.options.forEach((opt, i) => {
+            const src = (opt || "").trim();
+            const cur = (f.options[i] || "").trim();
+            if (src && (!m.options || !cur || cur === src)) {
+              fields.push({ key: `option_${i}`, src, idx: i });
+            }
+          });
+        }
+        if (!fields.length) return;
+        try {
+          const results = await translateKoTo(lc, fields.map(x => x.src));
+          const upd: Partial<QuestionI18nForm> = {};
+          const newOpts = [...f.options];
+          fields.forEach((fd, i) => {
+            const v = results[i];
+            if (!v) return;
+            if (fd.key === "question_text") upd.question_text = v;
+            else if (fd.key === "correct_answer") upd.correct_answer = v;
+            else if (fd.key === "explanation") upd.explanation = v;
+            else if (fd.key === "hint") upd.hint = v;
+            else if (fd.key.startsWith("option_") && fd.idx !== undefined) newOpts[fd.idx] = v;
+          });
+          upd.options = newOpts;
+          autoTr[lc] = upd;
+        } catch { /* silent */ }
+      }));
+
       // Save i18n rows for each language
       const rows = I18N_LANGS.map(lc => {
         const f = questionI18nForm[lc];
+        const a = autoTr[lc] || {};
+        const finalOptions = isMcq ? (a.options || (f.options.length ? f.options : questionForm.options)) : null;
         return {
           question_id: questionId,
           language_code: lc,
-          question_text: (f.question_text || questionForm.question_text || "").trim(),
-          options: isMcq ? (f.options.length ? f.options : questionForm.options) : null,
-          correct_answer: (f.correct_answer || questionForm.correct_answer || "").trim(),
-          explanation: f.explanation?.trim() || null,
-          hint: f.hint?.trim() || null,
+          question_text: ((a.question_text ?? f.question_text) || questionForm.question_text || "").trim(),
+          options: finalOptions,
+          correct_answer: ((a.correct_answer ?? f.correct_answer) || questionForm.correct_answer || "").trim(),
+          explanation: ((a.explanation ?? f.explanation) || "").trim() || null,
+          hint: ((a.hint ?? f.hint) || "").trim() || null,
         };
       }).filter(r => r.question_text);
 
@@ -398,6 +452,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
         if (error) console.error("question i18n save error:", error);
       }
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assessment-questions", assessment?.id] });
       queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-all"] });
