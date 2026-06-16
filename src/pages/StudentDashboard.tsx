@@ -193,6 +193,28 @@ const StudentDashboard = () => {
     enabled: !!user?.id,
   });
 
+  // 누적 학습시간 (분): course_learning_sessions 기준, 세션당 30분 캡
+  const { data: learningMinutes = 0 } = useQuery({
+    queryKey: ["dash-learning-minutes", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_learning_sessions")
+        .select("started_at, last_heartbeat_at")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      const SESSION_CAP_MIN = 30;
+      let total = 0;
+      (data || []).forEach((s: any) => {
+        const start = new Date(s.started_at).getTime();
+        const end = new Date(s.last_heartbeat_at).getTime();
+        const min = Math.max(0, (end - start) / 60000);
+        total += Math.min(min, SESSION_CAP_MIN);
+      });
+      return Math.round(total);
+    },
+    enabled: !!user?.id,
+  });
+
   // 필수교육 (마감 임박 우선)
   const { data: mandatoryCourses = [] } = useQuery({
     queryKey: ["dash-mandatory", user?.id, lang],
