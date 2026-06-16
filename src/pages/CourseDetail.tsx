@@ -1079,7 +1079,7 @@ const CourseDetail = () => {
           </div>
 
           {enrollment ? (
-            <div className="space-y-1.5" aria-label={isEn ? `Progress ${overallProgress}%` : `진도율 ${overallProgress}%`}>
+            <div className="space-y-2" aria-label={isEn ? `Progress ${overallProgress}%` : `진도율 ${overallProgress}%`}>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">{t("course.enrollProgress")}</span>
                 <span className="font-medium text-foreground">{overallProgress}%</span>
@@ -1090,6 +1090,31 @@ const CourseDetail = () => {
                   ? t("course.courseCompleted", "학습완료")
                   : t("course.learningInProgress", "학습 진행중")}
               </p>
+              {enrollment.completed_at && (
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <span className="text-[10px] text-muted-foreground">
+                    {t("course.completionCount", "수강 완료 횟수")}: <span className="font-medium text-foreground">{(enrollment as any).completion_count ?? 1}</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={async () => {
+                      const { data, error } = await supabase.rpc("record_course_review_completion", { p_course_id: courseId! } as any);
+                      if (error) {
+                        toast({ title: t("common.error", "오류"), description: error.message, variant: "destructive" });
+                        return;
+                      }
+                      toast({ title: t("course.reviewCompleted", "복습 완료"), description: t("course.reviewCompletedDesc", "수강 완료 횟수가 {{n}}회로 누적되었습니다.", { n: data }) });
+                      queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
+                      queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
+                      queryClient.invalidateQueries({ queryKey: ["dash-enrollment-stats"] });
+                    }}
+                  >
+                    {t("course.markReviewComplete", "복습 완료")}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : enrollmentLoading ? (
             <Button className="w-full sm:w-auto" disabled aria-label={t("common.loading", "불러오는 중")}>
