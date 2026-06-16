@@ -425,7 +425,11 @@ export default function AssessmentPage() {
       return data as any;
     },
     enabled: !!assessmentId && !!currentLang,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
+
 
   // Pick the active question source for i18n lookup (prefer rawQuestions; fallback to reviewQuestions)
   const questionIdsForI18n = useMemo(() => {
@@ -435,8 +439,14 @@ export default function AssessmentPage() {
     return Array.from(ids);
   }, [rawQuestions, reviewQuestions]);
 
+  // Stable key: join sorted IDs so the cache entry is unique per (assessment, lang, exact question set)
+  const questionIdsKey = useMemo(
+    () => [...questionIdsForI18n].sort().join("|"),
+    [questionIdsForI18n]
+  );
+
   const { data: questionI18nRows = [] } = useQuery({
-    queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsForI18n.length],
+    queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
     queryFn: async () => {
       if (!currentLang || questionIdsForI18n.length === 0) return [];
       const { data, error } = await supabase
@@ -448,7 +458,11 @@ export default function AssessmentPage() {
       return (data || []) as any[];
     },
     enabled: !!currentLang && questionIdsForI18n.length > 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
+
 
   const questionI18nMap = useMemo(() => {
     const m = new Map<string, any>();
