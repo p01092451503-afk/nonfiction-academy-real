@@ -609,6 +609,44 @@
         "name": "TOP 10 排行",
         "description": "进入排行榜TOP 10即可获得"
       }
+    },
+    "dbBadges": {
+      "lessons_completed_1": {
+        "name": "第一步",
+        "description": "完成了第一节课"
+      },
+      "lessons_completed_10": {
+        "name": "学习王",
+        "description": "完成10节课"
+      },
+      "lessons_completed_50": {
+        "name": "大师",
+        "description": "完成50节课"
+      },
+      "streak_7": {
+        "name": "坚持不懈",
+        "description": "连续学习7天"
+      },
+      "streak_30": {
+        "name": "习惯养成",
+        "description": "连续学习30天"
+      },
+      "points_100": {
+        "name": "积分收藏家",
+        "description": "获得100积分"
+      },
+      "points_1000": {
+        "name": "积分富翁",
+        "description": "获得1000积分"
+      },
+      "assignments_completed_10": {
+        "name": "作业大师",
+        "description": "完成10项作业"
+      },
+      "courses_completed_3": {
+        "name": "课程征服者",
+        "description": "修完3门课程"
+      }
     }
   },
   "admin": {

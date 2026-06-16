@@ -609,6 +609,44 @@
         "name": "TOP 10 진입",
         "description": "리더보드 TOP 10 진입"
       }
+    },
+    "dbBadges": {
+      "lessons_completed_1": {
+        "name": "첫 걸음",
+        "description": "첫 번째 강의를 완료했습니다"
+      },
+      "lessons_completed_10": {
+        "name": "학습왕",
+        "description": "10개 강의를 완료했습니다"
+      },
+      "lessons_completed_50": {
+        "name": "마스터",
+        "description": "50개 강의를 완료했습니다"
+      },
+      "streak_7": {
+        "name": "꾸준함",
+        "description": "7일 연속 학습했습니다"
+      },
+      "streak_30": {
+        "name": "습관 형성",
+        "description": "30일 연속 학습했습니다"
+      },
+      "points_100": {
+        "name": "포인트 수집가",
+        "description": "100 포인트를 달성했습니다"
+      },
+      "points_1000": {
+        "name": "포인트 부자",
+        "description": "1000 포인트를 달성했습니다"
+      },
+      "assignments_completed_10": {
+        "name": "과제 마스터",
+        "description": "10개 과제를 완료했습니다"
+      },
+      "courses_completed_3": {
+        "name": "코스 정복자",
+        "description": "3개 코스를 수료했습니다"
+      }
     }
   },
   "admin": {
