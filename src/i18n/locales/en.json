@@ -576,15 +576,42 @@
     "thisWeek": "This week",
     "toLevel": "{{percent}}% to Lv.{{level}}",
     "placeholderBadges": {
-      "firstCourse": { "name": "First Course Completed", "description": "Earned by completing your first course" },
-      "streak3": { "name": "3-Day Streak", "description": "Earned by learning 3 days in a row" },
-      "streak7": { "name": "7-Day Streak", "description": "Earned by learning 7 days in a row" },
-      "perfectQuiz": { "name": "Perfect Quiz", "description": "Earned by scoring 100% on an assessment" },
-      "fiveCourses": { "name": "5 Courses Completed", "description": "Earned by completing 5 courses" },
-      "tenCourses": { "name": "10 Courses Completed", "description": "Earned by completing 10 courses" },
-      "level5": { "name": "Reach Level 5", "description": "Earned by reaching level 5" },
-      "level10": { "name": "Reach Level 10", "description": "Earned by reaching level 10" },
-      "topRanker": { "name": "TOP 10 Ranker", "description": "Earned by entering leaderboard TOP 10" }
+      "firstCourse": {
+        "name": "First Course Completed",
+        "description": "Earned by completing your first course"
+      },
+      "streak3": {
+        "name": "3-Day Streak",
+        "description": "Earned by learning 3 days in a row"
+      },
+      "streak7": {
+        "name": "7-Day Streak",
+        "description": "Earned by learning 7 days in a row"
+      },
+      "perfectQuiz": {
+        "name": "Perfect Quiz",
+        "description": "Earned by scoring 100% on an assessment"
+      },
+      "fiveCourses": {
+        "name": "5 Courses Completed",
+        "description": "Earned by completing 5 courses"
+      },
+      "tenCourses": {
+        "name": "10 Courses Completed",
+        "description": "Earned by completing 10 courses"
+      },
+      "level5": {
+        "name": "Reach Level 5",
+        "description": "Earned by reaching level 5"
+      },
+      "level10": {
+        "name": "Reach Level 10",
+        "description": "Earned by reaching level 10"
+      },
+      "topRanker": {
+        "name": "TOP 10 Ranker",
+        "description": "Earned by entering leaderboard TOP 10"
+      }
     }
   },
   "admin": {
@@ -1201,7 +1228,40 @@
     "assessmentAvailable": "Assessment Available",
     "assessmentAvailableDesc": "You've met the progress threshold and can now take the assessment.",
     "progressRequired": "You need {{threshold}}%+ progress to take this assessment.",
-    "currentProgress": "Current progress: {{progress}}%"
+    "currentProgress": "Current progress: {{progress}}%",
+    "ui": {
+      "results": "Results",
+      "previous": "Previous",
+      "next": "Next",
+      "correct": "Correct",
+      "wrong": "Wrong",
+      "viewHint": "View Hint",
+      "yourAnswer": "Your answer",
+      "noAnswer": "(No answer)",
+      "correctAnswerLabel": "Correct answer",
+      "greatJob": "Great job! Quiz completed.",
+      "score": "Score",
+      "accuracy": "Accuracy",
+      "skipped": "Skipped",
+      "pass": "Pass",
+      "fail": "Fail",
+      "passInfo": "Passing score: {{passingScore}} points (Your score: {{score}}/{{total}})",
+      "highlights": "Highlights",
+      "areasToReview": "Areas to Review",
+      "continueLearning": "Continue Learning",
+      "reviewQuiz": "Review Quiz",
+      "reviewQuizDesc": "Review each question with correct answers and explanations.",
+      "retakeQuiz": "Retake Quiz",
+      "retakeDesc": "Try again to improve your score.",
+      "backToCourse": "Back to Course",
+      "enterAnswer": "Enter your answer",
+      "writeAnswer": "Write your answer",
+      "answered": "{{answered}}/{{total}} answered",
+      "attemptLabel": "Attempt {{n}}",
+      "passShort": "(Pass)",
+      "failShort": "(Fail)",
+      "reviewBtn": "Review"
+    }
   },
   "organizationes": {
     "title": "Organization Management",
@@ -1368,7 +1428,7 @@
     "statsTitle": "Statistics",
     "statsDesc": "View site statistics and traffic status",
     "tabOverview": "Overview",
-    "tabBranch": "Branch Learning",
+    "tabBranch": "Learning by Branch",
     "tabTraffic": "Traffic",
     "tabLearning": "Learning Activity",
     "last7days": "Last 7 days",
@@ -1398,7 +1458,7 @@
     "viewCount": "Views",
     "ratio": "Ratio",
     "itemCount": "{{count}}",
-    "branchLearning": "Branch Learning Status",
+    "branchLearning": "Learning Status by Branch",
     "courseStats": "Course Status",
     "totalCoursesCount": "Total Courses",
     "publishedCoursesCount": "Published",
@@ -1445,9 +1505,7 @@
     "lessonCompletions": "Lesson Completions",
     "realtimeUsers": "Current Online Users",
     "autoRefresh": "Auto-refreshing",
-    "branchLearning": "Learning Status by Branch",
-    "byBranch": "By Branch/Department",
-    "tabBranch": "Learning by Branch"
+    "byBranch": "By Branch/Department"
   },
   "track": {
     "myTracks": "My Learning Tracks",

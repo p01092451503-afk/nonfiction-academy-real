@@ -63,7 +63,7 @@ function QuestionReview({
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
                           <Check className="h-4 w-4" />
-                          <span className="text-sm font-bold">{isEn ? "Correct" : "정답"}</span>
+                          <span className="text-sm font-bold">{t("assessment.ui.correct")}</span>
                         </div>
                         {question.explanation && (
                           <p className="text-sm text-muted-foreground leading-relaxed pl-6">{question.explanation}</p>
@@ -74,7 +74,7 @@ function QuestionReview({
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5 text-destructive dark:text-red-400">
                           <X className="h-4 w-4" />
-                          <span className="text-sm font-bold">{isEn ? "Wrong" : "오답"}</span>
+                          <span className="text-sm font-bold">{t("assessment.ui.wrong")}</span>
                         </div>
                         {question.explanation && (
                           <p className="text-sm text-muted-foreground leading-relaxed pl-6">{question.explanation}</p>
@@ -92,23 +92,23 @@ function QuestionReview({
       {!isChoice && (
         <div className="space-y-3">
           <div className={`rounded-xl border-2 p-4 sm:p-5 ${isCorrect ? "border-green-500 dark:border-green-400 bg-green-50/50 dark:bg-green-900/10" : "border-destructive dark:border-red-400 bg-red-50/50 dark:bg-red-900/10"}`}>
-            <p className="text-xs text-muted-foreground mb-1">{isEn ? "Your answer" : "내 답변"}</p>
-            <p className="text-sm">{userAnswer || (isEn ? "(No answer)" : "(미답변)")}</p>
+            <p className="text-xs text-muted-foreground mb-1">{t("assessment.ui.yourAnswer")}</p>
+            <p className="text-sm">{userAnswer || (t("assessment.ui.noAnswer"))}</p>
             <div className="mt-2">
               {isCorrect ? (
                 <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-bold">
-                  <Check className="h-4 w-4" /> {isEn ? "Correct" : "정답"}
+                  <Check className="h-4 w-4" /> {t("assessment.ui.correct")}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-destructive dark:text-red-400 text-sm font-bold">
-                  <X className="h-4 w-4" /> {isEn ? "Wrong" : "오답"}
+                  <X className="h-4 w-4" /> {t("assessment.ui.wrong")}
                 </span>
               )}
             </div>
           </div>
           {question.correct_answer && question.question_type !== "essay" && (
             <div className="rounded-xl border-2 border-green-500 dark:border-green-400 bg-green-50/50 dark:bg-green-900/10 p-4 sm:p-5">
-              <p className="text-xs text-muted-foreground mb-1">{isEn ? "Correct answer" : "정답"}</p>
+              <p className="text-xs text-muted-foreground mb-1">{t("assessment.ui.correctAnswerLabel")}</p>
               <p className="text-sm font-medium">{question.correct_answer}</p>
             </div>
           )}
@@ -125,7 +125,7 @@ function QuestionReview({
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <Lightbulb className="h-4 w-4" />
-          {isEn ? "View Hint" : "힌트 보기"}
+          {t("assessment.ui.viewHint")}
           {showHint ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
       )}
@@ -137,10 +137,10 @@ function QuestionReview({
 
       <div className="flex justify-between items-center pt-4 border-t border-border">
         <Button variant="ghost" size="sm" onClick={onPrev} disabled={index === 0}>
-          {isEn ? "Previous" : "이전"}
+          {t("assessment.ui.previous")}
         </Button>
         <Button variant="outline" size="sm" onClick={onNext} disabled={index === total - 1}>
-          {isEn ? "Next" : "다음"}
+          {t("assessment.ui.next")}
         </Button>
       </div>
     </div>
@@ -173,34 +173,34 @@ function ResultSummary({
       {/* Header */}
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-          {isEn ? "Great job! Quiz completed." : "수고하셨습니다. 평가를 완료했습니다"}
+          {t("assessment.ui.greatJob")}
         </h2>
       </div>
 
       {/* 3-column stats: Score, Accuracy, Breakdown */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5">
-          <p className="text-xs text-muted-foreground mb-2">{isEn ? "Score" : "점수"}</p>
+          <p className="text-xs text-muted-foreground mb-2">{t("assessment.ui.score")}</p>
           <p className="text-3xl sm:text-4xl font-bold text-foreground">
             {correctCount}<span className="text-lg text-muted-foreground">/{questions.length}</span>
           </p>
         </div>
         <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5">
-          <p className="text-xs text-muted-foreground mb-2">{isEn ? "Accuracy" : "정확성"}</p>
+          <p className="text-xs text-muted-foreground mb-2">{t("assessment.ui.accuracy")}</p>
           <p className="text-3xl sm:text-4xl font-bold text-foreground">{percentage}%</p>
         </div>
         <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{isEn ? "Correct" : "정답"}</span>
+              <span className="text-muted-foreground">{t("assessment.ui.correct")}</span>
               <span className="font-semibold text-foreground">{correctCount}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{isEn ? "Wrong" : "오답"}</span>
+              <span className="text-muted-foreground">{t("assessment.ui.wrong")}</span>
               <span className="font-semibold text-foreground">{wrongCount}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{isEn ? "Skipped" : "건너뜀"}</span>
+              <span className="text-muted-foreground">{t("assessment.ui.skipped")}</span>
               <span className="font-semibold text-foreground">{skippedCount}</span>
             </div>
           </div>
@@ -211,9 +211,9 @@ function ResultSummary({
       <div className={`rounded-xl border-2 p-4 flex items-center gap-4 ${passed ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20"}`}>
         {passed ? <Check className="h-7 w-7 text-green-600 dark:text-green-400 shrink-0" /> : <X className="h-7 w-7 text-orange-600 dark:text-orange-400 shrink-0" />}
         <div>
-          <p className="font-semibold text-foreground">{passed ? (isEn ? "Pass" : "합격") : (isEn ? "Fail" : "불합격")}</p>
+          <p className="font-semibold text-foreground">{passed ? (t("assessment.ui.pass")) : (t("assessment.ui.fail"))}</p>
           <p className="text-sm text-muted-foreground">
-            {isEn ? `Passing score: ${assessment.passing_score} points (Your score: ${score}/${totalPoints})` : `합격 기준: ${assessment.passing_score}점 (내 점수: ${score}/${totalPoints}점)`}
+            {t("assessment.ui.passInfo", { passingScore: assessment.passing_score, score, total: totalPoints })}
           </p>
         </div>
       </div>
@@ -223,7 +223,7 @@ function ResultSummary({
         <div className="space-y-4">
           {correctQuestions.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2">{isEn ? "Highlights" : "하이라이트"}</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2">{t("assessment.ui.highlights")}</h3>
               <ul className="space-y-2">
                 {correctQuestions.map((q, i) => (
                   <li key={q.id} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -236,7 +236,7 @@ function ResultSummary({
           )}
           {wrongQuestions.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2">{isEn ? "Areas to Review" : "중점적으로 살펴볼 영역"}</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2">{t("assessment.ui.areasToReview")}</h3>
               <ul className="space-y-2">
                 {wrongQuestions.map((q, i) => (
                   <li key={q.id} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -257,7 +257,7 @@ function ResultSummary({
 
       {/* Continue Learning section */}
       <div className="space-y-3">
-        <h3 className="text-lg font-bold text-foreground">{isEn ? "Continue Learning" : "계속 학습하세요"}</h3>
+        <h3 className="text-lg font-bold text-foreground">{t("assessment.ui.continueLearning")}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Review quiz card */}
           <button
@@ -269,9 +269,9 @@ function ResultSummary({
               <Eye className="h-7 w-7 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">{isEn ? "Review Quiz" : "퀴즈 복습"}</p>
+              <p className="text-sm font-semibold text-foreground">{t("assessment.ui.reviewQuiz")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {isEn ? "Review each question with correct answers and explanations." : "각 문항의 정답과 해설을 확인하며 복습합니다."}
+                {t("assessment.ui.reviewQuizDesc")}
               </p>
             </div>
           </button>
@@ -286,9 +286,9 @@ function ResultSummary({
                 <RotateCcw className="h-7 w-7 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">{isEn ? "Retake Quiz" : "재응시"}</p>
+                <p className="text-sm font-semibold text-foreground">{t("assessment.ui.retakeQuiz")}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {isEn ? "Try again to improve your score." : "점수를 올리기 위해 다시 도전해보세요."}
+                  {t("assessment.ui.retakeDesc")}
                 </p>
               </div>
             </button>
@@ -299,7 +299,7 @@ function ResultSummary({
       {/* Back button */}
       <div className="pt-2">
         <Button variant="outline" className="w-full" onClick={onBack}>
-          {isEn ? "Back to Course" : "강의로 돌아가기"}
+          {t("assessment.ui.backToCourse")}
         </Button>
       </div>
     </div>
@@ -692,7 +692,7 @@ export default function AssessmentPage() {
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <ClipboardCheck className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">{assessmentLocalized.title} — {isEn ? "Results" : "결과"}</span>
+                <span className="text-sm font-semibold">{assessmentLocalized.title} — {t("assessment.ui.results")}</span>
               </div>
               <button
                 type="button"
@@ -811,7 +811,7 @@ export default function AssessmentPage() {
                   </div>
                 )}
                 <span className="text-xs text-muted-foreground">
-                  {isEn ? `${answeredCount}/${questions.length} answered` : `${answeredCount}/${questions.length} 응답`}
+                  {t("assessment.ui.answered", { answered: answeredCount, total: questions.length })}
                 </span>
               </div>
             </div>
@@ -868,7 +868,7 @@ export default function AssessmentPage() {
                       className="h-11 text-sm sm:text-base"
                       value={answers[currentQ.id] || ""}
                       onChange={e => setAnswers(a => ({ ...a, [currentQ.id]: e.target.value }))}
-                      placeholder={isEn ? "Enter your answer" : "답을 입력하세요"}
+                      placeholder={t("assessment.ui.enterAnswer")}
                     />
                   )}
 
@@ -879,7 +879,7 @@ export default function AssessmentPage() {
                       value={answers[currentQ.id] || ""}
                       onChange={e => setAnswers(a => ({ ...a, [currentQ.id]: e.target.value }))}
                       rows={6}
-                      placeholder={isEn ? "Write your answer" : "답안을 작성하세요"}
+                      placeholder={t("assessment.ui.writeAnswer")}
                     />
                   )}
 
@@ -892,7 +892,7 @@ export default function AssessmentPage() {
                         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                       >
                         <Lightbulb className="h-4 w-4" />
-                        {isEn ? "View Hint" : "힌트 보기"}
+                        {t("assessment.ui.viewHint")}
                         {hintVisible ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </button>
                       {hintVisible && (
@@ -911,7 +911,7 @@ export default function AssessmentPage() {
                       onClick={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
                       disabled={currentQuestionIndex === 0}
                     >
-                      {isEn ? "Previous" : "이전"}
+                      {t("assessment.ui.previous")}
                     </Button>
 
                     {isLastQuestion ? (
@@ -924,7 +924,7 @@ export default function AssessmentPage() {
                         size="sm"
                         onClick={() => setCurrentQuestionIndex(i => Math.min(i + 1, questions.length - 1))}
                       >
-                        {isEn ? "Next" : "다음"}
+                        {t("assessment.ui.next")}
                       </Button>
                     )}
                   </div>
@@ -995,9 +995,9 @@ export default function AssessmentPage() {
                 <h3 className="text-xs font-semibold">{t("assessment.attemptHistory")}</h3>
                 {completedAttempts.map((a: any, i: number) => (
                   <div key={a.id} className="flex items-center justify-between rounded-xl border border-border px-4 py-3 text-xs">
-                    <span className="font-medium">{completedAttempts.length - i}{isEn ? "st attempt" : "회차"}</span>
+                    <span className="font-medium">{t("assessment.ui.attemptLabel", { n: completedAttempts.length - i })}</span>
                     <span className={a.passed ? "text-green-600 dark:text-green-400 font-medium" : "text-orange-600 dark:text-orange-400"}>
-                      {Number(a.score)}/{Number(a.total_points)}{t("common.points")} {a.passed ? (isEn ? "(Pass)" : "(합격)") : (isEn ? "(Fail)" : "(불합격)")}
+                      {Number(a.score)}/{Number(a.total_points)}{t("common.points")} {a.passed ? (t("assessment.ui.passShort")) : (t("assessment.ui.failShort"))}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">{new Date(a.completed_at).toLocaleString()}</span>
@@ -1008,7 +1008,7 @@ export default function AssessmentPage() {
                           className="h-6 text-[10px] px-2"
                           onClick={() => { setReviewMode(true); setCurrentQuestionIndex(0); }}
                         >
-                          {isEn ? "Review" : "오답확인"}
+                          {t("assessment.ui.reviewBtn")}
                         </Button>
                       )}
                     </div>

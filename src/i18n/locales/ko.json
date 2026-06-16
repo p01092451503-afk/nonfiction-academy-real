@@ -573,15 +573,42 @@
     "thisWeek": "이번주",
     "toLevel": "{{percent}}% to Lv.{{level}}",
     "placeholderBadges": {
-      "firstCourse": { "name": "첫 강의 완료", "description": "첫 강의를 완료하면 획득" },
-      "streak3": { "name": "3일 연속 학습", "description": "3일 연속 학습 시 획득" },
-      "streak7": { "name": "7일 연속 학습", "description": "7일 연속 학습 시 획득" },
-      "perfectQuiz": { "name": "퀴즈 만점", "description": "평가에서 만점을 받으면 획득" },
-      "fiveCourses": { "name": "강의 5개 완료", "description": "강의 5개 완료 시 획득" },
-      "tenCourses": { "name": "강의 10개 완료", "description": "강의 10개 완료 시 획득" },
-      "level5": { "name": "레벨 5 달성", "description": "레벨 5에 도달하면 획득" },
-      "level10": { "name": "레벨 10 달성", "description": "레벨 10에 도달하면 획득" },
-      "topRanker": { "name": "TOP 10 진입", "description": "리더보드 TOP 10 진입" }
+      "firstCourse": {
+        "name": "첫 강의 완료",
+        "description": "첫 강의를 완료하면 획득"
+      },
+      "streak3": {
+        "name": "3일 연속 학습",
+        "description": "3일 연속 학습 시 획득"
+      },
+      "streak7": {
+        "name": "7일 연속 학습",
+        "description": "7일 연속 학습 시 획득"
+      },
+      "perfectQuiz": {
+        "name": "퀴즈 만점",
+        "description": "평가에서 만점을 받으면 획득"
+      },
+      "fiveCourses": {
+        "name": "강의 5개 완료",
+        "description": "강의 5개 완료 시 획득"
+      },
+      "tenCourses": {
+        "name": "강의 10개 완료",
+        "description": "강의 10개 완료 시 획득"
+      },
+      "level5": {
+        "name": "레벨 5 달성",
+        "description": "레벨 5에 도달하면 획득"
+      },
+      "level10": {
+        "name": "레벨 10 달성",
+        "description": "레벨 10에 도달하면 획득"
+      },
+      "topRanker": {
+        "name": "TOP 10 진입",
+        "description": "리더보드 TOP 10 진입"
+      }
     }
   },
   "admin": {
@@ -1198,7 +1225,40 @@
     "assessmentAvailable": "평가 응시 가능",
     "assessmentAvailableDesc": "진도율 기준을 충족하여 평가를 응시할 수 있습니다.",
     "progressRequired": "진도율 {{threshold}}% 이상 달성 후 응시할 수 있습니다.",
-    "currentProgress": "현재 진도율: {{progress}}%"
+    "currentProgress": "현재 진도율: {{progress}}%",
+    "ui": {
+      "results": "결과",
+      "previous": "이전",
+      "next": "다음",
+      "correct": "정답",
+      "wrong": "오답",
+      "viewHint": "힌트 보기",
+      "yourAnswer": "내 답변",
+      "noAnswer": "(미답변)",
+      "correctAnswerLabel": "정답",
+      "greatJob": "수고하셨습니다. 평가를 완료했습니다",
+      "score": "점수",
+      "accuracy": "정확성",
+      "skipped": "건너뜀",
+      "pass": "합격",
+      "fail": "불합격",
+      "passInfo": "합격 기준: {{passingScore}}점 (내 점수: {{score}}/{{total}}점)",
+      "highlights": "하이라이트",
+      "areasToReview": "중점적으로 살펴볼 영역",
+      "continueLearning": "계속 학습하세요",
+      "reviewQuiz": "퀴즈 복습",
+      "reviewQuizDesc": "각 문항의 정답과 해설을 확인하며 복습합니다.",
+      "retakeQuiz": "재응시",
+      "retakeDesc": "점수를 올리기 위해 다시 도전해보세요.",
+      "backToCourse": "강의로 돌아가기",
+      "enterAnswer": "답을 입력하세요",
+      "writeAnswer": "답안을 작성하세요",
+      "answered": "{{answered}}/{{total}} 응답",
+      "attemptLabel": "{{n}}회차",
+      "passShort": "(합격)",
+      "failShort": "(불합격)",
+      "reviewBtn": "오답확인"
+    }
   },
   "branches": {
     "title": "조직 관리",

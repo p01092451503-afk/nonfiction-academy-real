@@ -573,15 +573,42 @@
     "thisWeek": "今週",
     "toLevel": "Lv.{{level}}まで{{percent}}%",
     "placeholderBadges": {
-      "firstCourse": { "name": "初回コース修了", "description": "最初のコースを修了すると獲得" },
-      "streak3": { "name": "3日連続学習", "description": "3日連続で学習すると獲得" },
-      "streak7": { "name": "7日連続学習", "description": "7日連続で学習すると獲得" },
-      "perfectQuiz": { "name": "クイズ満点", "description": "評価で満点を取ると獲得" },
-      "fiveCourses": { "name": "コース5つ修了", "description": "5コース修了で獲得" },
-      "tenCourses": { "name": "コース10修了", "description": "10コース修了で獲得" },
-      "level5": { "name": "レベル5達成", "description": "レベル5に到達すると獲得" },
-      "level10": { "name": "レベル10達成", "description": "レベル10に到達すると獲得" },
-      "topRanker": { "name": "TOP 10入り", "description": "リーダーボードTOP 10に入ると獲得" }
+      "firstCourse": {
+        "name": "初回コース修了",
+        "description": "最初のコースを修了すると獲得"
+      },
+      "streak3": {
+        "name": "3日連続学習",
+        "description": "3日連続で学習すると獲得"
+      },
+      "streak7": {
+        "name": "7日連続学習",
+        "description": "7日連続で学習すると獲得"
+      },
+      "perfectQuiz": {
+        "name": "クイズ満点",
+        "description": "評価で満点を取ると獲得"
+      },
+      "fiveCourses": {
+        "name": "コース5つ修了",
+        "description": "5コース修了で獲得"
+      },
+      "tenCourses": {
+        "name": "コース10修了",
+        "description": "10コース修了で獲得"
+      },
+      "level5": {
+        "name": "レベル5達成",
+        "description": "レベル5に到達すると獲得"
+      },
+      "level10": {
+        "name": "レベル10達成",
+        "description": "レベル10に到達すると獲得"
+      },
+      "topRanker": {
+        "name": "TOP 10入り",
+        "description": "リーダーボードTOP 10に入ると獲得"
+      }
     }
   },
   "admin": {
@@ -1198,7 +1225,40 @@
     "assessmentAvailable": "評価受験可能",
     "assessmentAvailableDesc": "進捗率の基準を満たしたため、評価を受験できます。",
     "progressRequired": "進捗率{{threshold}}%以上達成後に受験できます。",
-    "currentProgress": "現在の進捗率: {{progress}}%"
+    "currentProgress": "現在の進捗率: {{progress}}%",
+    "ui": {
+      "results": "結果",
+      "previous": "前へ",
+      "next": "次へ",
+      "correct": "正解",
+      "wrong": "不正解",
+      "viewHint": "ヒントを見る",
+      "yourAnswer": "あなたの回答",
+      "noAnswer": "(未回答)",
+      "correctAnswerLabel": "正解",
+      "greatJob": "お疲れさまでした。評価が完了しました。",
+      "score": "点数",
+      "accuracy": "正答率",
+      "skipped": "スキップ",
+      "pass": "合格",
+      "fail": "不合格",
+      "passInfo": "合格基準: {{passingScore}}点 (あなたの点数: {{score}}/{{total}}点)",
+      "highlights": "ハイライト",
+      "areasToReview": "重点的に確認する領域",
+      "continueLearning": "学習を続ける",
+      "reviewQuiz": "クイズの復習",
+      "reviewQuizDesc": "各問題の正解と解説を確認しながら復習します。",
+      "retakeQuiz": "再受験",
+      "retakeDesc": "点数を上げるためにもう一度挑戦してみましょう。",
+      "backToCourse": "講義に戻る",
+      "enterAnswer": "答えを入力してください",
+      "writeAnswer": "答案を記入してください",
+      "answered": "{{answered}}/{{total}} 回答済み",
+      "attemptLabel": "{{n}}回目",
+      "passShort": "(合格)",
+      "failShort": "(不合格)",
+      "reviewBtn": "復習"
+    }
   },
   "branches": {
     "title": "組織管理",
