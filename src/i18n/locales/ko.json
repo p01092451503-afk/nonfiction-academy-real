@@ -1535,7 +1535,10 @@
     "notAllowed": "댓글을 작성할 수 없습니다. 수강 승인 여부를 확인해 주세요.",
     "replyPlaceholder": "@{{name}} 에게 답글 달기...",
     "translatedBadge": "번역됨",
-    "emptyTitle": "아직 댓글이 없습니다"
+    "emptyTitle": "아직 댓글이 없습니다",
+    "placeholderShort": "댓글 추가...",
+    "replyPlaceholderShort": "@{{name}} 에게 답글 추가...",
+    "replyingTo": "@{{name}} 에게 답글 작성 중"
   },
   "globalDashboard": {
     "title": "글로벌 학습 대시보드",

@@ -1535,7 +1535,10 @@
     "notAllowed": "无法评论。请确认您的报名审批。",
     "replyPlaceholder": "回复 @{{name}}...",
     "translatedBadge": "已翻译",
-    "emptyTitle": "暂无评论"
+    "emptyTitle": "暂无评论",
+    "placeholderShort": "添加评论...",
+    "replyPlaceholderShort": "回复 @{{name}}...",
+    "replyingTo": "正在回复 @{{name}}"
   },
   "globalDashboard": {
     "activeTracks": "学习路径",
