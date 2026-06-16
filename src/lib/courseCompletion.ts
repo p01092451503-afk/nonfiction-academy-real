@@ -83,10 +83,10 @@ export async function syncEnrollmentOnContentCompleted(params: {
       .limit(1);
 
     if (!passedAttempts || passedAttempts.length === 0) {
-      // 평가 미합격 → 이수 완료 처리 보류, 진행률만 99로 유지
+      // 평가 미합격 → 차시는 완료지만 수료 보류. 진행률은 100으로 표시.
       await supabase
         .from("enrollments")
-        .update({ progress: 99 })
+        .update({ progress: 100 })
         .eq("id", enrollment.id);
       return;
     }
