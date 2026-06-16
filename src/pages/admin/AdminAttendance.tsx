@@ -71,22 +71,30 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     [isTeacher, profiles]
   );
 
-  // Fetch sessions for the selected date
+  // Fetch course learning sessions for the selected date (학습시간 산정 기준)
+  // - started_at: 학습자가 강의 상세 페이지에 진입한 시점
+  // - last_heartbeat_at: 마지막 활동 시각 (DB/클라이언트에서 30분 캡)
   const { data: sessions = [] } = useQuery({
-    queryKey: ["user-sessions", dateFilter],
+    queryKey: ["course-learning-sessions", dateFilter],
     queryFn: async () => {
       const startOfDay = `${dateFilter}T00:00:00.000Z`;
       const endOfDay = `${dateFilter}T23:59:59.999Z`;
       const { data, error } = await supabase
-        .from("user_sessions")
-        .select("*")
-        .gte("login_at", startOfDay)
-        .lte("login_at", endOfDay)
-        .order("login_at", { ascending: true });
+        .from("course_learning_sessions")
+        .select("user_id, started_at, last_heartbeat_at")
+        .gte("started_at", startOfDay)
+        .lte("started_at", endOfDay)
+        .order("started_at", { ascending: true });
       if (error) throw error;
-      return data;
+      // 기존 형태(login_at/logout_at)와 호환되도록 매핑
+      return (data ?? []).map((s: any) => ({
+        user_id: s.user_id,
+        login_at: s.started_at,
+        logout_at: s.last_heartbeat_at,
+      }));
     },
   });
+
 
   // Fetch content_progress completed on this date for learning stats
   const { data: dailyProgress = [] } = useQuery({
@@ -152,7 +160,8 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     const OPEN_SESSION_CAP_MIN = 30; // assume 30 minutes activity if no explicit logout
 
     // Group sessions by user, then merge overlapping intervals to avoid double-counting
-    // (many sessions are created per page navigation and are never closed)
+    // (course_learning_sessions: 세션당 최대 30분 캡)
+    const SESSION_CAP_MIN = 30;
     const sessionsByUser = new Map<string, { start: number; end: number }[]>();
     sessions.forEach((s: any) => {
       if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
@@ -160,8 +169,10 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       const rawEndMs = s.logout_at
         ? new Date(s.logout_at).getTime()
         : Math.min(nowMs, startMs + OPEN_SESSION_CAP_MIN * 60000);
+      // 세션 자체를 30분으로 캡 (방어적 처리)
+      const cappedEndMs = Math.min(rawEndMs, startMs + SESSION_CAP_MIN * 60000);
       const start = Math.max(startMs, dayStartMs);
-      const end = Math.min(rawEndMs, dayEndMs);
+      const end = Math.min(cappedEndMs, dayEndMs);
       if (end <= start) return;
       const arr = sessionsByUser.get(s.user_id) ?? [];
       arr.push({ start, end });

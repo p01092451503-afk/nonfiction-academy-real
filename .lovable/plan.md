@@ -1,73 +1,51 @@
-## 목표
+# 학습시간 산정 기준 변경 계획
 
-망고보드처럼 **이미지 템플릿 위에 동영상을 특정 영역에 삽입**할 수 있는 기능을 추가합니다. 기존 "미디어 패키지" 차시 소스를 강화해서, 각 이미지 슬라이드마다 선택적으로 동영상을 오버레이할 수 있게 만듭니다.
+## 변경 요약
+- **현재**: 로그인 세션(user_sessions의 login_at~logout_at, 미종료 시 30분 가정) 기반
+- **변경 후**: **"내 강의 → 특정 강의 클릭(CourseDetail 진입)"** 시점부터 측정, **세션당 최대 30분 캡**
 
-## 동작 방식
+## 1. 새 테이블: `course_learning_sessions`
+| 컬럼 | 설명 |
+|---|---|
+| id | PK |
+| user_id | 학습자 |
+| course_id | 강의 |
+| started_at | 강의 클릭 시점 (CourseDetail mount) |
+| last_heartbeat_at | 마지막 활동 시각 (1분마다 갱신, started_at+30min 캡) |
+| tenant_id | 테넌트 |
 
-1. 교수자가 "미디어 패키지" 차시에 이미지를 업로드 (예: Hospitality 템플릿 이미지)
-2. 해당 이미지 옆 새 버튼 **"동영상 영역 추가"** 클릭
-3. 동영상 파일 업로드 (Bunny Stream — 기존 로직 재사용)
-4. 팝업에서 이미지 위에 표시된 **드래그/리사이즈 가능한 사각형**으로 동영상 영역 지정
-5. 저장 → 학습자는 이미지 슬라이드 위에 정확한 위치/크기로 동영상이 박힌 화면을 봄
+- RLS: 본인 INSERT/UPDATE, admin/super_admin/teacher 조회 가능
+- GRANT: authenticated SELECT/INSERT/UPDATE, service_role ALL
 
-## 변경 사항
+## 2. 클라이언트 트래킹
+**`src/pages/CourseDetail.tsx`** (또는 신규 훅 `useCourseLearningSession`)
+- 페이지 마운트 시 세션 INSERT (`started_at = now()`)
+- 1분마다 heartbeat로 `last_heartbeat_at` 업데이트 (단, `started_at + 30min` 초과 시 갱신 중단)
+- 언마운트/탭종료(`visibilitychange`/`beforeunload`)에 `sendBeacon`으로 최종 heartbeat 전송
 
-### 1) DB 스키마 (마이그레이션)
-
-`media_package_items` 테이블에 동영상 오버레이용 컬럼 추가 (이미지 슬라이드일 때만 사용):
-
-- `overlay_video_url` TEXT — 오버레이할 동영상 URL
-- `overlay_video_provider` TEXT — bunny/custom 등
-- `overlay_thumbnail_url` TEXT — 썸네일
-- `overlay_x`, `overlay_y` NUMERIC — 이미지 기준 상대 위치 (0~1)
-- `overlay_w`, `overlay_h` NUMERIC — 이미지 기준 상대 크기 (0~1)
-
-기존 데이터에 영향 없음 (모두 nullable).
-
-### 2) 편집기 (`src/pages/teacher/CreateCourse.tsx` 내 `PackageItemsEditor`)
-
-이미지 항목에만 표시되는 새 액션:
-- **"동영상 오버레이"** 버튼 — 동영상이 없으면 추가, 있으면 편집/제거
-- 새 컴포넌트 `OverlayVideoEditorDialog`:
-  - 동영상 파일 업로드 (기존 `uploadOneVideo` Bunny 함수 재사용)
-  - 이미지 미리보기 위에 **드래그/리사이즈 가능한 사각형** (마우스 + 터치)
-  - 좌표는 0~1 비율로 저장 → 어떤 해상도에서도 정확
-
-### 3) 저장 로직 (CreateCourse 저장 시)
-
-`media_package_items` insert 시 `package_items[i]`에 오버레이 필드가 있으면 함께 저장. 생성/수정 두 mutation 모두 업데이트.
-
-### 4) 플레이어 (`src/components/MediaPackagePlayer.tsx`)
-
-이미지 슬라이드 렌더링 시 오버레이 데이터가 있으면 절대 위치 `<video>`를 위에 띄움:
-
-```tsx
-<div className="relative">
-  <img src={item.media_url} />
-  {item.overlay_video_url && (
-    <video
-      src={item.overlay_video_url}
-      controls playsInline
-      className="absolute"
-      style={{
-        left: `${item.overlay_x * 100}%`,
-        top: `${item.overlay_y * 100}%`,
-        width: `${item.overlay_w * 100}%`,
-        height: `${item.overlay_h * 100}%`,
-      }}
-    />
-  )}
-</div>
+## 3. 학습시간 산정 공식
+```sql
+duration_min = LEAST(
+  EXTRACT(EPOCH FROM (last_heartbeat_at - started_at))/60,
+  30
+)
 ```
 
-### 5) 타입 (`PackageItemDraft`)
+## 4. 통계 화면 일괄 교체
+다음 화면들이 `user_sessions` 기반 → `course_learning_sessions` 기반으로 전환:
+- `admin_dashboard_insights` RPC (학습 건강도: week_minutes / prev_week_minutes)
+- `src/pages/admin/AdminAttendance.tsx` (일일 학습시간)
+- `src/pages/teacher/TeacherStudentDetail.tsx` (학습자별 학습시간)
 
-`overlay_video_url`, `overlay_x/y/w/h` 등 선택 필드 추가.
+> ※ DAU/WAU/MAU/접속 히트맵 등 "접속" 지표는 그대로 user_sessions 유지
 
-## 진행 순서
+## 5. 기존 데이터
+- 과거 user_sessions 기반 통계는 시점 이전 자료로 그대로 두고, 신규 테이블은 도입 시점부터 누적
 
-1. DB 마이그레이션 제출 (사용자 승인 필요)
-2. 승인 후 → 타입 / 편집기 / 저장 로직 / 플레이어 동시 작업
-3. 미리보기에서 동작 확인
+## 기술 메모
+- heartbeat 30분 캡은 클라/서버 양쪽에서 강제 (클라가 중단해도 SQL에서 `LEAST(..., 30)`로 재캡)
+- 같은 강의를 닫았다 다시 들어오면 **새 세션** 생성 → 30분 × 진입횟수만큼 누적 가능 (의도된 동작인지 확인 필요)
 
-이대로 진행할까요?
+## 확인 필요 사항
+1. **CourseDetail 진입만** 기준인가? `ContentPlayer`(차시 재생) 진입은 별도로 카운트하지 않는 것이 맞나요?
+2. 같은 강의를 **재진입**할 때마다 새 30분 카운트를 인정하나요? (예: 하루에 강의 3번 들어가면 최대 90분)
