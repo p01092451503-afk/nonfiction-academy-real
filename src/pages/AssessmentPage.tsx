@@ -425,7 +425,11 @@ export default function AssessmentPage() {
       return data as any;
     },
     enabled: !!assessmentId && !!currentLang,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
+
 
   // Pick the active question source for i18n lookup (prefer rawQuestions; fallback to reviewQuestions)
   const questionIdsForI18n = useMemo(() => {
