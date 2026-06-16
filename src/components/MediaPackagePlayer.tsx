@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw, Play, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const STORAGE_KEY = (cid: string) => `mp-progress:${cid}`;
+const VIDEO_COMPLETE_THRESHOLD = 0.95; // 95% 시청 시 완료 인정
 type StoredProgress = { index: number; visited: number[] };
 
 const loadProgress = (cid: string): StoredProgress | null => {
@@ -24,10 +26,18 @@ const loadProgress = (cid: string): StoredProgress | null => {
 };
 
 
+interface VideoTrackInfo {
+  watched: number; // 실제 시청 누적 초 (최대치 기준, 되감기로 중복 카운트 안 함)
+  duration: number;
+  completed: boolean;
+}
+
 interface MediaPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
+  /** 영상 슬라이드들의 실제 시청 초가 변할 때 호출 (디바운스됨). 학습시간 통계에 사용 */
+  onWatchedSecondsTracked?: (totalSeconds: number) => void;
 }
 
 interface PackageItem {
@@ -59,9 +69,20 @@ interface PackageItem {
  * Overlay video with mango-board parity playback options:
  * autoplay / loop / muted / controls / volume / playbackRate / trim (start–end) / delayed start / opacity.
  */
-const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean }) => {
+const OverlayVideo = ({
+  item,
+  isActive,
+  onProgress,
+}: {
+  item: PackageItem;
+  isActive: boolean;
+  onProgress?: (itemId: string, watched: number, duration: number, completed: boolean) => void;
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxWatchedRef = useRef<number>(0);
+  const completedRef = useRef<boolean>(false);
+  const seekGuardRef = useRef<boolean>(false);
 
   const autoplay = item.overlay_autoplay ?? true;
   const loop = item.overlay_loop ?? true;
@@ -74,7 +95,6 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
   const delaySec = item.overlay_delay_sec ?? 0;
   const opacity = (item.overlay_opacity ?? 100) / 100;
 
-  // Apply mutable props
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -83,7 +103,6 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
     v.playbackRate = rate;
   }, [muted, volume, rate]);
 
-  // Activate / deactivate playback when slide enters/leaves view
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -113,10 +132,10 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
     };
   }, [isActive, autoplay, delaySec, startSec]);
 
-  // Trim-aware timeupdate: loop or stop at endSec
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v) return;
+    // 트림 처리
     if (endSec != null && v.currentTime >= endSec) {
       if (loop) {
         v.currentTime = startSec;
@@ -125,15 +144,31 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
         v.pause();
       }
     }
+    // 앞으로 빨리감기 차단 (이미 완료된 영상은 자유)
+    if (!completedRef.current && !seekGuardRef.current) {
+      const cur = v.currentTime;
+      if (cur > maxWatchedRef.current + 2) {
+        seekGuardRef.current = true;
+        try { v.currentTime = maxWatchedRef.current; } catch {}
+        setTimeout(() => { seekGuardRef.current = false; }, 300);
+        return;
+      }
+    }
+    if (v.currentTime > maxWatchedRef.current) {
+      maxWatchedRef.current = v.currentTime;
+    }
+    const dur = Math.max(0, (endSec ?? v.duration) - startSec);
+    const watched = Math.max(0, Math.min(maxWatchedRef.current - startSec, dur));
+    const completed = dur > 0 && watched / dur >= VIDEO_COMPLETE_THRESHOLD;
+    if (completed) completedRef.current = true;
+    onProgress?.(item.id, watched, dur, completedRef.current);
   };
 
-  const handleEnded = () => {
+  const handleLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v) return;
-    if (loop) {
-      v.currentTime = startSec;
-      v.play().catch(() => {});
-    }
+    const dur = Math.max(0, (endSec ?? v.duration) - startSec);
+    onProgress?.(item.id, 0, dur, false);
   };
 
   const url = item.overlay_video_url || "";
@@ -148,6 +183,7 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
   };
 
   if (isIframeUrl) {
+    // iframe 임베드는 시청 이벤트를 받을 수 없어 잠금/시간추적 대상에서 제외됨
     const embedUrl = url
       .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
       .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
@@ -182,9 +218,72 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
       preload="metadata"
       loop={loop && endSec == null}
       onTimeUpdate={handleTimeUpdate}
-      onEnded={handleEnded}
+      onLoadedMetadata={handleLoadedMetadata}
+      onEnded={() => {
+        completedRef.current = true;
+        const v = videoRef.current;
+        const dur = v ? Math.max(0, (endSec ?? v.duration) - startSec) : 0;
+        onProgress?.(item.id, dur, dur, true);
+      }}
       className="absolute object-cover bg-black"
       style={overlayStyle}
+    />
+  );
+};
+
+/** 직접 video 슬라이드용: 시청 추적 + 앞으로감기 차단 */
+const TrackedDirectVideo = ({
+  item,
+  onProgress,
+}: {
+  item: PackageItem;
+  onProgress?: (itemId: string, watched: number, duration: number, completed: boolean) => void;
+}) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  const maxRef = useRef(0);
+  const completedRef = useRef(false);
+  const seekGuardRef = useRef(false);
+
+  const handleTimeUpdate = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (!completedRef.current && !seekGuardRef.current) {
+      if (v.currentTime > maxRef.current + 2) {
+        seekGuardRef.current = true;
+        try { v.currentTime = maxRef.current; } catch {}
+        setTimeout(() => { seekGuardRef.current = false; }, 300);
+        return;
+      }
+    }
+    if (v.currentTime > maxRef.current) maxRef.current = v.currentTime;
+    const dur = v.duration || 0;
+    const completed = dur > 0 && maxRef.current / dur >= VIDEO_COMPLETE_THRESHOLD;
+    if (completed) completedRef.current = true;
+    onProgress?.(item.id, Math.min(maxRef.current, dur), dur, completedRef.current);
+  };
+
+  return (
+    <video
+      ref={ref}
+      src={item.media_url}
+      controls
+      controlsList="nodownload noplaybackrate noremoteplayback"
+      disablePictureInPicture
+      disableRemotePlayback
+      className="w-full max-h-[85vh]"
+      playsInline
+      preload="metadata"
+      onTimeUpdate={handleTimeUpdate}
+      onLoadedMetadata={() => {
+        const v = ref.current;
+        if (v) onProgress?.(item.id, 0, v.duration || 0, false);
+      }}
+      onEnded={() => {
+        const v = ref.current;
+        const dur = v?.duration || 0;
+        completedRef.current = true;
+        onProgress?.(item.id, dur, dur, true);
+      }}
     />
   );
 };
@@ -192,7 +291,7 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
 const isImageUrl = (url: string) =>
   /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url);
 
-const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaPackagePlayerProps) => {
+const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatchedSecondsTracked }: MediaPackagePlayerProps) => {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
@@ -219,6 +318,38 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // ── 영상 슬라이드 시청 추적 ──
+  const [videoStates, setVideoStates] = useState<Record<string, VideoTrackInfo>>({});
+  const videoStatesRef = useRef(videoStates);
+  videoStatesRef.current = videoStates;
+  const lastReportedSecRef = useRef<number>(-1);
+  const lockToastRef = useRef<number>(0);
+
+  const handleVideoProgress = useCallback(
+    (itemId: string, watched: number, duration: number, completed: boolean) => {
+      setVideoStates((prev) => {
+        const prevState = prev[itemId];
+        if (
+          prevState &&
+          Math.abs(prevState.watched - watched) < 1 &&
+          Math.abs(prevState.duration - duration) < 0.5 &&
+          prevState.completed === completed
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [itemId]: {
+            watched: Math.max(prevState?.watched ?? 0, watched),
+            duration: Math.max(prevState?.duration ?? 0, duration),
+            completed: prevState?.completed || completed,
+          },
+        };
+      });
+    },
+    []
+  );
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["media-package-items", contentId],
@@ -284,28 +415,83 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
     }
   }, [contentId, index, visited, items.length]);
 
+  // 영상 슬라이드 잠금 판정 헬퍼
+  const isItemTrackableVideo = useCallback((it: PackageItem | undefined) => {
+    if (!it) return false;
+    if (it.item_type === "video") return true;
+    if (it.overlay_video_url) {
+      // iframe 임베드(Bunny mediadelivery)는 이벤트를 받을 수 없으므로 추적 불가 → 잠금/시간추적 대상 아님
+      return !/(?:iframe|player)\.mediadelivery\.net\/(embed|play)\//i.test(it.overlay_video_url);
+    }
+    return false;
+  }, []);
+
+  const isItemLocked = useCallback(
+    (slideIdx: number) => {
+      const it = items[slideIdx];
+      if (!isItemTrackableVideo(it)) return false;
+      return !videoStates[it.id]?.completed;
+    },
+    [items, videoStates, isItemTrackableVideo]
+  );
+
+  const showLockToast = useCallback(() => {
+    const now = Date.now();
+    if (now - lockToastRef.current < 2000) return;
+    lockToastRef.current = now;
+    toast({
+      title: t("contentPlayer.videoLockTitle", "영상을 끝까지 시청해주세요"),
+      description: t(
+        "contentPlayer.videoLockDesc",
+        "영상이 95% 이상 재생되어야 다음 카드로 이동할 수 있어요."
+      ),
+    });
+  }, [t]);
+
+  // 강의 전체 시청 완료 + 영상 시청 완료 여부 모두 만족해야 onComplete
   useEffect(() => {
     if (items.length === 0) return;
+    const allVideosDone = items.every((it) =>
+      !isItemTrackableVideo(it) || videoStatesRef.current[it.id]?.completed
+    );
     onPartialProgress?.(visited.size, items.length);
-    if (
-      visited.size >= items.length &&
-      !completedRef.current
-    ) {
+    if (visited.size >= items.length && allVideosDone && !completedRef.current) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [visited, items.length, onComplete, onPartialProgress]);
+  }, [visited, items, videoStates, onComplete, onPartialProgress, isItemTrackableVideo]);
 
+  // 실제 시청 누적 초 → 부모에 보고 (3초 디바운스)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const total = Object.values(videoStates).reduce((sum, s) => sum + (s.watched || 0), 0);
+      const rounded = Math.round(total);
+      if (rounded !== lastReportedSecRef.current && rounded > 0) {
+        lastReportedSecRef.current = rounded;
+        onWatchedSecondsTracked?.(rounded);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [videoStates, onWatchedSecondsTracked]);
 
-  // Keyboard navigation
+  // Keyboard navigation (잠금 고려)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(items.length - 1, i + 1));
+      if (e.key === "ArrowRight") {
+        setIndex((i) => {
+          if (i >= items.length - 1) return i;
+          if (isItemLocked(i)) {
+            showLockToast();
+            return i;
+          }
+          return i + 1;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items.length]);
+  }, [items.length, isItemLocked, showLockToast]);
 
   if (isLoading) {
     return (
@@ -401,7 +587,11 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
     }
     const threshold = Math.min(80, containerWidth * 0.18);
     if (dragOffset < -threshold && !isLast) {
-      setIndex((i) => i + 1);
+      if (isItemLocked(index)) {
+        showLockToast();
+      } else {
+        setIndex((i) => i + 1);
+      }
     } else if (dragOffset > threshold && !isFirst) {
       setIndex((i) => i - 1);
     }
@@ -431,19 +621,11 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
             {item.overlay_video_url &&
               item.overlay_x != null && item.overlay_y != null &&
               item.overlay_w != null && item.overlay_h != null && (
-              <OverlayVideo item={item} isActive={isCurrent} />
+              <OverlayVideo item={item} isActive={isCurrent} onProgress={handleVideoProgress} />
             )}
           </div>
         ) : (
-          <video
-            src={item.media_url}
-            controls
-            controlsList="nodownload noplaybackrate noremoteplayback"
-            disablePictureInPicture
-            disableRemotePlayback
-            className="w-full max-h-[85vh]"
-            playsInline
-          />
+          <TrackedDirectVideo item={item} onProgress={handleVideoProgress} />
         )}
       </div>
     );
@@ -514,7 +696,18 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
             <button
               key={i}
               type="button"
-              onClick={() => setIndex(i)}
+              onClick={() => {
+                // 앞으로 건너뛰려는 시도에서 잠긴 슬라이드가 있는지 검사
+                if (i > index) {
+                  for (let k = index; k < i; k++) {
+                    if (isItemLocked(k)) {
+                      showLockToast();
+                      return;
+                    }
+                  }
+                }
+                setIndex(i);
+              }}
               className={`h-2 rounded-full transition-all ${
                 i === index
                   ? "w-6 bg-primary"
@@ -528,6 +721,18 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress }: MediaP
         </div>
       )}
 
+      {/* 현재 슬라이드에 미완료 영상이 있으면 안내 */}
+      {isItemLocked(index) && (
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>
+            {t(
+              "contentPlayer.videoLockHint",
+              "영상을 끝까지 시청하면 다음 카드로 이동할 수 있어요"
+            )}
+          </span>
+        </div>
+      )}
 
       {/* Caption */}
       {current.caption && (

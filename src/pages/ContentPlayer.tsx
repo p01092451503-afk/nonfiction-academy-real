@@ -495,6 +495,53 @@ const ContentPlayer = () => {
     [user?.id, contentId, courseId, currentProgress?.id, currentProgress?.completed, currentProgress?.progress_percentage, queryClient]
   );
 
+  /**
+   * 미디어 패키지 슬라이드의 영상 시청 누적 초를 content_progress.last_position_seconds 에 저장.
+   * 학습시간 통계는 last_position_seconds 의 합으로 산정되므로, 실제 시청한 초만 누적된다.
+   */
+  const watchedSecsInFlight = useRef(false);
+  const lastWatchedSecRef = useRef<number>(-1);
+  const handleWatchedSecondsTracked = useCallback(
+    async (totalSeconds: number) => {
+      if (!user?.id || !contentId) return;
+      if (totalSeconds <= 0) return;
+      if (totalSeconds === lastWatchedSecRef.current) return;
+      if (watchedSecsInFlight.current) return;
+      watchedSecsInFlight.current = true;
+      try {
+        const { data: latest } = await supabase
+          .from("content_progress")
+          .select("id, last_position_seconds")
+          .eq("user_id", user.id)
+          .eq("content_id", contentId)
+          .maybeSingle();
+        const existing = Number(latest?.last_position_seconds) || 0;
+        if (totalSeconds <= existing) {
+          lastWatchedSecRef.current = totalSeconds;
+          return;
+        }
+        const payload = {
+          last_position_seconds: totalSeconds,
+          last_accessed_at: new Date().toISOString(),
+        };
+        if (latest?.id) {
+          await supabase.from("content_progress").update(payload).eq("id", latest.id);
+        } else {
+          await supabase.from("content_progress").upsert(
+            { user_id: user.id, content_id: contentId, completed: false, ...payload },
+            { onConflict: "user_id,content_id" }
+          );
+        }
+        lastWatchedSecRef.current = totalSeconds;
+      } catch {
+        /* 학습시간은 보조 통계이므로 실패해도 사용자에게 노출하지 않음 */
+      } finally {
+        watchedSecsInFlight.current = false;
+      }
+    },
+    [user?.id, contentId]
+  );
+
 
   const normalizeMangoboardUrl = (url: string) => {
     let normalized = url.trim();
@@ -673,6 +720,7 @@ const ContentPlayer = () => {
                 <MediaPackagePlayer
                   contentId={currentContent.id}
                   onPartialProgress={handlePartialProgress}
+                  onWatchedSecondsTracked={handleWatchedSecondsTracked}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
                       markCompleteMutation.mutate();
