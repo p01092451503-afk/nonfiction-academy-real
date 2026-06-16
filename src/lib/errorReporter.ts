@@ -52,6 +52,7 @@ export const reportError = async (params: {
   const message = (params.message || "").trim();
   if (!message) return;
   if (IGNORE_PATTERNS.some((re) => re.test(message))) return;
+  if (RLS_PATTERNS.some((re) => re.test(message))) return;
 
   const stack = params.stack || "";
   const fp = fingerprint(message, stack);
@@ -68,6 +69,7 @@ export const reportError = async (params: {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return; // skip unauthenticated errors
     await supabase.functions.invoke("report-error", {
       body: {
         message,
