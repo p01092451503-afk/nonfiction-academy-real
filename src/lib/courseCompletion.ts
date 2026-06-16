@@ -22,15 +22,17 @@ export function computeCourseProgress(
     completed: boolean | null;
     progress_percentage?: number | null;
   }>,
+  isCompleted?: boolean,
 ): { percentage: number; isCompleted: boolean } {
   if (!contents || contents.length === 0) {
-    return { percentage: 0, isCompleted: false };
+    return { percentage: 0, isCompleted: !!isCompleted };
   }
   const contentIds = new Set(contents.map((c) => c.id));
   const relevant = (progressData || []).filter((p) => contentIds.has(p.content_id));
   const anyCompleted = relevant.some((p) => p.completed);
   if (anyCompleted) {
-    return { percentage: 100, isCompleted: true };
+    // 차시는 모두 완료 → 진행률 100%. 수료 여부는 평가 통과로 결정되며 호출자가 전달.
+    return { percentage: 100, isCompleted: !!isCompleted };
   }
   const maxPct = relevant.reduce((max, p) => {
     const pct = Number(p.progress_percentage) || 0;
