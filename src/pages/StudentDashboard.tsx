@@ -1,6 +1,6 @@
 import {
   BookOpen, Clock, ClipboardCheck, Award, Play, ArrowRight, TrendingUp, BarChart3, Star,
-  AlertTriangle, Calendar,
+  AlertTriangle, Calendar, MessageSquare,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
