@@ -60,7 +60,7 @@ export const useCourseLearningSession = (
       }, HEARTBEAT_INTERVAL_MS);
     })();
 
-    // 탭 종료 / 페이지 이탈 시 마지막 heartbeat
+    // 탭 종료 / 페이지 이탈 시 마지막 heartbeat (keepalive fetch)
     const flush = () => {
       if (!sessionIdRef.current) return;
       const elapsedMin = (Date.now() - startedAtRef.current) / 60_000;
@@ -69,13 +69,18 @@ export const useCourseLearningSession = (
       ).toISOString();
       try {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionIdRef.current}`;
-        navigator.sendBeacon(
-          url,
-          new Blob(
-            [JSON.stringify({ last_heartbeat_at: cappedTs })],
-            { type: "application/json" },
-          ),
-        );
+        const token = supabase.realtime?.accessToken || "";
+        fetch(url, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${token}`,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ last_heartbeat_at: cappedTs }),
+          keepalive: true,
+        }).catch(() => {});
       } catch {
         // ignore
       }
