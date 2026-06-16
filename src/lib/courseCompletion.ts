@@ -42,7 +42,8 @@ export function computeCourseProgress(
 
 /**
  * 한 차시가 완료된 시점에 호출.
- * 같은 강의의 enrollment.progress / completed_at 을 갱신한다.
+ * 강의에 게시된 평가가 있으면, 사용자가 해당 평가에 합격(passed=true)했을 때만
+ * 이수 완료(completed_at)로 처리한다. 미합격 시 진행률만 99로 유지한다.
  */
 export async function syncEnrollmentOnContentCompleted(params: {
   userId: string;
@@ -60,6 +61,34 @@ export async function syncEnrollmentOnContentCompleted(params: {
 
   if (!enrollment) return;
   if (enrollment.completed_at) return; // 이미 완료됨
+
+  // 강의에 게시된 평가가 있는지 확인
+  const { data: assessments } = await supabase
+    .from("assessments")
+    .select("id")
+    .eq("course_id", courseId)
+    .eq("is_published", true);
+  const hasAssessment = (assessments?.length ?? 0) > 0;
+
+  if (hasAssessment) {
+    const assessmentIds = (assessments || []).map((a: any) => a.id);
+    const { data: passedAttempts } = await supabase
+      .from("assessment_attempts")
+      .select("id")
+      .eq("user_id", userId)
+      .in("assessment_id", assessmentIds)
+      .eq("passed", true)
+      .limit(1);
+
+    if (!passedAttempts || passedAttempts.length === 0) {
+      // 평가 미합격 → 이수 완료 처리 보류, 진행률만 99로 유지
+      await supabase
+        .from("enrollments")
+        .update({ progress: 99 })
+        .eq("id", enrollment.id);
+      return;
+    }
+  }
 
   await supabase
     .from("enrollments")
