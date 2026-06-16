@@ -415,28 +415,83 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     }
   }, [contentId, index, visited, items.length]);
 
+  // 영상 슬라이드 잠금 판정 헬퍼
+  const isItemTrackableVideo = useCallback((it: PackageItem | undefined) => {
+    if (!it) return false;
+    if (it.item_type === "video") return true;
+    if (it.overlay_video_url) {
+      // iframe 임베드(Bunny mediadelivery)는 이벤트를 받을 수 없으므로 추적 불가 → 잠금/시간추적 대상 아님
+      return !/(?:iframe|player)\.mediadelivery\.net\/(embed|play)\//i.test(it.overlay_video_url);
+    }
+    return false;
+  }, []);
+
+  const isItemLocked = useCallback(
+    (slideIdx: number) => {
+      const it = items[slideIdx];
+      if (!isItemTrackableVideo(it)) return false;
+      return !videoStates[it.id]?.completed;
+    },
+    [items, videoStates, isItemTrackableVideo]
+  );
+
+  const showLockToast = useCallback(() => {
+    const now = Date.now();
+    if (now - lockToastRef.current < 2000) return;
+    lockToastRef.current = now;
+    toast({
+      title: t("contentPlayer.videoLockTitle", "영상을 끝까지 시청해주세요"),
+      description: t(
+        "contentPlayer.videoLockDesc",
+        "영상이 95% 이상 재생되어야 다음 카드로 이동할 수 있어요."
+      ),
+    });
+  }, [t]);
+
+  // 강의 전체 시청 완료 + 영상 시청 완료 여부 모두 만족해야 onComplete
   useEffect(() => {
     if (items.length === 0) return;
+    const allVideosDone = items.every((it) =>
+      !isItemTrackableVideo(it) || videoStatesRef.current[it.id]?.completed
+    );
     onPartialProgress?.(visited.size, items.length);
-    if (
-      visited.size >= items.length &&
-      !completedRef.current
-    ) {
+    if (visited.size >= items.length && allVideosDone && !completedRef.current) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [visited, items.length, onComplete, onPartialProgress]);
+  }, [visited, items, videoStates, onComplete, onPartialProgress, isItemTrackableVideo]);
 
+  // 실제 시청 누적 초 → 부모에 보고 (3초 디바운스)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const total = Object.values(videoStates).reduce((sum, s) => sum + (s.watched || 0), 0);
+      const rounded = Math.round(total);
+      if (rounded !== lastReportedSecRef.current && rounded > 0) {
+        lastReportedSecRef.current = rounded;
+        onWatchedSecondsTracked?.(rounded);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [videoStates, onWatchedSecondsTracked]);
 
-  // Keyboard navigation
+  // Keyboard navigation (잠금 고려)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(items.length - 1, i + 1));
+      if (e.key === "ArrowRight") {
+        setIndex((i) => {
+          if (i >= items.length - 1) return i;
+          if (isItemLocked(i)) {
+            showLockToast();
+            return i;
+          }
+          return i + 1;
+        });
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items.length]);
+  }, [items.length, isItemLocked, showLockToast]);
 
   if (isLoading) {
     return (
