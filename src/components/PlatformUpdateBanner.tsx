@@ -108,7 +108,10 @@ export default function PlatformUpdateBanner() {
     }
   };
 
-  const handleReload = () => {
+  const handleReload = (e?: React.MouseEvent | React.TouchEvent) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+
     // Mark as dismissed so banner doesn't reappear after reload
     if (update) {
       const list = dismissedIds();
@@ -117,12 +120,13 @@ export default function PlatformUpdateBanner() {
     }
 
     const href = getReloadHref();
+    // Fire-and-forget cleanup; never block the navigation on mobile.
     void cleanupPwaCaches();
 
-    // Do not wait for async cleanup: navigate synchronously while the click is still trusted.
-    window.location.assign(href);
-    window.setTimeout(() => window.location.replace(href), 250);
-    window.setTimeout(() => window.location.reload(), 750);
+    // Multiple fallbacks for cross-browser/PWA reliability (iOS Safari, in-app browsers, Android Chrome)
+    try { window.location.assign(href); } catch {}
+    window.setTimeout(() => { try { window.location.replace(href); } catch {} }, 200);
+    window.setTimeout(() => { try { window.location.reload(); } catch {} }, 600);
   };
 
   if (!update) return null;
@@ -130,7 +134,10 @@ export default function PlatformUpdateBanner() {
   const Icon = s.icon;
 
   return (
-    <div className={`fixed top-0 inset-x-0 z-[100] ${s.bg} border-b-4 ${s.border} shadow-lg animate-in slide-in-from-top-2`}>
+    <div
+      className={`fixed top-0 inset-x-0 z-[200] ${s.bg} border-b-4 ${s.border} shadow-lg animate-in slide-in-from-top-2`}
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <div className="mx-auto max-w-7xl px-3 sm:px-6 py-3 flex items-start sm:items-center gap-3 flex-wrap sm:flex-nowrap">
         <Icon className={`h-5 w-5 ${s.text} shrink-0 mt-0.5 sm:mt-0`} />
         <div className={`flex-1 min-w-0 ${s.text}`}>
@@ -142,15 +149,26 @@ export default function PlatformUpdateBanner() {
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           {update.require_reload && (
-            <Button size="sm" asChild className="h-8">
-              <a href={getReloadHref()} onClick={handleReload} target="_self">
+            <Button
+              size="sm"
+              type="button"
+              onClick={handleReload}
+              onTouchEnd={handleReload}
+              className="h-9 min-w-[110px] px-3 font-semibold touch-manipulation cursor-pointer"
+              style={{ WebkitTapHighlightColor: "rgba(0,0,0,0.1)" }}
+            >
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               지금 새로고침
-              </a>
             </Button>
           )}
           {update.severity !== "critical" && (
-            <Button size="sm" variant="ghost" onClick={handleDismiss} className={`h-8 w-8 p-0 ${s.text}`}>
+            <Button
+              size="sm"
+              variant="ghost"
+              type="button"
+              onClick={handleDismiss}
+              className={`h-9 w-9 p-0 touch-manipulation ${s.text}`}
+            >
               <X className="h-4 w-4" />
             </Button>
           )}
@@ -159,3 +177,4 @@ export default function PlatformUpdateBanner() {
     </div>
   );
 }
+
