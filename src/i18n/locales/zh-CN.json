@@ -573,15 +573,42 @@
     "thisWeek": "本周",
     "toLevel": "{{percent}}% 到达 Lv.{{level}}",
     "placeholderBadges": {
-      "firstCourse": { "name": "完成首门课程", "description": "完成第一门课程即可获得" },
-      "streak3": { "name": "连续学习3天", "description": "连续学习3天即可获得" },
-      "streak7": { "name": "连续学习7天", "description": "连续学习7天即可获得" },
-      "perfectQuiz": { "name": "测验满分", "description": "评估获得满分即可获得" },
-      "fiveCourses": { "name": "完成5门课程", "description": "完成5门课程即可获得" },
-      "tenCourses": { "name": "完成10门课程", "description": "完成10门课程即可获得" },
-      "level5": { "name": "达成等级5", "description": "达到等级5即可获得" },
-      "level10": { "name": "达成等级10", "description": "达到等级10即可获得" },
-      "topRanker": { "name": "TOP 10 排行", "description": "进入排行榜TOP 10即可获得" }
+      "firstCourse": {
+        "name": "完成首门课程",
+        "description": "完成第一门课程即可获得"
+      },
+      "streak3": {
+        "name": "连续学习3天",
+        "description": "连续学习3天即可获得"
+      },
+      "streak7": {
+        "name": "连续学习7天",
+        "description": "连续学习7天即可获得"
+      },
+      "perfectQuiz": {
+        "name": "测验满分",
+        "description": "评估获得满分即可获得"
+      },
+      "fiveCourses": {
+        "name": "完成5门课程",
+        "description": "完成5门课程即可获得"
+      },
+      "tenCourses": {
+        "name": "完成10门课程",
+        "description": "完成10门课程即可获得"
+      },
+      "level5": {
+        "name": "达成等级5",
+        "description": "达到等级5即可获得"
+      },
+      "level10": {
+        "name": "达成等级10",
+        "description": "达到等级10即可获得"
+      },
+      "topRanker": {
+        "name": "TOP 10 排行",
+        "description": "进入排行榜TOP 10即可获得"
+      }
     }
   },
   "admin": {
@@ -1198,7 +1225,40 @@
     "assessmentAvailable": "评估可用",
     "assessmentAvailableDesc": "已满足进度标准，可以参加评估。",
     "progressRequired": "完成 {{threshold}}% 或以上进度后方可参加评估。",
-    "currentProgress": "当前进度：{{progress}}%"
+    "currentProgress": "当前进度：{{progress}}%",
+    "ui": {
+      "results": "结果",
+      "previous": "上一题",
+      "next": "下一题",
+      "correct": "正确",
+      "wrong": "错误",
+      "viewHint": "查看提示",
+      "yourAnswer": "您的答案",
+      "noAnswer": "(未作答)",
+      "correctAnswerLabel": "正确答案",
+      "greatJob": "辛苦了！测验已完成。",
+      "score": "分数",
+      "accuracy": "准确率",
+      "skipped": "跳过",
+      "pass": "通过",
+      "fail": "未通过",
+      "passInfo": "合格分数：{{passingScore}}分 (您的分数：{{score}}/{{total}}分)",
+      "highlights": "亮点",
+      "areasToReview": "需重点复习的领域",
+      "continueLearning": "继续学习",
+      "reviewQuiz": "复习测验",
+      "reviewQuizDesc": "查看每道题的正确答案和解析进行复习。",
+      "retakeQuiz": "重新测验",
+      "retakeDesc": "再次挑战以提高分数。",
+      "backToCourse": "返回课程",
+      "enterAnswer": "请输入答案",
+      "writeAnswer": "请写下您的答案",
+      "answered": "{{answered}}/{{total}} 已答",
+      "attemptLabel": "第{{n}}次",
+      "passShort": "(通过)",
+      "failShort": "(未通过)",
+      "reviewBtn": "查看错题"
+    }
   },
   "branches": {
     "title": "组织管理",
