@@ -367,7 +367,7 @@ const StudentDashboard = () => {
         </div>
 
         {/* Stat Cards - Compact 2 rows */}
-        <section className="grid grid-cols-4 gap-2 sm:gap-3" aria-label={t("dashboard.stats", "학습 통계")}>
+        <section className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3" aria-label={t("dashboard.stats", "학습 통계")}>
           {[...stats, ...detailStats].map((stat) => {
             const content = (
               <>
