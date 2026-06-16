@@ -13,3 +13,5 @@ project_id = "jabagvlhgxrwbnxyrmvv"
     verify_jwt = false
   [functions.translate-comment]
     verify_jwt = false
+  [functions.fix-question-i18n]
+    verify_jwt = false
