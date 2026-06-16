@@ -319,6 +319,38 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
   const touchStartY = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // ── 영상 슬라이드 시청 추적 ──
+  const [videoStates, setVideoStates] = useState<Record<string, VideoTrackInfo>>({});
+  const videoStatesRef = useRef(videoStates);
+  videoStatesRef.current = videoStates;
+  const lastReportedSecRef = useRef<number>(-1);
+  const lockToastRef = useRef<number>(0);
+
+  const handleVideoProgress = useCallback(
+    (itemId: string, watched: number, duration: number, completed: boolean) => {
+      setVideoStates((prev) => {
+        const prevState = prev[itemId];
+        if (
+          prevState &&
+          Math.abs(prevState.watched - watched) < 1 &&
+          Math.abs(prevState.duration - duration) < 0.5 &&
+          prevState.completed === completed
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [itemId]: {
+            watched: Math.max(prevState?.watched ?? 0, watched),
+            duration: Math.max(prevState?.duration ?? 0, duration),
+            completed: prevState?.completed || completed,
+          },
+        };
+      });
+    },
+    []
+  );
+
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["media-package-items", contentId],
     queryFn: async () => {
