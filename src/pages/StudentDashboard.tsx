@@ -163,6 +163,21 @@ const StudentDashboard = () => {
     enabled: !!user?.id,
   });
 
+  // 내가 작성한 강의 댓글 수 (삭제되지 않은 것만)
+  const { data: myCommentCount = 0 } = useQuery({
+    queryKey: ["dash-my-comment-count", user?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("course_comments")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .eq("is_deleted", false);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
   // 게이미피케이션
   const { data: gamification } = useQuery({
     queryKey: ["dash-gamification", user?.id],
