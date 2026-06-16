@@ -24,7 +24,12 @@ const setSentMap = (m: Record<string, number>) => {
 
 const fingerprint = (message: string, stack: string): string => {
   const stackHead = (stack.split("\n").find((l) => l.trim().startsWith("at ")) || "").trim();
-  return `${message.split("\n")[0]}|${location.pathname}|${stackHead}`;
+  // Normalize dynamic segments (UUIDs, numeric IDs) so same-class errors on
+  // different resources collapse into a single fingerprint and don't bypass debounce.
+  const normalizedPath = location.pathname
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ":uuid")
+    .replace(/\/\d+(?=\/|$)/g, "/:id");
+  return `${message.split("\n")[0]}|${normalizedPath}|${stackHead}`;
 };
 
 const IGNORE_PATTERNS = [
