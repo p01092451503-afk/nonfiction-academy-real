@@ -160,7 +160,8 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
     const OPEN_SESSION_CAP_MIN = 30; // assume 30 minutes activity if no explicit logout
 
     // Group sessions by user, then merge overlapping intervals to avoid double-counting
-    // (many sessions are created per page navigation and are never closed)
+    // (course_learning_sessions: 세션당 최대 30분 캡)
+    const SESSION_CAP_MIN = 30;
     const sessionsByUser = new Map<string, { start: number; end: number }[]>();
     sessions.forEach((s: any) => {
       if (scopedUserIds && !scopedUserIds.has(s.user_id)) return;
@@ -168,8 +169,10 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
       const rawEndMs = s.logout_at
         ? new Date(s.logout_at).getTime()
         : Math.min(nowMs, startMs + OPEN_SESSION_CAP_MIN * 60000);
+      // 세션 자체를 30분으로 캡 (방어적 처리)
+      const cappedEndMs = Math.min(rawEndMs, startMs + SESSION_CAP_MIN * 60000);
       const start = Math.max(startMs, dayStartMs);
-      const end = Math.min(rawEndMs, dayEndMs);
+      const end = Math.min(cappedEndMs, dayEndMs);
       if (end <= start) return;
       const arr = sessionsByUser.get(s.user_id) ?? [];
       arr.push({ start, end });
