@@ -2953,6 +2953,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_course_completion_eligible: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_user_in_leader_scope: {
         Args: { _leader_id: string; _target_user_id: string }
         Returns: boolean
