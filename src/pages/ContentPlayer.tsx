@@ -720,6 +720,7 @@ const ContentPlayer = () => {
                 <MediaPackagePlayer
                   contentId={currentContent.id}
                   onPartialProgress={handlePartialProgress}
+                  onWatchedSecondsTracked={handleWatchedSecondsTracked}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
                       markCompleteMutation.mutate();
