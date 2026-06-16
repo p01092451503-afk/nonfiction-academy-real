@@ -480,19 +480,28 @@ const StudentAchievements = () => {
                   {displayBadges.map((badge: any) => {
                     const earned = earnedBadgeIds.has(badge.id);
                     const Icon = badgeIcons[badge.icon] || Star;
+                    // Derive a stable i18n key from requirement_type + requirement_value
+                    // (DB badges have no `key` column). Falls back to badge.key, then DB text.
+                    const reqKey = badge.requirement_type && badge.requirement_value != null
+                      ? `${badge.requirement_type}_${badge.requirement_value}`
+                      : null;
+                    const i18nKey = badge.key || reqKey;
+                    const nameText = i18nKey
+                      ? t(`achievements.dbBadges.${i18nKey}.name`, { defaultValue: badge.name || "" })
+                      : badge.name;
+                    const descText = i18nKey
+                      ? t(`achievements.dbBadges.${i18nKey}.description`, { defaultValue: badge.description || "" })
+                      : badge.description;
                     return (
                       <div key={badge.id} className={`stat-card text-center !p-4 ${!earned ? "opacity-40 grayscale" : ""}`}>
                         <Icon className={`h-8 w-8 mx-auto mb-2 ${earned ? "text-warning" : "text-muted-foreground"}`} />
-                        <h3 className="text-sm font-medium text-foreground">
-                          {badge.key ? t(`achievements.placeholderBadges.${badge.key}.name`, badge.name || "") : badge.name}
-                        </h3>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {badge.key ? t(`achievements.placeholderBadges.${badge.key}.description`, badge.description || "") : badge.description}
-                        </p>
+                        <h3 className="text-sm font-medium text-foreground">{nameText}</h3>
+                        <p className="text-[10px] text-muted-foreground mt-1">{descText}</p>
                         {earned && <p className="text-[10px] text-success font-medium mt-1.5">{t("achievements.earned")}</p>}
                       </div>
                     );
                   })}
+
                 </div>
               );
             })()}
