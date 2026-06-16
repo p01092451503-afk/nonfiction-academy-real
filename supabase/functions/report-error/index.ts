@@ -70,7 +70,12 @@ Deno.serve(async (req: Request) => {
     // Fingerprint = first line of message + URL path + first stack frame
     const stackHead = (stack.split("\n").find((l) => l.trim().startsWith("at ")) || "").trim();
     const pathOnly = (() => { try { return new URL(url).pathname; } catch { return url; } })();
-    const fingerprint = await sha1(`${message.split("\n")[0]}|${pathOnly}|${stackHead}`);
+    // Normalize UUIDs and numeric IDs so the same error on different resources
+    // (e.g. different assessment IDs) collapses into a single fingerprint.
+    const normalizedPath = pathOnly
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ":uuid")
+      .replace(/\/\d+(?=\/|$)/g, "/:id");
+    const fingerprint = await sha1(`${message.split("\n")[0]}|${normalizedPath}|${stackHead}`);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
