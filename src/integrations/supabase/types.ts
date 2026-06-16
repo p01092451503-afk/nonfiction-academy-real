@@ -1426,6 +1426,7 @@ export type Database = {
       enrollments: {
         Row: {
           completed_at: string | null
+          completion_count: number
           course_id: string
           enrolled_at: string | null
           id: string
@@ -1437,6 +1438,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          completion_count?: number
           course_id: string
           enrolled_at?: string | null
           id?: string
@@ -1448,6 +1450,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          completion_count?: number
           course_id?: string
           enrolled_at?: string | null
           id?: string
@@ -3007,6 +3010,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      record_course_review_completion: {
+        Args: { p_course_id: string }
+        Returns: number
       }
       submit_and_grade_assessment: {
         Args: { p_answers: Json; p_attempt_id: string }
