@@ -26,10 +26,18 @@ const loadProgress = (cid: string): StoredProgress | null => {
 };
 
 
+interface VideoTrackInfo {
+  watched: number; // 실제 시청 누적 초 (최대치 기준, 되감기로 중복 카운트 안 함)
+  duration: number;
+  completed: boolean;
+}
+
 interface MediaPackagePlayerProps {
   contentId: string;
   onComplete?: () => void;
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
+  /** 영상 슬라이드들의 실제 시청 초가 변할 때 호출 (디바운스됨). 학습시간 통계에 사용 */
+  onWatchedSecondsTracked?: (totalSeconds: number) => void;
 }
 
 interface PackageItem {
