@@ -1539,7 +1539,10 @@
     "notAllowed": "You cannot comment. Please check your enrollment approval.",
     "replyPlaceholder": "Reply to @{{name}}...",
     "translatedBadge": "Translated",
-    "emptyTitle": "No comments yet"
+    "emptyTitle": "No comments yet",
+    "placeholderShort": "Add a comment...",
+    "replyPlaceholderShort": "Reply to @{{name}}...",
+    "replyingTo": "Replying to @{{name}}"
   },
   "globalDashboard": {
     "title": "Global Learning Dashboard",

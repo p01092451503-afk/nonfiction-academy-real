@@ -1535,7 +1535,10 @@
     "notAllowed": "コメントできません。受講承認をご確認ください。",
     "replyPlaceholder": "@{{name}} に返信...",
     "translatedBadge": "翻訳済み",
-    "emptyTitle": "まだコメントがありません"
+    "emptyTitle": "まだコメントがありません",
+    "placeholderShort": "コメントを追加...",
+    "replyPlaceholderShort": "@{{name}} に返信を追加...",
+    "replyingTo": "@{{name}} に返信中"
   },
   "globalDashboard": {
     "activeTracks": "トラック",
