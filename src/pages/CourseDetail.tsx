@@ -99,6 +99,8 @@ const CourseDetail = () => {
   const [searchParams] = useSearchParams();
   const { user } = useUser();
   const { primaryRole } = useUserRole();
+  // 학습시간 트래킹: 학생 역할만, 강의 상세 진입 ~ 이탈 동안 (세션당 최대 30분)
+  useCourseLearningSession(courseId, primaryRole === "student");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
