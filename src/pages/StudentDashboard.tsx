@@ -193,6 +193,28 @@ const StudentDashboard = () => {
     enabled: !!user?.id,
   });
 
+  // 누적 학습시간 (분): course_learning_sessions 기준, 세션당 30분 캡
+  const { data: learningMinutes = 0 } = useQuery({
+    queryKey: ["dash-learning-minutes", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_learning_sessions")
+        .select("started_at, last_heartbeat_at")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      const SESSION_CAP_MIN = 30;
+      let total = 0;
+      (data || []).forEach((s: any) => {
+        const start = new Date(s.started_at).getTime();
+        const end = new Date(s.last_heartbeat_at).getTime();
+        const min = Math.max(0, (end - start) / 60000);
+        total += Math.min(min, SESSION_CAP_MIN);
+      });
+      return Math.round(total);
+    },
+    enabled: !!user?.id,
+  });
+
   // 필수교육 (마감 임박 우선)
   const { data: mandatoryCourses = [] } = useQuery({
     queryKey: ["dash-mandatory", user?.id, lang],
@@ -342,7 +364,7 @@ const StudentDashboard = () => {
   const stats = [
     { label: t("dashboard.coursesInProgress"), value: String(enrollmentStats?.inProgress || 0), sub: t("dashboard.inProgress"), icon: BookOpen, href: "/dashboard/courses" },
     { label: t("dashboard.coursesCompleted"), value: String(enrollmentStats?.completed || 0), sub: t("dashboard.totalCourses", { count: enrollmentStats?.total || 0 }), icon: ClipboardCheck, href: "/dashboard/courses" },
-    { label: t("dashboard.learningTime"), value: `${gamification?.experience_points ? Math.round(gamification.experience_points / 60) : 0}h`, sub: t("dashboard.cumulativeLearning"), icon: Clock },
+    { label: t("dashboard.learningTime"), value: learningMinutes >= 60 ? `${Math.floor(learningMinutes / 60)}h ${learningMinutes % 60}m` : `${learningMinutes}m`, sub: t("dashboard.cumulativeLearning"), icon: Clock },
     { label: t("dashboard.badgesEarned"), value: String(badgeCount), sub: t("dashboard.earnedBadges"), icon: Award, href: "/dashboard/achievements" },
   ];
 
