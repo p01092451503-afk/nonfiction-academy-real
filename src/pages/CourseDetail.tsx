@@ -42,6 +42,7 @@ import { computeCourseProgress } from "@/lib/courseCompletion";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useCourseLearningSession } from "@/hooks/useCourseLearningSession";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
