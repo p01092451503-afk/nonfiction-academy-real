@@ -1158,6 +1158,36 @@ export type Database = {
           },
         ]
       }
+      course_learning_sessions: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          last_heartbeat_at: string
+          started_at: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          last_heartbeat_at?: string
+          started_at?: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          last_heartbeat_at?: string
+          started_at?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       course_target_departments: {
         Row: {
           course_id: string
