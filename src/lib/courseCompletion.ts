@@ -22,15 +22,17 @@ export function computeCourseProgress(
     completed: boolean | null;
     progress_percentage?: number | null;
   }>,
+  isCompleted?: boolean,
 ): { percentage: number; isCompleted: boolean } {
   if (!contents || contents.length === 0) {
-    return { percentage: 0, isCompleted: false };
+    return { percentage: 0, isCompleted: !!isCompleted };
   }
   const contentIds = new Set(contents.map((c) => c.id));
   const relevant = (progressData || []).filter((p) => contentIds.has(p.content_id));
   const anyCompleted = relevant.some((p) => p.completed);
   if (anyCompleted) {
-    return { percentage: 100, isCompleted: true };
+    // 차시는 모두 완료 → 진행률 100%. 수료 여부는 평가 통과로 결정되며 호출자가 전달.
+    return { percentage: 100, isCompleted: !!isCompleted };
   }
   const maxPct = relevant.reduce((max, p) => {
     const pct = Number(p.progress_percentage) || 0;
@@ -81,10 +83,10 @@ export async function syncEnrollmentOnContentCompleted(params: {
       .limit(1);
 
     if (!passedAttempts || passedAttempts.length === 0) {
-      // 평가 미합격 → 이수 완료 처리 보류, 진행률만 99로 유지
+      // 평가 미합격 → 차시는 완료지만 수료 보류. 진행률은 100으로 표시.
       await supabase
         .from("enrollments")
-        .update({ progress: 99 })
+        .update({ progress: 100 })
         .eq("id", enrollment.id);
       return;
     }

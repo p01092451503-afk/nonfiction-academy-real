@@ -120,10 +120,32 @@ const StudentCourses = () => {
         const { data: contents } = await supabase.from("course_contents").select("id").eq("course_id", courseId).eq("is_published", true);
         if (!contents || contents.length === 0) continue;
         const { data: progress } = await supabase.from("content_progress").select("content_id, completed").eq("user_id", user!.id).in("content_id", contents.map(c => c.id));
-        // 차시 = 동일 콘텐츠의 다국어 버전. 어느 한 차시라도 완료되면 강의 100% 완료.
         const anyCompleted = (progress || []).some(p => p.completed);
-        const percentage = anyCompleted ? 100 : 0;
-        await supabase.from("enrollments").update({ progress: percentage, completed_at: anyCompleted ? new Date().toISOString() : null }).eq("id", enrollment.id);
+        if (!anyCompleted) {
+          await supabase.from("enrollments").update({ progress: 0 }).eq("id", enrollment.id);
+          continue;
+        }
+        // 차시 완료 → 진행률 100%. 수료(completed_at)는 평가 통과 시점에만 부여.
+        // 강의에 게시된 평가가 있고 미통과면 completed_at 은 건드리지 않는다.
+        const { data: assessments } = await supabase
+          .from("assessments").select("id").eq("course_id", courseId).eq("is_published", true);
+        const hasAssessment = (assessments?.length ?? 0) > 0;
+        let eligible = !hasAssessment;
+        if (hasAssessment) {
+          const { data: passed } = await supabase
+            .from("assessment_attempts")
+            .select("id")
+            .eq("user_id", user!.id)
+            .in("assessment_id", (assessments || []).map((a: any) => a.id))
+            .eq("passed", true)
+            .limit(1);
+          eligible = (passed?.length ?? 0) > 0;
+        }
+        const payload: any = { progress: 100 };
+        if (eligible && !(enrollment as any).completed_at) {
+          payload.completed_at = new Date().toISOString();
+        }
+        await supabase.from("enrollments").update(payload).eq("id", enrollment.id);
       }
     },
     onSuccess: () => {
