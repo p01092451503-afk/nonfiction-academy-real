@@ -1,6 +1,6 @@
 import {
   BookOpen, Clock, ClipboardCheck, Award, Play, ArrowRight, TrendingUp, BarChart3, Star,
-  AlertTriangle, Calendar,
+  AlertTriangle, Calendar, MessageSquare,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -157,6 +157,21 @@ const StudentDashboard = () => {
         .from("user_badges")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user!.id);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  // 내가 작성한 강의 댓글 수 (삭제되지 않은 것만)
+  const { data: myCommentCount = 0 } = useQuery({
+    queryKey: ["dash-my-comment-count", user?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("course_comments")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .eq("is_deleted", false);
       if (error) throw error;
       return count || 0;
     },
@@ -336,6 +351,7 @@ const StudentDashboard = () => {
     { label: t("dashboard.level"), value: `Lv.${gamification?.level || 1}`, sub: `${gamification?.experience_points || 0} XP`, icon: Star },
     { label: t("dashboard.completedAssignments"), value: String(completedAssignments), sub: t("dashboard.totalAssignmentsSub", { count: totalAssignments }), icon: ClipboardCheck },
     { label: t("dashboard.totalPoints"), value: String(gamification?.total_points || 0), sub: t("dashboard.cumulativePoints"), icon: Award },
+    { label: t("dashboard.myComments", "내 댓글 수"), value: String(myCommentCount), sub: t("dashboard.myCommentsSub", "강의 작성 댓글"), icon: MessageSquare },
   ];
 
   return (
@@ -351,7 +367,7 @@ const StudentDashboard = () => {
         </div>
 
         {/* Stat Cards - Compact 2 rows */}
-        <section className="grid grid-cols-4 gap-2 sm:gap-3" aria-label={t("dashboard.stats", "학습 통계")}>
+        <section className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3" aria-label={t("dashboard.stats", "학습 통계")}>
           {[...stats, ...detailStats].map((stat) => {
             const content = (
               <>
