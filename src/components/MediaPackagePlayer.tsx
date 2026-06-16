@@ -69,9 +69,20 @@ interface PackageItem {
  * Overlay video with mango-board parity playback options:
  * autoplay / loop / muted / controls / volume / playbackRate / trim (start–end) / delayed start / opacity.
  */
-const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean }) => {
+const OverlayVideo = ({
+  item,
+  isActive,
+  onProgress,
+}: {
+  item: PackageItem;
+  isActive: boolean;
+  onProgress?: (itemId: string, watched: number, duration: number, completed: boolean) => void;
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxWatchedRef = useRef<number>(0);
+  const completedRef = useRef<boolean>(false);
+  const seekGuardRef = useRef<boolean>(false);
 
   const autoplay = item.overlay_autoplay ?? true;
   const loop = item.overlay_loop ?? true;
@@ -84,7 +95,6 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
   const delaySec = item.overlay_delay_sec ?? 0;
   const opacity = (item.overlay_opacity ?? 100) / 100;
 
-  // Apply mutable props
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -93,7 +103,6 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
     v.playbackRate = rate;
   }, [muted, volume, rate]);
 
-  // Activate / deactivate playback when slide enters/leaves view
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -123,10 +132,10 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
     };
   }, [isActive, autoplay, delaySec, startSec]);
 
-  // Trim-aware timeupdate: loop or stop at endSec
   const handleTimeUpdate = () => {
     const v = videoRef.current;
     if (!v) return;
+    // 트림 처리
     if (endSec != null && v.currentTime >= endSec) {
       if (loop) {
         v.currentTime = startSec;
@@ -135,15 +144,31 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
         v.pause();
       }
     }
+    // 앞으로 빨리감기 차단 (이미 완료된 영상은 자유)
+    if (!completedRef.current && !seekGuardRef.current) {
+      const cur = v.currentTime;
+      if (cur > maxWatchedRef.current + 2) {
+        seekGuardRef.current = true;
+        try { v.currentTime = maxWatchedRef.current; } catch {}
+        setTimeout(() => { seekGuardRef.current = false; }, 300);
+        return;
+      }
+    }
+    if (v.currentTime > maxWatchedRef.current) {
+      maxWatchedRef.current = v.currentTime;
+    }
+    const dur = Math.max(0, (endSec ?? v.duration) - startSec);
+    const watched = Math.max(0, Math.min(maxWatchedRef.current - startSec, dur));
+    const completed = dur > 0 && watched / dur >= VIDEO_COMPLETE_THRESHOLD;
+    if (completed) completedRef.current = true;
+    onProgress?.(item.id, watched, dur, completedRef.current);
   };
 
-  const handleEnded = () => {
+  const handleLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v) return;
-    if (loop) {
-      v.currentTime = startSec;
-      v.play().catch(() => {});
-    }
+    const dur = Math.max(0, (endSec ?? v.duration) - startSec);
+    onProgress?.(item.id, 0, dur, false);
   };
 
   const url = item.overlay_video_url || "";
@@ -158,6 +183,7 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
   };
 
   if (isIframeUrl) {
+    // iframe 임베드는 시청 이벤트를 받을 수 없어 잠금/시간추적 대상에서 제외됨
     const embedUrl = url
       .replace("iframe.mediadelivery.net/play/", "iframe.mediadelivery.net/embed/")
       .replace("player.mediadelivery.net/embed/", "iframe.mediadelivery.net/embed/");
@@ -192,9 +218,72 @@ const OverlayVideo = ({ item, isActive }: { item: PackageItem; isActive: boolean
       preload="metadata"
       loop={loop && endSec == null}
       onTimeUpdate={handleTimeUpdate}
-      onEnded={handleEnded}
+      onLoadedMetadata={handleLoadedMetadata}
+      onEnded={() => {
+        completedRef.current = true;
+        const v = videoRef.current;
+        const dur = v ? Math.max(0, (endSec ?? v.duration) - startSec) : 0;
+        onProgress?.(item.id, dur, dur, true);
+      }}
       className="absolute object-cover bg-black"
       style={overlayStyle}
+    />
+  );
+};
+
+/** 직접 video 슬라이드용: 시청 추적 + 앞으로감기 차단 */
+const TrackedDirectVideo = ({
+  item,
+  onProgress,
+}: {
+  item: PackageItem;
+  onProgress?: (itemId: string, watched: number, duration: number, completed: boolean) => void;
+}) => {
+  const ref = useRef<HTMLVideoElement>(null);
+  const maxRef = useRef(0);
+  const completedRef = useRef(false);
+  const seekGuardRef = useRef(false);
+
+  const handleTimeUpdate = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (!completedRef.current && !seekGuardRef.current) {
+      if (v.currentTime > maxRef.current + 2) {
+        seekGuardRef.current = true;
+        try { v.currentTime = maxRef.current; } catch {}
+        setTimeout(() => { seekGuardRef.current = false; }, 300);
+        return;
+      }
+    }
+    if (v.currentTime > maxRef.current) maxRef.current = v.currentTime;
+    const dur = v.duration || 0;
+    const completed = dur > 0 && maxRef.current / dur >= VIDEO_COMPLETE_THRESHOLD;
+    if (completed) completedRef.current = true;
+    onProgress?.(item.id, Math.min(maxRef.current, dur), dur, completedRef.current);
+  };
+
+  return (
+    <video
+      ref={ref}
+      src={item.media_url}
+      controls
+      controlsList="nodownload noplaybackrate noremoteplayback"
+      disablePictureInPicture
+      disableRemotePlayback
+      className="w-full max-h-[85vh]"
+      playsInline
+      preload="metadata"
+      onTimeUpdate={handleTimeUpdate}
+      onLoadedMetadata={() => {
+        const v = ref.current;
+        if (v) onProgress?.(item.id, 0, v.duration || 0, false);
+      }}
+      onEnded={() => {
+        const v = ref.current;
+        const dur = v?.duration || 0;
+        completedRef.current = true;
+        onProgress?.(item.id, dur, dur, true);
+      }}
     />
   );
 };
