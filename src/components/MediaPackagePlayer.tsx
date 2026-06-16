@@ -621,19 +621,11 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
             {item.overlay_video_url &&
               item.overlay_x != null && item.overlay_y != null &&
               item.overlay_w != null && item.overlay_h != null && (
-              <OverlayVideo item={item} isActive={isCurrent} />
+              <OverlayVideo item={item} isActive={isCurrent} onProgress={handleVideoProgress} />
             )}
           </div>
         ) : (
-          <video
-            src={item.media_url}
-            controls
-            controlsList="nodownload noplaybackrate noremoteplayback"
-            disablePictureInPicture
-            disableRemotePlayback
-            className="w-full max-h-[85vh]"
-            playsInline
-          />
+          <TrackedDirectVideo item={item} onProgress={handleVideoProgress} />
         )}
       </div>
     );
