@@ -109,12 +109,16 @@ const StudentDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
-        .select("progress, completed_at")
+        .select("progress, completed_at, completion_count")
         .eq("user_id", user!.id);
       if (error) throw error;
       const total = data.length;
-      const completed = data.filter((e) => e.completed_at).length;
-      const inProgress = total - completed;
+      // 수강 완료 카운트: 복습 완료를 포함한 누적 횟수의 합. (최초 완료 1회 + 복습마다 +1)
+      const completed = data.reduce(
+        (s, e: any) => s + (Number(e.completion_count) || (e.completed_at ? 1 : 0)),
+        0,
+      );
+      const inProgress = Math.max(0, total - data.filter((e: any) => e.completed_at).length);
       const avgProgress = total > 0 ? Math.round(data.reduce((s, e) => s + (Number(e.progress) || 0), 0) / total) : 0;
       return { total, completed, inProgress, avgProgress };
     },
