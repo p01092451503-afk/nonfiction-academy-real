@@ -89,6 +89,9 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
   build: {
+    // Generate sourcemaps so production stack traces show real function names
+    // and file locations (e.g. in operational error alerts).
+    sourcemap: true,
     // Split heavy vendor libraries into their own chunks so the initial bundle stays small.
     rollupOptions: {
       output: {
