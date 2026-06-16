@@ -612,6 +612,44 @@
         "name": "TOP 10 Ranker",
         "description": "Earned by entering leaderboard TOP 10"
       }
+    },
+    "dbBadges": {
+      "lessons_completed_1": {
+        "name": "First Step",
+        "description": "Completed your first lesson"
+      },
+      "lessons_completed_10": {
+        "name": "Learner",
+        "description": "Completed 10 lessons"
+      },
+      "lessons_completed_50": {
+        "name": "Master",
+        "description": "Completed 50 lessons"
+      },
+      "streak_7": {
+        "name": "Consistent",
+        "description": "Studied 7 days in a row"
+      },
+      "streak_30": {
+        "name": "Habit Builder",
+        "description": "Studied 30 days in a row"
+      },
+      "points_100": {
+        "name": "Point Collector",
+        "description": "Earned 100 points"
+      },
+      "points_1000": {
+        "name": "Point Tycoon",
+        "description": "Earned 1,000 points"
+      },
+      "assignments_completed_10": {
+        "name": "Assignment Master",
+        "description": "Completed 10 assignments"
+      },
+      "courses_completed_3": {
+        "name": "Course Conqueror",
+        "description": "Completed 3 courses"
+      }
     }
   },
   "admin": {

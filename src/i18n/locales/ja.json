@@ -609,6 +609,44 @@
         "name": "TOP 10入り",
         "description": "リーダーボードTOP 10に入ると獲得"
       }
+    },
+    "dbBadges": {
+      "lessons_completed_1": {
+        "name": "はじめの一歩",
+        "description": "最初の講義を完了しました"
+      },
+      "lessons_completed_10": {
+        "name": "学習王",
+        "description": "10件の講義を完了しました"
+      },
+      "lessons_completed_50": {
+        "name": "マスター",
+        "description": "50件の講義を完了しました"
+      },
+      "streak_7": {
+        "name": "継続力",
+        "description": "7日連続で学習しました"
+      },
+      "streak_30": {
+        "name": "習慣形成",
+        "description": "30日連続で学習しました"
+      },
+      "points_100": {
+        "name": "ポイントコレクター",
+        "description": "100ポイントを達成しました"
+      },
+      "points_1000": {
+        "name": "ポイント富豪",
+        "description": "1000ポイントを達成しました"
+      },
+      "assignments_completed_10": {
+        "name": "課題マスター",
+        "description": "10件の課題を完了しました"
+      },
+      "courses_completed_3": {
+        "name": "コース征服者",
+        "description": "3コースを修了しました"
+      }
     }
   },
   "admin": {
