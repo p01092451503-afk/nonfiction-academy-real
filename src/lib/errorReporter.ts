@@ -36,6 +36,13 @@ const IGNORE_PATTERNS = [
   /AbortError/i,
 ];
 
+// RLS / auth errors that are expected and noisy for ops alerts
+const RLS_PATTERNS = [
+  /The object can not be found here/i,
+  /JWT/i,
+  /row-level security/i,
+];
+
 export const reportError = async (params: {
   message: string;
   stack?: string;
