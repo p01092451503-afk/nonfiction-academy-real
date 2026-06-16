@@ -299,12 +299,35 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
 
       if (!assessmentId) return;
 
+      // Auto-translate KO → each language for fields the user hasn't manually edited
+      const koTitle = (assessmentForm.title || "").trim();
+      const koDesc = (assessmentForm.description || "").trim();
+      const autoTr: Record<string, { title?: string; description?: string }> = {};
+      await Promise.all(I18N_LANGS.map(async (lc) => {
+        const curTitle = (assessmentI18nForm[lc].title || "").trim();
+        const curDesc = (assessmentI18nForm[lc].description || "").trim();
+        const needTitle = !!koTitle && (!assessmentManual[lc].title || !curTitle || curTitle === koTitle);
+        const needDesc = !!koDesc && (!assessmentManual[lc].description || !curDesc || curDesc === koDesc);
+        if (!needTitle && !needDesc) return;
+        const texts: string[] = [];
+        if (needTitle) texts.push(koTitle);
+        if (needDesc) texts.push(koDesc);
+        try {
+          const results = await translateKoTo(lc, texts);
+          let idx = 0;
+          autoTr[lc] = {
+            title: needTitle ? (results[idx++] || undefined) : undefined,
+            description: needDesc ? (results[idx++] || undefined) : undefined,
+          };
+        } catch { /* silent — fall back to KO */ }
+      }));
+
       // Save i18n rows for each language
       const rows = I18N_LANGS.map(lc => ({
         assessment_id: assessmentId,
         language_code: lc,
-        title: (assessmentI18nForm[lc].title || assessmentForm.title || "").trim(),
-        description: assessmentI18nForm[lc].description?.trim() || null,
+        title: (autoTr[lc]?.title || assessmentI18nForm[lc].title || assessmentForm.title || "").trim(),
+        description: (autoTr[lc]?.description || assessmentI18nForm[lc].description || "").trim() || null,
       })).filter(r => r.title); // skip empty titles
 
       if (rows.length) {
@@ -314,6 +337,7 @@ export default function AssessmentManager({ courseId }: { courseId: string }) {
         );
         if (error) console.error("assessment i18n save error:", error);
       }
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assessment", courseId] });
