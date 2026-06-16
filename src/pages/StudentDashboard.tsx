@@ -351,6 +351,7 @@ const StudentDashboard = () => {
     { label: t("dashboard.level"), value: `Lv.${gamification?.level || 1}`, sub: `${gamification?.experience_points || 0} XP`, icon: Star },
     { label: t("dashboard.completedAssignments"), value: String(completedAssignments), sub: t("dashboard.totalAssignmentsSub", { count: totalAssignments }), icon: ClipboardCheck },
     { label: t("dashboard.totalPoints"), value: String(gamification?.total_points || 0), sub: t("dashboard.cumulativePoints"), icon: Award },
+    { label: t("dashboard.myComments", "내 댓글 수"), value: String(myCommentCount), sub: t("dashboard.myCommentsSub", "강의 작성 댓글"), icon: MessageSquare },
   ];
 
   return (
