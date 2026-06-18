@@ -861,6 +861,8 @@ export default function AssessmentPage() {
                   onNext={() => setCurrentQuestionIndex(i => Math.min(i + 1, rQuestions.length - 1))}
                   onPrev={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
                   t={t}
+                  currentLang={currentLang}
+                  onTranslated={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
                 />
               )}
             </CardContent>
