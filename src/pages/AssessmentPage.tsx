@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, X, Check, ChevronDown, ChevronUp, Timer, ClipboardCheck, Lightbulb, Trophy, RotateCcw, Eye } from "lucide-react";
+import { ArrowLeft, X, Check, ChevronDown, ChevronUp, Timer, ClipboardCheck, Lightbulb, Trophy, RotateCcw, Eye, Languages, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,77 @@ import { useTranslation } from "react-i18next";
 
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
 
+const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+
+const LANG_NATIVE: Record<string, string> = {
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "中文",
+};
+
+// Button shown next to a question when the displayed text still contains Korean
+// even though the user picked another language. Calls an edge function that
+// translates the question via Lovable AI and stores it in assessment_question_i18n
+// so every user benefits afterward.
+function TranslateQuestionButton({
+  questionId, questionText, targetLang, onDone,
+}: {
+  questionId: string;
+  questionText: string;
+  targetLang: "en" | "ja" | "zh-CN" | null;
+  onDone: () => void;
+}) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  if (!targetLang) return null;
+  if (!questionText || !HANGUL_RE.test(questionText)) return null;
+  if (done) return null;
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-question-now", {
+        body: { question_id: questionId, target_lang: targetLang },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: "✓", description: `${LANG_NATIVE[targetLang]} 번역 완료` });
+      setDone(true);
+      onDone();
+    } catch (e: any) {
+      toast({
+        title: "번역 실패",
+        description: e?.message || "잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={loading}
+      className="mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+    >
+      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
+      {loading ? "번역 중..." : `${LANG_NATIVE[targetLang]}(으)로 번역하기`}
+    </button>
+  );
+}
+
 // ─── Review mode: single question with correct/wrong UI ───
 function QuestionReview({
   question, index, total, userAnswer, isCorrect, isEn, onNext, onPrev, t,
+  currentLang, onTranslated,
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
+  currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void;
 }) {
   const [showHint, setShowHint] = useState(false);
   const isChoice = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(question.question_type);
@@ -38,6 +103,12 @@ function QuestionReview({
           <span className="font-bold mr-2">{index + 1}.</span>
           {question.question_text}
         </p>
+        <TranslateQuestionButton
+          questionId={question.id}
+          questionText={question.question_text}
+          targetLang={currentLang}
+          onDone={onTranslated}
+        />
       </div>
 
       {isChoice && (
@@ -790,6 +861,8 @@ export default function AssessmentPage() {
                   onNext={() => setCurrentQuestionIndex(i => Math.min(i + 1, rQuestions.length - 1))}
                   onPrev={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
                   t={t}
+                  currentLang={currentLang}
+                  onTranslated={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
                 />
               )}
             </CardContent>
@@ -849,6 +922,12 @@ export default function AssessmentPage() {
                       <span className="font-bold mr-2">{currentQuestionIndex + 1}.</span>
                       {currentQ.question_text}
                     </p>
+                    <TranslateQuestionButton
+                      questionId={currentQ.id}
+                      questionText={currentQ.question_text}
+                      targetLang={currentLang}
+                      onDone={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
+                    />
                   </div>
 
                   {/* Multiple choice / OX */}
