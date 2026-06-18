@@ -922,6 +922,12 @@ export default function AssessmentPage() {
                       <span className="font-bold mr-2">{currentQuestionIndex + 1}.</span>
                       {currentQ.question_text}
                     </p>
+                    <TranslateQuestionButton
+                      questionId={currentQ.id}
+                      questionText={currentQ.question_text}
+                      targetLang={currentLang}
+                      onDone={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
+                    />
                   </div>
 
                   {/* Multiple choice / OX */}
