@@ -20,6 +20,69 @@ import { useTranslation } from "react-i18next";
 
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
 
+const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+
+const LANG_NATIVE: Record<string, string> = {
+  en: "English",
+  ja: "日本語",
+  "zh-CN": "中文",
+};
+
+// Button shown next to a question when the displayed text still contains Korean
+// even though the user picked another language. Calls an edge function that
+// translates the question via Lovable AI and stores it in assessment_question_i18n
+// so every user benefits afterward.
+function TranslateQuestionButton({
+  questionId, questionText, targetLang, onDone,
+}: {
+  questionId: string;
+  questionText: string;
+  targetLang: "en" | "ja" | "zh-CN" | null;
+  onDone: () => void;
+}) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  if (!targetLang) return null;
+  if (!questionText || !HANGUL_RE.test(questionText)) return null;
+  if (done) return null;
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-question-now", {
+        body: { question_id: questionId, target_lang: targetLang },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: "✓", description: `${LANG_NATIVE[targetLang]} 번역 완료` });
+      setDone(true);
+      onDone();
+    } catch (e: any) {
+      toast({
+        title: "번역 실패",
+        description: e?.message || "잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={loading}
+      className="mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+    >
+      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
+      {loading ? "번역 중..." : `${LANG_NATIVE[targetLang]}(으)로 번역하기`}
+    </button>
+  );
+}
+
 // ─── Review mode: single question with correct/wrong UI ───
 function QuestionReview({
   question, index, total, userAnswer, isCorrect, isEn, onNext, onPrev, t,
