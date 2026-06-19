@@ -270,7 +270,7 @@ const MyPage = () => {
         </div>
 
         {/* Profile Header */}
-        <div className="border border-border rounded-xl p-4 sm:p-6">
+        <div className="border border-border rounded-xl p-4 sm:p-6 shadow-sm bg-card">
           <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
             {/* Left: avatar + info */}
             <div className="flex items-center gap-5 lg:min-w-[320px]">
