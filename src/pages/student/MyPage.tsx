@@ -308,7 +308,7 @@ const MyPage = () => {
                 <p className="text-[10px] text-muted-foreground">{t("dashboard.totalCourses", { count: enrollmentStats?.total || 0 })}</p>
               </div>
 
-              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5">
+              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5 shadow-sm bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{t("dashboard.coursesCompleted")}</span>
                   <Trophy className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
