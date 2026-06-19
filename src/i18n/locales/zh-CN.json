@@ -137,6 +137,8 @@
     "switchRole": "切换角色"
   },
   "dashboard": {
+    "myComments": "我的评论数",
+    "myCommentsSub": "课程评论",
     "learningDashboard": "学习仪表板",
     "hello": "您好！今天也努力学习吧",
     "coursesInProgress": "正在学习的课程",
