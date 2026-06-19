@@ -137,6 +137,8 @@
     "switchRole": "役割切替"
   },
   "dashboard": {
+    "myComments": "マイコメント数",
+    "myCommentsSub": "講義に書き込んだコメント",
     "learningDashboard": "学習ダッシュボード",
     "hello": "こんにちは！今日も一生懸命学習しましょう",
     "coursesInProgress": "受講中のコース",
