@@ -270,7 +270,7 @@ const MyPage = () => {
         </div>
 
         {/* Profile Header */}
-        <div className="border border-border rounded-xl p-4 sm:p-6">
+        <div className="border border-border rounded-xl p-4 sm:p-6 shadow-sm bg-card">
           <div className="flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
             {/* Left: avatar + info */}
             <div className="flex items-center gap-5 lg:min-w-[320px]">
@@ -299,7 +299,7 @@ const MyPage = () => {
 
             {/* Right: mini dashboard */}
             <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5">
+              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5 shadow-sm bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{t("dashboard.inProgress")}</span>
                   <BookOpen className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
@@ -308,7 +308,7 @@ const MyPage = () => {
                 <p className="text-[10px] text-muted-foreground">{t("dashboard.totalCourses", { count: enrollmentStats?.total || 0 })}</p>
               </div>
 
-              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5">
+              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5 shadow-sm bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{t("dashboard.coursesCompleted")}</span>
                   <Trophy className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
@@ -319,7 +319,7 @@ const MyPage = () => {
                 </div>
               </div>
 
-              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5">
+              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5 shadow-sm bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{t("dashboard.level")}</span>
                   <Star className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
@@ -333,7 +333,7 @@ const MyPage = () => {
                 </div>
               </div>
 
-              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5">
+              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5 shadow-sm bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{t("dashboard.earnedBadges")}</span>
                   <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
