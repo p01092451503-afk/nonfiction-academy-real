@@ -299,7 +299,7 @@ const MyPage = () => {
 
             {/* Right: mini dashboard */}
             <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5">
+              <div className="border border-border rounded-xl p-3 sm:p-4 space-y-1.5 shadow-sm bg-card">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{t("dashboard.inProgress")}</span>
                   <BookOpen className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
