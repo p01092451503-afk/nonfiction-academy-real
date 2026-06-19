@@ -28,6 +28,31 @@ const LANG_NATIVE: Record<string, string> = {
   "zh-CN": "中文",
 };
 
+// Localized labels for the translate button per target language
+const TRANSLATE_LABELS: Record<string, { idle: string; loading: string; doneTitle: string; failTitle: string; failDesc: string }> = {
+  en: {
+    idle: "Translate to English",
+    loading: "Translating...",
+    doneTitle: "Translated",
+    failTitle: "Translation failed",
+    failDesc: "Please try again in a moment.",
+  },
+  ja: {
+    idle: "日本語に翻訳する",
+    loading: "翻訳中...",
+    doneTitle: "翻訳完了",
+    failTitle: "翻訳に失敗しました",
+    failDesc: "しばらくしてからもう一度お試しください。",
+  },
+  "zh-CN": {
+    idle: "翻译成中文",
+    loading: "翻译中...",
+    doneTitle: "翻译完成",
+    failTitle: "翻译失败",
+    failDesc: "请稍后重试。",
+  },
+};
+
 // Button shown next to a question when the displayed text still contains Korean
 // even though the user picked another language. Calls an edge function that
 // translates the question via Lovable AI and stores it in assessment_question_i18n
