@@ -28,6 +28,31 @@ const LANG_NATIVE: Record<string, string> = {
   "zh-CN": "中文",
 };
 
+// Localized labels for the translate button per target language
+const TRANSLATE_LABELS: Record<string, { idle: string; loading: string; doneTitle: string; failTitle: string; failDesc: string }> = {
+  en: {
+    idle: "Translate to English",
+    loading: "Translating...",
+    doneTitle: "Translated",
+    failTitle: "Translation failed",
+    failDesc: "Please try again in a moment.",
+  },
+  ja: {
+    idle: "日本語に翻訳する",
+    loading: "翻訳中...",
+    doneTitle: "翻訳完了",
+    failTitle: "翻訳に失敗しました",
+    failDesc: "しばらくしてからもう一度お試しください。",
+  },
+  "zh-CN": {
+    idle: "翻译成中文",
+    loading: "翻译中...",
+    doneTitle: "翻译完成",
+    failTitle: "翻译失败",
+    failDesc: "请稍后重试。",
+  },
+};
+
 // Button shown next to a question when the displayed text still contains Korean
 // even though the user picked another language. Calls an edge function that
 // translates the question via Lovable AI and stores it in assessment_question_i18n
@@ -56,13 +81,15 @@ function TranslateQuestionButton({
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast({ title: "✓", description: `${LANG_NATIVE[targetLang]} 번역 완료` });
+      const labels = TRANSLATE_LABELS[targetLang];
+      toast({ title: "✓", description: labels.doneTitle });
       setDone(true);
       onDone();
     } catch (e: any) {
+      const labels = TRANSLATE_LABELS[targetLang];
       toast({
-        title: "번역 실패",
-        description: e?.message || "잠시 후 다시 시도해주세요.",
+        title: labels.failTitle,
+        description: e?.message || labels.failDesc,
         variant: "destructive",
       });
     } finally {
@@ -70,6 +97,7 @@ function TranslateQuestionButton({
     }
   };
 
+  const labels = TRANSLATE_LABELS[targetLang];
   return (
     <button
       type="button"
@@ -78,7 +106,7 @@ function TranslateQuestionButton({
       className="mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
-      {loading ? "번역 중..." : `${LANG_NATIVE[targetLang]}(으)로 번역하기`}
+      {loading ? labels.loading : labels.idle}
     </button>
   );
 }
