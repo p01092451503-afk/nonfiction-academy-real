@@ -137,6 +137,8 @@
     "switchRole": "역할 전환"
   },
   "dashboard": {
+    "myComments": "내 댓글 수",
+    "myCommentsSub": "강의 작성 댓글",
     "learningDashboard": "학습 대시보드",
     "hello": "안녕하세요! 오늘도 열심히 학습해봅시다",
     "coursesInProgress": "수강 중인 강의",

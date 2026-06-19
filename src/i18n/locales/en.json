@@ -140,6 +140,8 @@
     "switchRole": "Switch role"
   },
   "dashboard": {
+    "myComments": "My Comments",
+    "myCommentsSub": "Course comments written",
     "learningDashboard": "Learning Dashboard",
     "hello": "Hello! Let's keep learning today",
     "coursesInProgress": "In Progress",
