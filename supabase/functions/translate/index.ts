@@ -31,8 +31,9 @@ serve(async (req) => {
     const targetLabel = LANG_LABEL[targetLang] || "English";
 
     const keyedItems = Object.fromEntries(items.map((item) => [String(item.index), item.text]));
-    const prompt = `Translate each Korean text to ${targetLabel}.
+    const prompt = `Translate each input text to ${targetLabel}.
 Return ONLY a JSON object whose keys exactly match the input keys and whose values are translated strings.
+Translate Korean, English, and mixed-language text fully and naturally for the target language.
 If an input item is already a product name, keep the meaning and do not invent a different product.
 
 ${JSON.stringify(keyedItems)}`;
@@ -48,7 +49,7 @@ ${JSON.stringify(keyedItems)}`;
         messages: [
           {
             role: "system",
-            content: `You are a professional Korean to ${targetLabel} translator for an LMS (Learning Management System). Translate accurately and naturally. For course/content titles, keep them concise. For descriptions, maintain the original tone and meaning.`,
+            content: `You are a professional LMS translator into ${targetLabel}. Translate Korean, English, and mixed-language input accurately and naturally. For course/content titles, keep them concise. For descriptions, maintain the original tone and meaning.`,
           },
           { role: "user", content: prompt },
         ],
