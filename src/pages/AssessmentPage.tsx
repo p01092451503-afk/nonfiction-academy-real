@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, X, Check, ChevronDown, ChevronUp, Timer, ClipboardCheck, Lightbulb, Trophy, RotateCcw, Eye, Languages, Loader2 } from "lucide-react";
@@ -21,6 +21,37 @@ import { useTranslation } from "react-i18next";
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
 
 const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
+
+const hasHangulValue = (value: unknown): boolean => {
+  if (typeof value === "string") return HANGUL_RE.test(value);
+  if (Array.isArray(value)) return value.some((item) => hasHangulValue(item));
+  if (value && typeof value === "object") return Object.values(value).some((item) => hasHangulValue(item));
+  return false;
+};
+
+const isChoiceQuestion = (questionType?: string) => ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionType || "");
+
+const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+  if (!targetLang || !question?.id) return false;
+  if (!translation) return true;
+  if (hasHangulValue([translation.question_text, translation.options, translation.correct_answer, translation.hint, translation.explanation])) return true;
+  if (isChoiceQuestion(question.question_type) && Array.isArray(question.options)) {
+    return !Array.isArray(translation.options) || translation.options.length !== question.options.length;
+  }
+  return false;
+};
+
+const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean =>
+  questionNeedsTranslationRepair(question, translation, targetLang);
+
+const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN") => `${questionId}:${targetLang}`;
+
+const getVisibleQuestionTextParts = (question: any) => [
+  question?.question_text,
+  question?.options,
+  question?.hint,
+  question?.explanation,
+];
 
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
@@ -58,19 +89,20 @@ const TRANSLATE_LABELS: Record<string, { idle: string; loading: string; doneTitl
 // translates the question via Lovable AI and stores it in assessment_question_i18n
 // so every user benefits afterward.
 function TranslateQuestionButton({
-  questionId, questionText, targetLang, onDone,
+  questionId, questionText, targetLang, onDone, hasKorean,
 }: {
   questionId: string;
   questionText: string;
   targetLang: "en" | "ja" | "zh-CN" | null;
   onDone: () => void;
+  hasKorean?: boolean;
 }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   if (!targetLang) return null;
-  if (!questionText || !HANGUL_RE.test(questionText)) return null;
+  if (!(hasKorean ?? HANGUL_RE.test(questionText || ""))) return null;
   if (done) return null;
 
   const handleClick = async () => {
@@ -114,15 +146,49 @@ function TranslateQuestionButton({
 // ─── Review mode: single question with correct/wrong UI ───
 function QuestionReview({
   question, index, total, userAnswer, isCorrect, isEn, onNext, onPrev, t,
-  currentLang, onTranslated,
+  currentLang, onTranslated, questionI18n, sourceQuestion, repairing, repairFailed,
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
   currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void;
+  questionI18n?: any;
+  sourceQuestion?: any;
+  repairing?: boolean;
+  repairFailed?: boolean;
 }) {
   const [showHint, setShowHint] = useState(false);
-  const isChoice = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(question.question_type);
+  const isChoice = isChoiceQuestion(question.question_type);
   const options: string[] = (question.options as string[]) || [];
+  const repairSource = sourceQuestion || question;
+  const needsRepair = shouldAutoRepairQuestionTranslation(repairSource, questionI18n, currentLang) || hasHangulValue(getVisibleQuestionTextParts(question));
+
+  if (needsRepair && currentLang) {
+    const labels = TRANSLATE_LABELS[currentLang];
+    const isRepairing = repairing || !repairFailed;
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            {isRepairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+            <span>{isRepairing ? labels.loading : labels.failDesc}</span>
+          </div>
+          {!isRepairing && (
+            <TranslateQuestionButton
+              questionId={question.id}
+              questionText=""
+              targetLang={currentLang}
+              hasKorean
+              onDone={onTranslated}
+            />
+          )}
+        </div>
+        <div className="flex justify-between items-center pt-4 border-t border-border">
+          <Button variant="ghost" size="sm" onClick={onPrev} disabled={index === 0}>{t("assessment.ui.previous")}</Button>
+          <Button variant="outline" size="sm" onClick={onNext} disabled={index === total - 1}>{t("assessment.ui.next")}</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -135,6 +201,7 @@ function QuestionReview({
           questionId={question.id}
           questionText={question.question_text}
           targetLang={currentLang}
+          hasKorean={needsRepair}
           onDone={onTranslated}
         />
       </div>
@@ -435,6 +502,9 @@ export default function AssessmentPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [reviewMode, setReviewMode] = useState(false);
   const [showHintMap, setShowHintMap] = useState<Record<string, boolean>>({});
+  const [repairingQuestionIds, setRepairingQuestionIds] = useState<Set<string>>(() => new Set());
+  const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
+  const repairRequestedRef = useRef<Set<string>>(new Set());
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({
@@ -544,7 +614,7 @@ export default function AssessmentPage() {
     [questionIdsForI18n]
   );
 
-  const { data: questionI18nRows = [] } = useQuery({
+  const { data: questionI18nRows = [], isFetched: questionI18nFetched } = useQuery({
     queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
     queryFn: async () => {
       if (!currentLang || questionIdsForI18n.length === 0) return [];
@@ -569,29 +639,65 @@ export default function AssessmentPage() {
     return m;
   }, [questionI18nRows]);
 
+  const invalidateQuestionI18n = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] });
+  }, [queryClient, assessmentId, currentLang]);
+
+  const repairQuestionTranslation = useCallback(async (question: any) => {
+    if (!currentLang || !question?.id) return;
+    const key = repairKeyFor(question.id, currentLang);
+    if (repairRequestedRef.current.has(key)) return;
+    repairRequestedRef.current.add(key);
+    setRepairFailedKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-question-now", {
+        body: { question_id: question.id, target_lang: currentLang },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      invalidateQuestionI18n();
+    } catch (error) {
+      repairRequestedRef.current.delete(key);
+      setRepairFailedKeys((prev) => new Set(prev).add(key));
+      console.error("[assessment] question translation repair failed", error);
+    } finally {
+      setRepairingQuestionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(question.id);
+        return next;
+      });
+    }
+  }, [currentLang, invalidateQuestionI18n]);
+
   // Apply translation to a question (preserving original correct_answer position for MCQ)
   const localizeQuestion = (q: any) => {
     if (!q) return q;
     const tr = questionI18nMap.get(q.id);
     if (!tr) return q;
-    const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(q.question_type);
+    const isMcq = isChoiceQuestion(q.question_type);
     let options = q.options;
     let correctAnswer = q.correct_answer;
-    if (isMcq && Array.isArray(q.options) && Array.isArray(tr.options) && tr.options.length === q.options.length) {
+    const hasCleanOptions = Array.isArray(tr.options) && !hasHangulValue(tr.options);
+    if (isMcq && Array.isArray(q.options) && hasCleanOptions && tr.options.length === q.options.length) {
       options = tr.options;
       // Map correct_answer index from KO options to translated options
       const idx = q.options.findIndex((o: string) => o === q.correct_answer);
       if (idx >= 0 && tr.options[idx]) correctAnswer = tr.options[idx];
-    } else if (!isMcq && tr.correct_answer) {
+    } else if (!isMcq && tr.correct_answer && !hasHangulValue(tr.correct_answer)) {
       correctAnswer = tr.correct_answer;
     }
     return {
       ...q,
-      question_text: tr.question_text || q.question_text,
+      question_text: tr.question_text && !hasHangulValue(tr.question_text) ? tr.question_text : q.question_text,
       options,
       correct_answer: correctAnswer,
-      explanation: tr.explanation ?? q.explanation,
-      hint: tr.hint ?? q.hint,
+      explanation: tr.explanation && !hasHangulValue(tr.explanation) ? tr.explanation : q.explanation,
+      hint: tr.hint && !hasHangulValue(tr.hint) ? tr.hint : q.hint,
     };
   };
 
@@ -633,6 +739,18 @@ export default function AssessmentPage() {
     }
     return arr;
   }, [localizedRawQuestions, assessment?.randomize_questions]);
+
+  useEffect(() => {
+    if (!currentLang || !questionI18nFetched) return;
+    const sourceQuestions = rawQuestions.length > 0 ? rawQuestions : reviewQuestions;
+    const needsRepair = sourceQuestions.filter((q: any) =>
+      shouldAutoRepairQuestionTranslation(q, questionI18nMap.get(q.id), currentLang) &&
+      !repairFailedKeys.has(repairKeyFor(q.id, currentLang))
+    );
+    needsRepair.slice(0, 5).forEach((q: any) => {
+      void repairQuestionTranslation(q);
+    });
+  }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation, repairFailedKeys]);
 
   const { data: previousAnswers = [] } = useQuery({
     queryKey: ["assessment-answers", latestCompleted?.id],
@@ -839,6 +957,7 @@ export default function AssessmentPage() {
   if (reviewMode && previousAnswers.length > 0) {
     const rQuestions = localizedReviewQuestions as any[];
     const currentQ = rQuestions[currentQuestionIndex];
+    const currentSourceQ = currentQ ? reviewQuestions.find((q: any) => q.id === currentQ.id) : null;
     const ansData = currentQ ? answerMap[currentQ.id] : null;
     const progressPercent = rQuestions.length > 0 ? Math.round(((currentQuestionIndex + 1) / rQuestions.length) * 100) : 0;
 
@@ -890,7 +1009,11 @@ export default function AssessmentPage() {
                   onPrev={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
                   t={t}
                   currentLang={currentLang}
-                  onTranslated={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
+                  questionI18n={questionI18nMap.get(currentQ.id)}
+                  sourceQuestion={currentSourceQ}
+                  repairing={repairingQuestionIds.has(currentQ.id)}
+                  repairFailed={!!(currentLang && repairFailedKeys.has(repairKeyFor(currentQ.id, currentLang)))}
+                  onTranslated={invalidateQuestionI18n}
                 />
               )}
             </CardContent>
@@ -903,10 +1026,18 @@ export default function AssessmentPage() {
   // ─── TAKING ASSESSMENT (one question per page, full-width) ───
   if (currentAttemptId) {
     const currentQ = questions[currentQuestionIndex];
+    const currentSourceQ = currentQ ? rawQuestions.find((q: any) => q.id === currentQ.id) : null;
     const answeredCount = Object.values(answers).filter(a => a.trim()).length;
     const progressPercent = questions.length > 0 ? Math.round(((currentQuestionIndex + 1) / questions.length) * 100) : 0;
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
     const hintVisible = currentQ ? showHintMap[currentQ.id] : false;
+    const currentTranslation = currentQ ? questionI18nMap.get(currentQ.id) : null;
+    const currentNeedsRepair = !!currentQ && !!currentLang && (
+      shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, currentTranslation, currentLang) ||
+      hasHangulValue(getVisibleQuestionTextParts(currentQ))
+    );
+    const currentRepairFailed = !!(currentQ && currentLang && repairFailedKeys.has(repairKeyFor(currentQ.id, currentLang)));
+    const currentRepairing = currentNeedsRepair && !currentRepairFailed;
 
     return (
       <DashboardLayout role="student">
@@ -943,7 +1074,33 @@ export default function AssessmentPage() {
 
             {/* Current question */}
             <CardContent className="pt-4 pb-6 px-4 sm:px-6 space-y-6">
-              {currentQ && (
+              {currentQ && currentNeedsRepair && currentLang ? (
+                <>
+                  <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      {currentRepairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+                      <span>{currentRepairing ? TRANSLATE_LABELS[currentLang].loading : TRANSLATE_LABELS[currentLang].failDesc}</span>
+                    </div>
+                    {!currentRepairing && (
+                      <TranslateQuestionButton
+                        questionId={currentQ.id}
+                        questionText=""
+                        targetLang={currentLang}
+                        hasKorean
+                        onDone={invalidateQuestionI18n}
+                      />
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-border">
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))} disabled={currentQuestionIndex === 0}>
+                      {t("assessment.ui.previous")}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentQuestionIndex(i => Math.min(i + 1, questions.length - 1))} disabled={isLastQuestion}>
+                      {t("assessment.ui.next")}
+                    </Button>
+                  </div>
+                </>
+              ) : currentQ && (
                 <>
                   <div>
                     <p className="text-base sm:text-lg leading-relaxed">
@@ -954,7 +1111,12 @@ export default function AssessmentPage() {
                       questionId={currentQ.id}
                       questionText={currentQ.question_text}
                       targetLang={currentLang}
-                      onDone={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
+                      hasKorean={
+                        !repairingQuestionIds.has(currentQ.id) &&
+                        (shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, questionI18nMap.get(currentQ.id), currentLang) ||
+                          hasHangulValue(getVisibleQuestionTextParts(currentQ)))
+                      }
+                      onDone={invalidateQuestionI18n}
                     />
                   </div>
 
