@@ -618,6 +618,35 @@ export default function AssessmentPage() {
     return m;
   }, [questionI18nRows]);
 
+  const invalidateQuestionI18n = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] });
+  }, [queryClient, assessmentId, currentLang]);
+
+  const repairQuestionTranslation = useCallback(async (question: any) => {
+    if (!currentLang || !question?.id) return;
+    const key = repairKeyFor(question.id, currentLang);
+    if (repairRequestedRef.current.has(key)) return;
+    repairRequestedRef.current.add(key);
+    setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
+    try {
+      const { data, error } = await supabase.functions.invoke("translate-question-now", {
+        body: { question_id: question.id, target_lang: currentLang },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      invalidateQuestionI18n();
+    } catch (error) {
+      repairRequestedRef.current.delete(key);
+      console.error("[assessment] question translation repair failed", error);
+    } finally {
+      setRepairingQuestionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(question.id);
+        return next;
+      });
+    }
+  }, [currentLang, invalidateQuestionI18n]);
+
   // Apply translation to a question (preserving original correct_answer position for MCQ)
   const localizeQuestion = (q: any) => {
     if (!q) return q;
