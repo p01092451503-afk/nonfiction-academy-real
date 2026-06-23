@@ -988,7 +988,8 @@ export default function AssessmentPage() {
                   onPrev={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
                   t={t}
                   currentLang={currentLang}
-                  onTranslated={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
+                  questionI18n={questionI18nMap.get(currentQ.id)}
+                  onTranslated={invalidateQuestionI18n}
                 />
               )}
             </CardContent>
@@ -1052,7 +1053,12 @@ export default function AssessmentPage() {
                       questionId={currentQ.id}
                       questionText={currentQ.question_text}
                       targetLang={currentLang}
-                      onDone={() => queryClient.invalidateQueries({ queryKey: ["assessment-question-i18n-view", assessmentId, currentLang] })}
+                      hasKorean={
+                        !repairingQuestionIds.has(currentQ.id) &&
+                        (shouldAutoRepairQuestionTranslation(currentQ, questionI18nMap.get(currentQ.id), currentLang) ||
+                          hasHangulValue(getVisibleQuestionTextParts(currentQ)))
+                      }
+                      onDone={invalidateQuestionI18n}
                     />
                   </div>
 
