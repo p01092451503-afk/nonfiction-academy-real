@@ -31,6 +31,12 @@ const hasHangulValue = (value: unknown): boolean => {
 
 const isChoiceQuestion = (questionType?: string) => ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionType || "");
 
+const parseOptionIndexAnswer = (value?: string | null): number | null => {
+  if (!value || !/^\d+$/.test(value)) return null;
+  const index = Number(value);
+  return Number.isInteger(index) && index >= 0 ? index : null;
+};
+
 const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
@@ -504,6 +510,7 @@ export default function AssessmentPage() {
   const [showHintMap, setShowHintMap] = useState<Record<string, boolean>>({});
   const [repairingQuestionIds, setRepairingQuestionIds] = useState<Set<string>>(() => new Set());
   const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
+  const [justSubmittedAttempt, setJustSubmittedAttempt] = useState<any | null>(null);
   const repairRequestedRef = useRef<Set<string>>(new Set());
 
   // Fetch assessment
@@ -535,7 +542,12 @@ export default function AssessmentPage() {
     enabled: !!assessmentId && !!user?.id,
   });
 
-  const latestCompleted = attempts.find((a: any) => a.completed_at);
+  const latestCompleted = useMemo(() => {
+    if (justSubmittedAttempt?.id) {
+      return attempts.find((a: any) => a.id === justSubmittedAttempt.id) || justSubmittedAttempt;
+    }
+    return attempts.find((a: any) => a.completed_at);
+  }, [attempts, justSubmittedAttempt]);
 
   // Fetch questions - students use secure RPC, teachers/admins use direct query
   const { data: rawQuestions = [] } = useQuery({
@@ -780,7 +792,8 @@ export default function AssessmentPage() {
         const baseQ = baseById.get(a.question_id);
         const tr = questionI18nMap.get(a.question_id);
         if (baseQ && tr && Array.isArray(baseQ.options) && Array.isArray(tr.options) && tr.options.length === baseQ.options.length) {
-          const idx = baseQ.options.findIndex((o: string) => o === display);
+          const parsedIndex = parseOptionIndexAnswer(display);
+          const idx = parsedIndex !== null ? parsedIndex : baseQ.options.findIndex((o: string) => o === display);
           if (idx >= 0 && tr.options[idx]) display = tr.options[idx];
         }
       }
@@ -821,6 +834,7 @@ export default function AssessmentPage() {
     },
     onSuccess: (id) => {
       setCurrentAttemptId(id);
+      setJustSubmittedAttempt(null);
       setAnswers({});
       setShowResults(false);
       setReviewMode(false);
@@ -840,13 +854,21 @@ export default function AssessmentPage() {
         const userAns = answers[q.id] || "";
         const baseQ = rawById.get(q.id);
         const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(q.question_type);
-        if (isMcq && baseQ && Array.isArray(q.options) && Array.isArray(baseQ.options)) {
-          const idx = q.options.findIndex((o: string) => o === userAns);
-          if (idx >= 0 && baseQ.options[idx] != null) {
-            return { question_id: q.id, user_answer: String(baseQ.options[idx]) };
-          }
+        if (!isMcq) return { question_id: q.id, user_answer: userAns };
+
+        let selectedIndex = parseOptionIndexAnswer(userAns);
+        if (selectedIndex === null && Array.isArray(q.options)) {
+          selectedIndex = q.options.findIndex((o: string) => o === userAns);
         }
-        return { question_id: q.id, user_answer: userAns };
+        if (selectedIndex !== null && selectedIndex >= 0) {
+          const baseAnswer = Array.isArray(baseQ?.options) ? baseQ.options[selectedIndex] : undefined;
+          return {
+            question_id: q.id,
+            user_answer: baseAnswer != null ? String(baseAnswer) : String(selectedIndex),
+            selected_index: selectedIndex,
+          };
+        }
+        return { question_id: q.id, user_answer: userAns, selected_index: null };
       });
 
       const { data, error } = await supabase.rpc("submit_and_grade_assessment", {
@@ -857,6 +879,16 @@ export default function AssessmentPage() {
       return data;
     },
     onSuccess: async (data: any) => {
+      const result = Array.isArray(data) ? data[0] : data;
+      setJustSubmittedAttempt({
+        id: currentAttemptId,
+        assessment_id: assessmentId,
+        user_id: user?.id,
+        score: result?.score ?? 0,
+        total_points: result?.total_points ?? 0,
+        passed: !!result?.passed,
+        completed_at: new Date().toISOString(),
+      });
       setCurrentAttemptId(null);
       setShowResults(true);
       setReviewMode(false);
@@ -864,7 +896,7 @@ export default function AssessmentPage() {
 
       // 퀴즈 합격 시 강의 이수 처리 (enrollments.completed_at 갱신)
       try {
-        const didPass = Array.isArray(data) ? data[0]?.passed : data?.passed;
+        const didPass = !!result?.passed;
         if (didPass && user?.id && courseId) {
           const { data: enr } = await supabase
             .from("enrollments")
@@ -1126,18 +1158,19 @@ export default function AssessmentPage() {
                       <div className="space-y-3">
                         {(currentQ.options as string[]).map((opt: string, i: number) => {
                           const label = String.fromCharCode(65 + i);
-                          const isSelected = answers[currentQ.id] === opt;
+                          const optionValue = String(i);
+                          const isSelected = answers[currentQ.id] === optionValue;
                           return (
                             <div
                               key={i}
                               className={`flex items-center gap-3 rounded-xl border-2 px-4 sm:px-5 py-3.5 cursor-pointer transition-all ${
                                 isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:bg-accent/30"
                               }`}
-                              onClick={() => setAnswers(a => ({ ...a, [currentQ.id]: opt }))}
+                              onClick={() => setAnswers(a => ({ ...a, [currentQ.id]: optionValue }))}
                             >
                               <span className="font-bold text-sm text-muted-foreground">{label}.</span>
                               <Label className="text-sm sm:text-base cursor-pointer flex-1">{opt}</Label>
-                              <RadioGroupItem value={opt} id={`${currentQ.id}-${i}`} className="sr-only" />
+                              <RadioGroupItem value={optionValue} id={`${currentQ.id}-${i}`} className="sr-only" />
                             </div>
                           );
                         })}
