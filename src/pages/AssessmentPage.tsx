@@ -1043,6 +1043,13 @@ export default function AssessmentPage() {
     const progressPercent = questions.length > 0 ? Math.round(((currentQuestionIndex + 1) / questions.length) * 100) : 0;
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
     const hintVisible = currentQ ? showHintMap[currentQ.id] : false;
+    const currentTranslation = currentQ ? questionI18nMap.get(currentQ.id) : null;
+    const currentNeedsRepair = !!currentQ && !!currentLang && (
+      shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, currentTranslation, currentLang) ||
+      hasHangulValue(getVisibleQuestionTextParts(currentQ))
+    );
+    const currentRepairFailed = !!(currentQ && currentLang && repairFailedKeys.has(repairKeyFor(currentQ.id, currentLang)));
+    const currentRepairing = currentNeedsRepair && !currentRepairFailed;
 
     return (
       <DashboardLayout role="student">
@@ -1079,7 +1086,33 @@ export default function AssessmentPage() {
 
             {/* Current question */}
             <CardContent className="pt-4 pb-6 px-4 sm:px-6 space-y-6">
-              {currentQ && (
+              {currentQ && currentNeedsRepair && currentLang ? (
+                <>
+                  <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      {currentRepairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+                      <span>{currentRepairing ? TRANSLATE_LABELS[currentLang].loading : TRANSLATE_LABELS[currentLang].failDesc}</span>
+                    </div>
+                    {!currentRepairing && (
+                      <TranslateQuestionButton
+                        questionId={currentQ.id}
+                        questionText=""
+                        targetLang={currentLang}
+                        hasKorean
+                        onDone={invalidateQuestionI18n}
+                      />
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-border">
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))} disabled={currentQuestionIndex === 0}>
+                      {t("assessment.ui.previous")}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentQuestionIndex(i => Math.min(i + 1, questions.length - 1))} disabled={isLastQuestion}>
+                      {t("assessment.ui.next")}
+                    </Button>
+                  </div>
+                </>
+              ) : currentQ && (
                 <>
                   <div>
                     <p className="text-base sm:text-lg leading-relaxed">
