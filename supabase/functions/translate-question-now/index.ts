@@ -15,6 +15,12 @@ const LANG_LABEL: Record<string, string> = {
   ja: "Japanese (日本語)",
 };
 
+const TERM_TRANSLATION_HINT: Record<string, string> = {
+  ja: "For English action keywords, translate them into Japanese too: Uncover → 明らかにする, Listen → 聞く, Clarify → 明確にする, Engage → 関与する. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
+  "zh-CN": "For English action keywords, translate them into Simplified Chinese too: Uncover → 发现, Listen → 倾听, Clarify → 澄清, Engage → 参与. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
+  en: "Translate Korean text into English while preserving official framework acronyms such as IDENTIFY or S.T.Y.L.E.",
+};
+
 async function translateBatch(texts: string[], targetLang: string, apiKey: string): Promise<string[]> {
   const items = texts.map((t, i) => ({ i, t: (t ?? "").toString() })).filter((x) => x.t.trim());
   if (items.length === 0) return texts.map(() => "");
@@ -23,7 +29,9 @@ async function translateBatch(texts: string[], targetLang: string, apiKey: strin
 Return ONLY a JSON object whose keys exactly match the input keys and whose values are translated strings.
 Translate Korean, English, and mixed-language text fully and naturally for the target language.
 Do NOT keep Korean characters in the output unless they are part of an official brand/product name.
+Do NOT leave English action words unchanged just because they look like keywords; translate them unless they are official brand/product names or framework acronyms.
 For assessment choices, keep each option aligned with the same input key and do not merge or split choices.
+${TERM_TRANSLATION_HINT[targetLang] || ""}
 
 ${JSON.stringify(keyed)}`;
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
