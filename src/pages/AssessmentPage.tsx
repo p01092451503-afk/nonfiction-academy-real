@@ -792,7 +792,8 @@ export default function AssessmentPage() {
         const baseQ = baseById.get(a.question_id);
         const tr = questionI18nMap.get(a.question_id);
         if (baseQ && tr && Array.isArray(baseQ.options) && Array.isArray(tr.options) && tr.options.length === baseQ.options.length) {
-          const idx = baseQ.options.findIndex((o: string) => o === display);
+          const parsedIndex = parseOptionIndexAnswer(display);
+          const idx = parsedIndex !== null ? parsedIndex : baseQ.options.findIndex((o: string) => o === display);
           if (idx >= 0 && tr.options[idx]) display = tr.options[idx];
         }
       }
@@ -1157,18 +1158,19 @@ export default function AssessmentPage() {
                       <div className="space-y-3">
                         {(currentQ.options as string[]).map((opt: string, i: number) => {
                           const label = String.fromCharCode(65 + i);
-                          const isSelected = answers[currentQ.id] === opt;
+                          const optionValue = String(i);
+                          const isSelected = answers[currentQ.id] === optionValue;
                           return (
                             <div
                               key={i}
                               className={`flex items-center gap-3 rounded-xl border-2 px-4 sm:px-5 py-3.5 cursor-pointer transition-all ${
                                 isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:bg-accent/30"
                               }`}
-                              onClick={() => setAnswers(a => ({ ...a, [currentQ.id]: opt }))}
+                              onClick={() => setAnswers(a => ({ ...a, [currentQ.id]: optionValue }))}
                             >
                               <span className="font-bold text-sm text-muted-foreground">{label}.</span>
                               <Label className="text-sm sm:text-base cursor-pointer flex-1">{opt}</Label>
-                              <RadioGroupItem value={opt} id={`${currentQ.id}-${i}`} className="sr-only" />
+                              <RadioGroupItem value={optionValue} id={`${currentQ.id}-${i}`} className="sr-only" />
                             </div>
                           );
                         })}
