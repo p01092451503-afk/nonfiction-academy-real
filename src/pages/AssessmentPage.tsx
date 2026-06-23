@@ -724,12 +724,13 @@ export default function AssessmentPage() {
     if (!currentLang || !questionI18nFetched) return;
     const sourceQuestions = rawQuestions.length > 0 ? rawQuestions : reviewQuestions;
     const needsRepair = sourceQuestions.filter((q: any) =>
-      shouldAutoRepairQuestionTranslation(q, questionI18nMap.get(q.id), currentLang)
+      shouldAutoRepairQuestionTranslation(q, questionI18nMap.get(q.id), currentLang) &&
+      !repairFailedKeys.has(repairKeyFor(q.id, currentLang))
     );
     needsRepair.slice(0, 5).forEach((q: any) => {
       void repairQuestionTranslation(q);
     });
-  }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation]);
+  }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation, repairFailedKeys]);
 
   const { data: previousAnswers = [] } = useQuery({
     queryKey: ["assessment-answers", latestCompleted?.id],
