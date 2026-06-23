@@ -12,6 +12,12 @@ const LANG_LABEL: Record<string, string> = {
   ko: "Korean (한국어)",
 };
 
+const TERM_TRANSLATION_HINT: Record<string, string> = {
+  ja: "For English action keywords, translate them into Japanese too: Uncover → 明らかにする, Listen → 聞く, Clarify → 明確にする, Engage → 関与する. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
+  "zh-CN": "For English action keywords, translate them into Simplified Chinese too: Uncover → 发现, Listen → 倾听, Clarify → 澄清, Engage → 参与. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
+  en: "Translate Korean text into English while preserving official framework acronyms such as IDENTIFY or S.T.Y.L.E.",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -34,7 +40,9 @@ serve(async (req) => {
     const prompt = `Translate each input text to ${targetLabel}.
 Return ONLY a JSON object whose keys exactly match the input keys and whose values are translated strings.
 Translate Korean, English, and mixed-language text fully and naturally for the target language.
+Do NOT leave English action words unchanged just because they look like keywords; translate them unless they are official brand/product names or framework acronyms.
 If an input item is already a product name, keep the meaning and do not invent a different product.
+${TERM_TRANSLATION_HINT[targetLang] || ""}
 
 ${JSON.stringify(keyedItems)}`;
 
