@@ -593,7 +593,7 @@ export default function AssessmentPage() {
     [questionIdsForI18n]
   );
 
-  const { data: questionI18nRows = [] } = useQuery({
+  const { data: questionI18nRows = [], isFetched: questionI18nFetched } = useQuery({
     queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
     queryFn: async () => {
       if (!currentLang || questionIdsForI18n.length === 0) return [];
@@ -712,6 +712,17 @@ export default function AssessmentPage() {
     }
     return arr;
   }, [localizedRawQuestions, assessment?.randomize_questions]);
+
+  useEffect(() => {
+    if (!currentLang || !questionI18nFetched) return;
+    const sourceQuestions = rawQuestions.length > 0 ? rawQuestions : reviewQuestions;
+    const needsRepair = sourceQuestions.filter((q: any) =>
+      shouldAutoRepairQuestionTranslation(q, questionI18nMap.get(q.id), currentLang)
+    );
+    needsRepair.slice(0, 5).forEach((q: any) => {
+      void repairQuestionTranslation(q);
+    });
+  }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation]);
 
   const { data: previousAnswers = [] } = useQuery({
     queryKey: ["assessment-answers", latestCompleted?.id],
