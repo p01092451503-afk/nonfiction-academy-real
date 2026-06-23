@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, X, Check, ChevronDown, ChevronUp, Timer, ClipboardCheck, Lightbulb, Trophy, RotateCcw, Eye, Languages, Loader2 } from "lucide-react";
@@ -604,24 +604,25 @@ export default function AssessmentPage() {
     if (!q) return q;
     const tr = questionI18nMap.get(q.id);
     if (!tr) return q;
-    const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(q.question_type);
+    const isMcq = isChoiceQuestion(q.question_type);
     let options = q.options;
     let correctAnswer = q.correct_answer;
-    if (isMcq && Array.isArray(q.options) && Array.isArray(tr.options) && tr.options.length === q.options.length) {
+    const hasCleanOptions = Array.isArray(tr.options) && !hasHangulValue(tr.options);
+    if (isMcq && Array.isArray(q.options) && hasCleanOptions && tr.options.length === q.options.length) {
       options = tr.options;
       // Map correct_answer index from KO options to translated options
       const idx = q.options.findIndex((o: string) => o === q.correct_answer);
       if (idx >= 0 && tr.options[idx]) correctAnswer = tr.options[idx];
-    } else if (!isMcq && tr.correct_answer) {
+    } else if (!isMcq && tr.correct_answer && !hasHangulValue(tr.correct_answer)) {
       correctAnswer = tr.correct_answer;
     }
     return {
       ...q,
-      question_text: tr.question_text || q.question_text,
+      question_text: tr.question_text && !hasHangulValue(tr.question_text) ? tr.question_text : q.question_text,
       options,
       correct_answer: correctAnswer,
-      explanation: tr.explanation ?? q.explanation,
-      hint: tr.hint ?? q.hint,
+      explanation: tr.explanation && !hasHangulValue(tr.explanation) ? tr.explanation : q.explanation,
+      hint: tr.hint && !hasHangulValue(tr.hint) ? tr.hint : q.hint,
     };
   };
 
