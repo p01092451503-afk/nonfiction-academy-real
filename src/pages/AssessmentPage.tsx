@@ -41,6 +41,23 @@ const questionNeedsTranslationRepair = (question: any, translation: any, targetL
   return false;
 };
 
+const choiceOptionsLookUntranslated = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+  if (!targetLang || targetLang === "en" || !isChoiceQuestion(question?.question_type)) return false;
+  if (!Array.isArray(question?.options) || !Array.isArray(translation?.options)) return false;
+  if (question.options.length !== translation.options.length) return true;
+  return translation.options.some((option: unknown, index: number) => {
+    const translated = String(option || "").trim();
+    const source = String(question.options[index] || "").trim();
+    if (!translated || !source) return false;
+    return /[A-Za-z]/.test(translated) && translated.toLowerCase() === source.toLowerCase();
+  });
+};
+
+const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean =>
+  questionNeedsTranslationRepair(question, translation, targetLang) || choiceOptionsLookUntranslated(question, translation, targetLang);
+
+const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN") => `${questionId}:${targetLang}`;
+
 const getVisibleQuestionTextParts = (question: any) => [
   question?.question_text,
   question?.options,
