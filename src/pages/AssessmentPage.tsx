@@ -1021,6 +1021,7 @@ export default function AssessmentPage() {
                   currentLang={currentLang}
                   questionI18n={questionI18nMap.get(currentQ.id)}
                   sourceQuestion={currentSourceQ}
+                  repairing={repairingQuestionIds.has(currentQ.id)}
                   onTranslated={invalidateQuestionI18n}
                 />
               )}
