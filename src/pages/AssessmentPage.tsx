@@ -31,6 +31,12 @@ const hasHangulValue = (value: unknown): boolean => {
 
 const isChoiceQuestion = (questionType?: string) => ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionType || "");
 
+const parseOptionIndexAnswer = (value?: string | null): number | null => {
+  if (!value || !/^\d+$/.test(value)) return null;
+  const index = Number(value);
+  return Number.isInteger(index) && index >= 0 ? index : null;
+};
+
 const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
@@ -504,6 +510,7 @@ export default function AssessmentPage() {
   const [showHintMap, setShowHintMap] = useState<Record<string, boolean>>({});
   const [repairingQuestionIds, setRepairingQuestionIds] = useState<Set<string>>(() => new Set());
   const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
+  const [justSubmittedAttempt, setJustSubmittedAttempt] = useState<any | null>(null);
   const repairRequestedRef = useRef<Set<string>>(new Set());
 
   // Fetch assessment
@@ -535,7 +542,12 @@ export default function AssessmentPage() {
     enabled: !!assessmentId && !!user?.id,
   });
 
-  const latestCompleted = attempts.find((a: any) => a.completed_at);
+  const latestCompleted = useMemo(() => {
+    if (justSubmittedAttempt?.id) {
+      return attempts.find((a: any) => a.id === justSubmittedAttempt.id) || justSubmittedAttempt;
+    }
+    return attempts.find((a: any) => a.completed_at);
+  }, [attempts, justSubmittedAttempt]);
 
   // Fetch questions - students use secure RPC, teachers/admins use direct query
   const { data: rawQuestions = [] } = useQuery({
