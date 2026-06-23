@@ -833,6 +833,7 @@ export default function AssessmentPage() {
     },
     onSuccess: (id) => {
       setCurrentAttemptId(id);
+      setJustSubmittedAttempt(null);
       setAnswers({});
       setShowResults(false);
       setReviewMode(false);
@@ -852,13 +853,21 @@ export default function AssessmentPage() {
         const userAns = answers[q.id] || "";
         const baseQ = rawById.get(q.id);
         const isMcq = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(q.question_type);
-        if (isMcq && baseQ && Array.isArray(q.options) && Array.isArray(baseQ.options)) {
-          const idx = q.options.findIndex((o: string) => o === userAns);
-          if (idx >= 0 && baseQ.options[idx] != null) {
-            return { question_id: q.id, user_answer: String(baseQ.options[idx]) };
-          }
+        if (!isMcq) return { question_id: q.id, user_answer: userAns };
+
+        let selectedIndex = parseOptionIndexAnswer(userAns);
+        if (selectedIndex === null && Array.isArray(q.options)) {
+          selectedIndex = q.options.findIndex((o: string) => o === userAns);
         }
-        return { question_id: q.id, user_answer: userAns };
+        if (selectedIndex !== null && selectedIndex >= 0) {
+          const baseAnswer = Array.isArray(baseQ?.options) ? baseQ.options[selectedIndex] : undefined;
+          return {
+            question_id: q.id,
+            user_answer: baseAnswer != null ? String(baseAnswer) : String(selectedIndex),
+            selected_index: selectedIndex,
+          };
+        }
+        return { question_id: q.id, user_answer: userAns, selected_index: null };
       });
 
       const { data, error } = await supabase.rpc("submit_and_grade_assessment", {
@@ -869,6 +878,16 @@ export default function AssessmentPage() {
       return data;
     },
     onSuccess: async (data: any) => {
+      const result = Array.isArray(data) ? data[0] : data;
+      setJustSubmittedAttempt({
+        id: currentAttemptId,
+        assessment_id: assessmentId,
+        user_id: user?.id,
+        score: result?.score ?? 0,
+        total_points: result?.total_points ?? 0,
+        passed: !!result?.passed,
+        completed_at: new Date().toISOString(),
+      });
       setCurrentAttemptId(null);
       setShowResults(true);
       setReviewMode(false);
@@ -876,7 +895,7 @@ export default function AssessmentPage() {
 
       // 퀴즈 합격 시 강의 이수 처리 (enrollments.completed_at 갱신)
       try {
-        const didPass = Array.isArray(data) ? data[0]?.passed : data?.passed;
+        const didPass = !!result?.passed;
         if (didPass && user?.id && courseId) {
           const { data: enr } = await supabase
             .from("enrollments")
