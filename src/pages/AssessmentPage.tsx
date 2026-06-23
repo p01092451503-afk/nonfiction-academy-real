@@ -141,15 +141,17 @@ function TranslateQuestionButton({
 // ─── Review mode: single question with correct/wrong UI ───
 function QuestionReview({
   question, index, total, userAnswer, isCorrect, isEn, onNext, onPrev, t,
-  currentLang, onTranslated,
+  currentLang, onTranslated, questionI18n,
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
   currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void;
+  questionI18n?: any;
 }) {
   const [showHint, setShowHint] = useState(false);
-  const isChoice = ["multiple_choice_4", "multiple_choice_5", "ox"].includes(question.question_type);
+  const isChoice = isChoiceQuestion(question.question_type);
   const options: string[] = (question.options as string[]) || [];
+  const needsRepair = questionNeedsTranslationRepair(question, questionI18n, currentLang) || hasHangulValue(getVisibleQuestionTextParts(question));
 
   return (
     <div className="space-y-6">
@@ -162,6 +164,7 @@ function QuestionReview({
           questionId={question.id}
           questionText={question.question_text}
           targetLang={currentLang}
+          hasKorean={needsRepair}
           onDone={onTranslated}
         />
       </div>
