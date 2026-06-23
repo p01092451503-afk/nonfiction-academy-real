@@ -22,6 +22,32 @@ type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" |
 
 const HANGUL_RE = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F]/;
 
+const hasHangulValue = (value: unknown): boolean => {
+  if (typeof value === "string") return HANGUL_RE.test(value);
+  if (Array.isArray(value)) return value.some((item) => hasHangulValue(item));
+  if (value && typeof value === "object") return Object.values(value).some((item) => hasHangulValue(item));
+  return false;
+};
+
+const isChoiceQuestion = (questionType?: string) => ["multiple_choice_4", "multiple_choice_5", "ox"].includes(questionType || "");
+
+const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+  if (!targetLang || !question?.id) return false;
+  if (!translation) return true;
+  if (hasHangulValue([translation.question_text, translation.options, translation.correct_answer, translation.hint, translation.explanation])) return true;
+  if (isChoiceQuestion(question.question_type) && Array.isArray(question.options)) {
+    return !Array.isArray(translation.options) || translation.options.length !== question.options.length;
+  }
+  return false;
+};
+
+const getVisibleQuestionTextParts = (question: any) => [
+  question?.question_text,
+  question?.options,
+  question?.hint,
+  question?.explanation,
+];
+
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
   ja: "日本語",
@@ -58,19 +84,20 @@ const TRANSLATE_LABELS: Record<string, { idle: string; loading: string; doneTitl
 // translates the question via Lovable AI and stores it in assessment_question_i18n
 // so every user benefits afterward.
 function TranslateQuestionButton({
-  questionId, questionText, targetLang, onDone,
+  questionId, questionText, targetLang, onDone, hasKorean,
 }: {
   questionId: string;
   questionText: string;
   targetLang: "en" | "ja" | "zh-CN" | null;
   onDone: () => void;
+  hasKorean?: boolean;
 }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   if (!targetLang) return null;
-  if (!questionText || !HANGUL_RE.test(questionText)) return null;
+  if (!(hasKorean ?? HANGUL_RE.test(questionText || ""))) return null;
   if (done) return null;
 
   const handleClick = async () => {
