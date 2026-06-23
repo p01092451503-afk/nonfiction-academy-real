@@ -158,19 +158,47 @@ function TranslateQuestionButton({
 // ─── Review mode: single question with correct/wrong UI ───
 function QuestionReview({
   question, index, total, userAnswer, isCorrect, isEn, onNext, onPrev, t,
-  currentLang, onTranslated, questionI18n, sourceQuestion,
+  currentLang, onTranslated, questionI18n, sourceQuestion, repairing,
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
   currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void;
   questionI18n?: any;
   sourceQuestion?: any;
+  repairing?: boolean;
 }) {
   const [showHint, setShowHint] = useState(false);
   const isChoice = isChoiceQuestion(question.question_type);
   const options: string[] = (question.options as string[]) || [];
   const repairSource = sourceQuestion || question;
   const needsRepair = shouldAutoRepairQuestionTranslation(repairSource, questionI18n, currentLang) || hasHangulValue(getVisibleQuestionTextParts(question));
+
+  if (needsRepair && currentLang) {
+    const labels = TRANSLATE_LABELS[currentLang];
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            {repairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+            <span>{repairing ? labels.loading : labels.failDesc}</span>
+          </div>
+          {!repairing && (
+            <TranslateQuestionButton
+              questionId={question.id}
+              questionText=""
+              targetLang={currentLang}
+              hasKorean
+              onDone={onTranslated}
+            />
+          )}
+        </div>
+        <div className="flex justify-between items-center pt-4 border-t border-border">
+          <Button variant="ghost" size="sm" onClick={onPrev} disabled={index === 0}>{t("assessment.ui.previous")}</Button>
+          <Button variant="outline" size="sm" onClick={onNext} disabled={index === total - 1}>{t("assessment.ui.next")}</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
