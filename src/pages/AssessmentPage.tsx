@@ -465,6 +465,8 @@ export default function AssessmentPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [reviewMode, setReviewMode] = useState(false);
   const [showHintMap, setShowHintMap] = useState<Record<string, boolean>>({});
+  const [repairingQuestionIds, setRepairingQuestionIds] = useState<Set<string>>(() => new Set());
+  const repairRequestedRef = useRef<Set<string>>(new Set());
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({
