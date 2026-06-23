@@ -483,6 +483,7 @@ export default function AssessmentPage() {
   const [reviewMode, setReviewMode] = useState(false);
   const [showHintMap, setShowHintMap] = useState<Record<string, boolean>>({});
   const [repairingQuestionIds, setRepairingQuestionIds] = useState<Set<string>>(() => new Set());
+  const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
   const repairRequestedRef = useRef<Set<string>>(new Set());
 
   // Fetch assessment
@@ -627,6 +628,11 @@ export default function AssessmentPage() {
     const key = repairKeyFor(question.id, currentLang);
     if (repairRequestedRef.current.has(key)) return;
     repairRequestedRef.current.add(key);
+    setRepairFailedKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
     setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
     try {
       const { data, error } = await supabase.functions.invoke("translate-question-now", {
@@ -637,6 +643,7 @@ export default function AssessmentPage() {
       invalidateQuestionI18n();
     } catch (error) {
       repairRequestedRef.current.delete(key);
+      setRepairFailedKeys((prev) => new Set(prev).add(key));
       console.error("[assessment] question translation repair failed", error);
     } finally {
       setRepairingQuestionIds((prev) => {
