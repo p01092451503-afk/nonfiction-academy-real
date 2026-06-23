@@ -158,7 +158,7 @@ function TranslateQuestionButton({
 // ─── Review mode: single question with correct/wrong UI ───
 function QuestionReview({
   question, index, total, userAnswer, isCorrect, isEn, onNext, onPrev, t,
-  currentLang, onTranslated, questionI18n, sourceQuestion, repairing,
+  currentLang, onTranslated, questionI18n, sourceQuestion, repairing, repairFailed,
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
@@ -166,6 +166,7 @@ function QuestionReview({
   questionI18n?: any;
   sourceQuestion?: any;
   repairing?: boolean;
+  repairFailed?: boolean;
 }) {
   const [showHint, setShowHint] = useState(false);
   const isChoice = isChoiceQuestion(question.question_type);
@@ -175,14 +176,15 @@ function QuestionReview({
 
   if (needsRepair && currentLang) {
     const labels = TRANSLATE_LABELS[currentLang];
+    const isRepairing = repairing || !repairFailed;
     return (
       <div className="space-y-6">
         <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            {repairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
-            <span>{repairing ? labels.loading : labels.failDesc}</span>
+            {isRepairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+            <span>{isRepairing ? labels.loading : labels.failDesc}</span>
           </div>
-          {!repairing && (
+          {!isRepairing && (
             <TranslateQuestionButton
               questionId={question.id}
               questionText=""
