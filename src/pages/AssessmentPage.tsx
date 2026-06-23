@@ -939,6 +939,7 @@ export default function AssessmentPage() {
   if (reviewMode && previousAnswers.length > 0) {
     const rQuestions = localizedReviewQuestions as any[];
     const currentQ = rQuestions[currentQuestionIndex];
+    const currentSourceQ = currentQ ? reviewQuestions.find((q: any) => q.id === currentQ.id) : null;
     const ansData = currentQ ? answerMap[currentQ.id] : null;
     const progressPercent = rQuestions.length > 0 ? Math.round(((currentQuestionIndex + 1) / rQuestions.length) * 100) : 0;
 
@@ -991,6 +992,7 @@ export default function AssessmentPage() {
                   t={t}
                   currentLang={currentLang}
                   questionI18n={questionI18nMap.get(currentQ.id)}
+                  sourceQuestion={currentSourceQ}
                   onTranslated={invalidateQuestionI18n}
                 />
               )}
@@ -1004,6 +1006,7 @@ export default function AssessmentPage() {
   // ─── TAKING ASSESSMENT (one question per page, full-width) ───
   if (currentAttemptId) {
     const currentQ = questions[currentQuestionIndex];
+    const currentSourceQ = currentQ ? rawQuestions.find((q: any) => q.id === currentQ.id) : null;
     const answeredCount = Object.values(answers).filter(a => a.trim()).length;
     const progressPercent = questions.length > 0 ? Math.round(((currentQuestionIndex + 1) / questions.length) * 100) : 0;
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -1057,7 +1060,7 @@ export default function AssessmentPage() {
                       targetLang={currentLang}
                       hasKorean={
                         !repairingQuestionIds.has(currentQ.id) &&
-                        (shouldAutoRepairQuestionTranslation(currentQ, questionI18nMap.get(currentQ.id), currentLang) ||
+                        (shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, questionI18nMap.get(currentQ.id), currentLang) ||
                           hasHangulValue(getVisibleQuestionTextParts(currentQ)))
                       }
                       onDone={invalidateQuestionI18n}
