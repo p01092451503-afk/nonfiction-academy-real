@@ -19,9 +19,11 @@ async function translateBatch(texts: string[], targetLang: string, apiKey: strin
   const items = texts.map((t, i) => ({ i, t: (t ?? "").toString() })).filter((x) => x.t.trim());
   if (items.length === 0) return texts.map(() => "");
   const keyed = Object.fromEntries(items.map((x) => [String(x.i), x.t]));
-  const prompt = `Translate each Korean text to ${LANG_LABEL[targetLang]}.
+  const prompt = `Translate each input text to ${LANG_LABEL[targetLang]}.
 Return ONLY a JSON object whose keys exactly match the input keys and whose values are translated strings.
-Do NOT keep Korean characters in the output. Translate everything fully and naturally.
+Translate Korean, English, and mixed-language text fully and naturally for the target language.
+Do NOT keep Korean characters in the output unless they are part of an official brand/product name.
+For assessment choices, keep each option aligned with the same input key and do not merge or split choices.
 
 ${JSON.stringify(keyed)}`;
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -30,7 +32,7 @@ ${JSON.stringify(keyed)}`;
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",
       messages: [
-        { role: "system", content: `You are a professional Korean to ${LANG_LABEL[targetLang]} translator for an LMS. Be accurate and natural. Never output Korean.` },
+        { role: "system", content: `You are a professional LMS assessment translator into ${LANG_LABEL[targetLang]}. Be accurate and natural. Translate Korean, English, and mixed-language input. Do not output Korean unless it is an official brand/product name.` },
         { role: "user", content: prompt },
       ],
       temperature: 0.2,
