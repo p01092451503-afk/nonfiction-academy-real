@@ -65,6 +65,21 @@ const LANG_NATIVE: Record<string, string> = {
   "zh-CN": "中文",
 };
 
+const countryToAssessmentLang = (country?: string | null): "en" | "ja" | "zh-CN" | null => {
+  const normalized = (country || "").toUpperCase();
+  if (normalized === "JP") return "ja";
+  if (normalized === "US") return "en";
+  if (["CN", "HK", "TW"].includes(normalized)) return "zh-CN";
+  return null;
+};
+
+const getQuestionLoadingText = (targetLang: "en" | "ja" | "zh-CN" | null) => {
+  if (targetLang === "ja") return "翻訳を準備しています...";
+  if (targetLang === "zh-CN") return "正在准备翻译...";
+  if (targetLang === "en") return "Preparing translation...";
+  return "번역을 준비 중입니다...";
+};
+
 // Localized labels for the translate button per target language
 const TRANSLATE_LABELS: Record<string, { idle: string; loading: string; doneTitle: string; failTitle: string; failDesc: string }> = {
   en: {
@@ -482,7 +497,7 @@ export default function AssessmentPage() {
   const { courseId, assessmentId } = useParams<{ courseId: string; assessmentId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const { primaryRole } = useUserRole();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
@@ -490,7 +505,7 @@ export default function AssessmentPage() {
   const queryClient = useQueryClient();
 
   // Map current UI language to assessment_i18n.language_code (null = Korean = base)
-  const currentLang: "en" | "ja" | "zh-CN" | null = (() => {
+  const uiLang: "en" | "ja" | "zh-CN" | null = (() => {
     const lng = (i18n.language || "").toLowerCase();
     if (lng.startsWith("en")) return "en";
     if (lng.startsWith("ja")) return "ja";
@@ -512,6 +527,35 @@ export default function AssessmentPage() {
   const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
   const [justSubmittedAttempt, setJustSubmittedAttempt] = useState<any | null>(null);
   const repairRequestedRef = useRef<Set<string>>(new Set());
+
+  const { data: branchCountry } = useQuery({
+    queryKey: ["assessment-branch-country", profile?.department_id],
+    queryFn: async () => {
+      if (!profile?.department_id) return null;
+      const { data, error } = await supabase
+        .from("departments")
+        .select("country, parent_department_id")
+        .eq("id", profile.department_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (data?.country) return data.country as string;
+      if (!data?.parent_department_id) return null;
+      const { data: parent, error: parentError } = await supabase
+        .from("departments")
+        .select("country")
+        .eq("id", data.parent_department_id)
+        .maybeSingle();
+      if (parentError) throw parentError;
+      return (parent?.country as string | null) || null;
+    },
+    enabled: isStudentRoute && !!profile?.department_id,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  // Student assessments should never fall back to Korean for users in non-KR
+  // branches just because their browser has a stale Korean localStorage value.
+  const currentLang = uiLang || (isStudentRoute ? countryToAssessmentLang(branchCountry) : null);
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({

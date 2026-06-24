@@ -48,6 +48,44 @@ const RLS_PATTERNS = [
   /row-level security/i,
 ];
 
+const ASSESSMENT_STACK_RECOVERY_PREFIX = "assessment_stack_recovered_v1:";
+
+const clearCachesAndReloadOnce = () => {
+  if (typeof window === "undefined") return;
+  const key = `${ASSESSMENT_STACK_RECOVERY_PREFIX}${location.pathname}`;
+  try {
+    if (sessionStorage.getItem(key) === "1") return;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    return;
+  }
+
+  setTimeout(() => {
+    (async () => {
+      try {
+        if (typeof caches !== "undefined") {
+          const names = await caches.keys();
+          await Promise.all(names.map((name) => caches.delete(name).catch(() => false)));
+        }
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister().catch(() => false)));
+        }
+      } catch {
+        // Best-effort recovery only.
+      } finally {
+        window.location.reload();
+      }
+    })();
+  }, 100);
+};
+
+const recoverKnownAssessmentStackError = (message: string) => {
+  if (!/Maximum call stack size exceeded/i.test(message)) return;
+  if (!location.pathname.includes("/assessment/")) return;
+  clearCachesAndReloadOnce();
+};
+
 export const reportError = async (params: {
   message: string;
   stack?: string;
@@ -100,6 +138,7 @@ export const installGlobalErrorReporter = () => {
   window.addEventListener("error", (e) => {
     const msg = e.message || (e.error && e.error.message) || "Unknown window error";
     const stack = (e.error && e.error.stack) || `${msg}\n  at ${e.filename}:${e.lineno}:${e.colno}`;
+    recoverKnownAssessmentStackError(msg);
     reportError({ message: msg, stack, source: "window.onerror" });
   });
 
@@ -110,6 +149,7 @@ export const installGlobalErrorReporter = () => {
         ? reason
         : reason?.message || "Unhandled promise rejection";
     const stack = reason?.stack || "";
+    recoverKnownAssessmentStackError(msg);
     reportError({ message: msg, stack, source: "unhandledrejection" });
   });
 };
