@@ -30,7 +30,10 @@ const LanguageToggle = () => {
 
   const changeLang = (lang: string) => {
     // Mark as a manual choice so country-based auto-switch doesn't override on next login
-    try { localStorage.setItem("nfl-lang-manual", "1"); } catch {}
+    try {
+      localStorage.setItem("nfl-lang-manual", "1");
+      localStorage.setItem("nfl-lang-manual-at", String(Date.now()));
+    } catch {}
     i18n.changeLanguage(lang);
   };
 

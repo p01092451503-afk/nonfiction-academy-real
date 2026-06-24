@@ -13,10 +13,27 @@ const COUNTRY_TO_LANG: Record<string, "ko" | "en" | "ja" | "zh-CN"> = {
   TW: "zh-CN",
 };
 
+const LANG_MANUAL_KEY = "nfl-lang-manual";
+const LANG_MANUAL_AT_KEY = "nfl-lang-manual-at";
+const LANG_MANUAL_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+const hasFreshManualLanguageChoice = () => {
+  if (typeof localStorage === "undefined") return false;
+  if (localStorage.getItem(LANG_MANUAL_KEY) !== "1") return false;
+  const changedAt = Number(localStorage.getItem(LANG_MANUAL_AT_KEY) || 0);
+  if (changedAt > 0 && Date.now() - changedAt < LANG_MANUAL_TTL_MS) return true;
+
+  // Older builds stored only `nfl-lang-manual=1`, which could permanently trap
+  // Japan/China/US users on Korean. Treat that legacy flag as stale and recover.
+  localStorage.removeItem(LANG_MANUAL_KEY);
+  localStorage.removeItem(LANG_MANUAL_AT_KEY);
+  return false;
+};
+
 async function applyCountryLanguage(departmentId: string | null | undefined) {
   if (!departmentId) return;
   // Respect explicit user choice: i18next-browser-languagedetector stores it under 'nfl-lang'
-  if (typeof localStorage !== "undefined" && localStorage.getItem("nfl-lang-manual") === "1") return;
+  if (hasFreshManualLanguageChoice()) return;
   try {
     const { data } = await supabase
       .from("departments")
