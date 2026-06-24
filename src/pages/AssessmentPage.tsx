@@ -528,7 +528,7 @@ export default function AssessmentPage() {
   const [justSubmittedAttempt, setJustSubmittedAttempt] = useState<any | null>(null);
   const repairRequestedRef = useRef<Set<string>>(new Set());
 
-  const { data: branchCountry } = useQuery({
+  const { data: branchCountry, isLoading: branchCountryLoading } = useQuery({
     queryKey: ["assessment-branch-country", profile?.department_id],
     queryFn: async () => {
       if (!profile?.department_id) return null;
@@ -971,7 +971,7 @@ export default function AssessmentPage() {
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   const layoutRole = isStudentRoute ? "student" : primaryRole === "admin" ? "admin" : "teacher";
 
-  if (assessmentLoading) {
+  if (assessmentLoading || (isStudentRoute && !!profile?.department_id && branchCountryLoading)) {
     return (
       <DashboardLayout role={layoutRole}>
         <PageSkeleton blocks={4} />
