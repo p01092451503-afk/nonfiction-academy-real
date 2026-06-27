@@ -764,11 +764,7 @@ export default function AssessmentPage() {
     });
     setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
     try {
-      const { data, error } = await supabase.functions.invoke("translate-question-now", {
-        body: { question_id: question.id, target_lang: currentLang },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      await invokeQuestionTranslation(question.id, currentLang);
       invalidateQuestionI18n();
     } catch (error) {
       repairRequestedRef.current.delete(key);
@@ -1162,11 +1158,11 @@ export default function AssessmentPage() {
     const hintVisible = currentQ ? showHintMap[currentQ.id] : false;
     const currentTranslation = currentQ ? questionI18nMap.get(currentQ.id) : null;
     const currentNeedsRepair = !!currentQ && !!currentLang && (
-      shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, currentTranslation, currentLang) ||
-      hasHangulValue(getVisibleQuestionTextParts(currentQ))
+      questionHasCoreDisplayTranslationIssue(currentSourceQ || currentQ, currentTranslation, currentLang) ||
+      hasHangulValue(getTakingQuestionTextParts(currentQ))
     );
     const currentRepairFailed = !!(currentQ && currentLang && repairFailedKeys.has(repairKeyFor(currentQ.id, currentLang)));
-    const currentRepairing = currentNeedsRepair && !currentRepairFailed;
+    const currentRepairing = !!(currentQ && repairingQuestionIds.has(currentQ.id) && !currentRepairFailed);
 
     return (
       <DashboardLayout role="student">
@@ -1242,8 +1238,7 @@ export default function AssessmentPage() {
                       targetLang={currentLang}
                       hasKorean={
                         !repairingQuestionIds.has(currentQ.id) &&
-                        (shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, questionI18nMap.get(currentQ.id), currentLang) ||
-                          hasHangulValue(getVisibleQuestionTextParts(currentQ)))
+                        hasHangulValue(getTakingQuestionTextParts(currentQ))
                       }
                       onDone={invalidateQuestionI18n}
                     />
