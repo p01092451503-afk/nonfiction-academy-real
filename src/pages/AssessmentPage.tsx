@@ -50,6 +50,20 @@ const questionNeedsTranslationRepair = (question: any, translation: any, targetL
 const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean =>
   questionNeedsTranslationRepair(question, translation, targetLang);
 
+// UI blocking must be stricter than background repair. A translated MCQ can have
+// stale Korean in hidden fields such as correct_answer/explanation while the
+// visible question/options are already clean. Blocking the whole quiz for those
+// hidden fields caused iOS users to see an endless "翻訳中..." card.
+const questionHasCoreDisplayTranslationIssue = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+  if (!targetLang || !question?.id) return false;
+  if (!translation) return true;
+  if (hasHangulValue([translation.question_text, translation.options])) return true;
+  if (isChoiceQuestion(question.question_type) && Array.isArray(question.options)) {
+    return !Array.isArray(translation.options) || translation.options.length !== question.options.length;
+  }
+  return false;
+};
+
 const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN") => `${questionId}:${targetLang}`;
 
 const getVisibleQuestionTextParts = (question: any) => [
@@ -58,6 +72,49 @@ const getVisibleQuestionTextParts = (question: any) => [
   question?.hint,
   question?.explanation,
 ];
+
+const getTakingQuestionTextParts = (question: any) => [
+  question?.question_text,
+  question?.options,
+  question?.hint,
+];
+
+const getReviewQuestionTextParts = (question: any) => [
+  question?.question_text,
+  question?.options,
+  question?.hint,
+  question?.explanation,
+  !isChoiceQuestion(question?.question_type) ? question?.correct_answer : null,
+];
+
+const QUESTION_TRANSLATION_TIMEOUT_MS = 15_000;
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+const invokeQuestionTranslation = async (questionId: string, targetLang: "en" | "ja" | "zh-CN") => {
+  const { data, error } = await withTimeout(
+    supabase.functions.invoke("translate-question-now", {
+      body: { question_id: questionId, target_lang: targetLang },
+    }),
+    QUESTION_TRANSLATION_TIMEOUT_MS,
+    "Translation request timed out. Please try again.",
+  );
+  if (error) throw error;
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data;
+};
 
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
