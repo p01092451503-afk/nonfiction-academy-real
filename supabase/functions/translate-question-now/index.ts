@@ -21,6 +21,8 @@ const TERM_TRANSLATION_HINT: Record<string, string> = {
   en: "Translate Korean text into English while preserving official framework acronyms such as IDENTIFY or S.T.Y.L.E.",
 };
 
+const AI_TIMEOUT_MS = 12_000;
+
 async function translateBatch(texts: string[], targetLang: string, apiKey: string): Promise<string[]> {
   const items = texts.map((t, i) => ({ i, t: (t ?? "").toString() })).filter((x) => x.t.trim());
   if (items.length === 0) return texts.map(() => "");
@@ -34,18 +36,31 @@ For assessment choices, keep each option aligned with the same input key and do 
 ${TERM_TRANSLATION_HINT[targetLang] || ""}
 
 ${JSON.stringify(keyed)}`;
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: `You are a professional LMS assessment translator into ${LANG_LABEL[targetLang]}. Be accurate and natural. Translate Korean, English, and mixed-language input. Do not output Korean unless it is an official brand/product name.` },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.2,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: `You are a professional LMS assessment translator into ${LANG_LABEL[targetLang]}. Be accurate and natural. Translate Korean, English, and mixed-language input. Do not output Korean unless it is an official brand/product name.` },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.2,
+      }),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("AI translation timed out");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) throw new Error(`AI gateway ${res.status}: ${await res.text()}`);
   const j = await res.json();
   const content = (j.choices?.[0]?.message?.content || "").trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
