@@ -186,11 +186,7 @@ function TranslateQuestionButton({
   const handleClick = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("translate-question-now", {
-        body: { question_id: questionId, target_lang: targetLang },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      await invokeQuestionTranslation(questionId, targetLang);
       const labels = TRANSLATE_LABELS[targetLang];
       toast({ title: "✓", description: labels.doneTitle });
       setDone(true);
@@ -238,11 +234,11 @@ function QuestionReview({
   const isChoice = isChoiceQuestion(question.question_type);
   const options: string[] = (question.options as string[]) || [];
   const repairSource = sourceQuestion || question;
-  const needsRepair = shouldAutoRepairQuestionTranslation(repairSource, questionI18n, currentLang) || hasHangulValue(getVisibleQuestionTextParts(question));
+  const needsRepair = questionHasCoreDisplayTranslationIssue(repairSource, questionI18n, currentLang) || hasHangulValue(getReviewQuestionTextParts(question));
 
   if (needsRepair && currentLang) {
-    const labels = TRANSLATE_LABELS[currentLang];
-    const isRepairing = repairing || !repairFailed;
+      const labels = TRANSLATE_LABELS[currentLang];
+      const isRepairing = repairing && !repairFailed;
     return (
       <div className="space-y-6">
         <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
@@ -279,7 +275,7 @@ function QuestionReview({
           questionId={question.id}
           questionText={question.question_text}
           targetLang={currentLang}
-          hasKorean={needsRepair}
+          hasKorean={hasHangulValue(getReviewQuestionTextParts(question))}
           onDone={onTranslated}
         />
       </div>
