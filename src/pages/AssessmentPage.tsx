@@ -66,13 +66,6 @@ const questionHasCoreDisplayTranslationIssue = (question: any, translation: any,
 
 const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN") => `${questionId}:${targetLang}`;
 
-const getVisibleQuestionTextParts = (question: any) => [
-  question?.question_text,
-  question?.options,
-  question?.hint,
-  question?.explanation,
-];
-
 const getTakingQuestionTextParts = (question: any) => [
   question?.question_text,
   question?.options,
@@ -128,13 +121,6 @@ const countryToAssessmentLang = (country?: string | null): "en" | "ja" | "zh-CN"
   if (normalized === "US") return "en";
   if (["CN", "HK", "TW"].includes(normalized)) return "zh-CN";
   return null;
-};
-
-const getQuestionLoadingText = (targetLang: "en" | "ja" | "zh-CN" | null) => {
-  if (targetLang === "ja") return "翻訳を準備しています...";
-  if (targetLang === "zh-CN") return "正在准备翻译...";
-  if (targetLang === "en") return "Preparing translation...";
-  return "번역을 준비 중입니다...";
 };
 
 // Localized labels for the translate button per target language
