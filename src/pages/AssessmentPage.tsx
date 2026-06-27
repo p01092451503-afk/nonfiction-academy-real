@@ -50,14 +50,64 @@ const questionNeedsTranslationRepair = (question: any, translation: any, targetL
 const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean =>
   questionNeedsTranslationRepair(question, translation, targetLang);
 
+// UI blocking must be stricter than background repair. A translated MCQ can have
+// stale Korean in hidden fields such as correct_answer/explanation while the
+// visible question/options are already clean. Blocking the whole quiz for those
+// hidden fields caused iOS users to see an endless "翻訳中..." card.
+const questionHasCoreDisplayTranslationIssue = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+  if (!targetLang || !question?.id) return false;
+  if (!translation) return true;
+  if (hasHangulValue([translation.question_text, translation.options])) return true;
+  if (isChoiceQuestion(question.question_type) && Array.isArray(question.options)) {
+    return !Array.isArray(translation.options) || translation.options.length !== question.options.length;
+  }
+  return false;
+};
+
 const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN") => `${questionId}:${targetLang}`;
 
-const getVisibleQuestionTextParts = (question: any) => [
+const getTakingQuestionTextParts = (question: any) => [
+  question?.question_text,
+  question?.options,
+  question?.hint,
+];
+
+const getReviewQuestionTextParts = (question: any) => [
   question?.question_text,
   question?.options,
   question?.hint,
   question?.explanation,
+  !isChoiceQuestion(question?.question_type) ? question?.correct_answer : null,
 ];
+
+const QUESTION_TRANSLATION_TIMEOUT_MS = 15_000;
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+const invokeQuestionTranslation = async (questionId: string, targetLang: "en" | "ja" | "zh-CN") => {
+  const { data, error } = await withTimeout(
+    supabase.functions.invoke("translate-question-now", {
+      body: { question_id: questionId, target_lang: targetLang },
+    }),
+    QUESTION_TRANSLATION_TIMEOUT_MS,
+    "Translation request timed out. Please try again.",
+  );
+  if (error) throw error;
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data;
+};
 
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
@@ -71,13 +121,6 @@ const countryToAssessmentLang = (country?: string | null): "en" | "ja" | "zh-CN"
   if (normalized === "US") return "en";
   if (["CN", "HK", "TW"].includes(normalized)) return "zh-CN";
   return null;
-};
-
-const getQuestionLoadingText = (targetLang: "en" | "ja" | "zh-CN" | null) => {
-  if (targetLang === "ja") return "翻訳を準備しています...";
-  if (targetLang === "zh-CN") return "正在准备翻译...";
-  if (targetLang === "en") return "Preparing translation...";
-  return "번역을 준비 중입니다...";
 };
 
 // Localized labels for the translate button per target language
@@ -121,19 +164,17 @@ function TranslateQuestionButton({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const touchHandledRef = useRef(false);
 
   if (!targetLang) return null;
   if (!(hasKorean ?? HANGUL_RE.test(questionText || ""))) return null;
   if (done) return null;
 
   const handleClick = async () => {
+    if (loading) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("translate-question-now", {
-        body: { question_id: questionId, target_lang: targetLang },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      await invokeQuestionTranslation(questionId, targetLang);
       const labels = TRANSLATE_LABELS[targetLang];
       toast({ title: "✓", description: labels.doneTitle });
       setDone(true);
@@ -154,9 +195,20 @@ function TranslateQuestionButton({
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => {
+        if (touchHandledRef.current) {
+          touchHandledRef.current = false;
+          return;
+        }
+        void handleClick();
+      }}
+      onTouchEnd={(event) => {
+        event.preventDefault();
+        touchHandledRef.current = true;
+        void handleClick();
+      }}
       disabled={loading}
-      className="mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+      className="mt-2 inline-flex touch-manipulation items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
       {loading ? labels.loading : labels.idle}
@@ -181,11 +233,11 @@ function QuestionReview({
   const isChoice = isChoiceQuestion(question.question_type);
   const options: string[] = (question.options as string[]) || [];
   const repairSource = sourceQuestion || question;
-  const needsRepair = shouldAutoRepairQuestionTranslation(repairSource, questionI18n, currentLang) || hasHangulValue(getVisibleQuestionTextParts(question));
+  const needsRepair = questionHasCoreDisplayTranslationIssue(repairSource, questionI18n, currentLang) || hasHangulValue(getReviewQuestionTextParts(question));
 
   if (needsRepair && currentLang) {
-    const labels = TRANSLATE_LABELS[currentLang];
-    const isRepairing = repairing || !repairFailed;
+      const labels = TRANSLATE_LABELS[currentLang];
+      const isRepairing = repairing && !repairFailed;
     return (
       <div className="space-y-6">
         <div className="rounded-xl border border-border bg-secondary/30 p-4 sm:p-5 text-sm text-muted-foreground">
@@ -222,7 +274,7 @@ function QuestionReview({
           questionId={question.id}
           questionText={question.question_text}
           targetLang={currentLang}
-          hasKorean={needsRepair}
+          hasKorean={hasHangulValue(getReviewQuestionTextParts(question))}
           onDone={onTranslated}
         />
       </div>
@@ -553,9 +605,12 @@ export default function AssessmentPage() {
     gcTime: 30 * 60 * 1000,
   });
 
+  const branchAssessmentLang = isStudentRoute ? countryToAssessmentLang(branchCountry) : null;
   // Student assessments should never fall back to Korean for users in non-KR
-  // branches just because their browser has a stale Korean localStorage value.
-  const currentLang = uiLang || (isStudentRoute ? countryToAssessmentLang(branchCountry) : null);
+  // branches just because their browser has a stale localStorage value. Branch
+  // language wins on the assessment page because the quiz content must match
+  // the learner's branch language consistently across PC/mobile/PWA caches.
+  const currentLang = branchAssessmentLang || uiLang;
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({
@@ -711,11 +766,7 @@ export default function AssessmentPage() {
     });
     setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
     try {
-      const { data, error } = await supabase.functions.invoke("translate-question-now", {
-        body: { question_id: question.id, target_lang: currentLang },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      await invokeQuestionTranslation(question.id, currentLang);
       invalidateQuestionI18n();
     } catch (error) {
       repairRequestedRef.current.delete(key);
@@ -1109,11 +1160,11 @@ export default function AssessmentPage() {
     const hintVisible = currentQ ? showHintMap[currentQ.id] : false;
     const currentTranslation = currentQ ? questionI18nMap.get(currentQ.id) : null;
     const currentNeedsRepair = !!currentQ && !!currentLang && (
-      shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, currentTranslation, currentLang) ||
-      hasHangulValue(getVisibleQuestionTextParts(currentQ))
+      questionHasCoreDisplayTranslationIssue(currentSourceQ || currentQ, currentTranslation, currentLang) ||
+      hasHangulValue(getTakingQuestionTextParts(currentQ))
     );
     const currentRepairFailed = !!(currentQ && currentLang && repairFailedKeys.has(repairKeyFor(currentQ.id, currentLang)));
-    const currentRepairing = currentNeedsRepair && !currentRepairFailed;
+    const currentRepairing = !!(currentQ && repairingQuestionIds.has(currentQ.id) && !currentRepairFailed);
 
     return (
       <DashboardLayout role="student">
@@ -1189,8 +1240,7 @@ export default function AssessmentPage() {
                       targetLang={currentLang}
                       hasKorean={
                         !repairingQuestionIds.has(currentQ.id) &&
-                        (shouldAutoRepairQuestionTranslation(currentSourceQ || currentQ, questionI18nMap.get(currentQ.id), currentLang) ||
-                          hasHangulValue(getVisibleQuestionTextParts(currentQ)))
+                        hasHangulValue(getTakingQuestionTextParts(currentQ))
                       }
                       onDone={invalidateQuestionI18n}
                     />
