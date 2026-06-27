@@ -619,9 +619,12 @@ export default function AssessmentPage() {
     gcTime: 30 * 60 * 1000,
   });
 
+  const branchAssessmentLang = isStudentRoute ? countryToAssessmentLang(branchCountry) : null;
   // Student assessments should never fall back to Korean for users in non-KR
-  // branches just because their browser has a stale Korean localStorage value.
-  const currentLang = uiLang || (isStudentRoute ? countryToAssessmentLang(branchCountry) : null);
+  // branches just because their browser has a stale localStorage value. Branch
+  // language wins on the assessment page because the quiz content must match
+  // the learner's branch language consistently across PC/mobile/PWA caches.
+  const currentLang = branchAssessmentLang || uiLang;
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({
