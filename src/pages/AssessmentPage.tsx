@@ -178,12 +178,14 @@ function TranslateQuestionButton({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const touchHandledRef = useRef(false);
 
   if (!targetLang) return null;
   if (!(hasKorean ?? HANGUL_RE.test(questionText || ""))) return null;
   if (done) return null;
 
   const handleClick = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       await invokeQuestionTranslation(questionId, targetLang);
@@ -207,9 +209,20 @@ function TranslateQuestionButton({
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={() => {
+        if (touchHandledRef.current) {
+          touchHandledRef.current = false;
+          return;
+        }
+        void handleClick();
+      }}
+      onTouchEnd={(event) => {
+        event.preventDefault();
+        touchHandledRef.current = true;
+        void handleClick();
+      }}
       disabled={loading}
-      className="mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+      className="mt-2 inline-flex touch-manipulation items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
       {loading ? labels.loading : labels.idle}
