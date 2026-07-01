@@ -136,6 +136,36 @@ serve(async (req) => {
       for (const orig of bad as any[]) {
         try {
           const opts: string[] = Array.isArray(orig.options) ? orig.options : [];
+          const existing = existingMap.get(orig.id);
+          const sourceCorrectIndex = isChoiceQuestion(orig.question_type) && Array.isArray(orig.options)
+            ? orig.options.findIndex((option: string) => option === orig.correct_answer)
+            : -1;
+
+          // For choice questions the correct answer should stay aligned by option
+          // index. If only this hidden answer field is dirty, fix it from the
+          // already-translated option instead of calling AI for a long explanation.
+          if (
+            isChoiceQuestion(orig.question_type) &&
+            existing &&
+            Array.isArray(existing.options) &&
+            existing.options.length === opts.length &&
+            !hasHangul(existing.question_text) &&
+            !hasHangul(existing.options) &&
+            !hasHangul(existing.hint) &&
+            !hasHangul(existing.explanation) &&
+            sourceCorrectIndex >= 0 &&
+            existing.options[sourceCorrectIndex]
+          ) {
+            const derivedCorrect = String(existing.options[sourceCorrectIndex]).trim();
+            if (derivedCorrect && existing.correct_answer !== derivedCorrect) {
+              const { error: ue } = await sb.from("assessment_question_i18n")
+                .upsert({ ...existing, correct_answer: derivedCorrect }, { onConflict: "question_id,language_code" });
+              if (ue) { report[lang].failed++; console.error("upsert", orig.id, lang, ue.message); }
+              else report[lang].fixed++;
+              continue;
+            }
+          }
+
           const inputs: string[] = [orig.question_text || ""];
           const optStart = inputs.length;
           opts.forEach((o) => inputs.push(o || ""));
@@ -147,9 +177,6 @@ serve(async (req) => {
           const out = await translate(inputs, lang, apiKey);
           const tQ = (out[0] || "").trim();
           const tOpts = out.slice(optStart, optEnd).map((s) => (s || "").trim());
-          const sourceCorrectIndex = isChoiceQuestion(orig.question_type) && Array.isArray(orig.options)
-            ? orig.options.findIndex((option: string) => option === orig.correct_answer)
-            : -1;
           const tCorrect = sourceCorrectIndex >= 0 && tOpts[sourceCorrectIndex]
             ? tOpts[sourceCorrectIndex]
             : (out[optEnd] || "").trim();
