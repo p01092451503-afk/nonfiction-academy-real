@@ -147,7 +147,12 @@ serve(async (req) => {
           const out = await translate(inputs, lang, apiKey);
           const tQ = (out[0] || "").trim();
           const tOpts = out.slice(optStart, optEnd).map((s) => (s || "").trim());
-          const tCorrect = (out[optEnd] || "").trim();
+          const sourceCorrectIndex = isChoiceQuestion(orig.question_type) && Array.isArray(orig.options)
+            ? orig.options.findIndex((option: string) => option === orig.correct_answer)
+            : -1;
+          const tCorrect = sourceCorrectIndex >= 0 && tOpts[sourceCorrectIndex]
+            ? tOpts[sourceCorrectIndex]
+            : (out[optEnd] || "").trim();
           const tHint = (out[optEnd + 1] || "").trim();
           const tExp = (out[optEnd + 2] || "").trim();
 

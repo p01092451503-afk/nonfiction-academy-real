@@ -40,8 +40,10 @@ const parseOptionIndexAnswer = (value?: string | null): number | null => {
 const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
-  if (hasHangulValue([translation.question_text, translation.options, translation.correct_answer, translation.hint, translation.explanation])) return true;
-  if (isChoiceQuestion(question.question_type) && Array.isArray(question.options)) {
+  const isChoice = isChoiceQuestion(question.question_type);
+  if (hasHangulValue([translation.question_text, translation.options, translation.hint, translation.explanation])) return true;
+  if (!isChoice && hasHangulValue(translation.correct_answer)) return true;
+  if (isChoice && Array.isArray(question.options)) {
     return !Array.isArray(translation.options) || translation.options.length !== question.options.length;
   }
   return false;
