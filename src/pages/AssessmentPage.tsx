@@ -235,12 +235,15 @@ function TranslationRepairNotice({
 }) {
   if (!targetLang || (!repairing && !failed)) return null;
   const labels = TRANSLATE_LABELS[targetLang];
+  const text = repairing ? labels.repairingNotice : labels.fallbackNotice;
   return (
-    <div className="mt-3 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-xs text-muted-foreground">
-      <div className="flex items-start gap-2">
-        {repairing ? <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" /> : <Languages className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
-        <span>{repairing ? labels.repairingNotice : labels.fallbackNotice}</span>
-      </div>
+    <div
+      className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-secondary/40 px-2.5 py-1 text-[11px] leading-none text-muted-foreground"
+      title={text}
+      aria-label={text}
+    >
+      {repairing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Languages className="h-3 w-3" />}
+      <span className="truncate max-w-[220px] sm:max-w-none">{text}</span>
     </div>
   );
 }
