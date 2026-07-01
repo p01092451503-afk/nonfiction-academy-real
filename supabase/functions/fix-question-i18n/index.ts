@@ -155,7 +155,7 @@ serve(async (req) => {
             question_id: orig.id,
             language_code: lang,
             question_text: tQ || orig.question_text,
-            options: tOpts.length ? tOpts : r.options,
+            options: tOpts.length ? tOpts : opts,
             correct_answer: tCorrect || orig.correct_answer,
             hint: tHint || orig.hint || null,
             explanation: tExp || orig.explanation || null,
@@ -166,7 +166,7 @@ serve(async (req) => {
           else report[lang].fixed++;
         } catch (e) {
           report[lang].failed++;
-          console.error("row", r.question_id, lang, (e as Error).message);
+          console.error("row", orig.id, lang, (e as Error).message);
         }
       }
     }

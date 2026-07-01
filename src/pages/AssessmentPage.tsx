@@ -250,7 +250,7 @@ function QuestionReview({
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
-  currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void;
+  currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void | Promise<void>;
   questionI18n?: any;
   sourceQuestion?: any;
   repairing?: boolean;
