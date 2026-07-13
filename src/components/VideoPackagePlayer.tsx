@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { supabase } from "@/integrations/supabase/client";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { normalizeLang } from "@/lib/i18nLang";
+import { useUser } from "@/contexts/UserContext";
 
 
 
