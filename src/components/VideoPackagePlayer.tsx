@@ -431,11 +431,10 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
         }
         // Fire-and-forget; don't block UI. Errors are non-fatal — the parent
         // ContentPlayer also writes via onPartialProgress/onComplete as a fallback.
-        supabase
+        void supabase
           .from("content_progress")
           .upsert(payload, { onConflict: "user_id,content_id" })
-          .then(() => {})
-          .catch(() => {});
+          .then(() => {});
       }
     }
     if (isAllDone && !completedRef.current) {
