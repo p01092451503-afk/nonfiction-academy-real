@@ -405,17 +405,44 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
   // Trigger onComplete when all items completed (>=80% each).
   // Also emit partial progress on every change so the parent can persist
   // intermediate progress to content_progress (used by the course progress bar).
+  // Belt-and-suspenders: write directly to DB from here as well so that a
+  // single item's completion is persisted even if the parent's effect chain
+  // fails to run (observed on some iOS Safari sessions where the PWA state
+  // resets between renders and no partial progress was ever recorded).
   useEffect(() => {
     if (items.length === 0) return;
     onPartialProgress?.(completedItems.size, items.length);
-    if (
-      completedItems.size >= items.length &&
-      !completedRef.current
-    ) {
+    const size = completedItems.size;
+    const total = items.length;
+    const isAllDone = size >= total;
+    if (user?.id && contentId && size > 0) {
+      const pct = isAllDone ? 100 : Math.max(0, Math.min(99, Math.round((size / total) * 100)));
+      if (pct > lastDbPctRef.current) {
+        lastDbPctRef.current = pct;
+        const payload: any = {
+          user_id: user.id,
+          content_id: contentId,
+          progress_percentage: pct,
+          last_accessed_at: new Date().toISOString(),
+        };
+        if (isAllDone) {
+          payload.completed = true;
+          payload.completed_at = new Date().toISOString();
+        }
+        // Fire-and-forget; don't block UI. Errors are non-fatal — the parent
+        // ContentPlayer also writes via onPartialProgress/onComplete as a fallback.
+        supabase
+          .from("content_progress")
+          .upsert(payload, { onConflict: "user_id,content_id" })
+          .then(() => {})
+          .catch(() => {});
+      }
+    }
+    if (isAllDone && !completedRef.current) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [completedItems, items.length, onComplete, onPartialProgress]);
+  }, [completedItems, items.length, onComplete, onPartialProgress, user?.id, contentId]);
 
   // Bunny iframe progress tracking via Player.js postMessage protocol
   useEffect(() => {
