@@ -78,6 +78,7 @@ const getFrameNonce = () => `${Date.now()}-${Math.random().toString(36).slice(2,
 
 const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, isAlreadyCompleted = false, savedProgressPercentage = 0 }: VideoPackagePlayerProps) => {
   const { t, i18n } = useTranslation();
+  const { user } = useUser();
   const lang = normalizeLang(i18n.language);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -96,6 +97,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
   const completedRef = useRef(false);
   const maxWatchedRef = useRef<number>(0);
   const seekGuardRef = useRef<boolean>(false);
+  const lastDbPctRef = useRef<number>(-1);
 
 
 
