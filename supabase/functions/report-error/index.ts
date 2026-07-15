@@ -91,6 +91,31 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // === Project whitelist filter ===
+    // Combine all fields that might carry a Supabase project ref, then check:
+    //   1) If any FOREIGN ref is mentioned → drop (not our project).
+    //   2) If it's a LockManager error AND no reference to OUR project → drop.
+    const haystack = `${message}\n${stack}\n${url}`;
+    const mentionsOurRef =
+      haystack.includes(PROJECT_REF) ||
+      // Our app is served from these hosts; treat them as our project too.
+      /nonfiction-academy\.(lovable\.app|webheads\.co\.kr)/i.test(haystack) ||
+      /32613697-36d8-44de-a44f-4b31fe45576b\.lovable\.app/i.test(haystack);
+
+    if (containsForeignSupabaseRef(haystack) && !mentionsOurRef) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "foreign_project_ref" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (LOCK_MANAGER_RE.test(`${message}\n${stack}`) && !mentionsOurRef) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "lockmanager_no_project_ref" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Fingerprint = first line of message + URL path + first stack frame
     const stackHead = (stack.split("\n").find((l) => l.trim().startsWith("at ")) || "").trim();
     const pathOnly = (() => { try { return new URL(url).pathname; } catch { return url; } })();
