@@ -14,6 +14,30 @@ const SLACK_CHANNEL = "C0AK3KDJPU3";
 const DEBOUNCE_MINUTES = 5;
 const SLACK_GATEWAY = "https://connector-gateway.lovable.dev/slack/api";
 
+// Whitelist: only alert for errors that belong to THIS Supabase project.
+// Other projects' Supabase/LockManager noise (foreign project refs) is dropped.
+const PROJECT_REF = "jabagvlhgxrwbnxyrmvv";
+// Matches any 20-char lowercase Supabase project ref appearing in URLs like
+// https://<ref>.supabase.co or sb-<ref>-auth-token localStorage keys.
+const SUPABASE_REF_RE = /\b([a-z]{20})\.supabase\.co\b|sb-([a-z]{20})-auth-token/gi;
+
+const containsForeignSupabaseRef = (text: string): boolean => {
+  if (!text) return false;
+  SUPABASE_REF_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = SUPABASE_REF_RE.exec(text)) !== null) {
+    const ref = (m[1] || m[2] || "").toLowerCase();
+    if (ref && ref !== PROJECT_REF) return true;
+  }
+  return false;
+};
+
+// LockManager errors ("NavigatorLockAcquireTimeoutError", "Acquiring an exclusive
+// Navigator LockManager lock ...") originate from the Supabase auth client. When
+// they come from a foreign project ref (e.g. a user has multiple Supabase apps
+// open), we drop them entirely.
+const LOCK_MANAGER_RE = /NavigatorLockAcquireTimeout|Navigator LockManager|@supabase\/auth-js.*lock/i;
+
 const sha1 = async (s: string): Promise<string> => {
   const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -65,6 +89,31 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "message is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // === Project whitelist filter ===
+    // Combine all fields that might carry a Supabase project ref, then check:
+    //   1) If any FOREIGN ref is mentioned → drop (not our project).
+    //   2) If it's a LockManager error AND no reference to OUR project → drop.
+    const haystack = `${message}\n${stack}\n${url}`;
+    const mentionsOurRef =
+      haystack.includes(PROJECT_REF) ||
+      // Our app is served from these hosts; treat them as our project too.
+      /nonfiction-academy\.(lovable\.app|webheads\.co\.kr)/i.test(haystack) ||
+      /32613697-36d8-44de-a44f-4b31fe45576b\.lovable\.app/i.test(haystack);
+
+    if (containsForeignSupabaseRef(haystack) && !mentionsOurRef) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "foreign_project_ref" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (LOCK_MANAGER_RE.test(`${message}\n${stack}`) && !mentionsOurRef) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "lockmanager_no_project_ref" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Fingerprint = first line of message + URL path + first stack frame
