@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Video as VideoIcon, ZoomIn, X, Plus, Minus, RotateCcw, Play, Lock } from "lucide-react";
@@ -38,6 +38,8 @@ interface MediaPackagePlayerProps {
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
   /** 영상 슬라이드들의 실제 시청 초가 변할 때 호출 (디바운스됨). 학습시간 통계에 사용 */
   onWatchedSecondsTracked?: (totalSeconds: number) => void;
+  /** 이 차시에 배분된 최소 학습시간(초). 슬라이드 수로 균등 배분되어 카드별 게이팅에 사용 */
+  perContentMinSeconds?: number;
 }
 
 interface PackageItem {
@@ -291,7 +293,7 @@ const TrackedDirectVideo = ({
 const isImageUrl = (url: string) =>
   /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url);
 
-const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatchedSecondsTracked }: MediaPackagePlayerProps) => {
+const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatchedSecondsTracked, perContentMinSeconds = 0 }: MediaPackagePlayerProps) => {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
@@ -325,6 +327,11 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
   videoStatesRef.current = videoStates;
   const lastReportedSecRef = useRef<number>(-1);
   const lockToastRef = useRef<number>(0);
+
+  // ── 카드별 최소 체류 시간(초) 트래킹 ──
+  const [dwellSec, setDwellSec] = useState<Record<number, number>>({});
+  const dwellSecRef = useRef(dwellSec);
+  dwellSecRef.current = dwellSec;
 
   const handleVideoProgress = useCallback(
     (itemId: string, watched: number, duration: number, completed: boolean) => {
@@ -426,40 +433,82 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     return false;
   }, []);
 
+  // 카드별 최소 체류 시간 (초). 0이면 미사용.
+  const perCardMinSec = useMemo(() => {
+    if (!perContentMinSeconds || perContentMinSeconds <= 0 || items.length === 0) return 0;
+    return Math.ceil(perContentMinSeconds / items.length);
+  }, [perContentMinSeconds, items.length]);
+
+  const isTimeGated = useCallback(
+    (slideIdx: number) => {
+      if (perCardMinSec <= 0) return false;
+      return (dwellSec[slideIdx] || 0) < perCardMinSec;
+    },
+    [dwellSec, perCardMinSec]
+  );
+
   const isItemLocked = useCallback(
     (slideIdx: number) => {
       const it = items[slideIdx];
-      if (!isItemTrackableVideo(it)) return false;
-      return !videoStates[it.id]?.completed;
+      const videoLocked = isItemTrackableVideo(it) && !videoStates[it.id]?.completed;
+      return videoLocked || isTimeGated(slideIdx);
     },
-    [items, videoStates, isItemTrackableVideo]
+    [items, videoStates, isItemTrackableVideo, isTimeGated]
   );
 
-  const showLockToast = useCallback(() => {
-    const now = Date.now();
-    if (now - lockToastRef.current < 2000) return;
-    lockToastRef.current = now;
-    toast({
-      title: t("contentPlayer.videoLockTitle", "영상을 끝까지 시청해주세요"),
-      description: t(
-        "contentPlayer.videoLockDesc",
-        "영상이 95% 이상 재생되어야 다음 카드로 이동할 수 있어요."
-      ),
-    });
-  }, [t]);
+  const showLockToast = useCallback(
+    (reason: "video" | "time" = "video") => {
+      const now = Date.now();
+      if (now - lockToastRef.current < 2000) return;
+      lockToastRef.current = now;
+      if (reason === "time") {
+        const remain = Math.max(0, perCardMinSec - (dwellSecRef.current[index] || 0));
+        toast({
+          title: t("contentPlayer.timeLockTitle", "학습시간을 채워야 이동할 수 있어요"),
+          description: t("contentPlayer.timeLockDesc", "이 카드에 배분된 학습시간이 {{s}}초 남았어요.", { s: remain }),
+        });
+      } else {
+        toast({
+          title: t("contentPlayer.videoLockTitle", "영상을 끝까지 시청해주세요"),
+          description: t(
+            "contentPlayer.videoLockDesc",
+            "영상이 95% 이상 재생되어야 다음 카드로 이동할 수 있어요."
+          ),
+        });
+      }
+    },
+    [t, perCardMinSec, index]
+  );
 
-  // 강의 전체 시청 완료 + 영상 시청 완료 여부 모두 만족해야 onComplete
+  // 현재 카드에서 1초마다 체류 시간 누적 (탭 활성일 때만)
+  useEffect(() => {
+    if (perCardMinSec <= 0) return;
+    if (items.length === 0) return;
+    const id = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      setDwellSec((prev) => {
+        const cur = prev[index] || 0;
+        if (cur >= perCardMinSec) return prev;
+        return { ...prev, [index]: cur + 1 };
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [index, perCardMinSec, items.length]);
+
+  // 강의 전체 시청 완료 + 영상 시청 완료 + 카드 학습시간 충족 시 onComplete
   useEffect(() => {
     if (items.length === 0) return;
     const allVideosDone = items.every((it) =>
       !isItemTrackableVideo(it) || videoStatesRef.current[it.id]?.completed
     );
+    const allTimeMet = perCardMinSec <= 0
+      || items.every((_, i) => (dwellSec[i] || 0) >= perCardMinSec);
     onPartialProgress?.(visited.size, items.length);
-    if (visited.size >= items.length && allVideosDone && !completedRef.current) {
+    if (visited.size >= items.length && allVideosDone && allTimeMet && !completedRef.current) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [visited, items, videoStates, onComplete, onPartialProgress, isItemTrackableVideo]);
+  }, [visited, items, videoStates, dwellSec, perCardMinSec, onComplete, onPartialProgress, isItemTrackableVideo]);
 
   // 실제 시청 누적 초 → 부모에 보고 (3초 디바운스)
   useEffect(() => {
@@ -482,7 +531,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
         setIndex((i) => {
           if (i >= items.length - 1) return i;
           if (isItemLocked(i)) {
-            showLockToast();
+            showLockToast(isTimeGated(i) ? "time" : "video");
             return i;
           }
           return i + 1;
@@ -491,7 +540,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items.length, isItemLocked, showLockToast]);
+  }, [items.length, isItemLocked, showLockToast, isTimeGated]);
 
   if (isLoading) {
     return (
@@ -588,7 +637,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     const threshold = Math.min(80, containerWidth * 0.18);
     if (dragOffset < -threshold && !isLast) {
       if (isItemLocked(index)) {
-        showLockToast();
+        showLockToast(isTimeGated(index) ? "time" : "video");
       } else {
         setIndex((i) => i + 1);
       }
@@ -701,7 +750,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
                 if (i > index) {
                   for (let k = index; k < i; k++) {
                     if (isItemLocked(k)) {
-                      showLockToast();
+                      showLockToast(isTimeGated(k) ? "time" : "video");
                       return;
                     }
                   }
@@ -721,15 +770,16 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
         </div>
       )}
 
-      {/* 현재 슬라이드에 미완료 영상이 있으면 안내 */}
+      {/* 현재 슬라이드에 미완료 영상이 있거나 배분된 학습시간이 남았으면 안내 */}
       {isItemLocked(index) && (
         <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5" aria-hidden="true" />
           <span>
-            {t(
-              "contentPlayer.videoLockHint",
-              "영상을 끝까지 시청하면 다음 카드로 이동할 수 있어요"
-            )}
+            {isTimeGated(index)
+              ? t("contentPlayer.timeLockHint", "이 카드에 배분된 학습시간을 채우면 다음 카드로 이동할 수 있어요 ({{s}}초 남음)", {
+                  s: Math.max(0, perCardMinSec - (dwellSec[index] || 0)),
+                })
+              : t("contentPlayer.videoLockHint", "영상을 끝까지 시청하면 다음 카드로 이동할 수 있어요")}
           </span>
         </div>
       )}

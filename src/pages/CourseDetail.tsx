@@ -126,7 +126,7 @@ const CourseDetail = () => {
   const [courseForm, setCourseForm] = useState({
     title: "", description: "", status: "draft", is_mandatory: false, deadline: "",
     category_id: "", difficulty_level: "beginner", estimated_duration_hours: "", max_students: "",
-    is_sequential: false,
+    is_sequential: false, min_learning_minutes: "",
   });
   // Multi-language i18n forms for course edit (en, ja, zh-CN)
   type CourseI18nLang = "en" | "ja" | "zh-CN";
@@ -432,6 +432,7 @@ const CourseDetail = () => {
         max_students: vals.max_students ? parseInt(vals.max_students) : null,
         thumbnail_url: thumbnailUrl,
         is_sequential: vals.is_sequential,
+        min_learning_minutes: vals.min_learning_minutes ? Math.max(0, parseInt(vals.min_learning_minutes)) : 0,
       } as any).eq("id", courseId!);
       if (error) throw error;
       const resolvedI18nForm = { ...courseI18nForm };
@@ -625,6 +626,7 @@ const CourseDetail = () => {
       estimated_duration_hours: course.estimated_duration_hours ? String(course.estimated_duration_hours) : "",
       max_students: course.max_students ? String(course.max_students) : "",
       is_sequential: (course as any).is_sequential || false,
+      min_learning_minutes: (course as any).min_learning_minutes ? String((course as any).min_learning_minutes) : "",
     });
     const findRow = (lc: CourseI18nLang) =>
       courseI18n?.find((i: any) => i.language_code === lc);
@@ -1736,7 +1738,7 @@ const CourseEditDialog = ({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  form: { title: string; description: string; status: string; is_mandatory: boolean; deadline: string; category_id: string; difficulty_level: string; estimated_duration_hours: string; max_students: string; is_sequential: boolean };
+  form: { title: string; description: string; status: string; is_mandatory: boolean; deadline: string; category_id: string; difficulty_level: string; estimated_duration_hours: string; max_students: string; is_sequential: boolean; min_learning_minutes: string };
   setForm: React.Dispatch<React.SetStateAction<typeof form>>;
   i18nForm: Record<CourseI18nLang, CourseI18nForm>;
   setI18nForm: React.Dispatch<React.SetStateAction<Record<CourseI18nLang, CourseI18nForm>>>;
@@ -1961,6 +1963,27 @@ const CourseEditDialog = ({
                 checked={form.is_sequential}
                 onCheckedChange={(v) => setForm(f => ({ ...f, is_sequential: v }))}
               />
+            </div>
+            {/* Minimum Learning Time */}
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">
+                {t("course.minLearningMinutes", "최소 학습시간 (분)")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                className="h-9 text-sm"
+                placeholder="0"
+                value={form.min_learning_minutes}
+                onChange={(e) => setForm(f => ({ ...f, min_learning_minutes: e.target.value.replace(/[^0-9]/g, "") }))}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "course.minLearningMinutesHelp",
+                  "0이면 미사용. 값을 넣으면 강의의 모든 차시/카드에 시간이 균등 배분되고, 각 카드에 배분된 시간을 채워야 다음 카드로 넘어갈 수 있으며 시간을 모두 채우기 전에는 이수 완료로 처리되지 않습니다."
+                )}
+              </p>
             </div>
           </div>
         </TabsContent>

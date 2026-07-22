@@ -719,6 +719,10 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "media_package" ? (
                 <MediaPackagePlayer
                   contentId={currentContent.id}
+                  perContentMinSeconds={
+                    (((course as any)?.min_learning_minutes ?? 0) * 60) /
+                    Math.max(1, contents.length)
+                  }
                   onPartialProgress={handlePartialProgress}
                   onWatchedSecondsTracked={handleWatchedSecondsTracked}
                   onComplete={() => {
