@@ -1964,6 +1964,27 @@ const CourseEditDialog = ({
                 onCheckedChange={(v) => setForm(f => ({ ...f, is_sequential: v }))}
               />
             </div>
+            {/* Minimum Learning Time */}
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">
+                {t("course.minLearningMinutes", "최소 학습시간 (분)")}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                className="h-9 text-sm"
+                placeholder="0"
+                value={form.min_learning_minutes}
+                onChange={(e) => setForm(f => ({ ...f, min_learning_minutes: e.target.value.replace(/[^0-9]/g, "") }))}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {t(
+                  "course.minLearningMinutesHelp",
+                  "0이면 미사용. 값을 넣으면 강의의 모든 차시/카드에 시간이 균등 배분되고, 각 카드에 배분된 시간을 채워야 다음 카드로 넘어갈 수 있으며 시간을 모두 채우기 전에는 이수 완료로 처리되지 않습니다."
+                )}
+              </p>
+            </div>
           </div>
         </TabsContent>
 
