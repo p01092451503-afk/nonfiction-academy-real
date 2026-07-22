@@ -34,6 +34,7 @@ const severityStyle = {
 
 export default function PlatformUpdateBanner() {
   const { user, roles } = useUser();
+  const { t } = useTranslation();
   const [update, setUpdate] = useState<Update | null>(null);
 
   const matchesAudience = (u: Update) => {
