@@ -69,7 +69,7 @@ export const DashboardWeeklySummary = ({ filters, leaderId }: DashboardWeeklySum
   const maxValue = Math.max(...items.map((i) => i.value), 1);
 
   return (
-    <div className="stat-card !p-4">
+    <div className="stat-card !p-4 self-start">
       <h3 className="text-base font-semibold text-foreground mb-3">
         {t("dashboard.weekly.title", { defaultValue: "주간 요약" })}
       </h3>
