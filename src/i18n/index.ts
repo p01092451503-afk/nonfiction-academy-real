@@ -5,6 +5,7 @@ import ko from './locales/ko.json';
 import en from './locales/en.json';
 import ja from './locales/ja.json';
 import zhCN from './locales/zh-CN.json';
+import yue from './locales/yue.json';
 
 i18n
   .use(LanguageDetector)
@@ -15,10 +16,11 @@ i18n
       en: { translation: en },
       ja: { translation: ja },
       'zh-CN': { translation: zhCN },
+      yue: { translation: yue },
     },
-    // KO를 모든 비KO 로케일의 폴백으로 사용 — 새 키가 EN/JA/ZH에 아직 없어도 한국어로라도 표시됨
-    fallbackLng: { 'en': ['ko'], 'ja': ['ko'], 'zh-CN': ['ko'], default: ['ko'] },
-    supportedLngs: ['ko', 'en', 'ja', 'zh-CN'],
+    // KO를 모든 비KO 로케일의 폴백으로 사용 — 새 키가 EN/JA/ZH/YUE에 아직 없어도 한국어로라도 표시됨
+    fallbackLng: { 'en': ['ko'], 'ja': ['ko'], 'zh-CN': ['ko'], 'yue': ['ko'], default: ['ko'] },
+    supportedLngs: ['ko', 'en', 'ja', 'zh-CN', 'yue'],
     // 빈 문자열도 "값 없음"으로 보고 폴백을 타도록
     returnEmptyString: false,
     returnNull: false,
@@ -42,10 +44,13 @@ i18n
       caches: ['localStorage'],
       lookupLocalStorage: 'nfl-lang',
       lookupQuerystring: 'lang',
-      // Map browser zh / zh-Hans / zh-SG → zh-CN so detection doesn't drop it
+      // Map browser zh / zh-Hans / zh-SG → zh-CN, and zh-HK / zh-Hant-HK / zh-MO / yue → yue
       convertDetectedLanguage: (lng: string) => {
         if (!lng) return 'ko';
         const lower = lng.toLowerCase();
+        if (lower === 'yue' || lower.startsWith('yue-') ||
+            lower === 'zh-hk' || lower === 'zh-mo' ||
+            lower.startsWith('zh-hant-hk') || lower.startsWith('zh-yue')) return 'yue';
         if (lower === 'zh' || lower.startsWith('zh-hans') || lower === 'zh-sg' || lower === 'zh-cn') return 'zh-CN';
         if (lower.startsWith('zh')) return 'zh-CN';
         if (lower.startsWith('ja')) return 'ja';
