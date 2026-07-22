@@ -433,27 +433,67 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     return false;
   }, []);
 
+  // 카드별 최소 체류 시간 (초). 0이면 미사용.
+  const perCardMinSec = useMemo(() => {
+    if (!perContentMinSeconds || perContentMinSeconds <= 0 || items.length === 0) return 0;
+    return Math.ceil(perContentMinSeconds / items.length);
+  }, [perContentMinSeconds, items.length]);
+
+  const isTimeGated = useCallback(
+    (slideIdx: number) => {
+      if (perCardMinSec <= 0) return false;
+      return (dwellSec[slideIdx] || 0) < perCardMinSec;
+    },
+    [dwellSec, perCardMinSec]
+  );
+
   const isItemLocked = useCallback(
     (slideIdx: number) => {
       const it = items[slideIdx];
-      if (!isItemTrackableVideo(it)) return false;
-      return !videoStates[it.id]?.completed;
+      const videoLocked = isItemTrackableVideo(it) && !videoStates[it.id]?.completed;
+      return videoLocked || isTimeGated(slideIdx);
     },
-    [items, videoStates, isItemTrackableVideo]
+    [items, videoStates, isItemTrackableVideo, isTimeGated]
   );
 
-  const showLockToast = useCallback(() => {
-    const now = Date.now();
-    if (now - lockToastRef.current < 2000) return;
-    lockToastRef.current = now;
-    toast({
-      title: t("contentPlayer.videoLockTitle", "영상을 끝까지 시청해주세요"),
-      description: t(
-        "contentPlayer.videoLockDesc",
-        "영상이 95% 이상 재생되어야 다음 카드로 이동할 수 있어요."
-      ),
-    });
-  }, [t]);
+  const showLockToast = useCallback(
+    (reason: "video" | "time" = "video") => {
+      const now = Date.now();
+      if (now - lockToastRef.current < 2000) return;
+      lockToastRef.current = now;
+      if (reason === "time") {
+        const remain = Math.max(0, perCardMinSec - (dwellSecRef.current[index] || 0));
+        toast({
+          title: t("contentPlayer.timeLockTitle", "학습시간을 채워야 이동할 수 있어요"),
+          description: t("contentPlayer.timeLockDesc", "이 카드에 배분된 학습시간이 {{s}}초 남았어요.", { s: remain }),
+        });
+      } else {
+        toast({
+          title: t("contentPlayer.videoLockTitle", "영상을 끝까지 시청해주세요"),
+          description: t(
+            "contentPlayer.videoLockDesc",
+            "영상이 95% 이상 재생되어야 다음 카드로 이동할 수 있어요."
+          ),
+        });
+      }
+    },
+    [t, perCardMinSec, index]
+  );
+
+  // 현재 카드에서 1초마다 체류 시간 누적 (탭 활성일 때만)
+  useEffect(() => {
+    if (perCardMinSec <= 0) return;
+    if (items.length === 0) return;
+    const id = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      setDwellSec((prev) => {
+        const cur = prev[index] || 0;
+        if (cur >= perCardMinSec) return prev;
+        return { ...prev, [index]: cur + 1 };
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [index, perCardMinSec, items.length]);
 
   // 강의 전체 시청 완료 + 영상 시청 완료 여부 모두 만족해야 onComplete
   useEffect(() => {
