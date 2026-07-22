@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Users, ClipboardCheck, TrendingUp, LayoutDashboard, Activity, GraduationCap,
   AlertCircle, Trophy, BookOpen, Target, Flame, ArrowRight,
@@ -15,6 +16,19 @@ import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { localizeCourse } from "@/lib/i18nCourse";
 import { normalizeLang } from "@/lib/i18nLang";
+import DashboardFilterBar, { DashboardFilters } from "@/components/admin/DashboardFilterBar";
+import DashboardMetricCards from "@/components/admin/DashboardMetricCards";
+import DashboardWeeklySummary from "@/components/admin/DashboardWeeklySummary";
+import DashboardDropoffCourses from "@/components/admin/DashboardDropoffCourses";
+import DashboardAccessHeatmap from "@/components/admin/DashboardAccessHeatmap";
+import DashboardLearnerTable from "@/components/admin/DashboardLearnerTable";
+
+const defaultLeaderFilters: DashboardFilters = {
+  years: [],
+  months: [],
+  countries: [],
+  branch_ids: [],
+};
 
 const TeacherDashboard = () => {
   const { user } = useUser();
