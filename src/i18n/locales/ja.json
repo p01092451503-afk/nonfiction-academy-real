@@ -1614,5 +1614,9 @@
     "title": "グローバル学習ダッシュボード",
     "totalLearners": "全学習者",
     "trackCompletion": "トラック別修了率"
+  },
+  "platformUpdate": {
+    "title": "新しいアップデートがあります",
+    "message": "より良い体験のため、アプリを再読み込みしてください。"
   }
 }

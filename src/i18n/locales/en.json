@@ -1659,5 +1659,9 @@
   },
   "branch": {
     "branchTitle": "Affiliated Organization"
+  },
+  "platformUpdate": {
+    "title": "A new update is available",
+    "message": "Please refresh the app for the best experience."
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, AlertTriangle, Info, X, Megaphone } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -33,6 +34,7 @@ const severityStyle = {
 
 export default function PlatformUpdateBanner() {
   const { user, roles } = useUser();
+  const { t } = useTranslation();
   const [update, setUpdate] = useState<Update | null>(null);
 
   const matchesAudience = (u: Update) => {
@@ -142,10 +144,13 @@ export default function PlatformUpdateBanner() {
         <Icon className={`h-5 w-5 ${s.text} shrink-0 mt-0.5 sm:mt-0`} />
         <div className={`flex-1 min-w-0 ${s.text}`}>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold">{update.title}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-background/60 font-mono">v{update.version}</span>
+            <span className="text-sm font-semibold">
+              {t("platformUpdate.title", "새로운 업데이트가 있습니다")}
+            </span>
           </div>
-          <p className="text-xs mt-0.5 opacity-90 line-clamp-2 sm:line-clamp-1">{update.message}</p>
+          <p className="text-xs mt-0.5 opacity-90 line-clamp-2 sm:line-clamp-1">
+            {t("platformUpdate.message", "더 나은 사용 환경을 위해 앱을 새로고침해 주세요.")}
+          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           {update.require_reload && (

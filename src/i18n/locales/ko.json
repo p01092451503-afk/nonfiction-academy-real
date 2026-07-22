@@ -1614,5 +1614,9 @@
     "learnerBreakdown": "학습자별 수료 현황",
     "learner": "학습자",
     "done": "완료"
+  },
+  "platformUpdate": {
+    "title": "새로운 업데이트가 있습니다",
+    "message": "더 나은 사용 환경을 위해 앱을 새로고침해 주세요."
   }
 }

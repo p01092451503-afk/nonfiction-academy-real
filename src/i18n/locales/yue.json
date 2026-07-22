@@ -1614,5 +1614,9 @@
     "learnerBreakdown": "學習者完成狀況細分",
     "learner": "學習者",
     "done": "完成"
+  },
+  "platformUpdate": {
+    "title": "有新嘅更新",
+    "message": "為咗更好嘅體驗，請刷新應用程式。"
   }
 }

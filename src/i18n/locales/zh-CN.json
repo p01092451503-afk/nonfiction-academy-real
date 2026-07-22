@@ -1614,5 +1614,9 @@
     "title": "全球学习仪表盘",
     "totalLearners": "全体学员",
     "trackCompletion": "各阶段完成率"
+  },
+  "platformUpdate": {
+    "title": "有新的更新",
+    "message": "为获得更好的体验，请刷新应用。"
   }
 }
