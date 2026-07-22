@@ -81,6 +81,7 @@ export async function loadContentTranslations(params: {
     en: { title: pick("en")?.title ?? "", content: pick("en")?.content ?? "" },
     ja: { title: pick("ja")?.title ?? "", content: pick("ja")?.content ?? "" },
     "zh-CN": { title: pick("zh-CN")?.title ?? "", content: pick("zh-CN")?.content ?? "" },
+    yue: { title: pick("yue")?.title ?? "", content: pick("yue")?.content ?? "" },
   };
 }
 
