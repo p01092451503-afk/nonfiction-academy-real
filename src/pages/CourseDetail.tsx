@@ -1859,8 +1859,8 @@ const CourseEditDialog = ({
           <TabsTrigger value="ko" className="text-xs">{t("course.koTab")}</TabsTrigger>
           <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
           <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
-          <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
           <TabsTrigger value="yue" className="text-xs">粵語</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
