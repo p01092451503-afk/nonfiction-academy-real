@@ -495,18 +495,20 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     return () => clearInterval(id);
   }, [index, perCardMinSec, items.length]);
 
-  // 강의 전체 시청 완료 + 영상 시청 완료 여부 모두 만족해야 onComplete
+  // 강의 전체 시청 완료 + 영상 시청 완료 + 카드 학습시간 충족 시 onComplete
   useEffect(() => {
     if (items.length === 0) return;
     const allVideosDone = items.every((it) =>
       !isItemTrackableVideo(it) || videoStatesRef.current[it.id]?.completed
     );
+    const allTimeMet = perCardMinSec <= 0
+      || items.every((_, i) => (dwellSec[i] || 0) >= perCardMinSec);
     onPartialProgress?.(visited.size, items.length);
-    if (visited.size >= items.length && allVideosDone && !completedRef.current) {
+    if (visited.size >= items.length && allVideosDone && allTimeMet && !completedRef.current) {
       completedRef.current = true;
       onComplete?.();
     }
-  }, [visited, items, videoStates, onComplete, onPartialProgress, isItemTrackableVideo]);
+  }, [visited, items, videoStates, dwellSec, perCardMinSec, onComplete, onPartialProgress, isItemTrackableVideo]);
 
   // 실제 시청 누적 초 → 부모에 보고 (3초 디바운스)
   useEffect(() => {
