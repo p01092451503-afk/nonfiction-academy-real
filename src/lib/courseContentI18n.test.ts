@@ -89,6 +89,7 @@ describe("getContentTitle (Learning screen + CourseDetail row title)", () => {
     en:      { id: "en-1",   language_code: "en",    title: "Lesson 1. English Lesson" },
     "zh-CN": { id: "zh-1",   language_code: "zh-CN", title: "第 1 课. 中文课程" },
     ja:      { id: "ja-1",   language_code: "ja",    title: "レッスン 1. 日本語レッスン" },
+    yue:     { id: "yue-1",  language_code: "yue",   title: "第 1 課. 廣東話課程" },
   };
 
   it.each(SUPPORTED_LANGS)("renders %s row in its own language (no cross-language bleed)", (lang) => {

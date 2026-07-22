@@ -90,6 +90,7 @@ const emptyI18nAll: Record<ContentI18nLang, ContentI18nData> = {
   en: { ...emptyI18n },
   ja: { ...emptyI18n },
   "zh-CN": { ...emptyI18n },
+  yue: { ...emptyI18n },
 };
 
 const CourseDetail = () => {
@@ -105,10 +106,11 @@ const CourseDetail = () => {
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
-  const currentLang: "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue" = (() => {
+  const currentLang: "ko" | "en" | "ja" | "zh-CN" | "yue" = (() => {
     const l = i18n.language || "ko";
     if (l.startsWith("en")) return "en";
     if (l.startsWith("ja")) return "ja";
+    if (l === "yue" || l.startsWith("yue-") || l === "zh-hk" || l === "zh-mo") return "yue";
     if (l.startsWith("zh")) return "zh-CN";
     return "ko";
   })();
@@ -135,6 +137,7 @@ const CourseDetail = () => {
     en: { title: "", description: "" },
     ja: { title: "", description: "" },
     "zh-CN": { title: "", description: "" },
+    yue: { title: "", description: "" },
   };
   const [courseI18nForm, setCourseI18nForm] = useState<Record<CourseI18nLang, CourseI18nForm>>(EMPTY_COURSE_I18N);
   const [courseThumbnailFile, setCourseThumbnailFile] = useState<File | null>(null);
@@ -634,6 +637,7 @@ const CourseDetail = () => {
       en: { title: sanitizeCourseTranslation(findRow("en")?.title, course.title), description: sanitizeTranslatedDescription(findRow("en")?.description) },
       ja: { title: sanitizeCourseTranslation(findRow("ja")?.title, course.title), description: sanitizeTranslatedDescription(findRow("ja")?.description) },
       "zh-CN": { title: sanitizeCourseTranslation(findRow("zh-CN")?.title, course.title), description: sanitizeTranslatedDescription(findRow("zh-CN")?.description) },
+      yue: { title: sanitizeCourseTranslation(findRow("yue")?.title, course.title), description: sanitizeTranslatedDescription(findRow("yue")?.description) },
     });
     setCourseThumbnailFile(null);
     setCourseThumbnailPreview(course.thumbnail_url || null);
@@ -1325,7 +1329,7 @@ const StudentAssessmentSection = ({
   routePrefix: string;
   t: any;
   isEn: boolean;
-  currentLang: "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue";
+  currentLang: "ko" | "en" | "ja" | "zh-CN" | "yue";
 }) => {
   const navigate = useNavigate();
   const { data: assessment } = useQuery({
@@ -1425,6 +1429,7 @@ const I18N_LANG_LABELS: Record<ContentI18nLang, string> = {
   en: "English",
   ja: "日本語",
   "zh-CN": "简体中文",
+  yue: "粵語",
 };
 
 const ContentDialog = ({
@@ -1448,6 +1453,7 @@ const ContentDialog = ({
     en: { title: false, description: false },
     ja: { title: false, description: false },
     "zh-CN": { title: false, description: false },
+    yue: { title: false, description: false },
   });
 
   // Reset manual flags when dialog opens
@@ -1457,6 +1463,7 @@ const ContentDialog = ({
         en: { title: false, description: false },
         ja: { title: false, description: false },
         "zh-CN": { title: false, description: false },
+        yue: { title: false, description: false },
       });
     }
   }, [open]);
@@ -1730,6 +1737,7 @@ const COURSE_I18N_LANG_LABELS: Record<CourseI18nLang, string> = {
   en: "English",
   ja: "日本語",
   "zh-CN": "简体中文",
+  yue: "粵語",
 };
 
 const CourseEditDialog = ({
@@ -1758,6 +1766,7 @@ const CourseEditDialog = ({
     en: { title: false, description: false },
     ja: { title: false, description: false },
     "zh-CN": { title: false, description: false },
+    yue: { title: false, description: false },
   });
 
   const prevKoRef = useRef<{ title: string; description: string } | null>(null);
@@ -1771,6 +1780,7 @@ const CourseEditDialog = ({
       en: { title: !!sanitizeCourseTranslation(i18nForm.en.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.en.description, form.description).trim() },
       ja: { title: !!sanitizeCourseTranslation(i18nForm.ja.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.ja.description, form.description).trim() },
       "zh-CN": { title: !!sanitizeCourseTranslation(i18nForm["zh-CN"].title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm["zh-CN"].description, form.description).trim() },
+      yue: { title: !!sanitizeCourseTranslation(i18nForm.yue.title, form.title).trim(), description: !!sanitizeCourseTranslation(i18nForm.yue.description, form.description).trim() },
     });
     // Seed previous KO snapshot so the sync effects below don't fire on initial open
     prevKoRef.current = { title: form.title, description: form.description };

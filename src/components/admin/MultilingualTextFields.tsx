@@ -10,13 +10,14 @@ import { Languages } from "lucide-react";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
 import { toast } from "sonner";
 
-export type MlLang = "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue";
+export type MlLang = "ko" | "en" | "ja" | "zh-CN" | "yue";
 
 export interface MultilingualValue {
   ko: { title: string; content: string };
   en: { title: string; content: string };
   ja: { title: string; content: string };
   "zh-CN": { title: string; content: string };
+  yue: { title: string; content: string };
 }
 
 export const EMPTY_MULTILINGUAL: MultilingualValue = {
@@ -24,6 +25,7 @@ export const EMPTY_MULTILINGUAL: MultilingualValue = {
   en: { title: "", content: "" },
   ja: { title: "", content: "" },
   "zh-CN": { title: "", content: "" },
+  yue: { title: "", content: "" },
 };
 
 const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN", "yue"];
@@ -32,6 +34,7 @@ const LANG_LABEL: Record<MlLang, string> = {
   en: "English",
   ja: "日本語",
   "zh-CN": "中文",
+  yue: "粵語",
 };
 
 interface Props {
