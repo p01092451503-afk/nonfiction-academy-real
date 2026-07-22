@@ -315,6 +315,7 @@ async function fetchAllRows(): Promise<Row[]> {
   const enFlat = flattenKeys(enLocale);
   const jaFlat = flattenKeys(jaLocale);
   const zhFlat = flattenKeys(zhLocale);
+  const yueFlat = flattenKeys(yueLocale);
   const { data: uiOverrides } = await supabase
     .from("ui_translations" as any)
     .select("key, language_code, value");
