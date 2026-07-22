@@ -462,7 +462,12 @@ const StudentDashboard = () => {
     { label: t("dashboard.consecutiveLearning"), value: `${gamification?.streak_days || 0}${t("common.days")}`, sub: t("dashboard.consecutiveDays"), icon: TrendingUp },
     { label: t("dashboard.level"), value: `Lv.${gamification?.level || 1}`, sub: `${gamification?.experience_points || 0} XP`, icon: Star },
     { label: t("dashboard.completedAssignments"), value: String(completedAssignments), sub: t("dashboard.totalAssignmentsSub", { count: totalAssignments }), icon: ClipboardCheck },
-    { label: t("dashboard.totalPoints"), value: String(gamification?.total_points || 0), sub: t("dashboard.cumulativePoints"), icon: Award },
+    {
+      label: periodRanges ? t("dashboard.periodPoints", { defaultValue: "기간 획득 포인트" }) : t("dashboard.totalPoints"),
+      value: String(periodRanges ? periodPoints : (gamification?.total_points || 0)),
+      sub: periodRanges ? t("dashboard.periodPointsSub", { defaultValue: "선택 기간 합계" }) : t("dashboard.cumulativePoints"),
+      icon: Award,
+    },
     { label: t("dashboard.myComments", "내 댓글 수"), value: String(myCommentCount), sub: t("dashboard.myCommentsSub", "강의 작성 댓글"), icon: MessageSquare },
   ];
 
