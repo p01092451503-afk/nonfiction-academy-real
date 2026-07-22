@@ -200,7 +200,8 @@
       "learningMinutes": "This Week Learning Time",
       "activeLearners": "This Week Active Learners",
       "completionRate": "This Week Completion Rate",
-      "totalEnrollments": "Total Enrollments"
+      "totalEnrollments": "Total Enrollments",
+      "prevWeek": "last week"
     },
     "dropoff": {
       "title": "Top 5 Dropoff Courses",

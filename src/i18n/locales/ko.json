@@ -197,7 +197,8 @@
       "learningMinutes": "이번 주 학습 시간",
       "activeLearners": "이번 주 활동 학습자",
       "completionRate": "이번 주 이수율",
-      "totalEnrollments": "전체 수강 등록"
+      "totalEnrollments": "전체 수강 등록",
+      "prevWeek": "지난주"
     },
     "dropoff": {
       "title": "이탈 강의 TOP 5",

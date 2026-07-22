@@ -197,7 +197,8 @@
       "learningMinutes": "今週の学習時間",
       "activeLearners": "今週のアクティブ学習者",
       "completionRate": "今週の修了率",
-      "totalEnrollments": "総受講登録数"
+      "totalEnrollments": "総受講登録数",
+      "prevWeek": "先週"
     },
     "dropoff": {
       "title": "離脱コース TOP 5",
