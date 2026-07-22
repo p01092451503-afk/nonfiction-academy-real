@@ -66,40 +66,57 @@ export const DashboardWeeklySummary = ({ filters, leaderId }: DashboardWeeklySum
     },
   ];
 
+  const maxValue = Math.max(...items.map((i) => i.value), 1);
+
   return (
-    <div className="stat-card !p-5">
-      <h3 className="text-base font-semibold text-foreground mb-4">
+    <div className="stat-card !p-4">
+      <h3 className="text-base font-semibold text-foreground mb-3">
         {t("dashboard.weekly.title", { defaultValue: "주간 요약" })}
       </h3>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.map((item) => {
           const delta = deltaPct(item.value, item.prev);
           const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
           const color =
             delta > 0 ? "text-chart-2" : delta < 0 ? "text-destructive" : "text-muted-foreground";
+          const barWidth = `${Math.min((item.value / maxValue) * 100, 100)}%`;
           return (
-            <div key={item.key} className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-bold text-foreground tabular-nums">
-                  {isLoading ? "-" : item.value}
-                  {item.unit}
-                </span>
-                {!isLoading && (
-                  <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${color}`}>
-                    <Icon className="h-3 w-3" />
-                    {delta > 0 ? "+" : ""}{delta}%
+            <div key={item.key} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground tabular-nums">
+                    {isLoading ? "-" : item.value}
+                    {item.unit}
                   </span>
-                )}
+                  {!isLoading && (
+                    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${color}`}>
+                      <Icon className="h-3 w-3" />
+                      {delta > 0 ? "+" : ""}{delta}%
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary/80 rounded-full transition-all"
+                    style={{ width: isLoading ? "0%" : barWidth }}
+                  />
+                </div>
+                <span className="text-[10px] text-muted-foreground w-16 text-right tabular-nums">
+                  {isLoading ? "-" : item.prev}
+                  {item.unit} {t("dashboard.weekly.prevWeek", { defaultValue: "지난주" })}
+                </span>
               </div>
             </div>
           );
         })}
       </div>
-      <div className="mt-4 pt-4 border-t border-border">
+      <div className="mt-3 pt-3 border-t border-border">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{t("dashboard.weekly.totalEnrollments", { defaultValue: "전체 수강 등록" })}</span>
           <span className="font-medium text-foreground">{isLoading ? "-" : summary?.total_enrollments ?? 0}{t("common.cases")}</span>

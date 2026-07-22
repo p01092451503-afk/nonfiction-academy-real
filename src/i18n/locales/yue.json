@@ -197,7 +197,8 @@
       "learningMinutes": "今個禮拜學習時間",
       "activeLearners": "今個禮拜活躍學習者",
       "completionRate": "今個禮拜完成率",
-      "totalEnrollments": "總報名數"
+      "totalEnrollments": "總報名數",
+      "prevWeek": "上個禮拜"
     },
     "dropoff": {
       "title": "流失課程 TOP 5",

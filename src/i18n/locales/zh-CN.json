@@ -197,7 +197,8 @@
       "learningMinutes": "本周学习时间",
       "activeLearners": "本周活跃学习者",
       "completionRate": "本周完成率",
-      "totalEnrollments": "总报名数"
+      "totalEnrollments": "总报名数",
+      "prevWeek": "上周"
     },
     "dropoff": {
       "title": "流失课程 TOP 5",
