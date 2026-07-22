@@ -150,7 +150,7 @@ async function fetchAllRows(): Promise<Row[]> {
       const lc = r.language_code as TargetLang;
       if (!TARGET_LANGS.includes(lc)) return;
       if (!map.has(id)) {
-        map.set(id, { en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null } });
+        map.set(id, { en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null }, yue: { title: null, body: null } });
       }
       map.get(id)![lc] = { title: r[titleField] ?? null, body: r[bodyField] ?? null };
     });
