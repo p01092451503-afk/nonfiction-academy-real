@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Users, ClipboardCheck, TrendingUp, LayoutDashboard, Activity, GraduationCap,
   AlertCircle, Trophy, BookOpen, Target, Flame, ArrowRight,
@@ -15,6 +16,19 @@ import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { localizeCourse } from "@/lib/i18nCourse";
 import { normalizeLang } from "@/lib/i18nLang";
+import DashboardFilterBar, { DashboardFilters } from "@/components/admin/DashboardFilterBar";
+import DashboardMetricCards from "@/components/admin/DashboardMetricCards";
+import DashboardWeeklySummary from "@/components/admin/DashboardWeeklySummary";
+import DashboardDropoffCourses from "@/components/admin/DashboardDropoffCourses";
+import DashboardAccessHeatmap from "@/components/admin/DashboardAccessHeatmap";
+import DashboardLearnerTable from "@/components/admin/DashboardLearnerTable";
+
+const defaultLeaderFilters: DashboardFilters = {
+  years: [],
+  months: [],
+  countries: [],
+  branch_ids: [],
+};
 
 const TeacherDashboard = () => {
   const { user } = useUser();
@@ -22,6 +36,7 @@ const TeacherDashboard = () => {
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
   const lang = normalizeLang(i18n.language);
+  const [leaderFilters, setLeaderFilters] = useState<DashboardFilters>(defaultLeaderFilters);
 
   const branchLabel = branch
     ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
@@ -344,6 +359,30 @@ const TeacherDashboard = () => {
             </Link>
           </div>
         </section>
+
+        {/* Period & scope filters (leader scope) */}
+        <DashboardFilterBar
+          filters={leaderFilters}
+          onChange={setLeaderFilters}
+          role="teacher"
+          leaderId={user?.id}
+        />
+
+        {/* 6 Average Metric Cards (leader scope) */}
+        <DashboardMetricCards filters={leaderFilters} leaderId={user?.id} />
+
+        {/* Weekly Summary + Dropoff Courses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DashboardWeeklySummary filters={leaderFilters} leaderId={user?.id} />
+          <DashboardDropoffCourses filters={leaderFilters} leaderId={user?.id} limit={5} />
+        </div>
+
+        {/* Access Heatmap */}
+        <DashboardAccessHeatmap filters={leaderFilters} leaderId={user?.id} />
+
+        {/* Learner Details Table (branch-scoped) */}
+        <DashboardLearnerTable filters={leaderFilters} leaderId={user?.id} limit={100} />
+
 
         {/* TOP 5 Learners & Top Courses */}
         <div className="grid lg:grid-cols-2 gap-4">

@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import {
   BookOpen, Clock, ClipboardCheck, Award, Play, ArrowRight, TrendingUp, BarChart3, Star,
   AlertTriangle, Calendar, MessageSquare,
@@ -12,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
 import { localizeCourse } from "@/lib/i18nCourse";
+import { MultiSelectPopover } from "@/components/ui/MultiSelectPopover";
+import { Filter, RotateCcw } from "lucide-react";
 
 const StudentDashboard = () => {
   const { user, profile } = useUser();
@@ -19,6 +22,39 @@ const StudentDashboard = () => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLang(i18n.language);
   const displayName = profile?.full_name || t("common.user");
+
+  // ── 개인 통계 기간 필터 (년도/월) ──
+  const CURRENT_YEAR = new Date().getFullYear();
+  const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => ({ id: String(CURRENT_YEAR - i), label: String(CURRENT_YEAR - i) }));
+  const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), label: String(i + 1) }));
+  const [periodYears, setPeriodYears] = useState<string[]>([]);
+  const [periodMonths, setPeriodMonths] = useState<string[]>([]);
+
+  // Build date ranges (UTC) for the selected years × months. Empty => no filter.
+  const periodRanges = useMemo(() => {
+    const years = periodYears.length ? periodYears.map(Number) : [];
+    const months = periodMonths.length ? periodMonths.map(Number) : [];
+    if (!years.length && !months.length) return null;
+    const ys = years.length ? years : [CURRENT_YEAR];
+    const ms = months.length ? months : Array.from({ length: 12 }, (_, i) => i + 1);
+    const ranges: { start: string; end: string }[] = [];
+    ys.forEach((y) => {
+      ms.forEach((m) => {
+        const start = new Date(Date.UTC(y, m - 1, 1)).toISOString();
+        const end = new Date(Date.UTC(y, m, 1)).toISOString();
+        ranges.push({ start, end });
+      });
+    });
+    return ranges;
+  }, [periodYears, periodMonths, CURRENT_YEAR]);
+  const periodKey = periodRanges ? `${periodYears.join(",")}|${periodMonths.join(",")}` : "all";
+  const inRange = (iso: string | null | undefined) => {
+    if (!iso) return false;
+    if (!periodRanges) return true;
+    const t = new Date(iso).getTime();
+    return periodRanges.some((r) => t >= new Date(r.start).getTime() && t < new Date(r.end).getTime());
+  };
+
 
   // 수강 중인 강좌 (진행 중)
   const { data: enrollments = [] } = useQuery({
@@ -103,9 +139,9 @@ const StudentDashboard = () => {
     return pool.find((c: any) => !completedContentIds.has(c.id));
   };
 
-  // 통계
+  // 통계 (기간 필터 적용: completed_at 기준)
   const { data: enrollmentStats } = useQuery({
-    queryKey: ["dash-enrollment-stats", user?.id],
+    queryKey: ["dash-enrollment-stats", user?.id, periodKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("enrollments")
@@ -113,8 +149,11 @@ const StudentDashboard = () => {
         .eq("user_id", user!.id);
       if (error) throw error;
       const total = data.length;
-      // 수강 완료 카운트: 복습 완료를 포함한 누적 횟수의 합. (최초 완료 1회 + 복습마다 +1)
-      const completed = data.reduce(
+      const filtered = periodRanges
+        ? data.filter((e: any) => inRange(e.completed_at))
+        : data;
+      // 수강 완료 카운트: 복습 완료를 포함한 누적 횟수의 합. (기간 필터가 있으면 해당 기간에 완료된 강의만)
+      const completed = filtered.reduce(
         (s, e: any) => s + (Number(e.completion_count) || (e.completed_at ? 1 : 0)),
         0,
       );
@@ -125,35 +164,49 @@ const StudentDashboard = () => {
     enabled: !!user?.id,
   });
 
-  // 완료한 과제
+  // 완료한 과제 (기간 필터: submitted_at 범위)
   const { data: completedAssignments = 0 } = useQuery({
-    queryKey: ["dash-completed-assignments", user?.id],
+    queryKey: ["dash-completed-assignments", user?.id, periodKey],
     queryFn: async () => {
-      const { count, error } = await supabase
+      let q = supabase
         .from("assignment_submissions")
-        .select("*", { count: "exact", head: true })
+        .select("submitted_at", { count: "exact" })
         .eq("student_id", user!.id)
         .eq("status", "graded");
+      if (periodRanges && periodRanges.length) {
+        const min = periodRanges.reduce((a, r) => (r.start < a ? r.start : a), periodRanges[0].start);
+        const max = periodRanges.reduce((a, r) => (r.end > a ? r.end : a), periodRanges[0].end);
+        q = q.gte("submitted_at", min).lt("submitted_at", max);
+      }
+      const { data, count, error } = await q;
       if (error) throw error;
-      return count || 0;
+      if (!periodRanges) return count || 0;
+      return (data || []).filter((s: any) => inRange(s.submitted_at)).length;
     },
     enabled: !!user?.id,
   });
 
   const { data: totalAssignments = 0 } = useQuery({
-    queryKey: ["dash-total-assignments", user?.id],
+    queryKey: ["dash-total-assignments", user?.id, periodKey],
     queryFn: async () => {
-      const { count, error } = await supabase
+      let q = supabase
         .from("assignment_submissions")
-        .select("*", { count: "exact", head: true })
+        .select("submitted_at", { count: "exact" })
         .eq("student_id", user!.id);
+      if (periodRanges && periodRanges.length) {
+        const min = periodRanges.reduce((a, r) => (r.start < a ? r.start : a), periodRanges[0].start);
+        const max = periodRanges.reduce((a, r) => (r.end > a ? r.end : a), periodRanges[0].end);
+        q = q.gte("submitted_at", min).lt("submitted_at", max);
+      }
+      const { data, count, error } = await q;
       if (error) throw error;
-      return count || 0;
+      if (!periodRanges) return count || 0;
+      return (data || []).filter((s: any) => inRange(s.submitted_at)).length;
     },
     enabled: !!user?.id,
   });
 
-  // 뱃지
+  // 뱃지 (누적 값이라 기간 필터 미적용)
   const { data: badgeCount = 0 } = useQuery({
     queryKey: ["dash-badge-count", user?.id],
     queryFn: async () => {
@@ -167,22 +220,29 @@ const StudentDashboard = () => {
     enabled: !!user?.id,
   });
 
-  // 내가 작성한 강의 댓글 수 (삭제되지 않은 것만)
+  // 내가 작성한 강의 댓글 수 (기간 필터: created_at)
   const { data: myCommentCount = 0 } = useQuery({
-    queryKey: ["dash-my-comment-count", user?.id],
+    queryKey: ["dash-my-comment-count", user?.id, periodKey],
     queryFn: async () => {
-      const { count, error } = await supabase
+      let q = supabase
         .from("course_comments")
-        .select("*", { count: "exact", head: true })
+        .select("created_at", { count: "exact" })
         .eq("user_id", user!.id)
         .eq("is_deleted", false);
+      if (periodRanges && periodRanges.length) {
+        const min = periodRanges.reduce((a, r) => (r.start < a ? r.start : a), periodRanges[0].start);
+        const max = periodRanges.reduce((a, r) => (r.end > a ? r.end : a), periodRanges[0].end);
+        q = q.gte("created_at", min).lt("created_at", max);
+      }
+      const { data, count, error } = await q;
       if (error) throw error;
-      return count || 0;
+      if (!periodRanges) return count || 0;
+      return (data || []).filter((c: any) => inRange(c.created_at)).length;
     },
     enabled: !!user?.id,
   });
 
-  // 게이미피케이션
+  // 게이미피케이션 (누적)
   const { data: gamification } = useQuery({
     queryKey: ["dash-gamification", user?.id],
     queryFn: async () => {
@@ -197,18 +257,43 @@ const StudentDashboard = () => {
     enabled: !!user?.id,
   });
 
-  // 누적 학습시간 (분): course_learning_sessions 기준, 세션당 30분 캡
-  const { data: learningMinutes = 0 } = useQuery({
-    queryKey: ["dash-learning-minutes", user?.id],
+  // 기간 내 획득 포인트 (point_history 기반)
+  const { data: periodPoints = 0 } = useQuery({
+    queryKey: ["dash-period-points", user?.id, periodKey],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase.from("point_history").select("points, created_at").eq("user_id", user!.id);
+      if (periodRanges && periodRanges.length) {
+        const min = periodRanges.reduce((a, r) => (r.start < a ? r.start : a), periodRanges[0].start);
+        const max = periodRanges.reduce((a, r) => (r.end > a ? r.end : a), periodRanges[0].end);
+        q = q.gte("created_at", min).lt("created_at", max);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      const rows = periodRanges ? (data || []).filter((r: any) => inRange(r.created_at)) : (data || []);
+      return rows.reduce((s: number, r: any) => s + (Number(r.points) || 0), 0);
+    },
+    enabled: !!user?.id,
+  });
+
+  // 누적 학습시간 (분): course_learning_sessions, 세션당 30분 캡, 기간 필터 적용
+  const { data: learningMinutes = 0 } = useQuery({
+    queryKey: ["dash-learning-minutes", user?.id, periodKey],
+    queryFn: async () => {
+      let q = supabase
         .from("course_learning_sessions")
         .select("started_at, last_heartbeat_at")
         .eq("user_id", user!.id);
+      if (periodRanges && periodRanges.length) {
+        const min = periodRanges.reduce((a, r) => (r.start < a ? r.start : a), periodRanges[0].start);
+        const max = periodRanges.reduce((a, r) => (r.end > a ? r.end : a), periodRanges[0].end);
+        q = q.gte("started_at", min).lt("started_at", max);
+      }
+      const { data, error } = await q;
       if (error) throw error;
+      const rows = periodRanges ? (data || []).filter((s: any) => inRange(s.started_at)) : (data || []);
       const SESSION_CAP_MIN = 30;
       let total = 0;
-      (data || []).forEach((s: any) => {
+      rows.forEach((s: any) => {
         const start = new Date(s.started_at).getTime();
         const end = new Date(s.last_heartbeat_at).getTime();
         const min = Math.max(0, (end - start) / 60000);
@@ -218,6 +303,7 @@ const StudentDashboard = () => {
     },
     enabled: !!user?.id,
   });
+
 
   // 필수교육 (마감 임박 우선)
   const { data: mandatoryCourses = [] } = useQuery({
@@ -376,7 +462,12 @@ const StudentDashboard = () => {
     { label: t("dashboard.consecutiveLearning"), value: `${gamification?.streak_days || 0}${t("common.days")}`, sub: t("dashboard.consecutiveDays"), icon: TrendingUp },
     { label: t("dashboard.level"), value: `Lv.${gamification?.level || 1}`, sub: `${gamification?.experience_points || 0} XP`, icon: Star },
     { label: t("dashboard.completedAssignments"), value: String(completedAssignments), sub: t("dashboard.totalAssignmentsSub", { count: totalAssignments }), icon: ClipboardCheck },
-    { label: t("dashboard.totalPoints"), value: String(gamification?.total_points || 0), sub: t("dashboard.cumulativePoints"), icon: Award },
+    {
+      label: periodRanges ? t("dashboard.periodPoints", { defaultValue: "기간 획득 포인트" }) : t("dashboard.totalPoints"),
+      value: String(periodRanges ? periodPoints : (gamification?.total_points || 0)),
+      sub: periodRanges ? t("dashboard.periodPointsSub", { defaultValue: "선택 기간 합계" }) : t("dashboard.cumulativePoints"),
+      icon: Award,
+    },
     { label: t("dashboard.myComments", "내 댓글 수"), value: String(myCommentCount), sub: t("dashboard.myCommentsSub", "강의 작성 댓글"), icon: MessageSquare },
   ];
 
@@ -391,6 +482,43 @@ const StudentDashboard = () => {
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.hello")}</p>
         </div>
+
+        {/* 개인 통계 기간 필터 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground mr-1">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span>{t("dashboard.filter.period", { defaultValue: "기간" })}</span>
+          </div>
+          <MultiSelectPopover
+            label={t("dashboard.filter.year", { defaultValue: "년도" })}
+            placeholder={t("dashboard.filter.selectYear", { defaultValue: "년도 선택" })}
+            options={YEAR_OPTIONS}
+            selected={periodYears}
+            onChange={setPeriodYears}
+            width="w-[180px]"
+          />
+          <MultiSelectPopover
+            label={t("dashboard.filter.month", { defaultValue: "월" })}
+            placeholder={t("dashboard.filter.selectMonth", { defaultValue: "월 선택" })}
+            options={MONTH_OPTIONS}
+            selected={periodMonths}
+            onChange={setPeriodMonths}
+            width="w-[180px]"
+          />
+          {(periodYears.length > 0 || periodMonths.length > 0) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => { setPeriodYears([]); setPeriodMonths([]); }}
+              className="h-9 text-xs text-muted-foreground hover:text-destructive gap-1"
+            >
+              <RotateCcw className="h-3 w-3" />
+              {t("dashboard.filter.clear", { defaultValue: "초기화" })}
+            </Button>
+          )}
+        </div>
+
 
         {/* Stat Cards - Compact 2 rows */}
         <section className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3" aria-label={t("dashboard.stats", "학습 통계")}>
