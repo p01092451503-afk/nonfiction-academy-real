@@ -293,7 +293,7 @@ const TrackedDirectVideo = ({
 const isImageUrl = (url: string) =>
   /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?.*)?$/i.test(url);
 
-const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatchedSecondsTracked }: MediaPackagePlayerProps) => {
+const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatchedSecondsTracked, perContentMinSeconds = 0 }: MediaPackagePlayerProps) => {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
