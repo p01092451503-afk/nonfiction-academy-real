@@ -1,99 +1,177 @@
-# 광동어(Cantonese, `yue`) 다국어 확장 계획
+# NONFICTION Academy 대시보드 변경안 분석 및 구현 방향
 
-기존 4개 언어(`ko`, `en`, `ja`, `zh-CN`) 시스템에 **`yue`(광동어, 粵語 / 廣東話)** 를 5번째 언어로 추가합니다. 학습자·관리자·강사 모든 화면과 콘텐츠 편집기, 그리고 데이터베이스·번역 엣지 함수까지 완전히 확장합니다.
+## 1. 문서 개요
 
-> 참고: 광동어 표준 언어 코드는 ISO 639‑3의 **`yue`** 입니다. UI 라벨은 **粵語**로 노출하며, 자동번역 프롬프트에서는 "Cantonese (traditional Chinese script, Hong Kong style, 粵語 spoken form)"으로 지시합니다.
+업로드하신 PPTX는 **관리자 / 학습자 / 러닝리더(강사) 3개 화면**의 대시보드 개선 요구사항을 담고 있습니다. 현재 코드베이스에 이미 `AdminDashboard`, `TeacherDashboard`, `StudentDashboard`, `DeptAdminDashboard`가 존재하며, 이를 확장·재구성하는 형태로 반영 가능합니다.
+
+**결론:** 기술적으로 전부 구현 가능하나, 범위가 넓고 데이터 집계 로직이 새로 필요하므로 **단계별(Phase) 배포**를 권장합니다.
 
 ---
 
-## 1. 프론트엔드 i18n 인프라
+## 2. 요구사항 분석
 
-- `src/i18n/locales/yue.json` 신규 생성 (약 1,506개 키를 한국어 소스 기반으로 자동 번역 → 광동어). 관용어/UI 톤은 홍콩 스타일로 통일.
-- `src/i18n/index.ts`
-  - `resources`, `supportedLngs`, `fallbackLng`에 `yue` 추가.
-  - detector `convertDetectedLanguage`: 브라우저 `yue`, `zh-HK`, `zh-Hant-HK`, `zh-MO` → `yue` 로 매핑. (기존 `zh` → `zh-CN` 로직은 유지.)
-- `src/i18n/uiOverrides.ts`의 `UI_LANGS` 배열 및 `UiLang` 타입에 `yue` 추가.
-- `src/lib/i18nLang.ts`
-  - `SupportedLang` 타입 = `"ko" | "en" | "ja" | "zh-CN" | "yue"`.
-  - `normalizeLang`에 `yue` / `zh-HK` / `zh-MO` / `zh-Hant` 처리 추가.
+### 2-1. 관리자 화면 (Page 1)
 
-## 2. 학습자 언어 스위처
+| 요구사항 | 현재 상태 | 구현 난이도 |
+|---|---|---|
+| 필터: 년도/월/국가/매장 (중복 선택) | 없음 (전체 통계만 표시) | 중간 |
+| 평균 이수 완료 강의 개수 | 없음 | 중간 |
+| 평균 이수율 | `admin_dashboard_summary()`에 총합 기준 수료율만 있음 | 중간 |
+| 평균 학습 시간 | 없음 | 중간 |
+| 평균 댓글 개수 | 없음 | 중간 |
+| 평균 포인트 | 없음 | 중간 |
+| 평균 누적 학습일 | 없음 | 중간 |
+| 6개 카드 클릭 시 드릴다운 (전체 학습자 세부 정보) | 없음 | 높음 |
+| 기간 필터링 시 6개 항목 동기 변경 | 없음 | 중간 |
+| 이번 주/지난 주 학습시간, 주간 활성 학습자, 완강률 | `TeacherDashboard`에 유사 지표 존재 | 낮음~중간 |
+| 이탈 강의 TOP 5 | 없음 | 중간 |
+| 접속 시간대 히트맵 | 없음 | 중간 |
 
-- `src/components/LanguageToggle.tsx`
-  - `LANGS`에 **일본어 바로 다음에** `{ code: "yue", label: "粵語" }` 삽입.
-  - `resolveCurrent`에 `yue` / `zh-HK` 매핑 추가.
+### 2-2. 학습자 화면 (Page 2)
 
-## 3. 콘텐츠 다국어 편집 UI (관리자·강사)
+| 요구사항 | 현재 상태 | 구현 난이도 |
+|---|---|---|
+| 필터: 년도/월 (중복 선택) | 없음 | 낮음 |
+| 이수율 (전체 과정에 대한 개인 이수율) | 이미 `avgProgress`로 표시 중 | 낮음 |
 
-기존에 3~4개 언어 탭을 하드코딩한 화면을 5개 언어로 확장:
-- `src/pages/teacher/CreateCourse.tsx` — `LESSON_LANGS`, 언어 라벨, 자동번역 타깃, 강의/차시 i18n 저장 배열, 탭 UI (`ko / en / ja / zh-CN / yue`).
-- `src/pages/CourseDetail.tsx` — `COURSE_TRANSLATION_LANGS`, `CONTENT_I18N_LANGS`, `emptyI18n`, `currentLang` 판정, 강의·차시 편집 다이얼로그 탭.
-- `src/pages/admin/AdminTracks.tsx` — `I18N_LANGS`, `TARGET_LANGS`, `emptyLangMap`, `clearTranslations`, 저장 로직.
-- `src/pages/teacher/TeacherNotifications.tsx` — 공지 다국어 저장 맵.
-- `src/components/admin/MultilingualTextFields.tsx` — 언어 목록 및 자동번역 트리거.
-- `src/components/BulkQuestionUploadDialog.tsx` — 대량 업로드 시 지원 언어.
-- `src/components/AssessmentManager.tsx` — 평가 다국어 관리.
+### 2-3. 러닝리더 화면 (Page 3)
 
-각 파일에서 언어 라벨, 상태(state) 필드, 저장/불러오기 배열, "자동 번역" 대상, 수동 편집 플래그를 `yue`까지 확장합니다.
+| 요구사항 | 현재 상태 | 구현 난이도 |
+|---|---|---|
+| "강사" → "러닝 리더" 용어 변경 | `teacher.teacherDashboard` 등 번역 키 존재 | 낮음 |
+| 필터: 년도/월 (중복 선택) | 없음 | 낮음 |
+| 관리자와 동일 6개 평균 지표 (지점 범위) | 없음 | 중간 |
+| 드릴다운 + 기간 필터 동기화 | 없음 | 높음 |
+| 학습자 랭킹 (진행률/완료/포인트) | `topLearners` 유사 구현 존재 | 낮음 |
+| 최근 과제 제출 전체보기 | `recentSubmissions` 이미 존재 | 낮음 |
+| 관심이 필요한 학습자 (미접속) | `dormantStudents` 이미 존재 | 낮음 |
 
-## 4. 평가 페이지 (`src/pages/AssessmentPage.tsx`)
+---
 
-- `TargetLang` 유니온 타입: `"en" | "ja" | "zh-CN" | "yue"`.
-- `countryToAssessmentLang`: `HK`, `MO` → `yue` (기존 `HK` → `zh-CN` 매핑은 `yue`로 이동, `CN` / `TW` 만 `zh-CN` 유지).
-- `repairKeyFor`, `invokeQuestionTranslation`, `needsTranslationRepair`, 언어 라벨 맵, 수동 번역 버튼 텍스트에 `yue` 추가.
-- `uiLang` 판정에 `zh-HK` / `yue` 브랜치 추가.
+## 3. 현재 코드베이스 매핑
 
-## 5. 학습자·강사·관리자 기타 페이지
+### 3-1. 데이터 소스
 
-`normalizeLang` 를 이미 쓰는 파일들은 자동 확장되지만, 아래는 로컬 판정을 별도로 갖고 있어 개별 수정 필요:
-- `src/pages/student/StudentTracks.tsx`, `StudentCourses.tsx`, `StudentAssignments.tsx`, `CourseCatalog.tsx`
-- `src/pages/UserManual.tsx`
-- `src/hooks/useLanguageSwitching.ts` 및 테스트
-- `src/lib/i18nQueryCache.ts`, `src/lib/courseContentI18n.ts` (및 테스트)
+| 지표 | 사용 가능한 테이블/컬럼 | 비고 |
+|---|---|---|
+| 수강/완료 | `enrollments` (`progress`, `completed_at`, `completion_count`) | 복습 완료 누적은 `completion_count` 사용 |
+| 학습 시간 | `course_learning_sessions` (`started_at`, `last_heartbeat_at`) | 세션당 30분 캡 이미 적용됨 |
+| 댓글 | `course_comments` (`user_id`, `is_deleted`) | |
+| 포인트 | `user_gamification` (`total_points`) | |
+| 접속/활동 | `user_sessions` (`login_at`, `logout_at`) | |
+| 소속/국가/매장 | `profiles.department_id` → `departments` (`country`, `code`, `name`) | `departments.country` 컬럼 존재 |
 
-각 파일의 언어 리터럴/조건문에 `yue` 추가.
+### 3-2. 기존 구현
 
-## 6. 데이터베이스 마이그레이션
+- `AdminDashboard.tsx`: 실시간 접속자, 오늘 가입/수료, 대기 수강신청, 미채점 과제, 공지, 최근 활동 피드, `admin_dashboard_summary()` RPC
+- `TeacherDashboard.tsx`: 지점 학생 수, 주간 활성, 평균 진도, 필수교육 이수율, 완강률, 평가 합격률, 휴면 학습자, 미채점 과제, 우수 학습자 TOP 5, 지점 수강 TOP 5
+- `StudentDashboard.tsx`: 수강 중/완료 강의, 학습 시간, 뱃지, 누적 학습, 레벨/포인트, 내 댓글 수, 필수교육, 추천 강의
 
-기존 마이그레이션에 `CHECK (language_code IN ('ko','en','zh-CN','ja'))` 제약이 걸린 테이블들의 제약을 확장합니다. 신규 마이그레이션 1건으로 처리:
+---
 
-```sql
--- 각 테이블별 CHECK 제약 재정의 (ko/en/zh-CN/ja/yue 허용)
-ALTER TABLE public.course_contents  DROP CONSTRAINT IF EXISTS course_contents_language_code_chk;
-ALTER TABLE public.course_contents  ADD  CONSTRAINT course_contents_language_code_chk
-  CHECK (language_code IN ('ko','en','zh-CN','ja','yue'));
--- content_i18n / courses_i18n / assessment_i18n / announcements_i18n /
--- board_posts_i18n / tracks_i18n / assessment_questions_i18n 등 동일 패턴 반복
+## 4. 구현 방향
+
+### 4-1. 데이터 집계: RPC 중심으로 전환
+
+현재 `admin_dashboard_summary()`는 전체 집계만 가능합니다. 필터(기간/국가/매장)와 드릴다운을 지원하려면 **파라미터 기반 RPC**를 새로 작성해야 합니다.
+
+제안 함수:
+
+```text
+- dashboard_admin_metrics(filters JSONB) → 6개 평균 지표
+- dashboard_leader_metrics(filters JSONB, department_ids UUID[]) → 러닝리더용 6개 지표
+- dashboard_dropoff_courses(filters JSONB, limit INT) → 이탈 강의 TOP N
+- dashboard_access_heatmap(filters JSONB) → 요일/시간대 히트맵 데이터
+- dashboard_learner_ranking(filters JSONB, department_ids UUID[], limit INT) → 학습자 랭킹
+- dashboard_learner_details(filters JSONB, department_ids UUID[]) → 드릴다운용 상세 목록
 ```
 
-`language_code` 컬럼이 TEXT로 열려 있고 CHECK 제약만 있는 구조라 새 코드 추가는 안전합니다. 기존 데이터에 영향 없음.
+### 4-2. 필터 설계
 
-## 7. 자동번역 엣지 함수
+| 필터 | 데이터 소스 | UI 컴포넌트 |
+|---|---|---|
+| 년도 | 고정 범위 (예: 2024~현재) | Multi-select |
+| 월 | 1~12 | Multi-select |
+| 국가 | `SELECT DISTINCT country FROM departments WHERE country IS NOT NULL` | Multi-select |
+| 매장 | `departments` 중 최상위 또는 지정된 branch | Multi-select (계층 트리 권장) |
 
-- `supabase/functions/translate/index.ts`
-- `supabase/functions/translate-comment/index.ts`
-- `supabase/functions/translate-question-now/index.ts`
-- (그리고 `fix-question-i18n` 계열)
+필터 상태는 URL query string으로 관리하면 뒤로가기/공유에 유리합니다.
 
-각 함수의 `SUPPORTED_LANGS` / `LANG_LABEL` / 프롬프트에 `yue`를 추가하고, Gemini 프롬프트에서 **"Translate into Cantonese (粵語), using traditional Chinese script and Hong Kong colloquial style. Do not use Mandarin phrasing."** 로 명시. 응답 후처리(수동 편집 플래그 존중)는 기존 로직 그대로.
+### 4-3. UI/UX 변경
 
-## 8. 검증
+- **관리자 대시보드**: 상단 필터 바 → 6개 평균 카드(2x3) → 주간 요약(4열) → 이탈 TOP 5 + 히트맵(2열)
+- **러닝리더 대시보드**: 헤더 용어 변경, 상단 필터 바 → 6개 평균 카드 → 랭킹/강의별 진도/최근 과제/관심 학습자
+- **학습자 대시보드**: 상단 필터 바 → 이수율 카드 강조 → 기존 통계 카드 유지
 
-- `bunx vitest run src/i18n/locales.test.ts` — 5개 로케일 키 정합성 확인.
-- `tsgo` 타입 체크 — 유니온 타입 확장 후 컴파일 오류 잡기.
-- Playwright로 학습자 화면에서 언어 스위처 → 粵語 선택 → 학습·평가·마이페이지 UI가 광동어로 전환되는지 스크린샷 검증.
+### 4-4. "평균 누적 학습일" 정의 필요
 
-## 기술 세부
+문서에 질문으로 남겨두신 부분입니다. 구현 전에 아래 중 하나로 확정해야 합니다.
 
-- 자동번역 프롬프트에는 홍콩 표기(繁體) + 광동어 구어체를 강제. 서면중국어(zh-CN 간체)와 명확히 구분.
-- `yue.json`은 KO fallback이 이미 걸려 있어 초기 배포 시 누락 키가 있어도 UI가 깨지지 않음. 정식 릴리스 전 자동번역으로 전량 채웁니다.
-- 관리자 화면의 "수동 편집 시 자동번역 중단" 규칙은 `yue`에도 동일 적용.
+| 옵션 | 정의 | 장점 | 단점 |
+|---|---|---|---|
+| A | 로그인/출석일 기준 (`user_sessions` login_at 날짜의 distinct count) | 단순, 집계 빠름 | "학습"과 무관하게 카운트될 수 있음 |
+| B | 실제 학습 세션 발생일 기준 (`course_learning_sessions` started_at 날짜의 distinct count) | 실제 학습과 연결 | 세션 30분 캡과 별개로 일수 집계 |
+| C | 학습 완료/진행이 있었던 날짜 기준 (`content_progress`/`enrollments` 업데이트일 distinct count) | 가장 의미 있음 | 집계 로직 복잡 |
 
-## 파일 변경 요약
-
-- 신규: `src/i18n/locales/yue.json`, DB 마이그레이션 1건.
-- 수정: 프론트엔드 약 25~30개 파일, 엣지 함수 3~4개.
+**권장:** 옵션 B 또는 C. 학습 플랫폼 특성상 "학습 활동이 있었던 날"이 가장 적절합니다.
 
 ---
 
-승인해 주시면 위 순서대로 한 번에 배포하겠습니다.
+## 5. 예상 개발 공수 (일정)
+
+| Phase | 내용 | 예상 공수 | 배포 시점 |
+|---|---|---|---|
+| 1 | DB 함수 설계, 필터 컴포넌트, 공통 집계 유틸 | 2~3일 | 1차 |
+| 2 | 관리자 대시보드: 6지표 + 드릴다운 + 주간/이탈/히트맵 | 4~5일 | 2차 |
+| 3 | 러닝리더 대시보드: 용어 변경 + 지점 범위 지표 + 랭킹/과제/휴면 | 2~3일 | 3차 |
+| 4 | 학습자 대시보드: 년/월 필터 + 이수율 강조 | 1~2일 | 4차 |
+| 5 | 다국어, 반응형, 성능 최적화, QA | 2~3일 | 최종 |
+| **합계** | | **11~16일** | |
+
+> 공수는 기존 데이터 품질(특히 `departments.country` 채워짐 여부, `user_sessions` 로그 보관 기간)에 따라 변동될 수 있습니다.
+
+---
+
+## 6. 리스크 및 고려사항
+
+1. **성능**: 전체 사용자 기준 평균 집계는 `user_sessions`, `course_learning_sessions` 같은 대용량 테이블을 스캔할 수 있습니다. 인덱스 추가와 RPC `STABLE`/`SECURITY DEFINER` 설정이 필요합니다.
+2. **데이터 정의**: "누적 학습일" 기준을 확정해야 지표가 의미를 가집니다.
+3. **국가/매장 데이터**: `departments.country`가 모든 지점에 채워져 있어야 필터가 정확히 작동합니다.
+4. **드릴다운 권한**: 관리자는 전체, 러닝리더는 소속 지점 내 학습자만 볼 수 있도록 RLS/RPC 파라미터로 제한해야 합니다.
+5. **다국어**: 신규 지표/필터 라벨은 `ko/en/ja/zh-CN/yue` 5개 언어로 추가해야 합니다.
+
+---
+
+## 7. 권장 진행 순서
+
+```text
+1단계: 핵심 질문 확정
+  └─ "누적 학습일" 기준 확정
+  └─ "매장" = 최상위 departments(branch)로 정의 확정
+  └─ "이탈 강의" 정의: 수강 중이나 완료하지 않은 인원 많은 강의?
+
+2단계: 데이터 기반 설계
+  └─ RPC 함수 명세/인덱스 설계
+  └─ 샘플 데이터로 지표 검증
+
+3단계: 관리자 대시보드 먼저 구현
+  └─ 필터 + 6지표 + 드릴다운
+
+4단계: 러닝리더/학습자 대시보드 순차 적용
+
+5단계: 다국어 + QA 후 배포
+```
+
+---
+
+## 8. 결론 및 다음 단계
+
+문서의 변경안은 **현재 아키텍처로 모두 구현 가능**합니다. 다만 범위가 넓고 데이터 집계가 핵심이므로, 위 5단계로 나누어 단계별 배포하는 것을 권장합니다.
+
+**다음에 결정이 필요한 사항:**
+1. "평균 누적 학습일"은 어떤 기준으로 계산할까요? (로그인일 / 학습세션일 / 학습완료일)
+2. "매장" 필터는 `departments`의 최상위 branch로 볼까요, 아니면 팀(하위 department)까지 포함할까요?
+3. "이탈 강의 TOP 5"는 미완료 인원 기준으로 정렬할까요, 아니면 완료율이 낮은 순으로 정렬할까요?
+4. 3개 화면을 한 번에 배포할까요, 아니면 관리자 화면부터 단계별로 배포할까요?
+
+이 4가지를 확인하면 바로 Phase 1 구현을 시작할 수 있습니다.
