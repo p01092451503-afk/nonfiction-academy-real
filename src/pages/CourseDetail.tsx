@@ -1738,7 +1738,7 @@ const CourseEditDialog = ({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  form: { title: string; description: string; status: string; is_mandatory: boolean; deadline: string; category_id: string; difficulty_level: string; estimated_duration_hours: string; max_students: string; is_sequential: boolean };
+  form: { title: string; description: string; status: string; is_mandatory: boolean; deadline: string; category_id: string; difficulty_level: string; estimated_duration_hours: string; max_students: string; is_sequential: boolean; min_learning_minutes: string };
   setForm: React.Dispatch<React.SetStateAction<typeof form>>;
   i18nForm: Record<CourseI18nLang, CourseI18nForm>;
   setI18nForm: React.Dispatch<React.SetStateAction<Record<CourseI18nLang, CourseI18nForm>>>;
