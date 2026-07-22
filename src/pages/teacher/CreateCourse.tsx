@@ -1447,11 +1447,12 @@ const CreateCourse = () => {
           </Dialog>
 
           <Tabs defaultValue="ko" className="w-full">
-            <TabsList className="w-full h-9 grid grid-cols-4">
+            <TabsList className="w-full h-9 grid grid-cols-5">
               <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
               <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
               <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
               <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
+              <TabsTrigger value="yue" className="text-xs">粵語</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-2">
@@ -1505,6 +1506,18 @@ const CreateCourse = () => {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語説明</label>
                 <Textarea value={jaDescription} onChange={(e) => { setJaDescription(e.target.value); setJaDescManual(true); }} placeholder="日本語説明" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="yue" className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? t("createCourse.translating", "번역 중...") : t("createCourse.autoTranslateHint", "한국어 입력 시 자동 번역됩니다. 직접 수정 가능.")}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">粵語標題</label>
+                <Input value={yueTitle} onChange={(e) => { setYueTitle(e.target.value); setYueTitleManual(true); }} placeholder="粵語標題" className="h-9 rounded-lg border-border text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">粵語描述</label>
+                <Textarea value={yueDescription} onChange={(e) => { setYueDescription(e.target.value); setYueDescManual(true); }} placeholder="粵語描述" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
               </div>
             </TabsContent>
           </Tabs>
