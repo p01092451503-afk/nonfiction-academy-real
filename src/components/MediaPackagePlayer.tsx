@@ -328,6 +328,11 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
   const lastReportedSecRef = useRef<number>(-1);
   const lockToastRef = useRef<number>(0);
 
+  // ── 카드별 최소 체류 시간(초) 트래킹 ──
+  const [dwellSec, setDwellSec] = useState<Record<number, number>>({});
+  const dwellSecRef = useRef(dwellSec);
+  dwellSecRef.current = dwellSec;
+
   const handleVideoProgress = useCallback(
     (itemId: string, watched: number, duration: number, completed: boolean) => {
       setVideoStates((prev) => {
