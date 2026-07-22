@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type TargetLang = "en" | "zh-CN" | "ja";
+export type TargetLang = "en" | "zh-CN" | "ja" | "yue";
 
 export async function translateKoTo(targetLang: TargetLang, texts: string[]): Promise<string[]> {
   const sourceTexts = texts.map((text) => (typeof text === "string" ? text : ""));
