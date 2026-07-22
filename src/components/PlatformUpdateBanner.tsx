@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, AlertTriangle, Info, X, Megaphone } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
