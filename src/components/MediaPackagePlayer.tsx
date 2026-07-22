@@ -538,7 +538,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items.length, isItemLocked, showLockToast]);
+  }, [items.length, isItemLocked, showLockToast, isTimeGated]);
 
   if (isLoading) {
     return (
