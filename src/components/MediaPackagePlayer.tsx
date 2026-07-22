@@ -635,7 +635,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     const threshold = Math.min(80, containerWidth * 0.18);
     if (dragOffset < -threshold && !isLast) {
       if (isItemLocked(index)) {
-        showLockToast();
+        showLockToast(isTimeGated(index) ? "time" : "video");
       } else {
         setIndex((i) => i + 1);
       }
