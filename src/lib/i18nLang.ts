@@ -2,14 +2,18 @@
 // Many existing pages still gate translations as `KO/EN` only — this util normalizes
 // the i18next language code to one of the 4 supported codes used in DB i18n tables.
 
-export type SupportedLang = "ko" | "en" | "ja" | "zh-CN";
+export type SupportedLang = "ko" | "en" | "ja" | "zh-CN" | "yue";
 
 export function normalizeLang(code?: string | null): SupportedLang {
   if (!code) return "ko";
-  if (code.startsWith("ko")) return "ko";
-  if (code.startsWith("en")) return "en";
-  if (code.startsWith("ja")) return "ja";
-  if (code.startsWith("zh")) return "zh-CN";
+  const lower = code.toLowerCase();
+  if (lower.startsWith("ko")) return "ko";
+  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("ja")) return "ja";
+  if (lower === "yue" || lower.startsWith("yue-") ||
+      lower === "zh-hk" || lower === "zh-mo" ||
+      lower.startsWith("zh-hant-hk") || lower.startsWith("zh-yue")) return "yue";
+  if (lower.startsWith("zh")) return "zh-CN";
   return "ko";
 }
 
