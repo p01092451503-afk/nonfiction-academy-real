@@ -41,7 +41,7 @@ type VideoProvider = Database["public"]["Enums"]["video_provider"];
 type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "video_package";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
-export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja", "yue"] as const;
+export const LESSON_LANGS = ["ko", "en", "ja", "yue", "zh-CN"] as const;
 export type LessonLang = typeof LESSON_LANGS[number];
 export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
   ko: "한국어",
@@ -1450,9 +1450,9 @@ const CreateCourse = () => {
             <TabsList className="w-full h-9 grid grid-cols-5">
               <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
               <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
-              <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
               <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
               <TabsTrigger value="yue" className="text-xs">粵語</TabsTrigger>
+              <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-2">
