@@ -90,11 +90,12 @@ export const DashboardAccessHeatmap = ({ filters, leaderId }: DashboardAccessHea
               ))}
             </div>
             <div className="flex items-center justify-end gap-2 mt-2 text-[10px] text-muted-foreground">
-              <span>{isEn ? "Low" : "낮음"}</span>
-              <span className="w-3 h-3 bg-muted rounded-sm" />
-              <span className="w-3 h-3 bg-chart-3/20 rounded-sm" />
-              <span className="w-3 h-3 bg-chart-3/40 rounded-sm" />
-              <span className="w-3 h-3 bg-chart-3/70 rounded-sm" />
+            <span>{isEn ? "Low" : "낮음"}</span>
+              <span className="w-3 h-3 bg-background border border-border rounded-sm" />
+              <span className="w-3 h-3 bg-chart-3/25 rounded-sm" />
+              <span className="w-3 h-3 bg-chart-3/45 rounded-sm" />
+              <span className="w-3 h-3 bg-chart-3/65 rounded-sm" />
+              <span className="w-3 h-3 bg-chart-3/85 rounded-sm" />
               <span className="w-3 h-3 bg-chart-3 rounded-sm" />
               <span>{isEn ? "High" : "높음"}</span>
             </div>
