@@ -483,6 +483,43 @@ const StudentDashboard = () => {
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.hello")}</p>
         </div>
 
+        {/* 개인 통계 기간 필터 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground mr-1">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span>{t("dashboard.filter.period", { defaultValue: "기간" })}</span>
+          </div>
+          <MultiSelectPopover
+            label={t("dashboard.filter.year", { defaultValue: "년도" })}
+            placeholder={t("dashboard.filter.selectYear", { defaultValue: "년도 선택" })}
+            options={YEAR_OPTIONS}
+            selected={periodYears}
+            onChange={setPeriodYears}
+            width="w-[180px]"
+          />
+          <MultiSelectPopover
+            label={t("dashboard.filter.month", { defaultValue: "월" })}
+            placeholder={t("dashboard.filter.selectMonth", { defaultValue: "월 선택" })}
+            options={MONTH_OPTIONS}
+            selected={periodMonths}
+            onChange={setPeriodMonths}
+            width="w-[180px]"
+          />
+          {(periodYears.length > 0 || periodMonths.length > 0) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => { setPeriodYears([]); setPeriodMonths([]); }}
+              className="h-9 text-xs text-muted-foreground hover:text-destructive gap-1"
+            >
+              <RotateCcw className="h-3 w-3" />
+              {t("dashboard.filter.clear", { defaultValue: "초기화" })}
+            </Button>
+          )}
+        </div>
+
+
         {/* Stat Cards - Compact 2 rows */}
         <section className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3" aria-label={t("dashboard.stats", "학습 통계")}>
           {[...stats, ...detailStats].map((stat) => {
