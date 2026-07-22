@@ -1604,8 +1604,8 @@ const ContentDialog = ({
           <TabsTrigger value="ko" className="flex-1 text-xs">{t("course.koTab")}</TabsTrigger>
           <TabsTrigger value="en" className="flex-1 text-xs">English</TabsTrigger>
           <TabsTrigger value="ja" className="flex-1 text-xs">日本語</TabsTrigger>
-          <TabsTrigger value="zh-CN" className="flex-1 text-xs">简体中文</TabsTrigger>
           <TabsTrigger value="yue" className="flex-1 text-xs">粵語</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="flex-1 text-xs">简体中文</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
