@@ -48,6 +48,7 @@ export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
   en: "English",
   "zh-CN": "简体中文",
   ja: "日本語",
+  yue: "粵語",
 };
 
 export interface PackageItemDraft {
