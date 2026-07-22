@@ -158,7 +158,7 @@ async function fetchAllRows(): Promise<Row[]> {
   };
 
   const emptyPerLang = (): Record<TargetLang, { title: string | null; body: string | null }> =>
-    ({ en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null } });
+    ({ en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null }, yue: { title: null, body: null } });
 
   // 1) Courses
   const { data: coursesData } = await supabase.from("courses").select("id, title, description").order("created_at", { ascending: false });
@@ -322,7 +322,7 @@ async function fetchAllRows(): Promise<Row[]> {
   (uiOverrides ?? []).forEach((r: any) => {
     if (!TARGET_LANGS.includes(r.language_code)) return;
     if (!overrideMap.has(r.key)) {
-      overrideMap.set(r.key, { en: "", "zh-CN": "", ja: "" });
+      overrideMap.set(r.key, { en: "", "zh-CN": "", ja: "", yue: "" });
     }
     overrideMap.get(r.key)![r.language_code as TargetLang] = r.value;
   });
@@ -331,6 +331,7 @@ async function fetchAllRows(): Promise<Row[]> {
     en: enFlat,
     ja: jaFlat,
     "zh-CN": zhFlat,
+    yue: yueFlat,
   };
 
   Object.keys(koFlat).forEach((key) => {
