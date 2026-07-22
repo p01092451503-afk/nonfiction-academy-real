@@ -129,18 +129,25 @@ async function processTable(cfg: {
   return { table: cfg.name, total: todo.length, inserted };
 }
 
+const TABLES: Record<string, Parameters<typeof processTable>[0]> = {
+  courses: { name: "courses", sourceTable: "courses", i18nTable: "course_i18n", fkColumn: "course_id", fields: ["title", "description"] },
+  contents: { name: "contents", sourceTable: "course_contents", i18nTable: "course_content_i18n", fkColumn: "content_id", fields: ["title", "description"] },
+  assessments: { name: "assessments", sourceTable: "assessments", i18nTable: "assessment_i18n", fkColumn: "assessment_id", fields: ["title", "description"] },
+  questions: { name: "questions", sourceTable: "assessment_questions", i18nTable: "assessment_question_i18n", fkColumn: "question_id", fields: ["question_text", "correct_answer", "explanation", "hint"], optionsField: "options" },
+  announcements: { name: "announcements", sourceTable: "announcements", i18nTable: "announcement_i18n", fkColumn: "announcement_id", fields: ["title", "content"] },
+  tracks: { name: "tracks", sourceTable: "learning_tracks", i18nTable: "learning_tracks_i18n", fkColumn: "track_id", fields: ["title", "description"] },
+  stages: { name: "stages", sourceTable: "track_stages", i18nTable: "track_stages_i18n", fkColumn: "stage_id", fields: ["name", "description"] },
+  board_posts: { name: "board_posts", sourceTable: "board_posts", i18nTable: "board_post_i18n", fkColumn: "post_id", fields: ["title", "content"] },
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const url = new URL(req.url);
+    const which = url.searchParams.get("table");
     const results = [];
-    results.push(await processTable({ name: "courses", sourceTable: "courses", i18nTable: "course_i18n", fkColumn: "course_id", fields: ["title", "description"] }));
-    results.push(await processTable({ name: "contents", sourceTable: "course_contents", i18nTable: "course_content_i18n", fkColumn: "content_id", fields: ["title", "description"] }));
-    results.push(await processTable({ name: "assessments", sourceTable: "assessments", i18nTable: "assessment_i18n", fkColumn: "assessment_id", fields: ["title", "description"] }));
-    results.push(await processTable({ name: "questions", sourceTable: "assessment_questions", i18nTable: "assessment_question_i18n", fkColumn: "question_id", fields: ["question_text", "correct_answer", "explanation", "hint"], optionsField: "options" }));
-    results.push(await processTable({ name: "announcements", sourceTable: "announcements", i18nTable: "announcement_i18n", fkColumn: "announcement_id", fields: ["title", "content"] }));
-    results.push(await processTable({ name: "tracks", sourceTable: "learning_tracks", i18nTable: "learning_tracks_i18n", fkColumn: "track_id", fields: ["title", "description"] }));
-    results.push(await processTable({ name: "stages", sourceTable: "track_stages", i18nTable: "track_stages_i18n", fkColumn: "stage_id", fields: ["name", "description"] }));
-    results.push(await processTable({ name: "board_posts", sourceTable: "board_posts", i18nTable: "board_post_i18n", fkColumn: "post_id", fields: ["title", "content"] }));
+    const list = which && TABLES[which] ? [TABLES[which]] : Object.values(TABLES);
+    for (const cfg of list) results.push(await processTable(cfg));
 
     return new Response(JSON.stringify({ ok: true, results }, null, 2), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
