@@ -169,7 +169,55 @@
     "recommendedDesc": "根據你嘅學習模式推薦",
     "noRecommended": "冇推薦課程。",
     "instructor": "導師",
-    "students": "學生"
+    "students": "學生",
+    "filter": {
+      "year": "年份",
+      "selectYear": "揀年份",
+      "yearSuffix": "年",
+      "month": "月份",
+      "selectMonth": "揀月份",
+      "monthSuffix": "月",
+      "country": "國家",
+      "selectCountry": "揀國家",
+      "branch": "分店",
+      "selectBranch": "揀分店",
+      "clear": "重置"
+    },
+    "metric": {
+      "completedCourses": "平均完成課程數",
+      "completionRate": "平均完成率",
+      "learningMinutes": "平均學習時間",
+      "commentCount": "平均留言數",
+      "pointsEarned": "平均積分",
+      "learningDays": "平均累積學習日數",
+      "userCountHint": "根據 {{count}} 人"
+    },
+    "weekly": {
+      "title": "每週摘要",
+      "learningMinutes": "今個禮拜學習時間",
+      "activeLearners": "今個禮拜活躍學習者",
+      "completionRate": "今個禮拜完成率",
+      "totalEnrollments": "總報名數"
+    },
+    "dropoff": {
+      "title": "流失課程 TOP 5",
+      "enrolled": "已報名",
+      "inProgress": "未完成"
+    },
+    "heatmap": {
+      "title": "登入時段分佈"
+    },
+    "learners": {
+      "title": "學習者詳情",
+      "name": "姓名",
+      "department": "所屬",
+      "completedCourses": "完成課程",
+      "avgProgress": "平均進度",
+      "learningMinutes": "學習時間(分)",
+      "learningDays": "學習日數",
+      "comments": "留言",
+      "pointsEarned": "獲得積分"
+    }
   },
   "teacher": {
     "teacherDashboard": "導師主頁",

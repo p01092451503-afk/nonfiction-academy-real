@@ -169,7 +169,55 @@
     "recommendedDesc": "학습 패턴을 분석하여 추천합니다",
     "noRecommended": "추천 강의가 없습니다.",
     "instructor": "강사",
-    "students": "수강생"
+    "students": "수강생",
+    "filter": {
+      "year": "년도",
+      "selectYear": "년도 선택",
+      "yearSuffix": "년",
+      "month": "월",
+      "selectMonth": "월 선택",
+      "monthSuffix": "월",
+      "country": "국가",
+      "selectCountry": "국가 선택",
+      "branch": "매장",
+      "selectBranch": "매장 선택",
+      "clear": "초기화"
+    },
+    "metric": {
+      "completedCourses": "평균 수강 완료 강의 수",
+      "completionRate": "평균 이수율",
+      "learningMinutes": "평균 학습 시간",
+      "commentCount": "평균 댓글 수",
+      "pointsEarned": "평균 포인트",
+      "learningDays": "평균 누적 학습일",
+      "userCountHint": "{{count}}명 기준"
+    },
+    "weekly": {
+      "title": "주간 요약",
+      "learningMinutes": "이번 주 학습 시간",
+      "activeLearners": "이번 주 활동 학습자",
+      "completionRate": "이번 주 이수율",
+      "totalEnrollments": "전체 수강 등록"
+    },
+    "dropoff": {
+      "title": "이탈 강의 TOP 5",
+      "enrolled": "등록",
+      "inProgress": "미완료"
+    },
+    "heatmap": {
+      "title": "접속 시간대 분포"
+    },
+    "learners": {
+      "title": "학습자 상세",
+      "name": "이름",
+      "department": "소속",
+      "completedCourses": "완료 강의",
+      "avgProgress": "평균 진행률",
+      "learningMinutes": "학습 시간(분)",
+      "learningDays": "학습일",
+      "comments": "댓글",
+      "pointsEarned": "획득 포인트"
+    }
   },
   "teacher": {
     "teacherDashboard": "강사 대시보드",

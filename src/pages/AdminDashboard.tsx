@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Users, BookOpen, Activity, LayoutDashboard, Building2, GraduationCap,
   AlertTriangle, ClipboardCheck, Bell, Megaphone, Clock, ChevronRight,
@@ -17,6 +17,19 @@ import { ko, enUS } from "date-fns/locale";
 import StatCard from "@/components/ui/stat-card";
 import { useDashboardSparklines, computeDelta } from "@/hooks/useDashboardSparklines";
 import DashboardInsights from "@/components/admin/DashboardInsights";
+import DashboardFilterBar, { DashboardFilters } from "@/components/admin/DashboardFilterBar";
+import DashboardMetricCards from "@/components/admin/DashboardMetricCards";
+import DashboardWeeklySummary from "@/components/admin/DashboardWeeklySummary";
+import DashboardDropoffCourses from "@/components/admin/DashboardDropoffCourses";
+import DashboardAccessHeatmap from "@/components/admin/DashboardAccessHeatmap";
+import DashboardLearnerTable from "@/components/admin/DashboardLearnerTable";
+
+const defaultFilters: DashboardFilters = {
+  years: [],
+  months: [],
+  countries: [],
+  branch_ids: [],
+};
 
 const AdminDashboard = () => {
   const { profile } = useUser();
@@ -24,10 +37,9 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const isEn = i18n.language?.startsWith("en");
   const locale = isEn ? enUS : ko;
+  const [filters, setFilters] = useState<DashboardFilters>(defaultFilters);
 
   // ── Data Queries ──
-  // Use count-only query so we aren't capped at the 1,000-row default
-  // when many sessions overlap a 5-minute window.
   const { data: onlineUsers = 0 } = useQuery({
     queryKey: ["dash-realtime-online"],
     queryFn: async () => {
@@ -79,9 +91,6 @@ const AdminDashboard = () => {
     },
   });
 
-  // Only the slim columns we actually use, and only mandatory/published rows
-  // (urgentMandatory + courseMap for activity feed). For 9K+ users this avoids
-  // pulling the whole table on every dashboard mount.
   const { data: courses = [] } = useQuery({
     queryKey: ["dash-courses"],
     queryFn: async () => {
@@ -107,8 +116,6 @@ const AdminDashboard = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Aggregated server-side summary — replaces the full enrollments + full
-  // profiles scans (the previous biggest bottleneck for the dashboard).
   const { data: summary } = useQuery({
     queryKey: ["dash-summary"],
     queryFn: async () => {
@@ -150,8 +157,6 @@ const AdminDashboard = () => {
     staleTime: 60_000,
   });
 
-  // Only fetch full_name for the user_ids that appear in the activity feed
-  // (was previously pulling ALL 9K profiles on every dashboard load).
   const activityUserIds = useMemo(() => {
     const ids = new Set<string>();
     recentActivity.forEach((a: any) => { if (a.userId) ids.add(a.userId); });
@@ -182,7 +187,6 @@ const AdminDashboard = () => {
     return daysLeft <= 3;
   });
 
-  // Time-series for visualization on stat cards
   const { data: spark } = useDashboardSparklines(14);
   const sessions7   = (spark?.sessions ?? []).slice(-7);
   const signups7    = (spark?.signups ?? []).slice(-7);
@@ -192,7 +196,6 @@ const AdminDashboard = () => {
   const signupsDelta = computeDelta(spark?.signups);
   const completionsDelta = computeDelta(spark?.completions);
 
-  // Comes pre-aggregated from the server now.
   const topCourses = useMemo(
     () =>
       (summary?.top_courses ?? []).map((c) => ({
@@ -280,8 +283,6 @@ const AdminDashboard = () => {
 
         {/* ② Action Required Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-
-
           {/* Urgent Mandatory Training */}
           <button
             onClick={() => navigate("/admin/learning")}
@@ -368,10 +369,32 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* ③ Insights: Learning Health · User · Content Quality */}
+        {/* ③ Filter Bar */}
+        <DashboardFilterBar
+          filters={filters}
+          onChange={setFilters}
+          role="admin"
+        />
+
+        {/* ④ 6 Average Metric Cards */}
+        <DashboardMetricCards filters={filters} />
+
+        {/* ⑤ Weekly Summary + Dropoff Courses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DashboardWeeklySummary filters={filters} />
+          <DashboardDropoffCourses filters={filters} limit={5} />
+        </div>
+
+        {/* ⑥ Access Heatmap */}
+        <DashboardAccessHeatmap filters={filters} />
+
+        {/* ⑦ Learner Details Table */}
+        <DashboardLearnerTable filters={filters} limit={100} />
+
+        {/* ⑧ Insights: Learning Health · User · Content Quality */}
         <DashboardInsights />
 
-        {/* ④ Bottom Row: Activity Feed + Quick Summary */}
+        {/* ⑨ Bottom Row: Activity Feed + Quick Summary */}
         <div className="grid lg:grid-cols-5 gap-4">
           {/* Recent Activity Feed */}
           <div className="stat-card !p-5 lg:col-span-3">
@@ -406,7 +429,7 @@ const AdminDashboard = () => {
 
           {/* Quick Summary */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Weekly Summary */}
+            {/* Quick Summary */}
             <div className="stat-card !p-5">
               <h3 className="text-base font-semibold text-foreground mb-3">
                 {isEn ? "Quick Summary" : "빠른 요약"}
