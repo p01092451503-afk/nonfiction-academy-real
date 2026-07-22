@@ -23,10 +23,11 @@ import { translateKoTo, type TargetLang } from "@/lib/translate";
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
 
 // Supported non-Korean languages for assessment translations
-const I18N_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const I18N_LANGS: TargetLang[] = ["en", "ja", "yue", "zh-CN"];
 const LANG_LABELS: Record<TargetLang, string> = {
   en: "English",
   ja: "日本語",
+  yue: "粵語",
   "zh-CN": "简体中文",
 };
 
@@ -66,24 +67,28 @@ const emptyQuestion: QuestionForm = {
 const emptyAssessmentI18n = (): Record<TargetLang, AssessmentI18nForm> => ({
   en: { title: "", description: "" },
   ja: { title: "", description: "" },
+  yue: { title: "", description: "" },
   "zh-CN": { title: "", description: "" },
 });
 
 const emptyQuestionI18n = (optCount: number): Record<TargetLang, QuestionI18nForm> => ({
   en: { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
   ja: { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
+  yue: { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
   "zh-CN": { question_text: "", options: Array(optCount).fill(""), correct_answer: "", explanation: "", hint: "" },
 });
 
 const emptyManualFlags = (): Record<TargetLang, { title: boolean; description: boolean }> => ({
   en: { title: false, description: false },
   ja: { title: false, description: false },
+  yue: { title: false, description: false },
   "zh-CN": { title: false, description: false },
 });
 
 const emptyQuestionManualFlags = (): Record<TargetLang, { question_text: boolean; options: boolean; correct_answer: boolean; explanation: boolean; hint: boolean }> => ({
   en: { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
   ja: { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
+  yue: { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
   "zh-CN": { question_text: false, options: false, correct_answer: false, explanation: false, hint: false },
 });
 
