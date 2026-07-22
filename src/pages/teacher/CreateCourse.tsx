@@ -585,6 +585,7 @@ const CreateCourse = () => {
             if (tgt.lang === "en") setEnTitle(safe);
             if (tgt.lang === "zh-CN") setZhTitle(safe);
             if (tgt.lang === "ja") setJaTitle(safe);
+            if (tgt.lang === "yue") setYueTitle(safe);
           }
           if (tgt.needDesc) {
             const v = (out[i++] || "").trim();
@@ -593,6 +594,7 @@ const CreateCourse = () => {
             if (tgt.lang === "en") setEnDescription(safe);
             if (tgt.lang === "zh-CN") setZhDescription(safe);
             if (tgt.lang === "ja") setJaDescription(safe);
+            if (tgt.lang === "yue") setYueDescription(safe);
           }
         } catch { /* leave slot empty rather than fall back to KO */ }
       }));
@@ -808,7 +810,7 @@ const CreateCourse = () => {
       en: enTitle || "",
       "zh-CN": zhTitle || "",
       ja: jaTitle || "",
-      yue: "",
+      yue: yueTitle || "",
     };
     const prev = prevCourseTitlesRef.current;
 
@@ -830,7 +832,7 @@ const CreateCourse = () => {
     );
 
     prevCourseTitlesRef.current = courseTitlesByLang;
-  }, [title, enTitle, zhTitle, jaTitle]);
+  }, [title, enTitle, zhTitle, jaTitle, yueTitle]);
 
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
