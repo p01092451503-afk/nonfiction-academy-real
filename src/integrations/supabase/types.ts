@@ -1231,6 +1231,7 @@ export type Database = {
           is_mandatory: boolean | null
           is_sequential: boolean
           max_students: number | null
+          min_learning_minutes: number
           status: string | null
           target_departments: string[] | null
           thumbnail_url: string | null
@@ -1250,6 +1251,7 @@ export type Database = {
           is_mandatory?: boolean | null
           is_sequential?: boolean
           max_students?: number | null
+          min_learning_minutes?: number
           status?: string | null
           target_departments?: string[] | null
           thumbnail_url?: string | null
@@ -1269,6 +1271,7 @@ export type Database = {
           is_mandatory?: boolean | null
           is_sequential?: boolean
           max_students?: number | null
+          min_learning_minutes?: number
           status?: string | null
           target_departments?: string[] | null
           thumbnail_url?: string | null
