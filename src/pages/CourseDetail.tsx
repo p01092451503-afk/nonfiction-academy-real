@@ -625,6 +625,7 @@ const CourseDetail = () => {
       estimated_duration_hours: course.estimated_duration_hours ? String(course.estimated_duration_hours) : "",
       max_students: course.max_students ? String(course.max_students) : "",
       is_sequential: (course as any).is_sequential || false,
+      min_learning_minutes: (course as any).min_learning_minutes ? String((course as any).min_learning_minutes) : "",
     });
     const findRow = (lc: CourseI18nLang) =>
       courseI18n?.find((i: any) => i.language_code === lc);
