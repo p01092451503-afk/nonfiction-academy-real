@@ -41,7 +41,7 @@ type VideoProvider = Database["public"]["Enums"]["video_provider"];
 type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "video_package";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
-export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja", "yue"] as const;
+export const LESSON_LANGS = ["ko", "en", "ja", "yue", "zh-CN"] as const;
 export type LessonLang = typeof LESSON_LANGS[number];
 export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
   ko: "한국어",
