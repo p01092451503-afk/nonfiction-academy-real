@@ -267,6 +267,9 @@ const CreateCourse = () => {
         } else if (row.language_code === "ja") {
           setJaTitle(tVal); setJaDescription(dVal);
           setJaTitleManual(titleIsManual); setJaDescManual(descIsManual);
+        } else if (row.language_code === "yue") {
+          setYueTitle(tVal); setYueDescription(dVal);
+          setYueTitleManual(titleIsManual); setYueDescManual(descIsManual);
         }
       });
 
@@ -452,6 +455,7 @@ const CreateCourse = () => {
         { lang: "en", needTitle: !enTitleManual && !!koTitle, needDesc: !enDescManual && !!koDesc },
         { lang: "zh-CN", needTitle: !zhTitleManual && !!koTitle, needDesc: !zhDescManual && !!koDesc },
         { lang: "ja", needTitle: !jaTitleManual && !!koTitle, needDesc: !jaDescManual && !!koDesc },
+        { lang: "yue", needTitle: !yueTitleManual && !!koTitle, needDesc: !yueDescManual && !!koDesc },
       ];
       setTranslatingCourse(true);
       try {
@@ -468,12 +472,14 @@ const CreateCourse = () => {
               if (tgt.lang === "en") setEnTitle(v);
               if (tgt.lang === "zh-CN") setZhTitle(v);
               if (tgt.lang === "ja") setJaTitle(v);
+              if (tgt.lang === "yue") setYueTitle(v);
             }
             if (tgt.needDesc) {
               const v = out[i++] || "";
               if (tgt.lang === "en") setEnDescription(v);
               if (tgt.lang === "zh-CN") setZhDescription(v);
               if (tgt.lang === "ja") setJaDescription(v);
+              if (tgt.lang === "yue") setYueDescription(v);
             }
           } catch { /* silent per-lang */ }
         }));
