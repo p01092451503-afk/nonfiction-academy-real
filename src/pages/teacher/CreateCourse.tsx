@@ -41,7 +41,7 @@ type VideoProvider = Database["public"]["Enums"]["video_provider"];
 type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "video_package";
 
 // 4-language fixed structure: 1 강의 = 4 차시 (KO / EN / ZH-CN / JA)
-export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
+export const LESSON_LANGS = ["ko", "en", "zh-CN", "ja", "yue"] as const;
 export type LessonLang = typeof LESSON_LANGS[number];
 export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
   ko: "한국어",
@@ -242,7 +242,7 @@ const CreateCourse = () => {
         .from("course_i18n")
         .select("*")
         .eq("course_id", editCourseId)
-        .in("language_code", ["en", "zh-CN", "ja"]);
+        .in("language_code", ["en", "zh-CN", "ja", "yue"]);
       // Load course i18n. Mark "manual" only when stored value actually differs from the
       // KO original — otherwise the slot is stale (auto-translation never succeeded) and
       // must remain eligible for re-translation, instead of being permanently locked.
@@ -487,7 +487,7 @@ const CreateCourse = () => {
     if (!koTitle && !koDesc) return;
     setTranslatingCourse(true);
     try {
-      const langs: TargetLang[] = ["en", "zh-CN", "ja"];
+      const langs: TargetLang[] = ["en", "zh-CN", "ja", "yue"];
       await Promise.all(langs.map(async (lang) => {
         const inputs: string[] = [];
         if (koTitle) inputs.push(koTitle);
@@ -743,7 +743,7 @@ const CreateCourse = () => {
   useEffect(() => {
     if (!koTitle && !koDesc) return;
     const handle = setTimeout(async () => {
-      const targets: TargetLang[] = ["en", "zh-CN", "ja"];
+      const targets: TargetLang[] = ["en", "zh-CN", "ja", "yue"];
       // Mark all targets as translating
       setAutoTranslating((s) => ({ ...s, en: true, "zh-CN": true, ja: true }));
       try {
@@ -949,7 +949,7 @@ const CreateCourse = () => {
       const resolvedI18n = await ensureCourseI18nReady();
       const koTitleTrim = title.trim();
       const koDescTrim = description.trim();
-      const courseI18nRows = (["en", "zh-CN", "ja"] as TargetLang[])
+      const courseI18nRows = (["en", "zh-CN", "ja", "yue"] as TargetLang[])
         .map((lang) => {
           const r = resolvedI18n[lang];
           const tVal = (r.title || "").trim();
@@ -971,7 +971,7 @@ const CreateCourse = () => {
         .filter((row) => !!row.title);
       // Remove rows whose translation got cleared so stale KO copies don't linger.
       const langsWithRows = new Set<string>(courseI18nRows.map((r) => r.language_code as string));
-      const langsToClear = (["en", "zh-CN", "ja"] as string[]).filter((l) => !langsWithRows.has(l));
+      const langsToClear = (["en", "zh-CN", "ja", "yue"] as string[]).filter((l) => !langsWithRows.has(l));
       if (langsToClear.length) {
         await supabase.from("course_i18n").delete()
           .eq("course_id", editCourseId!)
@@ -1136,7 +1136,7 @@ const CreateCourse = () => {
       const resolvedI18nNew = await ensureCourseI18nReady();
       const koTitleTrimNew = title.trim();
       const koDescTrimNew = description.trim();
-      const courseI18nRows = (["en", "zh-CN", "ja"] as TargetLang[])
+      const courseI18nRows = (["en", "zh-CN", "ja", "yue"] as TargetLang[])
         .map((lang) => {
           const r = resolvedI18nNew[lang];
           const tVal = (r.title || "").trim();

@@ -37,7 +37,7 @@ const parseOptionIndexAnswer = (value?: string | null): number | null => {
   return Number.isInteger(index) && index >= 0 ? index : null;
 };
 
-const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
   const isChoice = isChoiceQuestion(question.question_type);
@@ -49,14 +49,14 @@ const questionNeedsTranslationRepair = (question: any, translation: any, targetL
   return false;
 };
 
-const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean =>
+const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null): boolean =>
   questionNeedsTranslationRepair(question, translation, targetLang);
 
 // UI blocking must be stricter than background repair. A translated MCQ can have
 // stale Korean in hidden fields such as correct_answer/explanation while the
 // visible question/options are already clean. Blocking the whole quiz for those
 // hidden fields caused iOS users to see an endless "翻訳中..." card.
-const questionHasCoreDisplayTranslationIssue = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | null): boolean => {
+const questionHasCoreDisplayTranslationIssue = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
   if (hasHangulValue([translation.question_text, translation.options])) return true;
@@ -66,7 +66,7 @@ const questionHasCoreDisplayTranslationIssue = (question: any, translation: any,
   return false;
 };
 
-const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN") => `${questionId}:${targetLang}`;
+const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN" | "yue") => `${questionId}:${targetLang}`;
 
 const getTakingQuestionTextParts = (question: any) => [
   question?.question_text,
@@ -98,7 +98,7 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, message: 
   }
 };
 
-const invokeQuestionTranslation = async (questionId: string, targetLang: "en" | "ja" | "zh-CN") => {
+const invokeQuestionTranslation = async (questionId: string, targetLang: "en" | "ja" | "zh-CN" | "yue") => {
   const { data, error } = await withTimeout(
     supabase.functions.invoke("translate-question-now", {
       body: { question_id: questionId, target_lang: targetLang },
@@ -117,7 +117,7 @@ const LANG_NATIVE: Record<string, string> = {
   "zh-CN": "中文",
 };
 
-const countryToAssessmentLang = (country?: string | null): "en" | "ja" | "zh-CN" | null => {
+const countryToAssessmentLang = (country?: string | null): "en" | "ja" | "zh-CN" | "yue" | "yue" | null => {
   const normalized = (country || "").toUpperCase();
   if (normalized === "JP") return "ja";
   if (normalized === "US") return "en";
@@ -165,7 +165,7 @@ function TranslateQuestionButton({
 }: {
   questionId: string;
   questionText: string;
-  targetLang: "en" | "ja" | "zh-CN" | null;
+  targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null;
   onDone: () => void | Promise<void>;
   hasKorean?: boolean;
 }) {
@@ -229,7 +229,7 @@ function TranslationRepairNotice({
   repairing,
   failed,
 }: {
-  targetLang: "en" | "ja" | "zh-CN" | null;
+  targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null;
   repairing?: boolean;
   failed?: boolean;
 }) {
@@ -255,7 +255,7 @@ function QuestionReview({
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
-  currentLang: "en" | "ja" | "zh-CN" | null; onTranslated: () => void | Promise<void>;
+  currentLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null; onTranslated: () => void | Promise<void>;
   questionI18n?: any;
   sourceQuestion?: any;
   repairing?: boolean;
@@ -567,7 +567,7 @@ export default function AssessmentPage() {
   const queryClient = useQueryClient();
 
   // Map current UI language to assessment_i18n.language_code (null = Korean = base)
-  const uiLang: "en" | "ja" | "zh-CN" | null = (() => {
+  const uiLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null = (() => {
     const lng = (i18n.language || "").toLowerCase();
     if (lng.startsWith("en")) return "en";
     if (lng.startsWith("ja")) return "ja";

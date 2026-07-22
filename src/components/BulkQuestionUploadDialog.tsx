@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
 
-type LangCode = "en" | "ja" | "zh-CN";
+type LangCode = "en" | "ja" | "zh-CN" | "yue";
 const EXTRA_LANGS: { code: LangCode; suffix: string; label: string }[] = [
   { code: "en", suffix: "EN", label: "English" },
   { code: "ja", suffix: "JA", label: "日本語" },

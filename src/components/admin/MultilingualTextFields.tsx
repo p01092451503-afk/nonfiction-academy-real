@@ -10,7 +10,7 @@ import { Languages } from "lucide-react";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
 import { toast } from "sonner";
 
-export type MlLang = "ko" | "en" | "ja" | "zh-CN";
+export type MlLang = "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue";
 
 export interface MultilingualValue {
   ko: { title: string; content: string };
@@ -26,7 +26,7 @@ export const EMPTY_MULTILINGUAL: MultilingualValue = {
   "zh-CN": { title: "", content: "" },
 };
 
-const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN", "yue"];
 const LANG_LABEL: Record<MlLang, string> = {
   ko: "한국어",
   en: "English",
@@ -89,7 +89,7 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
     }
   };
 
-  const allLangs: MlLang[] = ["ko", "en", "ja", "zh-CN"];
+  const allLangs: MlLang[] = ["ko", "en", "ja", "zh-CN", "yue"];
 
   return (
     <Tabs defaultValue="ko" className="w-full">
@@ -133,7 +133,7 @@ const MultilingualTextFields = ({ value, onChange, contentRows = 6, autoTranslat
         )}
       </TabsContent>
 
-      {!auto && (["en", "ja", "zh-CN"] as MlLang[]).map((lc) => (
+      {!auto && (["en", "ja", "zh-CN", "yue"] as MlLang[]).map((lc) => (
         <TabsContent key={lc} value={lc} className="space-y-3 mt-3">
           <div className="space-y-1">
             <Label className="text-xs">{t("announcements.titleLabel", "제목")} ({lc.toUpperCase()})</Label>

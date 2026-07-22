@@ -11,6 +11,7 @@ const LANG_NAMES: Record<string, string> = {
   en: "English",
   ja: "Japanese",
   "zh-CN": "Simplified Chinese",
+  yue: "Cantonese (Traditional Chinese, Hong Kong)",
 };
 
 serve(async (req) => {

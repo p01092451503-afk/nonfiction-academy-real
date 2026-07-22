@@ -9,12 +9,14 @@ const LANG_LABEL: Record<string, string> = {
   en: "English",
   "zh-CN": "Simplified Chinese (简体中文)",
   ja: "Japanese (日本語)",
+  yue: "Cantonese (廣東話, Traditional Chinese script, Hong Kong colloquial style)",
   ko: "Korean (한국어)",
 };
 
 const TERM_TRANSLATION_HINT: Record<string, string> = {
   ja: "For English action keywords, translate them into Japanese too: Uncover → 明らかにする, Listen → 聞く, Clarify → 明確にする, Engage → 関与する. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
   "zh-CN": "For English action keywords, translate them into Simplified Chinese too: Uncover → 发现, Listen → 倾听, Clarify → 澄清, Engage → 参与. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
+  yue: "Use Traditional Chinese script and Hong Kong Cantonese colloquial style. For English action keywords: Uncover → 揭示, Listen → 聆聽, Clarify → 釐清, Engage → 投入. Keep acronyms such as IDENTIFY or S.T.Y.L.E only when they are framework names.",
   en: "Translate Korean text into English while preserving official framework acronyms such as IDENTIFY or S.T.Y.L.E.",
 };
 

@@ -7,8 +7,8 @@
 import i18n from "i18next";
 import { supabase } from "@/integrations/supabase/client";
 
-export type UiLang = "en" | "ja" | "zh-CN";
-export const UI_LANGS: UiLang[] = ["en", "ja", "zh-CN"];
+export type UiLang = "en" | "ja" | "zh-CN" | "yue";
+export const UI_LANGS: UiLang[] = ["en", "ja", "zh-CN", "yue"];
 
 /**
  * Flatten a nested object into dot-separated keys.

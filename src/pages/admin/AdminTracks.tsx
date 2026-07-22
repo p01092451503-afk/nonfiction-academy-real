@@ -21,7 +21,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-const I18N_LANGS = ["ko", "en", "ja", "zh-CN"] as const;
+const I18N_LANGS = ["ko", "en", "ja", "zh-CN", "yue"] as const;
 type I18nLang = (typeof I18N_LANGS)[number];
 const LANG_LABEL: Record<I18nLang, string> = {
   ko: "한국어",
@@ -449,9 +449,9 @@ const AdminTracks = () => {
 /* ────────────── Track Editor ────────────── */
 
 type LangMap = Partial<Record<I18nLang, string>>;
-const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "" });
-const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
-const clearTranslations = (values: LangMap): LangMap => ({ ...values, en: "", ja: "", "zh-CN": "" });
+const emptyLangMap = (): LangMap => ({ ko: "", en: "", ja: "", "zh-CN": "", yue: "" });
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN", "yue"];
+const clearTranslations = (values: LangMap): LangMap => ({ ...values, en: "", ja: "", "zh-CN": "", yue: "" });
 const matchesSource = (row: any, field: string, source: string | null | undefined) =>
   !!row && !!(source || "").trim() && typeof row[field] === "string" && row[field].trim() === (source || "").trim();
 
@@ -532,7 +532,7 @@ const TrackEditorDialog = ({
       if (track) {
         const nextTitles: LangMap = { ...emptyLangMap(), ko: track.title || "" };
         const nextDescs: LangMap = { ...emptyLangMap(), ko: track.description || "" };
-        (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
+        (["en", "ja", "zh-CN", "yue"] as I18nLang[]).forEach((lc) => {
           const row = trackI18nByLang.get(lc);
           if (row) {
             nextTitles[lc] = row.title || "";
@@ -717,7 +717,7 @@ const TrackEditorDialog = ({
 
       // Track i18n: replace
       await supabase.from("learning_tracks_i18n" as any).delete().eq("track_id", savedTrackId);
-      const trackI18nRows = (["en", "ja", "zh-CN"] as I18nLang[])
+      const trackI18nRows = (["en", "ja", "zh-CN", "yue"] as I18nLang[])
         .map((lc) => ({
           track_id: savedTrackId!,
           language_code: lc,
@@ -751,7 +751,7 @@ const TrackEditorDialog = ({
         draft.course_ids.forEach((cid, j) => {
           stageRows.push({ stage_id: draft.id, course_id: cid, order_index: j });
         });
-        (["en", "ja", "zh-CN"] as I18nLang[]).forEach((lc) => {
+        (["en", "ja", "zh-CN", "yue"] as I18nLang[]).forEach((lc) => {
           const name = (draft.names[lc] || "").trim();
           if (name) stageI18nRows.push({ stage_id: draft.id, language_code: lc, name, source_name: (draft.names.ko || "").trim() });
         });

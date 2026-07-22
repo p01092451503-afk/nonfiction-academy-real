@@ -16,12 +16,13 @@ import koLocale from "@/i18n/locales/ko.json";
 import enLocale from "@/i18n/locales/en.json";
 import jaLocale from "@/i18n/locales/ja.json";
 import zhLocale from "@/i18n/locales/zh-CN.json";
+import yueLocale from "@/i18n/locales/yue.json";
 import { flattenKeys } from "@/i18n/uiOverrides";
 
 type Category = "course" | "content" | "assessment" | "announcement" | "board" | "category" | "assignment" | "survey" | "survey_question" | "track" | "track_stage" | "ui_string";
 
-const TARGET_LANGS: TargetLang[] = ["en", "zh-CN", "ja"];
-const LANG_LABELS: Record<TargetLang, string> = { en: "EN", "zh-CN": "ZH", ja: "JA" };
+const TARGET_LANGS: TargetLang[] = ["en", "zh-CN", "ja", "yue"];
+const LANG_LABELS: Record<TargetLang, string> = { en: "EN", "zh-CN": "ZH", ja: "JA", yue: "YUE" };
 
 type LangStatus = "missing" | "untranslated" | "partial" | "complete";
 
@@ -149,7 +150,7 @@ async function fetchAllRows(): Promise<Row[]> {
       const lc = r.language_code as TargetLang;
       if (!TARGET_LANGS.includes(lc)) return;
       if (!map.has(id)) {
-        map.set(id, { en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null } });
+        map.set(id, { en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null }, yue: { title: null, body: null } });
       }
       map.get(id)![lc] = { title: r[titleField] ?? null, body: r[bodyField] ?? null };
     });
@@ -157,7 +158,7 @@ async function fetchAllRows(): Promise<Row[]> {
   };
 
   const emptyPerLang = (): Record<TargetLang, { title: string | null; body: string | null }> =>
-    ({ en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null } });
+    ({ en: { title: null, body: null }, "zh-CN": { title: null, body: null }, ja: { title: null, body: null }, yue: { title: null, body: null } });
 
   // 1) Courses
   const { data: coursesData } = await supabase.from("courses").select("id, title, description").order("created_at", { ascending: false });
@@ -314,6 +315,7 @@ async function fetchAllRows(): Promise<Row[]> {
   const enFlat = flattenKeys(enLocale);
   const jaFlat = flattenKeys(jaLocale);
   const zhFlat = flattenKeys(zhLocale);
+  const yueFlat = flattenKeys(yueLocale);
   const { data: uiOverrides } = await supabase
     .from("ui_translations" as any)
     .select("key, language_code, value");
@@ -321,7 +323,7 @@ async function fetchAllRows(): Promise<Row[]> {
   (uiOverrides ?? []).forEach((r: any) => {
     if (!TARGET_LANGS.includes(r.language_code)) return;
     if (!overrideMap.has(r.key)) {
-      overrideMap.set(r.key, { en: "", "zh-CN": "", ja: "" });
+      overrideMap.set(r.key, { en: "", "zh-CN": "", ja: "", yue: "" });
     }
     overrideMap.get(r.key)![r.language_code as TargetLang] = r.value;
   });
@@ -330,6 +332,7 @@ async function fetchAllRows(): Promise<Row[]> {
     en: enFlat,
     ja: jaFlat,
     "zh-CN": zhFlat,
+    yue: yueFlat,
   };
 
   Object.keys(koFlat).forEach((key) => {

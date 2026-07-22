@@ -31,7 +31,7 @@ import {
  * These cases should fail loudly if anyone re-introduces the old behaviour.
  */
 
-const SUPPORTED_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
+const SUPPORTED_LANGS = ["ko", "en", "zh-CN", "ja", "yue"] as const;
 
 describe("stripLessonPrefix", () => {
   it("removes lesson-number prefixes for all 4 languages", () => {
@@ -162,7 +162,7 @@ describe("getCourseTitleByLang / getCourseDescByLang (course-level header)", () 
     expect(getCourseDescByLang(base, i18n, "ko")).toBe("한국어 설명");
   });
 
-  it.each(["en", "ja", "zh-CN"])("returns localized for %s", (lang) => {
+  it.each(["en", "ja", "zh-CN", "yue"])("returns localized for %s", (lang) => {
     const got = getCourseTitleByLang(base, i18n, lang);
     expect(got).toBe(i18n.find((r) => r.language_code === lang)!.title);
   });
@@ -224,7 +224,7 @@ describe("CreateCourse data model: 1 강의 = 4 차시 (one row per language)", 
    * `buildDefaultLessonSlots` — the contract that prevents the
    * "한글 강의가 영문으로 표시" regression at registration time.
    */
-  const LESSON_LANGS = ["ko", "en", "zh-CN", "ja"] as const;
+  const LESSON_LANGS = ["ko", "en", "zh-CN", "ja", "yue"] as const;
 
   const buildDefaultLessonSlots = () =>
     LESSON_LANGS.map((lang, i) => ({
@@ -237,7 +237,7 @@ describe("CreateCourse data model: 1 강의 = 4 차시 (one row per language)", 
   it("creates exactly 4 slots, one per supported language, in canonical order", () => {
     const slots = buildDefaultLessonSlots();
     expect(slots).toHaveLength(4);
-    expect(slots.map((s) => s.language_code)).toEqual(["ko", "en", "zh-CN", "ja"]);
+    expect(slots.map((s) => s.language_code)).toEqual(["ko", "en", "zh-CN", "ja", "yue"]);
   });
 
   it("each slot keeps its own title — rendering each via getContentTitle yields its own language", () => {

@@ -12,15 +12,20 @@ const LANGS: { code: string; label: string }[] = [
   { code: "ko", label: "한국어" },
   { code: "en", label: "English" },
   { code: "ja", label: "日本語" },
+  { code: "yue", label: "粵語" },
   { code: "zh-CN", label: "简体中文" },
 ];
 
 const resolveCurrent = (raw?: string) => {
   if (!raw) return "ko";
-  if (raw.startsWith("zh")) return "zh-CN";
-  if (raw.startsWith("ja")) return "ja";
-  if (raw.startsWith("en")) return "en";
-  if (raw.startsWith("ko")) return "ko";
+  const lower = raw.toLowerCase();
+  if (lower === "yue" || lower.startsWith("yue-") ||
+      lower === "zh-hk" || lower === "zh-mo" ||
+      lower.startsWith("zh-hant-hk") || lower.startsWith("zh-yue")) return "yue";
+  if (lower.startsWith("zh")) return "zh-CN";
+  if (lower.startsWith("ja")) return "ja";
+  if (lower.startsWith("en")) return "en";
+  if (lower.startsWith("ko")) return "ko";
   return "ko";
 };
 
