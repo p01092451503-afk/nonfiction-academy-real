@@ -783,13 +783,14 @@ const CreateCourse = () => {
      When the course title for a given language changes (KO 입력 또는 자동 번역 결과),
      mirror it into the matching 차시 슬롯 제목. 사용자가 차시 제목을 직접 수정한 경우
      (=수동 편집된 경우)에는 덮어쓰지 않는다. */
-  const prevCourseTitlesRef = useRef<Record<LessonLang, string>>({ ko: "", en: "", "zh-CN": "", ja: "" });
+  const prevCourseTitlesRef = useRef<Record<LessonLang, string>>({ ko: "", en: "", "zh-CN": "", ja: "", yue: "" });
   useEffect(() => {
     const courseTitlesByLang: Record<LessonLang, string> = {
       ko: title || "",
       en: enTitle || "",
       "zh-CN": zhTitle || "",
       ja: jaTitle || "",
+      yue: "",
     };
     const prev = prevCourseTitlesRef.current;
 
