@@ -38,6 +38,8 @@ interface MediaPackagePlayerProps {
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
   /** 영상 슬라이드들의 실제 시청 초가 변할 때 호출 (디바운스됨). 학습시간 통계에 사용 */
   onWatchedSecondsTracked?: (totalSeconds: number) => void;
+  /** 이 차시에 배분된 최소 학습시간(초). 슬라이드 수로 균등 배분되어 카드별 게이팅에 사용 */
+  perContentMinSeconds?: number;
 }
 
 interface PackageItem {
