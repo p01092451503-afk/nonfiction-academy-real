@@ -176,6 +176,8 @@ const CreateCourse = () => {
   const [zhDescription, setZhDescription] = useState("");
   const [jaTitle, setJaTitle] = useState("");
   const [jaDescription, setJaDescription] = useState("");
+  const [yueTitle, setYueTitle] = useState("");
+  const [yueDescription, setYueDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [difficultyLevel, setDifficultyLevel] = useState("beginner");
   const [estimatedHours, setEstimatedHours] = useState("");
@@ -186,6 +188,8 @@ const CreateCourse = () => {
   const [zhDescManual, setZhDescManual] = useState(false);
   const [jaTitleManual, setJaTitleManual] = useState(false);
   const [jaDescManual, setJaDescManual] = useState(false);
+  const [yueTitleManual, setYueTitleManual] = useState(false);
+  const [yueDescManual, setYueDescManual] = useState(false);
   const [maxStudents, setMaxStudents] = useState("");
   const [isMandatory, setIsMandatory] = useState(false);
   const [isSequential, setIsSequential] = useState(false);
@@ -263,6 +267,9 @@ const CreateCourse = () => {
         } else if (row.language_code === "ja") {
           setJaTitle(tVal); setJaDescription(dVal);
           setJaTitleManual(titleIsManual); setJaDescManual(descIsManual);
+        } else if (row.language_code === "yue") {
+          setYueTitle(tVal); setYueDescription(dVal);
+          setYueTitleManual(titleIsManual); setYueDescManual(descIsManual);
         }
       });
 
@@ -448,6 +455,7 @@ const CreateCourse = () => {
         { lang: "en", needTitle: !enTitleManual && !!koTitle, needDesc: !enDescManual && !!koDesc },
         { lang: "zh-CN", needTitle: !zhTitleManual && !!koTitle, needDesc: !zhDescManual && !!koDesc },
         { lang: "ja", needTitle: !jaTitleManual && !!koTitle, needDesc: !jaDescManual && !!koDesc },
+        { lang: "yue", needTitle: !yueTitleManual && !!koTitle, needDesc: !yueDescManual && !!koDesc },
       ];
       setTranslatingCourse(true);
       try {
@@ -464,12 +472,14 @@ const CreateCourse = () => {
               if (tgt.lang === "en") setEnTitle(v);
               if (tgt.lang === "zh-CN") setZhTitle(v);
               if (tgt.lang === "ja") setJaTitle(v);
+              if (tgt.lang === "yue") setYueTitle(v);
             }
             if (tgt.needDesc) {
               const v = out[i++] || "";
               if (tgt.lang === "en") setEnDescription(v);
               if (tgt.lang === "zh-CN") setZhDescription(v);
               if (tgt.lang === "ja") setJaDescription(v);
+              if (tgt.lang === "yue") setYueDescription(v);
             }
           } catch { /* silent per-lang */ }
         }));
@@ -501,12 +511,14 @@ const CreateCourse = () => {
             if (lang === "en") { setEnTitle(v); setEnTitleManual(true); }
             if (lang === "zh-CN") { setZhTitle(v); setZhTitleManual(true); }
             if (lang === "ja") { setJaTitle(v); setJaTitleManual(true); }
+            if (lang === "yue") { setYueTitle(v); setYueTitleManual(true); }
           }
           if (koDesc) {
             const v = out[i++] || "";
             if (lang === "en") { setEnDescription(v); setEnDescManual(true); }
             if (lang === "zh-CN") { setZhDescription(v); setZhDescManual(true); }
             if (lang === "ja") { setJaDescription(v); setJaDescManual(true); }
+            if (lang === "yue") { setYueDescription(v); setYueDescManual(true); }
           }
         } catch { /* silent */ }
       }));
@@ -530,6 +542,7 @@ const CreateCourse = () => {
       en: { title: enTitle, desc: enDescription },
       "zh-CN": { title: zhTitle, desc: zhDescription },
       ja: { title: jaTitle, desc: jaDescription },
+      yue: { title: yueTitle, desc: yueDescription },
     };
     const targets: { lang: TargetLang; needTitle: boolean; needDesc: boolean }[] = [
       {
@@ -546,6 +559,11 @@ const CreateCourse = () => {
         lang: "ja",
         needTitle: !jaTitleManual && !!koTitle && (!jaTitle.trim() || jaTitle.trim() === koTitle),
         needDesc: !jaDescManual && !!koDesc && (!jaDescription.trim() || jaDescription.trim() === koDesc),
+      },
+      {
+        lang: "yue",
+        needTitle: !yueTitleManual && !!koTitle && (!yueTitle.trim() || yueTitle.trim() === koTitle),
+        needDesc: !yueDescManual && !!koDesc && (!yueDescription.trim() || yueDescription.trim() === koDesc),
       },
     ];
     if (!targets.some((t) => t.needTitle || t.needDesc)) return resolved;
@@ -567,6 +585,7 @@ const CreateCourse = () => {
             if (tgt.lang === "en") setEnTitle(safe);
             if (tgt.lang === "zh-CN") setZhTitle(safe);
             if (tgt.lang === "ja") setJaTitle(safe);
+            if (tgt.lang === "yue") setYueTitle(safe);
           }
           if (tgt.needDesc) {
             const v = (out[i++] || "").trim();
@@ -575,6 +594,7 @@ const CreateCourse = () => {
             if (tgt.lang === "en") setEnDescription(safe);
             if (tgt.lang === "zh-CN") setZhDescription(safe);
             if (tgt.lang === "ja") setJaDescription(safe);
+            if (tgt.lang === "yue") setYueDescription(safe);
           }
         } catch { /* leave slot empty rather than fall back to KO */ }
       }));
@@ -790,7 +810,7 @@ const CreateCourse = () => {
       en: enTitle || "",
       "zh-CN": zhTitle || "",
       ja: jaTitle || "",
-      yue: "",
+      yue: yueTitle || "",
     };
     const prev = prevCourseTitlesRef.current;
 
@@ -812,7 +832,7 @@ const CreateCourse = () => {
     );
 
     prevCourseTitlesRef.current = courseTitlesByLang;
-  }, [title, enTitle, zhTitle, jaTitle]);
+  }, [title, enTitle, zhTitle, jaTitle, yueTitle]);
 
   const uploadThumbnail = async (courseId: string): Promise<string | null> => {
     if (!thumbnailFile) return null;
@@ -1427,11 +1447,12 @@ const CreateCourse = () => {
           </Dialog>
 
           <Tabs defaultValue="ko" className="w-full">
-            <TabsList className="w-full h-9 grid grid-cols-4">
+            <TabsList className="w-full h-9 grid grid-cols-5">
               <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
               <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
               <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
               <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
+              <TabsTrigger value="yue" className="text-xs">粵語</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-2">
@@ -1485,6 +1506,18 @@ const CreateCourse = () => {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">日本語説明</label>
                 <Textarea value={jaDescription} onChange={(e) => { setJaDescription(e.target.value); setJaDescManual(true); }} placeholder="日本語説明" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="yue" className="space-y-3 pt-2">
+              <p className="text-[11px] text-muted-foreground">{translatingCourse ? t("createCourse.translating", "번역 중...") : t("createCourse.autoTranslateHint", "한국어 입력 시 자동 번역됩니다. 직접 수정 가능.")}</p>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">粵語標題</label>
+                <Input value={yueTitle} onChange={(e) => { setYueTitle(e.target.value); setYueTitleManual(true); }} placeholder="粵語標題" className="h-9 rounded-lg border-border text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">粵語描述</label>
+                <Textarea value={yueDescription} onChange={(e) => { setYueDescription(e.target.value); setYueDescManual(true); }} placeholder="粵語描述" className="min-h-[68px] rounded-lg border-border resize-none text-sm" />
               </div>
             </TabsContent>
           </Tabs>
