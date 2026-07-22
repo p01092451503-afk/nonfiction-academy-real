@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import {
   BookOpen, Clock, ClipboardCheck, Award, Play, ArrowRight, TrendingUp, BarChart3, Star,
   AlertTriangle, Calendar, MessageSquare,
@@ -12,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
 import { localizeCourse } from "@/lib/i18nCourse";
+import { MultiSelectPopover } from "@/components/ui/MultiSelectPopover";
+import { Filter, RotateCcw } from "lucide-react";
 
 const StudentDashboard = () => {
   const { user, profile } = useUser();
