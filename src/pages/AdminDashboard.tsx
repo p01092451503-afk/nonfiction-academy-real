@@ -261,8 +261,6 @@ const AdminDashboard = () => {
           <DashboardDropoffCourses filters={filters} limit={5} />
         </div>
 
-        {/* ⑥ Access Heatmap */}
-        <DashboardAccessHeatmap filters={filters} />
 
         {/* ⑦ Learner Details Table */}
         <DashboardLearnerTable filters={filters} limit={100} />
