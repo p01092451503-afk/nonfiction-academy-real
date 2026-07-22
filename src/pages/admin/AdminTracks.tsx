@@ -28,6 +28,7 @@ const LANG_LABEL: Record<I18nLang, string> = {
   en: "English",
   ja: "日本語",
   "zh-CN": "中文",
+  yue: "粵語",
 };
 
 const resolveLang = (l: string | undefined): I18nLang => {
