@@ -511,12 +511,14 @@ const CreateCourse = () => {
             if (lang === "en") { setEnTitle(v); setEnTitleManual(true); }
             if (lang === "zh-CN") { setZhTitle(v); setZhTitleManual(true); }
             if (lang === "ja") { setJaTitle(v); setJaTitleManual(true); }
+            if (lang === "yue") { setYueTitle(v); setYueTitleManual(true); }
           }
           if (koDesc) {
             const v = out[i++] || "";
             if (lang === "en") { setEnDescription(v); setEnDescManual(true); }
             if (lang === "zh-CN") { setZhDescription(v); setZhDescManual(true); }
             if (lang === "ja") { setJaDescription(v); setJaDescManual(true); }
+            if (lang === "yue") { setYueDescription(v); setYueDescManual(true); }
           }
         } catch { /* silent */ }
       }));
@@ -540,6 +542,7 @@ const CreateCourse = () => {
       en: { title: enTitle, desc: enDescription },
       "zh-CN": { title: zhTitle, desc: zhDescription },
       ja: { title: jaTitle, desc: jaDescription },
+      yue: { title: yueTitle, desc: yueDescription },
     };
     const targets: { lang: TargetLang; needTitle: boolean; needDesc: boolean }[] = [
       {
@@ -556,6 +559,11 @@ const CreateCourse = () => {
         lang: "ja",
         needTitle: !jaTitleManual && !!koTitle && (!jaTitle.trim() || jaTitle.trim() === koTitle),
         needDesc: !jaDescManual && !!koDesc && (!jaDescription.trim() || jaDescription.trim() === koDesc),
+      },
+      {
+        lang: "yue",
+        needTitle: !yueTitleManual && !!koTitle && (!yueTitle.trim() || yueTitle.trim() === koTitle),
+        needDesc: !yueDescManual && !!koDesc && (!yueDescription.trim() || yueDescription.trim() === koDesc),
       },
     ];
     if (!targets.some((t) => t.needTitle || t.needDesc)) return resolved;
