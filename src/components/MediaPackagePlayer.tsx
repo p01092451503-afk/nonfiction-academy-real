@@ -768,15 +768,16 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
         </div>
       )}
 
-      {/* 현재 슬라이드에 미완료 영상이 있으면 안내 */}
+      {/* 현재 슬라이드에 미완료 영상이 있거나 배분된 학습시간이 남았으면 안내 */}
       {isItemLocked(index) && (
         <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <Lock className="h-3.5 w-3.5" aria-hidden="true" />
           <span>
-            {t(
-              "contentPlayer.videoLockHint",
-              "영상을 끝까지 시청하면 다음 카드로 이동할 수 있어요"
-            )}
+            {isTimeGated(index)
+              ? t("contentPlayer.timeLockHint", "이 카드에 배분된 학습시간을 채우면 다음 카드로 이동할 수 있어요 ({{s}}초 남음)", {
+                  s: Math.max(0, perCardMinSec - (dwellSec[index] || 0)),
+                })
+              : t("contentPlayer.videoLockHint", "영상을 끝까지 시청하면 다음 카드로 이동할 수 있어요")}
           </span>
         </div>
       )}
