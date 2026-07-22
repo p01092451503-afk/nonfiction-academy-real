@@ -126,7 +126,7 @@ const CourseDetail = () => {
   const [courseForm, setCourseForm] = useState({
     title: "", description: "", status: "draft", is_mandatory: false, deadline: "",
     category_id: "", difficulty_level: "beginner", estimated_duration_hours: "", max_students: "",
-    is_sequential: false,
+    is_sequential: false, min_learning_minutes: "",
   });
   // Multi-language i18n forms for course edit (en, ja, zh-CN)
   type CourseI18nLang = "en" | "ja" | "zh-CN";
