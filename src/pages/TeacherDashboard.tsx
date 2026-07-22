@@ -36,6 +36,7 @@ const TeacherDashboard = () => {
   const { t, i18n } = useTranslation();
   const dateFnsLocale = i18n.language?.startsWith("en") ? enUS : ko;
   const lang = normalizeLang(i18n.language);
+  const [leaderFilters, setLeaderFilters] = useState<DashboardFilters>(defaultLeaderFilters);
 
   const branchLabel = branch
     ? (i18n.language?.startsWith("en") && branch.name_en ? branch.name_en : branch.name) +
