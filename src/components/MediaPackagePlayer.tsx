@@ -748,7 +748,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
                 if (i > index) {
                   for (let k = index; k < i; k++) {
                     if (isItemLocked(k)) {
-                      showLockToast();
+                      showLockToast(isTimeGated(k) ? "time" : "video");
                       return;
                     }
                   }
