@@ -35,11 +35,13 @@ export const DashboardAccessHeatmap = ({ filters, leaderId }: DashboardAccessHea
     heatmap?.find((h) => h.dow === dow && h.hr === hr)?.n ?? 0;
 
   const intensityClass = (n: number) => {
-    const ratio = n / maxN;
-    if (ratio === 0) return "bg-muted";
-    if (ratio < 0.25) return "bg-chart-3/20";
-    if (ratio < 0.5) return "bg-chart-3/40";
-    if (ratio < 0.75) return "bg-chart-3/70";
+    if (n === 0) return "bg-background";
+    // sqrt scale to keep small values visible when max is very large
+    const ratio = Math.sqrt(n) / Math.sqrt(maxN);
+    if (ratio < 0.2) return "bg-chart-3/25";
+    if (ratio < 0.4) return "bg-chart-3/45";
+    if (ratio < 0.6) return "bg-chart-3/65";
+    if (ratio < 0.8) return "bg-chart-3/85";
     return "bg-chart-3";
   };
 
