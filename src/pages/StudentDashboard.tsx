@@ -23,6 +23,39 @@ const StudentDashboard = () => {
   const lang = normalizeLang(i18n.language);
   const displayName = profile?.full_name || t("common.user");
 
+  // ── 개인 통계 기간 필터 (년도/월) ──
+  const CURRENT_YEAR = new Date().getFullYear();
+  const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => ({ id: String(CURRENT_YEAR - i), label: String(CURRENT_YEAR - i) }));
+  const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ id: String(i + 1), label: String(i + 1) }));
+  const [periodYears, setPeriodYears] = useState<string[]>([]);
+  const [periodMonths, setPeriodMonths] = useState<string[]>([]);
+
+  // Build date ranges (UTC) for the selected years × months. Empty => no filter.
+  const periodRanges = useMemo(() => {
+    const years = periodYears.length ? periodYears.map(Number) : [];
+    const months = periodMonths.length ? periodMonths.map(Number) : [];
+    if (!years.length && !months.length) return null;
+    const ys = years.length ? years : [CURRENT_YEAR];
+    const ms = months.length ? months : Array.from({ length: 12 }, (_, i) => i + 1);
+    const ranges: { start: string; end: string }[] = [];
+    ys.forEach((y) => {
+      ms.forEach((m) => {
+        const start = new Date(Date.UTC(y, m - 1, 1)).toISOString();
+        const end = new Date(Date.UTC(y, m, 1)).toISOString();
+        ranges.push({ start, end });
+      });
+    });
+    return ranges;
+  }, [periodYears, periodMonths, CURRENT_YEAR]);
+  const periodKey = periodRanges ? `${periodYears.join(",")}|${periodMonths.join(",")}` : "all";
+  const inRange = (iso: string | null | undefined) => {
+    if (!iso) return false;
+    if (!periodRanges) return true;
+    const t = new Date(iso).getTime();
+    return periodRanges.some((r) => t >= new Date(r.start).getTime() && t < new Date(r.end).getTime());
+  };
+
+
   // 수강 중인 강좌 (진행 중)
   const { data: enrollments = [] } = useQuery({
     queryKey: ["dash-enrollments", user?.id, lang],
