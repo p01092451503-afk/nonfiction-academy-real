@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
 import type { MultilingualValue, MlLang } from "@/components/admin/MultilingualTextFields";
 
-const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN"];
+const TARGET_LANGS: TargetLang[] = ["en", "ja", "zh-CN", "yue"];
 
 /**
  * Saves Korean + English/Japanese/Chinese translations for a record into an i18n table.

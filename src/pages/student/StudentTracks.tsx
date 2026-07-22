@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
-type Lang = "ko" | "en" | "ja" | "zh-CN";
+type Lang = "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue";
 
 const resolveLang = (l: string | undefined): Lang => {
   const lower = (l || "ko").toLowerCase();

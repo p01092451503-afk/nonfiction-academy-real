@@ -16,7 +16,7 @@ if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({
     lng: "ko",
     fallbackLng: "ko",
-    supportedLngs: ["ko", "en", "ja", "zh-CN"],
+    supportedLngs: ["ko", "en", "ja", "zh-CN", "yue"],
     load: "currentOnly",
     resources: {
       ko: { translation: {} },
@@ -79,7 +79,7 @@ describe("i18nQueryCache", () => {
     expect(initialCalls).toBe(perPass);
 
     // Switch through every supported language back-to-back.
-    const sequence = ["en", "ja", "zh-CN"] as const;
+    const sequence = ["en", "ja", "zh-CN", "yue"] as const;
     for (const lang of sequence) {
       await act(async () => {
         await i18n.changeLanguage(lang);
@@ -114,7 +114,7 @@ describe("i18nQueryCache", () => {
       wrapper: makeWrapper(qc),
     });
 
-    for (const lang of ["en", "ja", "zh-CN"] as const) {
+    for (const lang of ["en", "ja", "zh-CN", "yue"] as const) {
       await act(async () => {
         await i18n.changeLanguage(lang);
       });

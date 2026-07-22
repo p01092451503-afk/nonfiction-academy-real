@@ -8,7 +8,7 @@ if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({
     lng: "ko",
     fallbackLng: "ko",
-    supportedLngs: ["ko", "en", "ja", "zh-CN"],
+    supportedLngs: ["ko", "en", "ja", "zh-CN", "yue"],
     load: "currentOnly",
     resources: {
       ko: { translation: {} },
@@ -28,7 +28,7 @@ describe("useLanguageSwitching", () => {
     const { result } = renderHook(() => useLanguageSwitching(200));
     expect(result.current).toBe(false);
 
-    for (const lang of ["en", "ja", "zh-CN"] as const) {
+    for (const lang of ["en", "ja", "zh-CN", "yue"] as const) {
       await act(async () => {
         await i18n.changeLanguage(lang);
       });

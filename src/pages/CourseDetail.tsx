@@ -53,7 +53,7 @@ const contentTypeIcon: Record<string, React.ElementType> = {
   video_package: Video, media_package: Images,
 };
 
-const COURSE_TRANSLATION_LANGS = ["en", "ja", "zh-CN"] as const;
+const COURSE_TRANSLATION_LANGS = ["en", "ja", "zh-CN", "yue"] as const;
 
 type ContentFormData = {
   title: string;
@@ -74,8 +74,8 @@ type ContentI18nData = {
   duration_minutes: number | null;
 };
 
-type ContentI18nLang = "en" | "ja" | "zh-CN";
-const CONTENT_I18N_LANGS: ContentI18nLang[] = ["en", "ja", "zh-CN"];
+type ContentI18nLang = "en" | "ja" | "zh-CN" | "yue";
+const CONTENT_I18N_LANGS: ContentI18nLang[] = ["en", "ja", "zh-CN", "yue"];
 
 const emptyContent: ContentFormData = {
   title: "", content_type: "video", video_url: "", video_provider: "",
@@ -105,7 +105,7 @@ const CourseDetail = () => {
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
-  const currentLang: "ko" | "en" | "ja" | "zh-CN" = (() => {
+  const currentLang: "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue" = (() => {
     const l = i18n.language || "ko";
     if (l.startsWith("en")) return "en";
     if (l.startsWith("ja")) return "ja";
@@ -129,7 +129,7 @@ const CourseDetail = () => {
     is_sequential: false, min_learning_minutes: "",
   });
   // Multi-language i18n forms for course edit (en, ja, zh-CN)
-  type CourseI18nLang = "en" | "ja" | "zh-CN";
+  type CourseI18nLang = "en" | "ja" | "zh-CN" | "yue";
   type CourseI18nForm = { title: string; description: string };
   const EMPTY_COURSE_I18N: Record<CourseI18nLang, CourseI18nForm> = {
     en: { title: "", description: "" },
@@ -1325,7 +1325,7 @@ const StudentAssessmentSection = ({
   routePrefix: string;
   t: any;
   isEn: boolean;
-  currentLang: "ko" | "en" | "ja" | "zh-CN";
+  currentLang: "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue";
 }) => {
   const navigate = useNavigate();
   const { data: assessment } = useQuery({
@@ -1723,9 +1723,9 @@ const ContentDialog = ({
 };
 
 // --- Course Edit Dialog with i18n tabs (ko/en/ja/zh-CN) + thumbnail + extended fields ---
-type CourseI18nLang = "en" | "ja" | "zh-CN";
+type CourseI18nLang = "en" | "ja" | "zh-CN" | "yue";
 type CourseI18nForm = { title: string; description: string };
-const COURSE_I18N_LANGS: CourseI18nLang[] = ["en", "ja", "zh-CN"];
+const COURSE_I18N_LANGS: CourseI18nLang[] = ["en", "ja", "zh-CN", "yue"];
 const COURSE_I18N_LANG_LABELS: Record<CourseI18nLang, string> = {
   en: "English",
   ja: "日本語",
@@ -1778,7 +1778,7 @@ const CourseEditDialog = ({
     // fallback was persisted). This prevents the dialog from rendering blank EN/JA/ZH
     // tabs when the DB never received a real translation.
     if (form.title.trim()) {
-      (["en", "ja", "zh-CN"] as CourseI18nLang[]).forEach((lc) => {
+      (["en", "ja", "zh-CN", "yue"] as CourseI18nLang[]).forEach((lc) => {
         const hasTitle = !!sanitizeCourseTranslation(i18nForm[lc].title, form.title).trim();
         const hasDesc = !form.description.trim() || !!sanitizeCourseTranslation(i18nForm[lc].description, form.description).trim();
         if (!hasTitle || !hasDesc) {
