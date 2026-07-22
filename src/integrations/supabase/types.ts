@@ -2916,6 +2916,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _dashboard_filter_ints: {
+        Args: { p_filters: Json; p_key: string }
+        Returns: number[]
+      }
+      _dashboard_filter_texts: {
+        Args: { p_filters: Json; p_key: string }
+        Returns: string[]
+      }
+      _dashboard_filter_uuids: {
+        Args: { p_filters: Json; p_key: string }
+        Returns: string[]
+      }
       admin_course_stats: { Args: never; Returns: Json }
       admin_dashboard_insights: { Args: never; Returns: Json }
       admin_dashboard_summary: { Args: never; Returns: Json }
@@ -2941,7 +2953,38 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      dashboard_access_heatmap: {
+        Args: { p_filters?: Json; p_leader_id?: string }
+        Returns: Json
+      }
+      dashboard_dropoff_courses: {
+        Args: { p_filters?: Json; p_leader_id?: string; p_limit?: number }
+        Returns: Json
+      }
+      dashboard_filtered_user_ids: {
+        Args: { p_filters?: Json; p_leader_id?: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
+      dashboard_learner_details: {
+        Args: {
+          p_filters?: Json
+          p_leader_id?: string
+          p_limit?: number
+          p_sort_by?: string
+        }
+        Returns: Json
+      }
+      dashboard_metrics: {
+        Args: { p_filters?: Json; p_leader_id?: string }
+        Returns: Json
+      }
       dashboard_sparklines: { Args: { p_days?: number }; Returns: Json }
+      dashboard_weekly_summary: {
+        Args: { p_filters?: Json; p_leader_id?: string }
+        Returns: Json
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
