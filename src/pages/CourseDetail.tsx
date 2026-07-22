@@ -432,6 +432,7 @@ const CourseDetail = () => {
         max_students: vals.max_students ? parseInt(vals.max_students) : null,
         thumbnail_url: thumbnailUrl,
         is_sequential: vals.is_sequential,
+        min_learning_minutes: vals.min_learning_minutes ? Math.max(0, parseInt(vals.min_learning_minutes)) : 0,
       } as any).eq("id", courseId!);
       if (error) throw error;
       const resolvedI18nForm = { ...courseI18nForm };
