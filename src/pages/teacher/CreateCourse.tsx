@@ -176,6 +176,8 @@ const CreateCourse = () => {
   const [zhDescription, setZhDescription] = useState("");
   const [jaTitle, setJaTitle] = useState("");
   const [jaDescription, setJaDescription] = useState("");
+  const [yueTitle, setYueTitle] = useState("");
+  const [yueDescription, setYueDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [difficultyLevel, setDifficultyLevel] = useState("beginner");
   const [estimatedHours, setEstimatedHours] = useState("");
@@ -186,6 +188,8 @@ const CreateCourse = () => {
   const [zhDescManual, setZhDescManual] = useState(false);
   const [jaTitleManual, setJaTitleManual] = useState(false);
   const [jaDescManual, setJaDescManual] = useState(false);
+  const [yueTitleManual, setYueTitleManual] = useState(false);
+  const [yueDescManual, setYueDescManual] = useState(false);
   const [maxStudents, setMaxStudents] = useState("");
   const [isMandatory, setIsMandatory] = useState(false);
   const [isSequential, setIsSequential] = useState(false);
