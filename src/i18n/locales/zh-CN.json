@@ -169,7 +169,55 @@
     "recommendedDesc": "根据您的学习模式推荐",
     "noRecommended": "没有推荐课程。",
     "instructor": "讲师",
-    "students": "学员"
+    "students": "学员",
+    "filter": {
+      "year": "年份",
+      "selectYear": "选择年份",
+      "yearSuffix": "年",
+      "month": "月份",
+      "selectMonth": "选择月份",
+      "monthSuffix": "月",
+      "country": "国家",
+      "selectCountry": "选择国家",
+      "branch": "门店",
+      "selectBranch": "选择门店",
+      "clear": "重置"
+    },
+    "metric": {
+      "completedCourses": "平均完成课程数",
+      "completionRate": "平均完成率",
+      "learningMinutes": "平均学习时间",
+      "commentCount": "平均评论数",
+      "pointsEarned": "平均积分",
+      "learningDays": "平均累计学习天数",
+      "userCountHint": "基于 {{count}} 人"
+    },
+    "weekly": {
+      "title": "每周摘要",
+      "learningMinutes": "本周学习时间",
+      "activeLearners": "本周活跃学习者",
+      "completionRate": "本周完成率",
+      "totalEnrollments": "总报名数"
+    },
+    "dropoff": {
+      "title": "流失课程 TOP 5",
+      "enrolled": "已报名",
+      "inProgress": "未完成"
+    },
+    "heatmap": {
+      "title": "访问时段分布"
+    },
+    "learners": {
+      "title": "学员详情",
+      "name": "姓名",
+      "department": "所属",
+      "completedCourses": "完成课程",
+      "avgProgress": "平均进度",
+      "learningMinutes": "学习时间(分)",
+      "learningDays": "学习天数",
+      "comments": "评论",
+      "pointsEarned": "获得积分"
+    }
   },
   "teacher": {
     "teacherDashboard": "讲师仪表板",

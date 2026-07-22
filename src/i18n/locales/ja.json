@@ -169,7 +169,55 @@
     "recommendedDesc": "学習パターンを分析してお勧めします",
     "noRecommended": "おすすめコースはありません。",
     "instructor": "講師",
-    "students": "受講生"
+    "students": "受講生",
+    "filter": {
+      "year": "年度",
+      "selectYear": "年度を選択",
+      "yearSuffix": "年",
+      "month": "月",
+      "selectMonth": "月を選択",
+      "monthSuffix": "月",
+      "country": "国",
+      "selectCountry": "国を選択",
+      "branch": "店舗",
+      "selectBranch": "店舗を選択",
+      "clear": "リセット"
+    },
+    "metric": {
+      "completedCourses": "平均修了コース数",
+      "completionRate": "平均修了率",
+      "learningMinutes": "平均学習時間",
+      "commentCount": "平均コメント数",
+      "pointsEarned": "平均ポイント",
+      "learningDays": "平均累積学習日数",
+      "userCountHint": "{{count}}名を基準"
+    },
+    "weekly": {
+      "title": "週間サマリー",
+      "learningMinutes": "今週の学習時間",
+      "activeLearners": "今週のアクティブ学習者",
+      "completionRate": "今週の修了率",
+      "totalEnrollments": "総受講登録数"
+    },
+    "dropoff": {
+      "title": "離脱コース TOP 5",
+      "enrolled": "登録",
+      "inProgress": "未完了"
+    },
+    "heatmap": {
+      "title": "アクセス時間帯分布"
+    },
+    "learners": {
+      "title": "学習者詳細",
+      "name": "名前",
+      "department": "所属",
+      "completedCourses": "完了コース",
+      "avgProgress": "平均進捗率",
+      "learningMinutes": "学習時間(分)",
+      "learningDays": "学習日数",
+      "comments": "コメント",
+      "pointsEarned": "獲得ポイント"
+    }
   },
   "teacher": {
     "teacherDashboard": "講師ダッシュボード",

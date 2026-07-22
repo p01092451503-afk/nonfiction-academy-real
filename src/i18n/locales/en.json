@@ -172,7 +172,55 @@
     "recommendedDesc": "Personalized recommendations based on your learning",
     "noRecommended": "No recommended courses.",
     "instructor": "Instructor",
-    "students": "Students"
+    "students": "Students",
+    "filter": {
+      "year": "Year",
+      "selectYear": "Select Year",
+      "yearSuffix": "",
+      "month": "Month",
+      "selectMonth": "Select Month",
+      "monthSuffix": "",
+      "country": "Country",
+      "selectCountry": "Select Country",
+      "branch": "Branch",
+      "selectBranch": "Select Branch",
+      "clear": "Reset"
+    },
+    "metric": {
+      "completedCourses": "Avg. Completed Courses",
+      "completionRate": "Avg. Completion Rate",
+      "learningMinutes": "Avg. Learning Time",
+      "commentCount": "Avg. Comments",
+      "pointsEarned": "Avg. Points",
+      "learningDays": "Avg. Cumulative Learning Days",
+      "userCountHint": "Based on {{count}} users"
+    },
+    "weekly": {
+      "title": "Weekly Summary",
+      "learningMinutes": "This Week Learning Time",
+      "activeLearners": "This Week Active Learners",
+      "completionRate": "This Week Completion Rate",
+      "totalEnrollments": "Total Enrollments"
+    },
+    "dropoff": {
+      "title": "Top 5 Dropoff Courses",
+      "enrolled": "Enrolled",
+      "inProgress": "In Progress"
+    },
+    "heatmap": {
+      "title": "Access Time Distribution"
+    },
+    "learners": {
+      "title": "Learner Details",
+      "name": "Name",
+      "department": "Department",
+      "completedCourses": "Completed",
+      "avgProgress": "Avg. Progress",
+      "learningMinutes": "Learning Time (min)",
+      "learningDays": "Learning Days",
+      "comments": "Comments",
+      "pointsEarned": "Points Earned"
+    }
   },
   "teacher": {
     "teacherDashboard": "Teacher Dashboard",
