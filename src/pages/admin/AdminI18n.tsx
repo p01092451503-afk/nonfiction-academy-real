@@ -16,12 +16,13 @@ import koLocale from "@/i18n/locales/ko.json";
 import enLocale from "@/i18n/locales/en.json";
 import jaLocale from "@/i18n/locales/ja.json";
 import zhLocale from "@/i18n/locales/zh-CN.json";
+import yueLocale from "@/i18n/locales/yue.json";
 import { flattenKeys } from "@/i18n/uiOverrides";
 
 type Category = "course" | "content" | "assessment" | "announcement" | "board" | "category" | "assignment" | "survey" | "survey_question" | "track" | "track_stage" | "ui_string";
 
-const TARGET_LANGS: TargetLang[] = ["en", "zh-CN", "ja"];
-const LANG_LABELS: Record<TargetLang, string> = { en: "EN", "zh-CN": "ZH", ja: "JA" };
+const TARGET_LANGS: TargetLang[] = ["en", "zh-CN", "ja", "yue"];
+const LANG_LABELS: Record<TargetLang, string> = { en: "EN", "zh-CN": "ZH", ja: "JA", yue: "YUE" };
 
 type LangStatus = "missing" | "untranslated" | "partial" | "complete";
 
