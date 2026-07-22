@@ -360,6 +360,30 @@ const TeacherDashboard = () => {
           </div>
         </section>
 
+        {/* Period & scope filters (leader scope) */}
+        <DashboardFilterBar
+          filters={leaderFilters}
+          onChange={setLeaderFilters}
+          role="teacher"
+          leaderId={user?.id}
+        />
+
+        {/* 6 Average Metric Cards (leader scope) */}
+        <DashboardMetricCards filters={leaderFilters} leaderId={user?.id} />
+
+        {/* Weekly Summary + Dropoff Courses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DashboardWeeklySummary filters={leaderFilters} leaderId={user?.id} />
+          <DashboardDropoffCourses filters={leaderFilters} leaderId={user?.id} limit={5} />
+        </div>
+
+        {/* Access Heatmap */}
+        <DashboardAccessHeatmap filters={leaderFilters} leaderId={user?.id} />
+
+        {/* Learner Details Table (branch-scoped) */}
+        <DashboardLearnerTable filters={leaderFilters} leaderId={user?.id} limit={100} />
+
+
         {/* TOP 5 Learners & Top Courses */}
         <div className="grid lg:grid-cols-2 gap-4">
           <div className="rounded-xl border border-border bg-card overflow-hidden">
