@@ -22,6 +22,7 @@ export async function saveContentTranslations(params: {
     en: { title: value.en.title.trim(), content: value.en.content.trim() },
     ja: { title: value.ja.title.trim(), content: value.ja.content.trim() },
     "zh-CN": { title: value["zh-CN"].title.trim(), content: value["zh-CN"].content.trim() },
+    yue: { title: value.yue?.title?.trim() ?? "", content: value.yue?.content?.trim() ?? "" },
   };
 
   await Promise.all(
