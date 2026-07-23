@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpDown, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Users, Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 import type { DashboardFilters } from "./DashboardFilterBar";
 
 type SortKey =
