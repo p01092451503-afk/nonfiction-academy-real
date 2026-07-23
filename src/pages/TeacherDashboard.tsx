@@ -19,7 +19,7 @@ import DashboardFilterBar, { DashboardFilters } from "@/components/admin/Dashboa
 import DashboardMetricCards from "@/components/admin/DashboardMetricCards";
 import DashboardWeeklySummary from "@/components/admin/DashboardWeeklySummary";
 import DashboardDropoffCourses from "@/components/admin/DashboardDropoffCourses";
-import DashboardAccessHeatmap from "@/components/admin/DashboardAccessHeatmap";
+
 import DashboardLearnerTable from "@/components/admin/DashboardLearnerTable";
 
 const defaultLeaderFilters: DashboardFilters = {
@@ -243,9 +243,6 @@ const TeacherDashboard = () => {
           <DashboardWeeklySummary filters={leaderFilters} leaderId={user?.id} />
           <DashboardDropoffCourses filters={leaderFilters} leaderId={user?.id} limit={5} />
         </div>
-
-        {/* Access Heatmap */}
-        <DashboardAccessHeatmap filters={leaderFilters} leaderId={user?.id} />
 
         {/* Learner Details Table (branch-scoped) */}
         <DashboardLearnerTable filters={leaderFilters} leaderId={user?.id} limit={100} />
