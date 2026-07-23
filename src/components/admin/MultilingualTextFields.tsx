@@ -33,8 +33,8 @@ const LANG_LABEL: Record<MlLang, string> = {
   ko: "한국어",
   en: "English",
   ja: "日本語",
-  "zh-CN": "中文",
-  yue: "粵語",
+  "zh-CN": "CN",
+  yue: "HK",
 };
 
 interface Props {

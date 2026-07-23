@@ -27,8 +27,8 @@ const I18N_LANGS: TargetLang[] = ["en", "ja", "yue", "zh-CN"];
 const LANG_LABELS: Record<TargetLang, string> = {
   en: "English",
   ja: "日本語",
-  yue: "粵語",
-  "zh-CN": "简体中文",
+  yue: "HK",
+  "zh-CN": "CN",
 };
 
 interface AssessmentI18nForm {

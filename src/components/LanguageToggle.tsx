@@ -12,8 +12,8 @@ const LANGS: { code: string; label: string }[] = [
   { code: "ko", label: "한국어" },
   { code: "en", label: "English" },
   { code: "ja", label: "日本語" },
-  { code: "yue", label: "粵語" },
-  { code: "zh-CN", label: "简体中文" },
+  { code: "yue", label: "HK" },
+  { code: "zh-CN", label: "CN" },
 ];
 
 const resolveCurrent = (raw?: string) => {
