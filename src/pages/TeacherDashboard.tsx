@@ -1,12 +1,11 @@
 import { useState } from "react";
 import {
-  Users, ClipboardCheck, TrendingUp, LayoutDashboard, Activity, GraduationCap,
-  AlertCircle, Trophy, BookOpen, Target, Flame, ArrowRight,
+  ClipboardCheck, LayoutDashboard, Activity,
+  AlertCircle, Trophy, BookOpen, Flame, ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
