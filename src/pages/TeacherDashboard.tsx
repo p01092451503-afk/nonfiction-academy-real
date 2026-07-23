@@ -147,16 +147,8 @@ const TeacherDashboard = () => {
 
   const totalEnrollments = enrollments.length;
   const completedEnrollments = enrollments.filter((e: any) => e.completed_at).length;
-  const completionRate = totalEnrollments ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
   const avgProgress = totalEnrollments
     ? Math.round(enrollments.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / totalEnrollments)
-    : 0;
-
-  // 필수교육 통계
-  const mandatoryEnrollments = enrollments.filter((e: any) => e.courses?.is_mandatory);
-  const mandatoryCompleted = mandatoryEnrollments.filter((e: any) => e.completed_at).length;
-  const mandatoryRate = mandatoryEnrollments.length
-    ? Math.round((mandatoryCompleted / mandatoryEnrollments.length) * 100)
     : 0;
 
   // 휴면(14일+ 미접속)
@@ -166,13 +158,6 @@ const TeacherDashboard = () => {
     if (new Date(s.login_at).getTime() >= fourteenDaysAgo) recentActiveSet.add(s.user_id);
   });
   const dormantStudents = studentIds.filter((id: string) => !recentActiveSet.has(id));
-
-  // 평가 합격률
-  const passedCount = attempts.filter((a: any) => a.passed).length;
-  const passRate = attempts.length ? Math.round((passedCount / attempts.length) * 100) : 0;
-
-  // 미채점 과제
-  const pendingSubmissions = recentSubmissions.filter((s: any) => s.status === "submitted");
 
   // ── 학생별 진도/포인트 집계 ────────────────────────────
   const studentProgressMap = new Map<string, { count: number; sum: number; completed: number }>();
