@@ -1,12 +1,11 @@
 import { useState } from "react";
 import {
-  Users, ClipboardCheck, TrendingUp, LayoutDashboard, Activity, GraduationCap,
-  AlertCircle, Trophy, BookOpen, Target, Flame, ArrowRight,
+  ClipboardCheck, LayoutDashboard, Activity,
+  AlertCircle, Trophy, BookOpen, Flame, ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
@@ -129,52 +128,11 @@ const TeacherDashboard = () => {
     },
   });
 
-  // ── 평가 응시 ─────────────────────────────────────────
-  const { data: attempts = [] } = useQuery({
-    queryKey: ["leader-dash-attempts", studentIds],
-    enabled: studentIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assessment_attempts")
-        .select("user_id, passed, completed_at, score")
-        .in("user_id", studentIds)
-        .not("completed_at", "is", null)
-        .gte("started_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
   // ── 프로필 맵 ──────────────────────────────────────────
   const profileMap = new Map(deptStudents.map((p: any) => [p.user_id, p.full_name]));
 
   // ── 파생 통계 ──────────────────────────────────────────
-  const totalStudents = studentIds.length;
   const now = Date.now();
-  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-
-  const weeklyActiveSet = new Set<string>();
-  const monthlyActiveSet = new Set<string>();
-  sessions.forEach((s: any) => {
-    const t = new Date(s.login_at).getTime();
-    if (t >= sevenDaysAgo) weeklyActiveSet.add(s.user_id);
-    if (t >= thirtyDaysAgo) monthlyActiveSet.add(s.user_id);
-  });
-
-  const totalEnrollments = enrollments.length;
-  const completedEnrollments = enrollments.filter((e: any) => e.completed_at).length;
-  const completionRate = totalEnrollments ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
-  const avgProgress = totalEnrollments
-    ? Math.round(enrollments.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / totalEnrollments)
-    : 0;
-
-  // 필수교육 통계
-  const mandatoryEnrollments = enrollments.filter((e: any) => e.courses?.is_mandatory);
-  const mandatoryCompleted = mandatoryEnrollments.filter((e: any) => e.completed_at).length;
-  const mandatoryRate = mandatoryEnrollments.length
-    ? Math.round((mandatoryCompleted / mandatoryEnrollments.length) * 100)
-    : 0;
 
   // 휴면(14일+ 미접속)
   const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
@@ -183,13 +141,6 @@ const TeacherDashboard = () => {
     if (new Date(s.login_at).getTime() >= fourteenDaysAgo) recentActiveSet.add(s.user_id);
   });
   const dormantStudents = studentIds.filter((id: string) => !recentActiveSet.has(id));
-
-  // 평가 합격률
-  const passedCount = attempts.filter((a: any) => a.passed).length;
-  const passRate = attempts.length ? Math.round((passedCount / attempts.length) * 100) : 0;
-
-  // 미채점 과제
-  const pendingSubmissions = recentSubmissions.filter((s: any) => s.status === "submitted");
 
   // ── 학생별 진도/포인트 집계 ────────────────────────────
   const studentProgressMap = new Map<string, { count: number; sum: number; completed: number }>();
@@ -237,37 +188,6 @@ const TeacherDashboard = () => {
     .slice(0, 5)
     .map((c) => ({ ...c, avgProgress: c.learners ? Math.round(c.sum / c.learners) : 0 }));
 
-  // ── 통계 카드 ──────────────────────────────────────────
-  const stats = [
-    {
-      label: t("teacher.branchTotalStudents", "지점 학생 수"),
-      value: totalStudents,
-      sub: branchLabel || t("teacher.allBranchStudents", "전체 지점 학생"),
-      icon: Users,
-      tone: "text-primary",
-    },
-    {
-      label: t("teacher.weeklyActive", "주간 활성 학습자"),
-      value: weeklyActiveSet.size,
-      sub: t("teacher.activeRatio", { rate: totalStudents ? Math.round((weeklyActiveSet.size / totalStudents) * 100) : 0, defaultValue: "활동률 {{rate}}%" }),
-      icon: Activity,
-      tone: "text-emerald-600",
-    },
-    {
-      label: t("teacher.avgProgressLabel", "평균 학습 진도"),
-      value: `${avgProgress}%`,
-      sub: t("teacher.completionStat", { done: completedEnrollments, total: totalEnrollments, defaultValue: "{{done}}/{{total}} 완료" }),
-      icon: TrendingUp,
-      tone: "text-blue-600",
-    },
-    {
-      label: t("teacher.mandatoryCompletion", "필수교육 이수율"),
-      value: `${mandatoryRate}%`,
-      sub: t("teacher.mandatoryStat", { done: mandatoryCompleted, total: mandatoryEnrollments.length, defaultValue: "{{done}}/{{total}} 이수" }),
-      icon: GraduationCap,
-      tone: "text-purple-600",
-    },
-  ];
 
   // ── 빈 상태 ────────────────────────────────────────────
   if (scopeLoading) {
@@ -306,59 +226,6 @@ const TeacherDashboard = () => {
           </p>
         </div>
 
-        {/* Stats */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label={t("teacher.teacherDashboard")}>
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
-                <stat.icon className={`h-4 w-4 ${stat.tone}`} aria-hidden="true" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{stat.sub}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* Secondary metrics */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.completionRateLabel", "완강률")}</span>
-              <Target className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
-            <Progress value={completionRate} className="h-1.5 mt-2" />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.assessmentPassRate", "평가 합격률")}</span>
-              <ClipboardCheck className="h-4 w-4 text-blue-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{passRate}%</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t("teacher.attemptsLast30d", { count: attempts.length, defaultValue: "최근 30일 {{count}}건" })}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.dormantStudents", "휴면 학습자")}</span>
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{dormantStudents.length}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{t("teacher.dormantHint", "14일+ 미접속")}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.pendingGrading", "미채점 과제")}</span>
-              <ClipboardCheck className="h-4 w-4 text-rose-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{pendingSubmissions.length}</p>
-            <Link to="/teacher/assignments" className="text-[11px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5">
-              {t("teacher.gradeNow", "채점하러 가기")} <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </section>
 
         {/* Period & scope filters (leader scope) */}
         <DashboardFilterBar
