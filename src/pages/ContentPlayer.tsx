@@ -1008,7 +1008,35 @@ const ContentPlayer = () => {
       )}
 
 
+      {/* 최소 학습시간 부족 안내 팝업 */}
+      {minTimeDialog.open && (
+        <div className="fixed inset-0 z-[120] bg-black/40 flex items-center justify-center p-4 animate-in fade-in-0">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {t("contentPlayer.minTimeShortTitle", "최소 학습시간이 부족해요")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              {t("contentPlayer.minTimeShortDesc", {
+                minutes: minTimeDialog.shortMin,
+                total: minLearningMin,
+                defaultValue:
+                  "이 강의를 이수하려면 총 {{total}}분의 학습시간이 필요해요. 현재 약 {{minutes}}분이 부족합니다. 학습 화면에 조금 더 머물러 주세요.",
+              })}
+            </p>
+            <div className="flex items-center justify-end">
+              <Button
+                className="rounded-full"
+                onClick={() => setMinTimeDialog({ open: false, shortMin: 0 })}
+              >
+                {t("common.confirm", "확인")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mangoboard Popup */}
+
       {mangoPopupOpen && currentContent && isMangoboard(localVideoUrl) && embedUrl && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center">
           <button onClick={() => setMangoPopupOpen(false)} className="absolute top-4 right-4 z-[110] p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
