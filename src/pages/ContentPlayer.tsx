@@ -719,10 +719,6 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "media_package" ? (
                 <MediaPackagePlayer
                   contentId={currentContent.id}
-                  perContentMinSeconds={
-                    (((course as any)?.min_learning_minutes ?? 0) * 60) /
-                    Math.max(1, contents.length)
-                  }
                   onPartialProgress={handlePartialProgress}
                   onWatchedSecondsTracked={handleWatchedSecondsTracked}
                   onComplete={() => {
@@ -731,6 +727,7 @@ const ContentPlayer = () => {
                     }
                   }}
                 />
+
               ) : isCardContent(currentContent.description) ? (() => {
                 const urls = getCardUrls(currentContent.description, localVideoUrl);
                 const totalCards = urls.length;
