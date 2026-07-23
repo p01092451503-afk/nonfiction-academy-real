@@ -128,22 +128,6 @@ const TeacherDashboard = () => {
     },
   });
 
-  // ── 평가 응시 ─────────────────────────────────────────
-  const { data: attempts = [] } = useQuery({
-    queryKey: ["leader-dash-attempts", studentIds],
-    enabled: studentIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("assessment_attempts")
-        .select("user_id, passed, completed_at, score")
-        .in("user_id", studentIds)
-        .not("completed_at", "is", null)
-        .gte("started_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
   // ── 프로필 맵 ──────────────────────────────────────────
   const profileMap = new Map(deptStudents.map((p: any) => [p.user_id, p.full_name]));
 
