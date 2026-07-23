@@ -433,11 +433,9 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     return false;
   }, []);
 
-  // 카드별 최소 체류 시간 (초). 0이면 미사용.
-  const perCardMinSec = useMemo(() => {
-    if (!perContentMinSeconds || perContentMinSeconds <= 0 || items.length === 0) return 0;
-    return Math.ceil(perContentMinSeconds / items.length);
-  }, [perContentMinSeconds, items.length]);
+  // 카드별 최소 체류 시간은 사용하지 않음. 강의 전체 최소 학습시간은
+  // ContentPlayer에서 마지막 차시 도달 시 팝업으로 안내한다.
+  const perCardMinSec = 0;
 
   const isTimeGated = useCallback(
     (slideIdx: number) => {
