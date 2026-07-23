@@ -80,6 +80,50 @@ export const DashboardLearnerTable = ({
 
   const SortIcon = () => <ArrowUpDown className="h-3 w-3" />;
 
+  const handleDownloadCsv = () => {
+    if (!learners || learners.length === 0) {
+      toast({ title: t("common.noData") });
+      return;
+    }
+    const headers = [
+      t("dashboard.learners.name", { defaultValue: "이름" }),
+      "Email",
+      t("dashboard.learners.department", { defaultValue: "소속" }),
+      t("dashboard.learners.country", { defaultValue: "국가" }),
+      t("dashboard.learners.totalEnrollments", { defaultValue: "총 수강" }),
+      t("dashboard.learners.completedCourses", { defaultValue: "완료 강의" }),
+      t("dashboard.learners.avgProgress", { defaultValue: "평균 진행률(%)" }),
+      t("dashboard.learners.learningMinutes", { defaultValue: "학습 시간(분)" }),
+      t("dashboard.learners.learningDays", { defaultValue: "학습일" }),
+      t("dashboard.learners.comments", { defaultValue: "댓글" }),
+      t("dashboard.learners.pointsEarned", { defaultValue: "획득 포인트" }),
+      t("dashboard.learners.totalPoints", { defaultValue: "누적 포인트" }),
+      "Level",
+      t("dashboard.learners.streakDays", { defaultValue: "연속 학습일" }),
+    ];
+    const escape = (v: any) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = learners.map((l) => [
+      l.full_name, l.email, l.department_name, l.country,
+      l.total_enrollments, l.completed_courses, l.avg_progress,
+      Math.round(l.learning_minutes), l.learning_days, l.comment_count,
+      l.points_earned, l.total_points, l.level, l.streak_days,
+    ].map(escape).join(","));
+    const csv = "\uFEFF" + [headers.map(escape).join(","), ...rows].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `learner-details-${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="stat-card !p-5">
       <div className="flex items-center justify-between mb-4">
@@ -87,6 +131,16 @@ export const DashboardLearnerTable = ({
           <Users className="h-4 w-4 text-muted-foreground" />
           {t("dashboard.learners.title", { defaultValue: "학습자 상세" })}
         </h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadCsv}
+          disabled={isLoading || !learners?.length}
+          className="h-8 text-xs gap-1.5"
+        >
+          <Download className="h-3.5 w-3.5" />
+          {t("common.downloadCsv", { defaultValue: "CSV 다운로드" })}
+        </Button>
       </div>
 
       <div className="overflow-x-auto">
