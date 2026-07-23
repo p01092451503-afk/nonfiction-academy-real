@@ -277,6 +277,9 @@ const ContentPlayer = () => {
   const [kollusLoading, setKollusLoading] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const resumePromptedRef = useRef<string | null>(null);
+  // 최소 학습시간 부족 안내 팝업
+  const [minTimeDialog, setMinTimeDialog] = useState<{ open: boolean; shortMin: number }>({ open: false, shortMin: 0 });
+  const minTimePromptedRef = useRef<string | null>(null);
 
   const currentContent = contents.find((c) => c.id === contentId);
 
