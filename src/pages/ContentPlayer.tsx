@@ -277,6 +277,9 @@ const ContentPlayer = () => {
   const [kollusLoading, setKollusLoading] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const resumePromptedRef = useRef<string | null>(null);
+  // 최소 학습시간 부족 안내 팝업
+  const [minTimeDialog, setMinTimeDialog] = useState<{ open: boolean; shortMin: number }>({ open: false, shortMin: 0 });
+  const minTimePromptedRef = useRef<string | null>(null);
 
   const currentContent = contents.find((c) => c.id === contentId);
 
@@ -542,6 +545,37 @@ const ContentPlayer = () => {
     [user?.id, contentId]
   );
 
+  // 마지막 차시 도달 시 강의 전체 최소 학습시간 검사 → 부족 시 팝업
+  const minLearningMin = Number((course as any)?.min_learning_minutes ?? 0) || 0;
+  const isOnLastContent =
+    visibleContents.length > 0 && currentIndex === visibleContents.length - 1;
+  useEffect(() => {
+    if (!isOnLastContent || minLearningMin <= 0 || !user?.id || !courseId) return;
+    if (minTimePromptedRef.current === `${courseId}:${contentId}`) return;
+    minTimePromptedRef.current = `${courseId}:${contentId}`;
+    (async () => {
+      // 세션 목록 조회 → 세션당 최대 30분으로 캡핑하여 총 학습시간 계산
+      const { data, error } = await supabase
+        .from("course_learning_sessions")
+        .select("started_at,last_heartbeat_at")
+        .eq("user_id", user.id)
+        .eq("course_id", courseId);
+      if (error || !data) return;
+      const totalMin = data.reduce((sum, s: any) => {
+        const start = new Date(s.started_at).getTime();
+        const end = new Date(s.last_heartbeat_at || s.started_at).getTime();
+        const min = Math.max(0, (end - start) / 60000);
+        return sum + Math.min(min, 30);
+      }, 0);
+      const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin));
+      if (shortMin > 0) {
+        setMinTimeDialog({ open: true, shortMin });
+      }
+    })();
+  }, [isOnLastContent, minLearningMin, user?.id, courseId, contentId]);
+
+
+
 
   const normalizeMangoboardUrl = (url: string) => {
     let normalized = url.trim();
@@ -719,10 +753,6 @@ const ContentPlayer = () => {
               ) : currentContent.content_type === "media_package" ? (
                 <MediaPackagePlayer
                   contentId={currentContent.id}
-                  perContentMinSeconds={
-                    (((course as any)?.min_learning_minutes ?? 0) * 60) /
-                    Math.max(1, contents.length)
-                  }
                   onPartialProgress={handlePartialProgress}
                   onWatchedSecondsTracked={handleWatchedSecondsTracked}
                   onComplete={() => {
@@ -731,6 +761,7 @@ const ContentPlayer = () => {
                     }
                   }}
                 />
+
               ) : isCardContent(currentContent.description) ? (() => {
                 const urls = getCardUrls(currentContent.description, localVideoUrl);
                 const totalCards = urls.length;
@@ -977,7 +1008,35 @@ const ContentPlayer = () => {
       )}
 
 
+      {/* 최소 학습시간 부족 안내 팝업 */}
+      {minTimeDialog.open && (
+        <div className="fixed inset-0 z-[120] bg-black/40 flex items-center justify-center p-4 animate-in fade-in-0">
+          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {t("contentPlayer.minTimeShortTitle", "최소 학습시간이 부족해요")}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              {t("contentPlayer.minTimeShortDesc", {
+                minutes: minTimeDialog.shortMin,
+                total: minLearningMin,
+                defaultValue:
+                  "이 강의를 이수하려면 총 {{total}}분의 학습시간이 필요해요. 현재 약 {{minutes}}분이 부족합니다. 학습 화면에 조금 더 머물러 주세요.",
+              })}
+            </p>
+            <div className="flex items-center justify-end">
+              <Button
+                className="rounded-full"
+                onClick={() => setMinTimeDialog({ open: false, shortMin: 0 })}
+              >
+                {t("common.confirm", "확인")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mangoboard Popup */}
+
       {mangoPopupOpen && currentContent && isMangoboard(localVideoUrl) && embedUrl && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center">
           <button onClick={() => setMangoPopupOpen(false)} className="absolute top-4 right-4 z-[110] p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors">
