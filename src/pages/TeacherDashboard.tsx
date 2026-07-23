@@ -132,24 +132,7 @@ const TeacherDashboard = () => {
   const profileMap = new Map(deptStudents.map((p: any) => [p.user_id, p.full_name]));
 
   // ── 파생 통계 ──────────────────────────────────────────
-  const totalStudents = studentIds.length;
   const now = Date.now();
-  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-
-  const weeklyActiveSet = new Set<string>();
-  const monthlyActiveSet = new Set<string>();
-  sessions.forEach((s: any) => {
-    const t = new Date(s.login_at).getTime();
-    if (t >= sevenDaysAgo) weeklyActiveSet.add(s.user_id);
-    if (t >= thirtyDaysAgo) monthlyActiveSet.add(s.user_id);
-  });
-
-  const totalEnrollments = enrollments.length;
-  const completedEnrollments = enrollments.filter((e: any) => e.completed_at).length;
-  const avgProgress = totalEnrollments
-    ? Math.round(enrollments.reduce((s: number, e: any) => s + (Number(e.progress) || 0), 0) / totalEnrollments)
-    : 0;
 
   // 휴면(14일+ 미접속)
   const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
