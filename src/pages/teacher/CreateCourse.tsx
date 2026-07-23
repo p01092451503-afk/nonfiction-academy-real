@@ -46,9 +46,9 @@ export type LessonLang = typeof LESSON_LANGS[number];
 export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
   ko: "한국어",
   en: "English",
-  "zh-CN": "简体中文",
+  "zh-CN": "CN",
   ja: "日本語",
-  yue: "粵語",
+  yue: "HK",
 };
 
 export interface PackageItemDraft {
@@ -1451,8 +1451,8 @@ const CreateCourse = () => {
               <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
               <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
               <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
-              <TabsTrigger value="yue" className="text-xs">粵語</TabsTrigger>
-              <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
+              <TabsTrigger value="yue" className="text-xs">HK</TabsTrigger>
+              <TabsTrigger value="zh-CN" className="text-xs">CN</TabsTrigger>
             </TabsList>
 
             <TabsContent value="ko" className="space-y-3 pt-2">

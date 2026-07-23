@@ -27,8 +27,8 @@ const LANG_LABEL: Record<I18nLang, string> = {
   ko: "한국어",
   en: "English",
   ja: "日本語",
-  "zh-CN": "中文",
-  yue: "粵語",
+  "zh-CN": "CN",
+  yue: "HK",
 };
 
 const resolveLang = (l: string | undefined): I18nLang => {

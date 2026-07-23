@@ -1428,8 +1428,8 @@ const StudentAssessmentSection = ({
 const I18N_LANG_LABELS: Record<ContentI18nLang, string> = {
   en: "English",
   ja: "日本語",
-  "zh-CN": "简体中文",
-  yue: "粵語",
+  "zh-CN": "CN",
+  yue: "HK",
 };
 
 const ContentDialog = ({
@@ -1604,8 +1604,8 @@ const ContentDialog = ({
           <TabsTrigger value="ko" className="flex-1 text-xs">{t("course.koTab")}</TabsTrigger>
           <TabsTrigger value="en" className="flex-1 text-xs">English</TabsTrigger>
           <TabsTrigger value="ja" className="flex-1 text-xs">日本語</TabsTrigger>
-          <TabsTrigger value="yue" className="flex-1 text-xs">粵語</TabsTrigger>
-          <TabsTrigger value="zh-CN" className="flex-1 text-xs">简体中文</TabsTrigger>
+          <TabsTrigger value="yue" className="flex-1 text-xs">HK</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="flex-1 text-xs">CN</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
@@ -1737,8 +1737,8 @@ const COURSE_I18N_LANGS: CourseI18nLang[] = ["en", "ja", "zh-CN", "yue"];
 const COURSE_I18N_LANG_LABELS: Record<CourseI18nLang, string> = {
   en: "English",
   ja: "日本語",
-  "zh-CN": "简体中文",
-  yue: "粵語",
+  "zh-CN": "CN",
+  yue: "HK",
 };
 
 const CourseEditDialog = ({
@@ -1859,8 +1859,8 @@ const CourseEditDialog = ({
           <TabsTrigger value="ko" className="text-xs">{t("course.koTab")}</TabsTrigger>
           <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
           <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
-          <TabsTrigger value="yue" className="text-xs">粵語</TabsTrigger>
-          <TabsTrigger value="zh-CN" className="text-xs">简体中文</TabsTrigger>
+          <TabsTrigger value="yue" className="text-xs">HK</TabsTrigger>
+          <TabsTrigger value="zh-CN" className="text-xs">CN</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ko" className="space-y-3 pt-2">
