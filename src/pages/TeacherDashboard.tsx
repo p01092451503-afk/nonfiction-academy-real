@@ -205,37 +205,6 @@ const TeacherDashboard = () => {
     .slice(0, 5)
     .map((c) => ({ ...c, avgProgress: c.learners ? Math.round(c.sum / c.learners) : 0 }));
 
-  // ── 통계 카드 ──────────────────────────────────────────
-  const stats = [
-    {
-      label: t("teacher.branchTotalStudents", "지점 학생 수"),
-      value: totalStudents,
-      sub: branchLabel || t("teacher.allBranchStudents", "전체 지점 학생"),
-      icon: Users,
-      tone: "text-primary",
-    },
-    {
-      label: t("teacher.weeklyActive", "주간 활성 학습자"),
-      value: weeklyActiveSet.size,
-      sub: t("teacher.activeRatio", { rate: totalStudents ? Math.round((weeklyActiveSet.size / totalStudents) * 100) : 0, defaultValue: "활동률 {{rate}}%" }),
-      icon: Activity,
-      tone: "text-emerald-600",
-    },
-    {
-      label: t("teacher.avgProgressLabel", "평균 학습 진도"),
-      value: `${avgProgress}%`,
-      sub: t("teacher.completionStat", { done: completedEnrollments, total: totalEnrollments, defaultValue: "{{done}}/{{total}} 완료" }),
-      icon: TrendingUp,
-      tone: "text-blue-600",
-    },
-    {
-      label: t("teacher.mandatoryCompletion", "필수교육 이수율"),
-      value: `${mandatoryRate}%`,
-      sub: t("teacher.mandatoryStat", { done: mandatoryCompleted, total: mandatoryEnrollments.length, defaultValue: "{{done}}/{{total}} 이수" }),
-      icon: GraduationCap,
-      tone: "text-purple-600",
-    },
-  ];
 
   // ── 빈 상태 ────────────────────────────────────────────
   if (scopeLoading) {
