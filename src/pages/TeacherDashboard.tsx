@@ -243,59 +243,6 @@ const TeacherDashboard = () => {
           </p>
         </div>
 
-        {/* Stats */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label={t("teacher.teacherDashboard")}>
-          {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
-                <stat.icon className={`h-4 w-4 ${stat.tone}`} aria-hidden="true" />
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{stat.sub}</p>
-            </div>
-          ))}
-        </section>
-
-        {/* Secondary metrics */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.completionRateLabel", "완강률")}</span>
-              <Target className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{completionRate}%</p>
-            <Progress value={completionRate} className="h-1.5 mt-2" />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.assessmentPassRate", "평가 합격률")}</span>
-              <ClipboardCheck className="h-4 w-4 text-blue-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{passRate}%</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t("teacher.attemptsLast30d", { count: attempts.length, defaultValue: "최근 30일 {{count}}건" })}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.dormantStudents", "휴면 학습자")}</span>
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{dormantStudents.length}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{t("teacher.dormantHint", "14일+ 미접속")}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">{t("teacher.pendingGrading", "미채점 과제")}</span>
-              <ClipboardCheck className="h-4 w-4 text-rose-600" />
-            </div>
-            <p className="text-2xl font-bold text-foreground">{pendingSubmissions.length}</p>
-            <Link to="/teacher/assignments" className="text-[11px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5">
-              {t("teacher.gradeNow", "채점하러 가기")} <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </section>
 
         {/* Period & scope filters (leader scope) */}
         <DashboardFilterBar
