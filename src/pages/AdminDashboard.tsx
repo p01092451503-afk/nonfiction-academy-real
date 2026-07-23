@@ -21,7 +21,7 @@ import DashboardFilterBar, { DashboardFilters } from "@/components/admin/Dashboa
 import DashboardMetricCards from "@/components/admin/DashboardMetricCards";
 import DashboardWeeklySummary from "@/components/admin/DashboardWeeklySummary";
 import DashboardDropoffCourses from "@/components/admin/DashboardDropoffCourses";
-import DashboardAccessHeatmap from "@/components/admin/DashboardAccessHeatmap";
+
 import DashboardLearnerTable from "@/components/admin/DashboardLearnerTable";
 
 const defaultFilters: DashboardFilters = {
