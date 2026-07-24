@@ -276,8 +276,8 @@ const StudentDashboard = () => {
   });
 
   // 누적 학습시간 (분): course_learning_sessions, 세션당 30분 캡, 기간 필터 적용
-  const { data: learningMinutes = 0 } = useQuery({
-    queryKey: ["dash-learning-minutes", user?.id, periodKey],
+  const { data: learningSessions = [] } = useQuery({
+    queryKey: ["dash-learning-sessions", user?.id, periodKey],
     queryFn: async () => {
       let q = supabase
         .from("course_learning_sessions")
@@ -290,19 +290,32 @@ const StudentDashboard = () => {
       }
       const { data, error } = await q;
       if (error) throw error;
-      const rows = periodRanges ? (data || []).filter((s: any) => inRange(s.started_at)) : (data || []);
-      const SESSION_CAP_MIN = 30;
-      let total = 0;
-      rows.forEach((s: any) => {
-        const start = new Date(s.started_at).getTime();
-        const end = new Date(s.last_heartbeat_at).getTime();
-        const min = Math.max(0, (end - start) / 60000);
-        total += Math.min(min, SESSION_CAP_MIN);
-      });
-      return Math.round(total);
+      return periodRanges ? (data || []).filter((s: any) => inRange(s.started_at)) : (data || []);
     },
     enabled: !!user?.id,
   });
+
+  const learningMinutes = useMemo(() => {
+    const SESSION_CAP_MIN = 30;
+    let total = 0;
+    (learningSessions as any[]).forEach((s) => {
+      const start = new Date(s.started_at).getTime();
+      const end = new Date(s.last_heartbeat_at).getTime();
+      const min = Math.max(0, (end - start) / 60000);
+      total += Math.min(min, SESSION_CAP_MIN);
+    });
+    return Math.round(total);
+  }, [learningSessions]);
+
+  // 학습일 (기간 필터 반영: 세션이 있는 서로 다른 날짜 수)
+  const learningDays = useMemo(() => {
+    const set = new Set<string>();
+    (learningSessions as any[]).forEach((s) => {
+      if (s.started_at) set.add(new Date(s.started_at).toISOString().slice(0, 10));
+    });
+    return set.size;
+  }, [learningSessions]);
+
 
 
   // 필수교육 (마감 임박 우선)
