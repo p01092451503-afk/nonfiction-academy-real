@@ -472,9 +472,21 @@ const StudentDashboard = () => {
   ];
 
   const detailStats = [
-    { label: t("dashboard.consecutiveLearning"), value: `${gamification?.streak_days || 0}${t("common.days")}`, sub: t("dashboard.consecutiveDays"), icon: TrendingUp },
+    {
+      label: t("dashboard.learningDays", { defaultValue: "누적 학습일" }),
+      value: `${learningDays}${t("common.days")}`,
+      sub: periodRanges
+        ? t("dashboard.learningDaysPeriodSub", { defaultValue: "선택 기간 학습일" })
+        : t("dashboard.learningDaysSub", { defaultValue: "학습한 총 일수" }),
+      icon: TrendingUp,
+    },
     { label: t("dashboard.level"), value: `Lv.${gamification?.level || 1}`, sub: `${gamification?.experience_points || 0} XP`, icon: Star },
-    { label: t("dashboard.completedAssignments"), value: String(completedAssignments), sub: t("dashboard.totalAssignmentsSub", { count: totalAssignments }), icon: ClipboardCheck },
+    {
+      label: t("dashboard.completionRate", { defaultValue: "이수율" }),
+      value: `${enrollmentStats?.avgProgress || 0}%`,
+      sub: t("dashboard.completionRateSub", { defaultValue: "전체 과정 개인 이수율" }),
+      icon: ClipboardCheck,
+    },
     {
       label: periodRanges ? t("dashboard.periodPoints", { defaultValue: "기간 획득 포인트" }) : t("dashboard.totalPoints"),
       value: String(periodRanges ? periodPoints : (gamification?.total_points || 0)),
@@ -483,6 +495,7 @@ const StudentDashboard = () => {
     },
     { label: t("dashboard.myComments", "내 댓글 수"), value: String(myCommentCount), sub: t("dashboard.myCommentsSub", "강의 작성 댓글"), icon: MessageSquare },
   ];
+
 
   return (
     <DashboardLayout role="student">
