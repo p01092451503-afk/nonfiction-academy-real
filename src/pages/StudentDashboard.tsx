@@ -276,8 +276,8 @@ const StudentDashboard = () => {
   });
 
   // 누적 학습시간 (분): course_learning_sessions, 세션당 30분 캡, 기간 필터 적용
-  const { data: learningMinutes = 0 } = useQuery({
-    queryKey: ["dash-learning-minutes", user?.id, periodKey],
+  const { data: learningSessions = [] } = useQuery({
+    queryKey: ["dash-learning-sessions", user?.id, periodKey],
     queryFn: async () => {
       let q = supabase
         .from("course_learning_sessions")
@@ -290,19 +290,32 @@ const StudentDashboard = () => {
       }
       const { data, error } = await q;
       if (error) throw error;
-      const rows = periodRanges ? (data || []).filter((s: any) => inRange(s.started_at)) : (data || []);
-      const SESSION_CAP_MIN = 30;
-      let total = 0;
-      rows.forEach((s: any) => {
-        const start = new Date(s.started_at).getTime();
-        const end = new Date(s.last_heartbeat_at).getTime();
-        const min = Math.max(0, (end - start) / 60000);
-        total += Math.min(min, SESSION_CAP_MIN);
-      });
-      return Math.round(total);
+      return periodRanges ? (data || []).filter((s: any) => inRange(s.started_at)) : (data || []);
     },
     enabled: !!user?.id,
   });
+
+  const learningMinutes = useMemo(() => {
+    const SESSION_CAP_MIN = 30;
+    let total = 0;
+    (learningSessions as any[]).forEach((s) => {
+      const start = new Date(s.started_at).getTime();
+      const end = new Date(s.last_heartbeat_at).getTime();
+      const min = Math.max(0, (end - start) / 60000);
+      total += Math.min(min, SESSION_CAP_MIN);
+    });
+    return Math.round(total);
+  }, [learningSessions]);
+
+  // 학습일 (기간 필터 반영: 세션이 있는 서로 다른 날짜 수)
+  const learningDays = useMemo(() => {
+    const set = new Set<string>();
+    (learningSessions as any[]).forEach((s) => {
+      if (s.started_at) set.add(new Date(s.started_at).toISOString().slice(0, 10));
+    });
+    return set.size;
+  }, [learningSessions]);
+
 
 
   // 필수교육 (마감 임박 우선)
@@ -459,9 +472,21 @@ const StudentDashboard = () => {
   ];
 
   const detailStats = [
-    { label: t("dashboard.consecutiveLearning"), value: `${gamification?.streak_days || 0}${t("common.days")}`, sub: t("dashboard.consecutiveDays"), icon: TrendingUp },
+    {
+      label: t("dashboard.learningDays", { defaultValue: "누적 학습일" }),
+      value: `${learningDays}${t("common.days")}`,
+      sub: periodRanges
+        ? t("dashboard.learningDaysPeriodSub", { defaultValue: "선택 기간 학습일" })
+        : t("dashboard.learningDaysSub", { defaultValue: "학습한 총 일수" }),
+      icon: TrendingUp,
+    },
     { label: t("dashboard.level"), value: `Lv.${gamification?.level || 1}`, sub: `${gamification?.experience_points || 0} XP`, icon: Star },
-    { label: t("dashboard.completedAssignments"), value: String(completedAssignments), sub: t("dashboard.totalAssignmentsSub", { count: totalAssignments }), icon: ClipboardCheck },
+    {
+      label: t("dashboard.completionRate", { defaultValue: "이수율" }),
+      value: `${enrollmentStats?.avgProgress || 0}%`,
+      sub: t("dashboard.completionRateSub", { defaultValue: "전체 과정 개인 이수율" }),
+      icon: ClipboardCheck,
+    },
     {
       label: periodRanges ? t("dashboard.periodPoints", { defaultValue: "기간 획득 포인트" }) : t("dashboard.totalPoints"),
       value: String(periodRanges ? periodPoints : (gamification?.total_points || 0)),
@@ -470,6 +495,7 @@ const StudentDashboard = () => {
     },
     { label: t("dashboard.myComments", "내 댓글 수"), value: String(myCommentCount), sub: t("dashboard.myCommentsSub", "강의 작성 댓글"), icon: MessageSquare },
   ];
+
 
   return (
     <DashboardLayout role="student">
