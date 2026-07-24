@@ -722,6 +722,9 @@ export type Database = {
           is_active: boolean | null
           name: string
           name_en: string | null
+          name_ja: string | null
+          name_yue: string | null
+          name_zh_cn: string | null
           slug: string
           updated_at: string | null
         }
@@ -733,6 +736,9 @@ export type Database = {
           is_active?: boolean | null
           name: string
           name_en?: string | null
+          name_ja?: string | null
+          name_yue?: string | null
+          name_zh_cn?: string | null
           slug: string
           updated_at?: string | null
         }
@@ -744,6 +750,9 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           name_en?: string | null
+          name_ja?: string | null
+          name_yue?: string | null
+          name_zh_cn?: string | null
           slug?: string
           updated_at?: string | null
         }
