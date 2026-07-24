@@ -347,9 +347,19 @@ const CourseCatalog = () => {
   contentCounts.forEach((c: any) => contentCountMap.set(c.course_id, (contentCountMap.get(c.course_id) || 0) + 1));
   const categoryMap = new Map(categories.map((c: any) => [c.id, c]));
 
+  const q = search.trim().toLowerCase();
   const filtered = courses.filter((c: any) => {
-    const matchSearch = c.title?.toLowerCase().includes(search.toLowerCase()) || c.description?.toLowerCase().includes(search.toLowerCase());
     const matchCategory = activeCategory === "all" || c.category_id === activeCategory;
+    if (!q) return matchCategory;
+    // Search across the localized title/description AND every stored i18n row,
+    // so a JA user can find a course even when only KO/EN text was entered.
+    const haystacks: string[] = [c.title, c.description];
+    (c.course_i18n || []).forEach((row: any) => {
+      haystacks.push(row?.title, row?.description);
+    });
+    const cat = categoryMap.get(c.category_id) as any;
+    if (cat) haystacks.push(cat.name, cat.name_en, cat.name_ja, cat.name_yue, cat.name_zh_cn);
+    const matchSearch = haystacks.some((v) => typeof v === "string" && v.toLowerCase().includes(q));
     return matchSearch && matchCategory;
   });
 
