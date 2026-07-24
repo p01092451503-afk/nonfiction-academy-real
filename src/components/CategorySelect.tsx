@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,14 +29,24 @@ const slugify = (name: string) =>
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
 
+type MlNames = {
+  name: string;
+  name_en: string;
+  name_ja: string;
+  name_yue: string;
+  name_zh_cn: string;
+};
+
+const emptyMl: MlNames = { name: "", name_en: "", name_ja: "", name_yue: "", name_zh_cn: "" };
+
 const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newNames, setNewNames] = useState<MlNames>(emptyMl);
   const [manageOpen, setManageOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [editingNames, setEditingNames] = useState<MlNames>(emptyMl);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: categories = [] } = useQuery({
@@ -43,7 +54,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
     queryFn: async () => {
       const { data } = await supabase
         .from("categories")
-        .select("id, name, slug")
+        .select("id, name, name_en, name_ja, name_yue, name_zh_cn, slug")
         .eq("is_active", true)
         .order("display_order");
       return data || [];
@@ -60,10 +71,17 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
   };
 
   const createMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async (names: MlNames) => {
       const { data, error } = await supabase
         .from("categories")
-        .insert({ name, slug: slugify(name) })
+        .insert({
+          name: names.name,
+          name_en: names.name_en || null,
+          name_ja: names.name_ja || null,
+          name_yue: names.name_yue || null,
+          name_zh_cn: names.name_zh_cn || null,
+          slug: slugify(names.name),
+        })
         .select("id")
         .single();
       if (error) throw error;
@@ -73,7 +91,7 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
       invalidateCategoryCaches();
       onValueChange(data.id);
       setDialogOpen(false);
-      setNewName("");
+      setNewNames(emptyMl);
       toast({ title: "카테고리가 추가되었습니다." });
     },
     onError: () => {
@@ -82,17 +100,24 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, names }: { id: string; names: MlNames }) => {
       const { error } = await supabase
         .from("categories")
-        .update({ name, slug: slugify(name) })
+        .update({
+          name: names.name,
+          name_en: names.name_en || null,
+          name_ja: names.name_ja || null,
+          name_yue: names.name_yue || null,
+          name_zh_cn: names.name_zh_cn || null,
+          slug: slugify(names.name),
+        })
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       invalidateCategoryCaches();
       setEditingId(null);
-      setEditingName("");
+      setEditingNames(emptyMl);
       toast({ title: "카테고리가 수정되었습니다." });
     },
     onError: () => {
@@ -102,7 +127,6 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Check usage in courses
       const { count, error: cntErr } = await supabase
         .from("courses")
         .select("id", { count: "exact", head: true })
@@ -127,33 +151,76 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
   });
 
   const handleCreate = () => {
-    const trimmed = newName.trim();
-    if (!trimmed) return;
-    createMutation.mutate(trimmed);
+    if (!newNames.name.trim()) return;
+    createMutation.mutate({
+      name: newNames.name.trim(),
+      name_en: newNames.name_en.trim(),
+      name_ja: newNames.name_ja.trim(),
+      name_yue: newNames.name_yue.trim(),
+      name_zh_cn: newNames.name_zh_cn.trim(),
+    });
   };
 
-  const startEdit = (id: string, name: string) => {
-    setEditingId(id);
-    setEditingName(name);
+  const startEdit = (cat: any) => {
+    setEditingId(cat.id);
+    setEditingNames({
+      name: cat.name || "",
+      name_en: cat.name_en || "",
+      name_ja: cat.name_ja || "",
+      name_yue: cat.name_yue || "",
+      name_zh_cn: cat.name_zh_cn || "",
+    });
   };
 
   const saveEdit = () => {
-    const trimmed = editingName.trim();
-    if (!trimmed || !editingId) return;
-    updateMutation.mutate({ id: editingId, name: trimmed });
+    if (!editingId || !editingNames.name.trim()) return;
+    updateMutation.mutate({
+      id: editingId,
+      names: {
+        name: editingNames.name.trim(),
+        name_en: editingNames.name_en.trim(),
+        name_ja: editingNames.name_ja.trim(),
+        name_yue: editingNames.name_yue.trim(),
+        name_zh_cn: editingNames.name_zh_cn.trim(),
+      },
+    });
   };
+
+  const MlFields = ({
+    values, onChange,
+  }: {
+    values: MlNames;
+    onChange: (patch: Partial<MlNames>) => void;
+  }) => (
+    <div className="space-y-2">
+      <div className="grid grid-cols-[64px_1fr] items-center gap-2">
+        <Label className="text-xs text-muted-foreground">KO</Label>
+        <Input value={values.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="한국어 (필수)" className="h-9" />
+      </div>
+      <div className="grid grid-cols-[64px_1fr] items-center gap-2">
+        <Label className="text-xs text-muted-foreground">EN</Label>
+        <Input value={values.name_en} onChange={(e) => onChange({ name_en: e.target.value })} placeholder="English" className="h-9" />
+      </div>
+      <div className="grid grid-cols-[64px_1fr] items-center gap-2">
+        <Label className="text-xs text-muted-foreground">JA</Label>
+        <Input value={values.name_ja} onChange={(e) => onChange({ name_ja: e.target.value })} placeholder="日本語" className="h-9" />
+      </div>
+      <div className="grid grid-cols-[64px_1fr] items-center gap-2">
+        <Label className="text-xs text-muted-foreground">HK</Label>
+        <Input value={values.name_yue} onChange={(e) => onChange({ name_yue: e.target.value })} placeholder="粵語" className="h-9" />
+      </div>
+      <div className="grid grid-cols-[64px_1fr] items-center gap-2">
+        <Label className="text-xs text-muted-foreground">CN</Label>
+        <Input value={values.name_zh_cn} onChange={(e) => onChange({ name_zh_cn: e.target.value })} placeholder="简体中文" className="h-9" />
+      </div>
+    </div>
+  );
 
   return (
     <>
       <Select value={value} onValueChange={(v) => {
-        if (v === "__add_new") {
-          setDialogOpen(true);
-          return;
-        }
-        if (v === "__manage") {
-          setManageOpen(true);
-          return;
-        }
+        if (v === "__add_new") { setDialogOpen(true); return; }
+        if (v === "__manage") { setManageOpen(true); return; }
         onValueChange(v);
       }}>
         <SelectTrigger className="h-11 rounded-xl border-border">
@@ -178,71 +245,63 @@ const CategorySelect = ({ value, onValueChange }: CategorySelectProps) => {
         </SelectContent>
       </Select>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
+      <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setNewNames(emptyMl); }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>새 카테고리 추가</DialogTitle>
+            <DialogDescription>언어별 이름을 직접 입력할 수 있습니다. 비워두면 한국어가 기본으로 사용됩니다.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="카테고리 이름"
-              className="h-11 rounded-xl"
-              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreate())}
-              autoFocus
-            />
+          <div className="py-2">
+            <MlFields values={newNames} onChange={(p) => setNewNames((s) => ({ ...s, ...p }))} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>취소</Button>
-            <Button onClick={handleCreate} disabled={!newName.trim() || createMutation.isPending}>
+            <Button onClick={handleCreate} disabled={!newNames.name.trim() || createMutation.isPending}>
               {createMutation.isPending ? "추가 중..." : "추가"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={manageOpen} onOpenChange={(o) => { setManageOpen(o); if (!o) { setEditingId(null); setEditingName(""); } }}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={manageOpen} onOpenChange={(o) => { setManageOpen(o); if (!o) { setEditingId(null); setEditingNames(emptyMl); } }}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>카테고리 관리</DialogTitle>
-            <DialogDescription>카테고리 이름을 수정하거나 삭제할 수 있습니다.</DialogDescription>
+            <DialogDescription>카테고리 이름을 언어별로 직접 수정하거나 삭제할 수 있습니다.</DialogDescription>
           </DialogHeader>
-          <div className="max-h-[50vh] overflow-y-auto divide-y divide-border">
+          <div className="max-h-[60vh] overflow-y-auto divide-y divide-border">
             {categories.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">카테고리가 없습니다.</p>
             ) : (
               categories.map((cat: any) => (
-                <div key={cat.id} className="flex items-center gap-2 py-2">
+                <div key={cat.id} className="py-3">
                   {editingId === cat.id ? (
-                    <>
-                      <Input
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        className="h-9 flex-1"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); saveEdit(); }
-                          if (e.key === "Escape") { setEditingId(null); setEditingName(""); }
-                        }}
-                      />
-                      <Button size="sm" variant="ghost" onClick={saveEdit} disabled={!editingName.trim() || updateMutation.isPending} aria-label="저장">
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setEditingName(""); }} aria-label="취소">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
+                    <div className="space-y-3">
+                      <MlFields values={editingNames} onChange={(p) => setEditingNames((s) => ({ ...s, ...p }))} />
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setEditingNames(emptyMl); }}>
+                          <X className="h-4 w-4 mr-1" /> 취소
+                        </Button>
+                        <Button size="sm" onClick={saveEdit} disabled={!editingNames.name.trim() || updateMutation.isPending}>
+                          <Check className="h-4 w-4 mr-1" /> 저장
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      <span className="flex-1 text-sm text-foreground">{cat.name}</span>
-                      <Button size="sm" variant="ghost" onClick={() => startEdit(cat.id, cat.name)} aria-label="수정">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-foreground truncate">{cat.name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          EN: {cat.name_en || "—"} · JA: {cat.name_ja || "—"} · HK: {cat.name_yue || "—"} · CN: {cat.name_zh_cn || "—"}
+                        </div>
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => startEdit(cat)} aria-label="수정">
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteId(cat.id)} aria-label="삭제">
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </>
+                    </div>
                   )}
                 </div>
               ))

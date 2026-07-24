@@ -267,8 +267,15 @@ const CourseCatalog = () => {
         .order("display_order", { ascending: true });
       if (error) throw error;
       if (lang === "ko") return data;
-      // categories only has KO + name_en; for JA/ZH fall back to EN, then KO
-      return (data || []).map((c: any) => ({ ...c, name: c.name_en || c.name }));
+      // Prefer explicit translation; fall back through EN → KO so no empty names show.
+      const pick = (c: any) => {
+        if (lang === "en") return c.name_en || c.name;
+        if (lang === "ja") return c.name_ja || c.name_en || c.name;
+        if (lang === "yue") return c.name_yue || c.name_zh_cn || c.name_en || c.name;
+        if (lang === "zh-CN") return c.name_zh_cn || c.name_en || c.name;
+        return c.name;
+      };
+      return (data || []).map((c: any) => ({ ...c, name: pick(c) }));
     },
   });
 

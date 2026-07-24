@@ -902,12 +902,13 @@ const ContentPlayer = () => {
                   const isActive = c.id === contentId;
                   const isCompleted = progressMap.get(c.id)?.completed;
                   const langCode = (c as any).language_code || "";
-                  const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
+                  const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode === "yue" ? "HK" : langCode.startsWith("zh") ? "CN" : (langCode ? langCode.toUpperCase() : "");
                   const langStyleMap: Record<string, string> = {
                     KO: "bg-foreground text-background",
                     EN: "bg-blue-600 text-white dark:bg-blue-500",
                     JA: "bg-rose-600 text-white dark:bg-rose-500",
-                    ZH: "bg-amber-600 text-white dark:bg-amber-500",
+                    HK: "bg-emerald-600 text-white dark:bg-emerald-500",
+                    CN: "bg-amber-600 text-white dark:bg-amber-500",
                   };
                   const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground";
                   // 다국어 차시: 뱃지 텍스트도 각 차시의 언어 코드에 맞춰 번역
@@ -1101,12 +1102,13 @@ const ContentPlayer = () => {
                 const isActive = c.id === contentId;
                 const isCompleted = progressMap.get(c.id)?.completed;
                 const langCode = (c as any).language_code || "";
-                const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode.startsWith("zh") ? "ZH" : (langCode ? langCode.toUpperCase() : "");
+                const langLabel = langCode === "ko" ? "KO" : langCode === "en" ? "EN" : langCode === "ja" ? "JA" : langCode === "yue" ? "HK" : langCode.startsWith("zh") ? "CN" : (langCode ? langCode.toUpperCase() : "");
                 const langStyleMap: Record<string, string> = {
                   KO: "bg-foreground text-background",
                   EN: "bg-blue-600 text-white dark:bg-blue-500",
                   JA: "bg-rose-600 text-white dark:bg-rose-500",
-                  ZH: "bg-amber-600 text-white dark:bg-amber-500",
+                  HK: "bg-emerald-600 text-white dark:bg-emerald-500",
+                  CN: "bg-amber-600 text-white dark:bg-amber-500",
                 };
                 const langClass = langStyleMap[langLabel] || "bg-muted text-muted-foreground";
                 const itemLang = normalizeLang(langCode || i18n.language);
