@@ -156,9 +156,12 @@ const StudentCourses = () => {
   });
 
   const categoryMap = new Map(categories.map((c: any) => [c.id, c]));
+  // 비공개(초안/보관) 처리된 강의는 진행중 목록에서 자동 제외 (완료된 강의는 이력 유지)
+  const isCoursePublished = (c: any) => !c || (c.status ?? "published") === "published";
   const filtered = enrollments.filter((e: any) => e.courses?.title?.toLowerCase().includes(search.toLowerCase()));
-  const inProgress = filtered.filter((e: any) => !e.completed_at);
+  const inProgress = filtered.filter((e: any) => !e.completed_at && isCoursePublished(e.courses));
   const completed = filtered.filter((e: any) => !!e.completed_at);
+
 
   const renderEmpty = (isCompleted = false) => (
     <div className="flex flex-col items-center justify-center py-12 space-y-3">
