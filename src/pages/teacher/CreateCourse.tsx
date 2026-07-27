@@ -44,10 +44,10 @@ type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "v
 export const LESSON_LANGS = ["ko", "en", "ja", "yue", "zh-CN"] as const;
 export type LessonLang = typeof LESSON_LANGS[number];
 export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
-  ko: "한국어",
-  en: "English",
+  ko: "KO",
+  en: "EN",
   "zh-CN": "CN",
-  ja: "日本語",
+  ja: "JA",
   yue: "HK",
 };
 
