@@ -1993,9 +1993,10 @@ const CourseEditDialog = ({
               <p className="text-[11px] text-muted-foreground">
                 {t(
                   "course.minLearningMinutesHelp",
-                  "0이면 미사용. 값을 넣으면 강의의 모든 차시/카드에 시간이 균등 배분되고, 각 카드에 배분된 시간을 채워야 다음 카드로 넘어갈 수 있으며 시간을 모두 채우기 전에는 이수 완료로 처리되지 않습니다."
+                  "0이면 미사용. 값을 설정하면 강의의 마지막 차시에 도달했을 때 총 누적 학습시간을 검사하여, 미달 시 부족한 분수를 안내하고 이수 완료로 처리되지 않습니다."
                 )}
               </p>
+
             </div>
           </div>
         </TabsContent>

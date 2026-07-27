@@ -104,6 +104,22 @@ const AdminEnrollments = () => {
     },
   });
 
+  // 승인된 수강 취소 (enrollment 레코드 삭제)
+  const cancelEnrollmentMutation = useMutation({
+    mutationFn: async (enrollmentId: string) => {
+      const { error } = await supabase.from("enrollments").delete().eq("id", enrollmentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-enrollments"] });
+      toast({ title: "수강이 취소되었습니다." });
+    },
+    onError: (e: any) => {
+      toast({ title: t("common.error"), description: e.message, variant: "destructive" });
+    },
+  });
+
+
   const filtered = enrollments.filter((e: any) => {
     const profile = profileMap.get(e.user_id);
     const matchSearch =

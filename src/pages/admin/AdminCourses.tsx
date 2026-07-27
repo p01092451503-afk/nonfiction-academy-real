@@ -24,6 +24,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { fetchAllPaged } from "@/lib/fetchAllPaged";
 import StatCard from "@/components/ui/stat-card";
+import CategoryManagerButton from "@/components/admin/CategoryManagerButton";
+
 
 const statusLabel: Record<string, string> = {
   draft: "초안",
@@ -219,7 +221,8 @@ const AdminCourses = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2"><BookOpen className="h-6 w-6" aria-hidden="true" />{t("admin.courseManagement")}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("admin.courseManagementDesc")}</p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+            <CategoryManagerButton />
             <Button
               variant="outline"
               className="rounded-xl gap-2 flex-1 sm:flex-none"
@@ -233,6 +236,7 @@ const AdminCourses = () => {
               </Button>
             </Link>
           </div>
+
         </div>
         <BulkCourseQuestionsUploadDialog open={bulkQuestionsOpen} onOpenChange={setBulkQuestionsOpen} />
 
