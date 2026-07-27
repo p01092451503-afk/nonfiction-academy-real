@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, CheckCircle2, XCircle, Clock, Users, BookOpen, Filter, UserPlus } from "lucide-react";
+import { Search, CheckCircle2, XCircle, Clock, Users, BookOpen, Filter, UserPlus, Trash2 } from "lucide-react";
 import BulkEnrollDialog from "@/components/admin/BulkEnrollDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -285,10 +285,28 @@ const AdminEnrollments = () => {
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {enrollment.reviewed_at ? new Date(enrollment.reviewed_at).toLocaleDateString() : "-"}
-                          </span>
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {enrollment.reviewed_at ? new Date(enrollment.reviewed_at).toLocaleDateString() : "-"}
+                            </span>
+                            {enrollment.status === "approved" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-lg text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/5"
+                                onClick={() => {
+                                  if (window.confirm("해당 학습자의 수강 승인을 취소하시겠습니까? 수강 이력이 삭제됩니다.")) {
+                                    cancelEnrollmentMutation.mutate(enrollment.id);
+                                  }
+                                }}
+                                disabled={cancelEnrollmentMutation.isPending}
+                              >
+                                <Trash2 className="h-3 w-3" /> 수강 취소
+                              </Button>
+                            )}
+                          </div>
                         )}
+
                       </td>
                     </tr>
                   );
