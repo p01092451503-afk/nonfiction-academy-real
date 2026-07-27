@@ -1448,9 +1448,9 @@ const CreateCourse = () => {
 
           <Tabs defaultValue="ko" className="w-full">
             <TabsList className="w-full h-9 grid grid-cols-5">
-              <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
-              <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
-              <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
+              <TabsTrigger value="ko" className="text-xs">KO</TabsTrigger>
+              <TabsTrigger value="en" className="text-xs">EN</TabsTrigger>
+              <TabsTrigger value="ja" className="text-xs">JA</TabsTrigger>
               <TabsTrigger value="yue" className="text-xs">HK</TabsTrigger>
               <TabsTrigger value="zh-CN" className="text-xs">CN</TabsTrigger>
             </TabsList>
