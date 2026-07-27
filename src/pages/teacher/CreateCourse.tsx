@@ -44,10 +44,10 @@ type ContentSource = "video" | "mangoboard" | "card" | "package" | "images" | "v
 export const LESSON_LANGS = ["ko", "en", "ja", "yue", "zh-CN"] as const;
 export type LessonLang = typeof LESSON_LANGS[number];
 export const LESSON_LANG_LABELS: Record<LessonLang, string> = {
-  ko: "한국어",
-  en: "English",
+  ko: "KO",
+  en: "EN",
   "zh-CN": "CN",
-  ja: "日本語",
+  ja: "JA",
   yue: "HK",
 };
 
@@ -1448,9 +1448,9 @@ const CreateCourse = () => {
 
           <Tabs defaultValue="ko" className="w-full">
             <TabsList className="w-full h-9 grid grid-cols-5">
-              <TabsTrigger value="ko" className="text-xs">{t("course.koTab", "한국어")}</TabsTrigger>
-              <TabsTrigger value="en" className="text-xs">English</TabsTrigger>
-              <TabsTrigger value="ja" className="text-xs">日本語</TabsTrigger>
+              <TabsTrigger value="ko" className="text-xs">KO</TabsTrigger>
+              <TabsTrigger value="en" className="text-xs">EN</TabsTrigger>
+              <TabsTrigger value="ja" className="text-xs">JA</TabsTrigger>
               <TabsTrigger value="yue" className="text-xs">HK</TabsTrigger>
               <TabsTrigger value="zh-CN" className="text-xs">CN</TabsTrigger>
             </TabsList>
