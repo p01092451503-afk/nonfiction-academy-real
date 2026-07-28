@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Play, FileText,
@@ -697,6 +697,20 @@ const ContentPlayer = () => {
             <p className="text-sm">{t("common.loading", "불러오는 중...")}</p>
           </div>
         </div>
+      );
+    }
+    // 요청한 contentId 가 삭제되었거나 다른 강의의 차시인 경우 → 현재 언어에 맞는
+    // 유효한 차시로 자동 이동. (오래된 북마크/링크로 인한 FK 위반 방지)
+    const fallback =
+      visibleContents.find((c: any) => normalizeLang(c.language_code) === lang) ||
+      visibleContents[0] ||
+      contents[0];
+    if (fallback && fallback.id !== contentId) {
+      return (
+        <Navigate
+          to={`${routePrefix}/courses/${courseId}/content/${fallback.id}${location.search}`}
+          replace
+        />
       );
     }
     return (
