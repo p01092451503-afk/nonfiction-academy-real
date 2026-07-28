@@ -169,9 +169,16 @@ const TeacherStudentDetail = () => {
         }, "" as string)
       : null;
 
-    const progressPct = contents.length > 0
-      ? Math.round((completedContents.length / contents.length) * 100)
-      : 0;
+    // 다국어 차시(동일 콘텐츠) 규칙: 한 언어라도 완료하면 100%.
+    // 그 외에는 차시별 최대 진행률을 강의 진행률로 사용.
+    const anyCompleted = completedContents.length > 0 || !!enrollment?.completed_at;
+    const maxPct = contentProgresses.reduce(
+      (m, p) => Math.max(m, Number(p!.progress_percentage) || 0),
+      0
+    );
+    const progressPct = anyCompleted
+      ? 100
+      : Math.max(0, Math.min(99, Math.round(Math.max(maxPct, Number(enrollment?.progress) || 0))));
 
     return {
       courseId,
