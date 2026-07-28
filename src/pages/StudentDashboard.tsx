@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
 import { localizeCourse } from "@/lib/i18nCourse";
+import { computeCourseProgress } from "@/lib/courseCompletion";
 import { MultiSelectPopover } from "@/components/ui/MultiSelectPopover";
 import { Filter, RotateCcw } from "lucide-react";
 
@@ -120,7 +121,7 @@ const StudentDashboard = () => {
       if (contentIds.length === 0) return [];
       const { data, error } = await supabase
         .from("content_progress")
-        .select("content_id, completed")
+        .select("content_id, completed, progress_percentage")
         .eq("user_id", user!.id)
         .in("content_id", contentIds);
       if (error) throw error;
@@ -130,6 +131,13 @@ const StudentDashboard = () => {
   });
 
   const completedContentIds = new Set(contentProgress.filter((p: any) => p.completed).map((p: any) => p.content_id));
+
+  const getDisplayedCourseProgress = (enrollment: any) => {
+    if (enrollment.completed_at) return 100;
+    const contentsForCourse = courseContents.filter((c: any) => c.course_id === enrollment.course_id);
+    const computed = computeCourseProgress(contentsForCourse, contentProgress as any, !!enrollment.completed_at);
+    return Math.max(Math.round(Number(enrollment.progress) || 0), computed.percentage);
+  };
 
   const getNextContent = (courseId: string) => {
     const all = courseContents.filter((c: any) => c.course_id === courseId);
@@ -158,7 +166,7 @@ const StudentDashboard = () => {
         0,
       );
       const inProgress = Math.max(0, total - data.filter((e: any) => e.completed_at).length);
-      const avgProgress = total > 0 ? Math.round(data.reduce((s, e) => s + (Number(e.progress) || 0), 0) / total) : 0;
+      const avgProgress = total > 0 ? Math.round(data.reduce((s, e: any) => s + (e.completed_at ? 100 : (Number(e.progress) || 0)), 0) / total) : 0;
       return { total, completed, inProgress, avgProgress };
     },
     enabled: !!user?.id,
@@ -638,7 +646,7 @@ const StudentDashboard = () => {
             <div className="space-y-0 rounded-2xl overflow-hidden border border-border">
               {enrollments.map((enrollment: any, index: number) => {
                 const nextContent = getNextContent(enrollment.course_id);
-                const progress = Math.round(Number(enrollment.progress) || 0);
+                const progress = getDisplayedCourseProgress(enrollment);
                 const instructorName = instructorMap.get(enrollment.courses?.instructor_id) || t("dashboard.instructor");
 
                 return (

@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 import { normalizeLang } from "@/lib/i18nLang";
 import { localizeCourse } from "@/lib/i18nCourse";
+import { computeCourseProgress } from "@/lib/courseCompletion";
 import CourseThumbnail from "@/components/CourseThumbnail";
 
 const StudentCourses = () => {
@@ -56,6 +57,31 @@ const StudentCourses = () => {
       if (lang === "ko") return data;
       return (data || []).map((c: any) => ({ ...c, name: c.name_en || c.name }));
     },
+  });
+
+  const courseIds = enrollments.map((e: any) => e.course_id).filter(Boolean);
+  const { data: progressRows = [] } = useQuery({
+    queryKey: ["my-enrollments-progress-rows", user?.id, courseIds],
+    queryFn: async () => {
+      if (!user?.id || courseIds.length === 0) return [];
+      const { data: contents, error: contentsError } = await supabase
+        .from("course_contents")
+        .select("id, course_id")
+        .in("course_id", courseIds)
+        .eq("is_published", true);
+      if (contentsError) throw contentsError;
+      const contentIds = (contents || []).map((c: any) => c.id);
+      if (contentIds.length === 0) return [];
+      const { data: progress, error: progressError } = await supabase
+        .from("content_progress")
+        .select("content_id, completed, progress_percentage")
+        .eq("user_id", user.id)
+        .in("content_id", contentIds);
+      if (progressError) throw progressError;
+      const courseIdByContentId = new Map((contents || []).map((c: any) => [c.id, c.course_id]));
+      return (progress || []).map((p: any) => ({ ...p, course_id: courseIdByContentId.get(p.content_id) }));
+    },
+    enabled: !!user?.id && courseIds.length > 0,
   });
 
   // 사용자가 배정받은 트랙 + 단계 + 강의 매핑 → 강의별 "어느 트랙의 어느 단계"인지 표시
@@ -156,6 +182,13 @@ const StudentCourses = () => {
   });
 
   const categoryMap = new Map(categories.map((c: any) => [c.id, c]));
+  const getDisplayedCourseProgress = (enrollment: any) => {
+    if (enrollment.completed_at) return 100;
+    const contents = (enrollment.courses?.course_contents || []).filter((c: any) => c.is_published !== false);
+    const progress = (progressRows as any[]).filter((p: any) => p.course_id === enrollment.course_id);
+    const computed = computeCourseProgress(contents, progress as any, !!enrollment.completed_at);
+    return Math.max(Math.round(Number(enrollment.progress) || 0), computed.percentage);
+  };
   // 비공개(초안/보관) 처리된 강의는 진행중 목록에서 자동 제외 (완료된 강의는 이력 유지)
   const isCoursePublished = (c: any) => !c || (c.status ?? "published") === "published";
   const filtered = enrollments.filter((e: any) => e.courses?.title?.toLowerCase().includes(search.toLowerCase()));
@@ -178,7 +211,7 @@ const StudentCourses = () => {
     const course = enrollment.courses;
     if (!course) return null;
     const cat = categoryMap.get(course.category_id);
-    const progress = isCompleted ? 100 : Number(enrollment.progress) || 0;
+    const progress = isCompleted ? 100 : getDisplayedCourseProgress(enrollment);
     const trackInfos: Array<{ trackId: string; trackTitle: string; stageIdx: number; stageName: string }> =
       (courseTrackMap as Map<string, any[]>).get(course.id) || [];
 

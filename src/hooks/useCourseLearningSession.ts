@@ -47,7 +47,7 @@ export const useCourseLearningSession = (
       sessionIdRef.current = data.id;
 
       // heartbeat 시작
-      intervalId = setInterval(() => {
+      const heartbeat = () => {
         const elapsedMin = (Date.now() - startedAtRef.current) / 60_000;
         if (elapsedMin > MAX_SESSION_MIN + 1) return; // 30분 + 약간의 버퍼 후 중단
         const cappedTs = new Date(
@@ -56,8 +56,10 @@ export const useCourseLearningSession = (
         void supabase
           .from("course_learning_sessions")
           .update({ last_heartbeat_at: cappedTs })
-          .eq("id", sessionIdRef.current!);
-      }, HEARTBEAT_INTERVAL_MS);
+          .eq("id", sessionIdRef.current);
+      };
+      heartbeat();
+      intervalId = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
     })();
 
     // 탭 종료 / 페이지 이탈 시 마지막 heartbeat (keepalive fetch)
@@ -68,33 +70,43 @@ export const useCourseLearningSession = (
         startedAtRef.current + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
       ).toISOString();
       try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionIdRef.current}`;
-        const token = supabase.realtime?.accessToken || "";
-        fetch(url, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${token}`,
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify({ last_heartbeat_at: cappedTs }),
-          keepalive: true,
+        void supabase
+          .from("course_learning_sessions")
+          .update({ last_heartbeat_at: cappedTs })
+          .eq("id", sessionIdRef.current);
+
+        supabase.auth.getSession().then(({ data }) => {
+          const token = data.session?.access_token;
+          if (!token || !sessionIdRef.current) return;
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionIdRef.current}`;
+          fetch(url, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              Authorization: `Bearer ${token}`,
+              Prefer: "return=minimal",
+            },
+            body: JSON.stringify({ last_heartbeat_at: cappedTs }),
+            keepalive: true,
+          }).catch(() => {});
         }).catch(() => {});
       } catch {
         // ignore
       }
     };
-    window.addEventListener("beforeunload", flush);
-    document.addEventListener("visibilitychange", () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") flush();
-    });
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelled = true;
       if (intervalId) clearInterval(intervalId);
       flush();
       window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [courseId, enabled, user?.id, profile?.tenant_id]);
 };

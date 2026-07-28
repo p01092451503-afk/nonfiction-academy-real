@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { normalizeLang } from "@/lib/i18nLang";
 import { useVideoProgress } from "@/hooks/useVideoProgress";
+import { useCourseLearningSession } from "@/hooks/useCourseLearningSession";
 import { logContentAccess } from "@/hooks/useTrafficLogger";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
@@ -95,6 +96,7 @@ const ContentPlayer = () => {
   // Derive route prefix from current path (e.g. /student, /teacher, /admin)
   const routePrefix = location.pathname.startsWith("/admin/") ? "/admin" : location.pathname.startsWith("/teacher/") ? "/teacher" : "/student";
   const { user, profile } = useUser();
+  useCourseLearningSession(courseId, routePrefix === "/student");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
@@ -282,6 +284,7 @@ const ContentPlayer = () => {
   const minTimePromptedRef = useRef<string | null>(null);
 
   const currentContent = contents.find((c) => c.id === contentId);
+  const minLearningMin = Number((course as any)?.min_learning_minutes ?? 0) || 0;
 
   // Log content access for traffic monitoring
   useEffect(() => {
@@ -414,8 +417,32 @@ const ContentPlayer = () => {
     }
   }, [mangoAutoCompleted]);
 
+  const getCourseLearningMinutes = useCallback(async () => {
+    if (!user?.id || !courseId) return 0;
+    const { data, error } = await supabase
+      .from("course_learning_sessions")
+      .select("started_at,last_heartbeat_at")
+      .eq("user_id", user.id)
+      .eq("course_id", courseId);
+    if (error || !data) return 0;
+    return data.reduce((sum, s: any) => {
+      const start = new Date(s.started_at).getTime();
+      const end = new Date(s.last_heartbeat_at || s.started_at).getTime();
+      const min = Math.max(0, (end - start) / 60000);
+      return sum + Math.min(min, 30);
+    }, 0);
+  }, [user?.id, courseId]);
+
   const markCompleteMutation = useMutation({
     mutationFn: async () => {
+      if (minLearningMin > 0) {
+        const totalMin = await getCourseLearningMinutes();
+        const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin));
+        if (shortMin > 0) {
+          setMinTimeDialog({ open: true, shortMin });
+          return false;
+        }
+      }
       const { error } = await supabase.from("content_progress").upsert(
         {
           user_id: user!.id,
@@ -432,8 +459,10 @@ const ContentPlayer = () => {
       if (user?.id && courseId) {
         await syncEnrollmentOnContentCompleted({ userId: user.id, courseId });
       }
+      return true;
     },
-    onSuccess: () => {
+    onSuccess: (completed) => {
+      if (!completed) return;
       queryClient.invalidateQueries({ queryKey: ["content-progress", courseId] });
       queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
       queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
@@ -546,7 +575,6 @@ const ContentPlayer = () => {
   );
 
   // 마지막 차시 도달 시 강의 전체 최소 학습시간 검사 → 부족 시 팝업
-  const minLearningMin = Number((course as any)?.min_learning_minutes ?? 0) || 0;
   const isOnLastContent =
     visibleContents.length > 0 && currentIndex === visibleContents.length - 1;
   useEffect(() => {
@@ -555,24 +583,13 @@ const ContentPlayer = () => {
     minTimePromptedRef.current = `${courseId}:${contentId}`;
     (async () => {
       // 세션 목록 조회 → 세션당 최대 30분으로 캡핑하여 총 학습시간 계산
-      const { data, error } = await supabase
-        .from("course_learning_sessions")
-        .select("started_at,last_heartbeat_at")
-        .eq("user_id", user.id)
-        .eq("course_id", courseId);
-      if (error || !data) return;
-      const totalMin = data.reduce((sum, s: any) => {
-        const start = new Date(s.started_at).getTime();
-        const end = new Date(s.last_heartbeat_at || s.started_at).getTime();
-        const min = Math.max(0, (end - start) / 60000);
-        return sum + Math.min(min, 30);
-      }, 0);
+      const totalMin = await getCourseLearningMinutes();
       const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin));
       if (shortMin > 0) {
         setMinTimeDialog({ open: true, shortMin });
       }
     })();
-  }, [isOnLastContent, minLearningMin, user?.id, courseId, contentId]);
+  }, [isOnLastContent, minLearningMin, user?.id, courseId, contentId, getCourseLearningMinutes]);
 
 
 
@@ -746,8 +763,9 @@ const ContentPlayer = () => {
                   onPartialProgress={handlePartialProgress}
                   onComplete={() => {
                     if (user && !currentProgress?.completed && !markCompleteMutation.isPending) {
-                      markCompleteMutation.mutate();
+                      return markCompleteMutation.mutateAsync();
                     }
+                    return false;
                   }}
                 />
               ) : currentContent.content_type === "media_package" ? (

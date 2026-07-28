@@ -3075,6 +3075,10 @@ export type Database = {
         Args: { p_answers: Json; p_attempt_id: string }
         Returns: Json
       }
+      sync_course_enrollment_progress: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: undefined
+      }
       update_streak: { Args: { p_user_id: string }; Returns: undefined }
       user_can_view_targeted_post: {
         Args: {
