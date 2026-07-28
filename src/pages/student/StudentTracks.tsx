@@ -30,13 +30,17 @@ const StudentTracks = () => {
   const { data: tracks = [], isLoading, isFetching } = useQuery({
     queryKey: ["my-tracks", user?.id, lang],
     queryFn: async () => {
-      const { data: enrolls, error: e1 } = await supabase
+      const { data: enrollsRaw, error: e1 } = await supabase
         .from("track_enrollments")
         .select("track_id, assigned_at, learning_tracks(*)")
         .eq("user_id", user!.id);
       if (e1) throw e1;
 
-      const trackIds = (enrolls || []).map((e: any) => e.track_id);
+      // 트랙이 draft/archived 로 변경되면 RLS 로 nested join 이 null 이 되는데,
+      // 그 상태로 map 을 돌리면 예외가 나서 전체 목록이 비어버립니다.
+      // 조회 가능한(=published) 트랙만 필터링해서 사용합니다.
+      const enrolls = (enrollsRaw || []).filter((e: any) => e.learning_tracks);
+      const trackIds = enrolls.map((e: any) => e.track_id);
       if (trackIds.length === 0) return [];
 
       const [
@@ -101,7 +105,7 @@ const StudentTracks = () => {
         return tr?.title || course.title;
       };
 
-      return (enrolls || []).map((te: any) => {
+      return enrolls.map((te: any) => {
         const track = te.learning_tracks;
         const trackTr = (trackI18nByTrack.get(track.id) || []).find(
           (r: any) => r.language_code === lang
