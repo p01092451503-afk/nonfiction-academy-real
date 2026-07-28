@@ -105,7 +105,7 @@ const StudentTracks = () => {
         return tr?.title || course.title;
       };
 
-      return (enrolls || []).map((te: any) => {
+      return enrolls.map((te: any) => {
         const track = te.learning_tracks;
         const trackTr = (trackI18nByTrack.get(track.id) || []).find(
           (r: any) => r.language_code === lang
