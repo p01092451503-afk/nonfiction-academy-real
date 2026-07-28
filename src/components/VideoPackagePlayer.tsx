@@ -18,7 +18,7 @@ import { useUser } from "@/contexts/UserContext";
 
 interface VideoPackagePlayerProps {
   contentId: string;
-  onComplete?: () => void;
+  onComplete?: () => void | boolean | Promise<void | boolean>;
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
   title?: string;
   isAlreadyCompleted?: boolean;
@@ -95,6 +95,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
   const [iframeStartTime, setIframeStartTime] = useState<number | null>(null);
   const [iframeInstanceKey, setIframeInstanceKey] = useState(getFrameNonce);
   const completedRef = useRef(false);
+  const completionAttemptRef = useRef(false);
   const maxWatchedRef = useRef<number>(0);
   const seekGuardRef = useRef<boolean>(false);
   const lastDbPctRef = useRef<number>(-1);
@@ -132,6 +133,7 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
     setProgress({ current: 0, duration: 0 });
     setIframeStartTime(null);
     completedRef.current = false;
+    completionAttemptRef.current = false;
   }, [contentId, lang]);
 
   // Hydrate per-item completion from both DB content progress and localStorage.
@@ -437,9 +439,19 @@ const VideoPackagePlayer = ({ contentId, onComplete, onPartialProgress, title, i
           .then(() => {});
       }
     }
-    if (isAllDone && !completedRef.current) {
-      completedRef.current = true;
-      onComplete?.();
+    if (isAllDone && !completedRef.current && !completionAttemptRef.current) {
+      completionAttemptRef.current = true;
+      try {
+        Promise.resolve(onComplete?.())
+          .then((result) => {
+            if (result !== false) completedRef.current = true;
+          })
+          .finally(() => {
+            completionAttemptRef.current = false;
+          });
+      } catch {
+        completionAttemptRef.current = false;
+      }
     }
   }, [completedItems, items.length, onComplete, onPartialProgress, user?.id, contentId]);
 
