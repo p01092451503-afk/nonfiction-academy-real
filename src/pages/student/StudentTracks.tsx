@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguageSwitching } from "@/hooks/useLanguageSwitching";
 
-type Lang = "ko" | "en" | "ja" | "zh-CN" | "yue" | "yue";
+type Lang = "ko" | "en" | "ja" | "zh-CN" | "yue";
 
 const resolveLang = (l: string | undefined): Lang => {
   const lower = (l || "ko").toLowerCase();
@@ -30,10 +30,13 @@ const StudentTracks = () => {
   const { data: tracks = [], isLoading, isFetching } = useQuery({
     queryKey: ["my-tracks", user?.id, lang],
     queryFn: async () => {
+      const userId = user?.id;
+      if (!userId) return [];
+
       const { data: enrollsRaw, error: e1 } = await supabase
         .from("track_enrollments")
         .select("track_id, assigned_at, learning_tracks(*)")
-        .eq("user_id", user!.id);
+        .eq("user_id", userId);
       if (e1) throw e1;
 
       // 트랙이 draft/archived 로 변경되면 RLS 로 nested join 이 null 이 되는데,
@@ -45,22 +48,30 @@ const StudentTracks = () => {
 
       const [
         { data: stages },
-        { data: stageCourses },
         { data: myEnrollments },
         { data: tracksI18n },
       ] = await Promise.all([
         supabase.from("track_stages").select("*").in("track_id", trackIds).order("order_index"),
-        supabase
-          .from("track_stage_courses")
-          .select("*, courses(id, title, thumbnail_url, status)")
-          .order("order_index"),
-        supabase.from("enrollments").select("course_id, progress, completed_at").eq("user_id", user!.id),
+        supabase.from("enrollments").select("course_id, progress, completed_at").eq("user_id", userId),
         supabase.from("learning_tracks_i18n").select("*").in("track_id", trackIds),
       ]);
 
       const stageIds = (stages || []).map((s: any) => s.id);
+      const { data: stageCourses } = stageIds.length
+        ? await supabase
+            .from("track_stage_courses")
+            .select("*, courses(id, title, thumbnail_url, status)")
+            .in("stage_id", stageIds)
+            .order("order_index")
+        : { data: [] as any[] };
+
       const courseIds = Array.from(
-        new Set((stageCourses || []).map((sc: any) => sc.course_id).filter(Boolean))
+        new Set(
+          (stageCourses || [])
+            .filter((sc: any) => sc.courses)
+            .map((sc: any) => sc.course_id)
+            .filter(Boolean)
+        )
       );
 
       const [{ data: stagesI18n }, { data: courseI18n }] = await Promise.all([
@@ -121,11 +132,13 @@ const StudentTracks = () => {
             localizedName:
               (stageTr?.source_name === s.name ? stageTr?.name : "") ||
               s.name,
-            courses: (stageCoursesByStage.get(s.id) || []).map((sc: any) => ({
-              ...sc.courses,
-              localizedTitle: pickCourseTitle(sc.courses),
-              enrollment: enrollMap.get(sc.course_id),
-            })),
+            courses: (stageCoursesByStage.get(s.id) || [])
+              .filter((sc: any) => sc.courses)
+              .map((sc: any) => ({
+                ...sc.courses,
+                localizedTitle: pickCourseTitle(sc.courses),
+                enrollment: enrollMap.get(sc.course_id),
+              })),
           };
         });
         const allCourses = stagesWithCourses.flatMap((s: any) => s.courses);
