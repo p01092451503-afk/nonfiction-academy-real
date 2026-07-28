@@ -34,7 +34,7 @@ interface VideoTrackInfo {
 
 interface MediaPackagePlayerProps {
   contentId: string;
-  onComplete?: () => void;
+  onComplete?: () => void | boolean | Promise<void | boolean>;
   onPartialProgress?: (completedCount: number, totalCount: number) => void;
   /** 영상 슬라이드들의 실제 시청 초가 변할 때 호출 (디바운스됨). 학습시간 통계에 사용 */
   onWatchedSecondsTracked?: (totalSeconds: number) => void;
@@ -244,6 +244,8 @@ const TrackedDirectVideo = ({
   const ref = useRef<HTMLVideoElement>(null);
   const maxRef = useRef(0);
   const completedRef = useRef(false);
+  const completionAttemptRef = useRef(false);
+  const [completionRetryTick, setCompletionRetryTick] = useState(0);
   const seekGuardRef = useRef(false);
 
   const handleTimeUpdate = () => {
@@ -378,6 +380,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     setVisited(new Set([0]));
     setResumeIndex(null);
     completedRef.current = false;
+    completionAttemptRef.current = false;
     restoredRef.current = false;
   }, [contentId]);
 
@@ -493,7 +496,7 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     return () => clearInterval(id);
   }, [index, perCardMinSec, items.length]);
 
-  // 강의 전체 시청 완료 + 영상 시청 완료 + 카드 학습시간 충족 시 onComplete
+  // 마지막 슬라이드 도달 + 영상 시청 완료 + 카드 학습시간 충족 시 onComplete
   useEffect(() => {
     if (items.length === 0) return;
     const allVideosDone = items.every((it) =>
@@ -501,12 +504,31 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     );
     const allTimeMet = perCardMinSec <= 0
       || items.every((_, i) => (dwellSec[i] || 0) >= perCardMinSec);
-    onPartialProgress?.(visited.size, items.length);
-    if (visited.size >= items.length && allVideosDone && allTimeMet && !completedRef.current) {
-      completedRef.current = true;
-      onComplete?.();
+    const reachedLastSlide = index === items.length - 1;
+    const progressCount = reachedLastSlide ? items.length : visited.size;
+    onPartialProgress?.(progressCount, items.length);
+    if (reachedLastSlide && allVideosDone && allTimeMet && !completedRef.current && !completionAttemptRef.current) {
+      completionAttemptRef.current = true;
+      try {
+        Promise.resolve(onComplete?.())
+          .then((result) => {
+            if (result !== false) completedRef.current = true;
+          })
+          .finally(() => {
+            completionAttemptRef.current = false;
+          });
+      } catch {
+        completionAttemptRef.current = false;
+      }
     }
-  }, [visited, items, videoStates, dwellSec, perCardMinSec, onComplete, onPartialProgress, isItemTrackableVideo]);
+  }, [index, visited, items, videoStates, dwellSec, perCardMinSec, onComplete, onPartialProgress, isItemTrackableVideo, completionRetryTick]);
+
+  // 최소 학습시간이 부족해 완료가 보류된 경우, 마지막 슬라이드에서 주기적으로 재확인한다.
+  useEffect(() => {
+    if (items.length === 0 || index !== items.length - 1 || completedRef.current) return;
+    const id = setInterval(() => setCompletionRetryTick((tick) => tick + 1), 10_000);
+    return () => clearInterval(id);
+  }, [index, items.length]);
 
   // 실제 시청 누적 초 → 부모에 보고 (3초 디바운스)
   useEffect(() => {
