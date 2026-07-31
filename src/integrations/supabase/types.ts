@@ -3003,6 +3003,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      finalize_course_completion_if_eligible: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_assessment_questions_for_student: {
         Args: { p_assessment_id: string }
         Returns: {
