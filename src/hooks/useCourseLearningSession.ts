@@ -27,58 +27,30 @@ export const useCourseLearningSession = (
 
     let cancelled = false;
     let intervalId: ReturnType<typeof setInterval> | null = null;
+    let sessionGeneration = 0;
 
-    // 세션 생성
-    (async () => {
-      const startedAt = new Date().toISOString();
-      startedAtRef.current = Date.now();
-      const { data, error } = await supabase
-        .from("course_learning_sessions")
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-          tenant_id: profile?.tenant_id ?? null,
-          started_at: startedAt,
-          last_heartbeat_at: startedAt,
-        })
-        .select("id")
-        .single();
-      if (cancelled || error || !data) return;
-      sessionIdRef.current = data.id;
+    const clearHeartbeat = () => {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = null;
+    };
 
-      // heartbeat 시작
-      const heartbeat = () => {
-        const elapsedMin = (Date.now() - startedAtRef.current) / 60_000;
-        if (elapsedMin > MAX_SESSION_MIN + 1) return; // 30분 + 약간의 버퍼 후 중단
-        const cappedTs = new Date(
-          startedAtRef.current + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
-        ).toISOString();
-        void supabase
-          .from("course_learning_sessions")
-          .update({ last_heartbeat_at: cappedTs })
-          .eq("id", sessionIdRef.current);
-      };
-      heartbeat();
-      intervalId = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
-    })();
-
-    // 탭 종료 / 페이지 이탈 시 마지막 heartbeat (keepalive fetch)
-    const flush = () => {
-      if (!sessionIdRef.current) return;
-      const elapsedMin = (Date.now() - startedAtRef.current) / 60_000;
+    // 현재 보이는 학습 구간의 마지막 시간을 저장한다.
+    const flush = (sessionId = sessionIdRef.current, startedAt = startedAtRef.current) => {
+      if (!sessionId || !startedAt) return;
+      const elapsedMin = (Date.now() - startedAt) / 60_000;
       const cappedTs = new Date(
-        startedAtRef.current + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
+        startedAt + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
       ).toISOString();
       try {
         void supabase
           .from("course_learning_sessions")
           .update({ last_heartbeat_at: cappedTs })
-          .eq("id", sessionIdRef.current);
+          .eq("id", sessionId);
 
         supabase.auth.getSession().then(({ data }) => {
           const token = data.session?.access_token;
-          if (!token || !sessionIdRef.current) return;
-          const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionIdRef.current}`;
+          if (!token) return;
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionId}`;
           fetch(url, {
             method: "PATCH",
             headers: {
@@ -95,17 +67,73 @@ export const useCourseLearningSession = (
         // ignore
       }
     };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") flush();
+
+    const endVisibleSession = () => {
+      sessionGeneration += 1;
+      clearHeartbeat();
+      flush();
+      sessionIdRef.current = null;
+      startedAtRef.current = 0;
     };
-    window.addEventListener("beforeunload", flush);
+
+    // 화면이 실제로 보이는 동안에만 새 학습 세션을 생성한다.
+    const startVisibleSession = async () => {
+      if (cancelled || document.visibilityState !== "visible" || sessionIdRef.current) return;
+      const generation = ++sessionGeneration;
+      const startedAt = new Date().toISOString();
+      const startedAtMs = Date.now();
+      const { data, error } = await supabase
+        .from("course_learning_sessions")
+        .insert({
+          user_id: user.id,
+          course_id: courseId,
+          tenant_id: profile?.tenant_id ?? null,
+          started_at: startedAt,
+          last_heartbeat_at: startedAt,
+        })
+        .select("id")
+        .single();
+      if (cancelled || generation !== sessionGeneration || document.visibilityState !== "visible" || error || !data) return;
+      sessionIdRef.current = data.id;
+      startedAtRef.current = startedAtMs;
+
+      // heartbeat 시작
+      const heartbeat = () => {
+        if (document.visibilityState !== "visible") return;
+        const elapsedMin = (Date.now() - startedAtRef.current) / 60_000;
+        if (elapsedMin > MAX_SESSION_MIN + 1) {
+          clearHeartbeat();
+          return;
+        }
+        const cappedTs = new Date(
+          startedAtRef.current + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
+        ).toISOString();
+        void supabase
+          .from("course_learning_sessions")
+          .update({ last_heartbeat_at: cappedTs })
+          .eq("id", sessionIdRef.current);
+      };
+      heartbeat();
+      intervalId = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+    };
+
+    void startVisibleSession();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        endVisibleSession();
+      } else {
+        void startVisibleSession();
+      }
+    };
+    const handleBeforeUnload = () => flush();
+    window.addEventListener("beforeunload", handleBeforeUnload);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelled = true;
-      if (intervalId) clearInterval(intervalId);
-      flush();
-      window.removeEventListener("beforeunload", flush);
+      endVisibleSession();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [courseId, enabled, user?.id, profile?.tenant_id]);

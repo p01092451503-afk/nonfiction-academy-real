@@ -97,7 +97,7 @@ export async function syncEnrollmentOnContentCompleted(params: {
     .update({
       progress: 100,
       completed_at: new Date().toISOString(),
-      completion_count: 1,
+      completion_count: Math.max(Number((enrollment as any).completion_count) || 0, 1),
     } as any)
     .eq("id", enrollment.id);
 }
