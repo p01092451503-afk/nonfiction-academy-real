@@ -959,11 +959,19 @@ const CreateCourse = () => {
         .eq("id", editCourseId!);
       if (courseError) throw courseError;
 
-      // Delete existing contents and re-insert
-      await supabase.from("course_content_i18n").delete().eq("language_code", "en").in("content_id",
-        (await supabase.from("course_contents").select("id").eq("course_id", editCourseId!)).data?.map((c: any) => c.id) || []
-      );
-      await supabase.from("course_contents").delete().eq("course_id", editCourseId!);
+      // 기존 차시 목록 확보 (삭제하지 않고 재사용한다 — 삭제 시 학습자 진도(content_progress)가
+      // FK CASCADE 로 함께 삭제되어 이수율이 초기화되는 사고가 발생함)
+      const { data: existingContentsRaw } = await supabase
+        .from("course_contents")
+        .select("id, language_code, order_index")
+        .eq("course_id", editCourseId!)
+        .order("order_index", { ascending: true });
+      const existingContents = existingContentsRaw || [];
+      if (existingContents.length) {
+        await supabase.from("course_content_i18n").delete().eq("language_code", "en").in("content_id",
+          existingContents.map((c: any) => c.id));
+      }
+
 
       // Save course i18n (en, zh-CN, ja) — fill in missing slots BEFORE saving so we
       // never persist KO text into a non-KO row (which would later be misread as a
