@@ -1033,11 +1033,51 @@ const CreateCourse = () => {
             language_code: c.language_code,
           };
         });
-        const { data: insertedContents, error: contentError } = await supabase
-          .from("course_contents")
-          .insert(contentRows)
-          .select("id");
-        if (contentError) throw contentError;
+        // 언어별로 기존 차시 id 를 재사용(UPDATE)해 학습자 진도를 보존한다.
+        const poolByLang = new Map<string, string[]>();
+        existingContents.forEach((ec: any) => {
+          const list = poolByLang.get(ec.language_code) || [];
+          list.push(ec.id);
+          poolByLang.set(ec.language_code, list);
+        });
+        const reusedIds = new Set<string>();
+        const insertedContents: { id: string }[] = [];
+        for (const row of contentRows) {
+          const pool = poolByLang.get(row.language_code) || [];
+          const reuseId = pool.shift();
+          if (reuseId) {
+            poolByLang.set(row.language_code, pool);
+            reusedIds.add(reuseId);
+            const { error: updErr } = await supabase
+              .from("course_contents")
+              .update(row as any)
+              .eq("id", reuseId);
+            if (updErr) throw updErr;
+            insertedContents.push({ id: reuseId });
+          } else {
+            const { data: newRow, error: insErr } = await supabase
+              .from("course_contents")
+              .insert(row as any)
+              .select("id")
+              .single();
+            if (insErr) throw insErr;
+            insertedContents.push({ id: newRow.id });
+          }
+        }
+        // 남은(더 이상 사용하지 않는) 기존 차시만 삭제
+        const leftoverIds = existingContents
+          .map((ec: any) => ec.id)
+          .filter((id: string) => !reusedIds.has(id));
+        if (leftoverIds.length) {
+          await supabase.from("course_contents").delete().in("id", leftoverIds);
+        }
+        // 재사용 차시의 하위 아이템은 다시 채우기 전에 정리
+        if (reusedIds.size) {
+          const ids = Array.from(reusedIds);
+          await (supabase as any).from("media_package_items").delete().in("content_id", ids);
+          await (supabase as any).from("video_package_items").delete().in("content_id", ids);
+        }
+
 
         // (legacy) course_content_i18n 저장 제거: course_contents 행 자체가 언어별로 분리되어 있음.
         if (insertedContents?.length) {
