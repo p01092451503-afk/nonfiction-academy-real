@@ -1142,7 +1142,13 @@ const CreateCourse = () => {
             await (supabase as any).from("video_package_items").insert(vpRows);
           }
         }
+      } else if (existingContents.length) {
+        await supabase
+          .from("course_contents")
+          .delete()
+          .in("id", existingContents.map((ec: any) => ec.id));
       }
+
 
       return { id: editCourseId!, title };
     },
