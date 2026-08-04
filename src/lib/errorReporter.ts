@@ -39,7 +39,28 @@ const IGNORE_PATTERNS = [
   /Load failed/i,
   /NetworkError when attempting to fetch resource/i,
   /AbortError/i,
+  // 외부 플레이어/SDK 가 던지는 난독화된 값(예: "Ba", "e") — 진단 가치가 없고 알림만 유발
+  /^[A-Za-z$_][A-Za-z0-9$_]{0,3}$/,
+  /^\[object [A-Za-z]+\]$/,
 ];
+
+// 던져진 값이 Error 가 아닐 때 사람이 읽을 수 있는 메시지로 직렬화
+const describeReason = (reason: unknown): string => {
+  if (typeof reason === "string") return reason;
+  if (reason instanceof Error) return reason.message;
+  if (reason && typeof reason === "object") {
+    const anyReason = reason as Record<string, unknown>;
+    const msg = anyReason.message ?? anyReason.error ?? anyReason.name;
+    if (typeof msg === "string" && msg.trim()) return msg;
+    try {
+      const json = JSON.stringify(reason);
+      if (json && json !== "{}") return `Non-Error rejection: ${json.slice(0, 300)}`;
+    } catch {
+      /* circular */
+    }
+  }
+  return "Unhandled promise rejection";
+};
 
 // RLS / auth errors that are expected and noisy for ops alerts
 const RLS_PATTERNS = [
@@ -144,10 +165,7 @@ export const installGlobalErrorReporter = () => {
 
   window.addEventListener("unhandledrejection", (e) => {
     const reason: any = e.reason;
-    const msg =
-      typeof reason === "string"
-        ? reason
-        : reason?.message || "Unhandled promise rejection";
+    const msg = describeReason(reason);
     const stack = reason?.stack || "";
     recoverKnownAssessmentStackError(msg);
     reportError({ message: msg, stack, source: "unhandledrejection" });
