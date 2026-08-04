@@ -165,10 +165,7 @@ export const installGlobalErrorReporter = () => {
 
   window.addEventListener("unhandledrejection", (e) => {
     const reason: any = e.reason;
-    const msg =
-      typeof reason === "string"
-        ? reason
-        : reason?.message || "Unhandled promise rejection";
+    const msg = describeReason(reason);
     const stack = reason?.stack || "";
     recoverKnownAssessmentStackError(msg);
     reportError({ message: msg, stack, source: "unhandledrejection" });
