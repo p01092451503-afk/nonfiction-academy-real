@@ -4,15 +4,19 @@ import { useUser } from "@/contexts/UserContext";
 
 /**
  * 강의 학습 세션 트래커
- * - 학습자가 강의 상세 페이지에 진입하면 새 세션을 생성합니다 (started_at = now).
- * - 1분마다 heartbeat 로 last_heartbeat_at 을 갱신하되 started_at + 30분을 초과하면 멈춥니다.
- * - 페이지 이탈/탭 종료 시 sendBeacon 으로 마지막 갱신을 보장합니다.
- * - 통계 산정 시 세션당 최대 30분만 합산됩니다 (DB 쪽 LEAST(..., 30) 캡).
+ * - 학습자가 강의 화면에 진입하면 세션을 1개 생성합니다 (started_at = now).
+ * - 화면이 보이는 동안에만 15초 단위로 누적 학습시간을 기록합니다.
+ * - 탭 전환/화면 잠금(hidden) 시에는 시간이 누적되지 않고 "일시정지"되며,
+ *   다시 돌아오면 같은 세션을 재사용합니다 (세션 파편화 방지).
+ * - last_heartbeat_at = started_at + 누적 시청시간(최대 30분) 으로 기록되므로
+ *   자리비움 시간이 학습시간에 포함되지 않습니다.
+ * - 페이지 이탈/탭 종료 시 keepalive fetch 로 마지막 갱신을 보장합니다.
  *
  * 학생 역할에서만 동작 (관리자/강사 미리보기는 학습시간 통계에서 제외).
  */
-const HEARTBEAT_INTERVAL_MS = 60_000; // 1분
+const HEARTBEAT_INTERVAL_MS = 15_000; // 15초
 const MAX_SESSION_MIN = 30;
+const MAX_SESSION_MS = MAX_SESSION_MIN * 60_000;
 
 export const useCourseLearningSession = (
   courseId: string | undefined,
@@ -20,68 +24,117 @@ export const useCourseLearningSession = (
 ) => {
   const { user, profile } = useUser();
   const sessionIdRef = useRef<string | null>(null);
-  const startedAtRef = useRef<number>(0);
+  const startedAtIsoRef = useRef<string | null>(null);
+  const accumulatedMsRef = useRef<number>(0);
+  const visibleSinceRef = useRef<number>(0);
 
   useEffect(() => {
     if (!enabled || !courseId || !user?.id) return;
 
     let cancelled = false;
     let intervalId: ReturnType<typeof setInterval> | null = null;
-    let sessionGeneration = 0;
 
     const clearHeartbeat = () => {
       if (intervalId) clearInterval(intervalId);
       intervalId = null;
     };
 
-    // 현재 보이는 학습 구간의 마지막 시간을 저장한다.
-    const flush = (sessionId = sessionIdRef.current, startedAt = startedAtRef.current) => {
-      if (!sessionId || !startedAt) return;
-      const elapsedMin = (Date.now() - startedAt) / 60_000;
-      const cappedTs = new Date(
-        startedAt + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
-      ).toISOString();
+    // 지금까지 누적된 "실제로 화면을 보고 있던" 시간(ms)
+    const currentAccumulatedMs = () => {
+      const live = visibleSinceRef.current ? Date.now() - visibleSinceRef.current : 0;
+      return Math.min(accumulatedMsRef.current + live, MAX_SESSION_MS);
+    };
+
+    const buildTimestamp = () => {
+      const base = startedAtIsoRef.current
+        ? new Date(startedAtIsoRef.current).getTime()
+        : Date.now();
+      return new Date(base + currentAccumulatedMs()).toISOString();
+    };
+
+    // 일반 갱신 (15초마다)
+    const persist = () => {
+      const sessionId = sessionIdRef.current;
+      if (!sessionId) return;
+      void supabase
+        .from("course_learning_sessions")
+        .update({ last_heartbeat_at: buildTimestamp() })
+        .eq("id", sessionId);
+    };
+
+    // 이탈 직전 보장 저장 (keepalive)
+    const flush = () => {
+      const sessionId = sessionIdRef.current;
+      if (!sessionId) return;
+      const ts = buildTimestamp();
       try {
         void supabase
           .from("course_learning_sessions")
-          .update({ last_heartbeat_at: cappedTs })
+          .update({ last_heartbeat_at: ts })
           .eq("id", sessionId);
 
-        supabase.auth.getSession().then(({ data }) => {
-          const token = data.session?.access_token;
-          if (!token) return;
-          const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionId}`;
-          fetch(url, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${token}`,
-              Prefer: "return=minimal",
-            },
-            body: JSON.stringify({ last_heartbeat_at: cappedTs }),
-            keepalive: true,
-          }).catch(() => {});
-        }).catch(() => {});
+        void supabase.auth
+          .getSession()
+          .then(({ data }) => {
+            const token = data.session?.access_token;
+            if (!token) return;
+            const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/course_learning_sessions?id=eq.${sessionId}`;
+            fetch(url, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                Authorization: `Bearer ${token}`,
+                Prefer: "return=minimal",
+              },
+              body: JSON.stringify({ last_heartbeat_at: ts }),
+              keepalive: true,
+            }).catch(() => {});
+          })
+          .catch(() => {});
       } catch {
         // ignore
       }
     };
 
-    const endVisibleSession = () => {
-      sessionGeneration += 1;
+    // 화면이 가려지면 누적을 멈추고(일시정지) 마지막 값을 저장한다. 세션은 유지.
+    const pause = () => {
+      if (visibleSinceRef.current) {
+        accumulatedMsRef.current = Math.min(
+          accumulatedMsRef.current + (Date.now() - visibleSinceRef.current),
+          MAX_SESSION_MS,
+        );
+        visibleSinceRef.current = 0;
+      }
       clearHeartbeat();
       flush();
-      sessionIdRef.current = null;
-      startedAtRef.current = 0;
     };
 
-    // 화면이 실제로 보이는 동안에만 새 학습 세션을 생성한다.
-    const startVisibleSession = async () => {
-      if (cancelled || document.visibilityState !== "visible" || sessionIdRef.current) return;
-      const generation = ++sessionGeneration;
+    const startHeartbeat = () => {
+      clearHeartbeat();
+      persist();
+      intervalId = setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+        if (accumulatedMsRef.current >= MAX_SESSION_MS) {
+          clearHeartbeat();
+          return;
+        }
+        persist();
+      }, HEARTBEAT_INTERVAL_MS);
+    };
+
+    // 세션 시작 또는 재개 (같은 세션 재사용)
+    const resume = async () => {
+      if (cancelled || document.visibilityState !== "visible") return;
+
+      if (sessionIdRef.current) {
+        if (currentAccumulatedMs() >= MAX_SESSION_MS) return; // 30분 상한 도달
+        if (!visibleSinceRef.current) visibleSinceRef.current = Date.now();
+        startHeartbeat();
+        return;
+      }
+
       const startedAt = new Date().toISOString();
-      const startedAtMs = Date.now();
       const { data, error } = await supabase
         .from("course_learning_sessions")
         .insert({
@@ -93,47 +146,43 @@ export const useCourseLearningSession = (
         })
         .select("id")
         .single();
-      if (cancelled || generation !== sessionGeneration || document.visibilityState !== "visible" || error || !data) return;
+      if (cancelled || error || !data) return;
       sessionIdRef.current = data.id;
-      startedAtRef.current = startedAtMs;
-
-      // heartbeat 시작
-      const heartbeat = () => {
-        if (document.visibilityState !== "visible") return;
-        const elapsedMin = (Date.now() - startedAtRef.current) / 60_000;
-        if (elapsedMin > MAX_SESSION_MIN + 1) {
-          clearHeartbeat();
-          return;
-        }
-        const cappedTs = new Date(
-          startedAtRef.current + Math.min(elapsedMin, MAX_SESSION_MIN) * 60_000,
-        ).toISOString();
-        void supabase
-          .from("course_learning_sessions")
-          .update({ last_heartbeat_at: cappedTs })
-          .eq("id", sessionIdRef.current);
-      };
-      heartbeat();
-      intervalId = setInterval(heartbeat, HEARTBEAT_INTERVAL_MS);
+      startedAtIsoRef.current = startedAt;
+      accumulatedMsRef.current = 0;
+      visibleSinceRef.current = Date.now();
+      if (document.visibilityState !== "visible") {
+        pause();
+        return;
+      }
+      startHeartbeat();
     };
 
-    void startVisibleSession();
+    void resume();
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        endVisibleSession();
+        pause();
       } else {
-        void startVisibleSession();
+        void resume();
       }
     };
-    const handleBeforeUnload = () => flush();
+    const handleBeforeUnload = () => pause();
+    const handlePageHide = () => pause();
+
     window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handlePageHide);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelled = true;
-      endVisibleSession();
+      pause();
+      sessionIdRef.current = null;
+      startedAtIsoRef.current = null;
+      accumulatedMsRef.current = 0;
+      visibleSinceRef.current = 0;
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handlePageHide);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [courseId, enabled, user?.id, profile?.tenant_id]);
