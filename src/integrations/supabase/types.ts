@@ -1171,7 +1171,9 @@ export type Database = {
         Row: {
           course_id: string
           created_at: string
+          estimation_method: string | null
           id: string
+          is_estimated: boolean
           last_heartbeat_at: string
           started_at: string
           tenant_id: string | null
@@ -1180,7 +1182,9 @@ export type Database = {
         Insert: {
           course_id: string
           created_at?: string
+          estimation_method?: string | null
           id?: string
+          is_estimated?: boolean
           last_heartbeat_at?: string
           started_at?: string
           tenant_id?: string | null
@@ -1189,7 +1193,9 @@ export type Database = {
         Update: {
           course_id?: string
           created_at?: string
+          estimation_method?: string | null
           id?: string
+          is_estimated?: boolean
           last_heartbeat_at?: string
           started_at?: string
           tenant_id?: string | null
