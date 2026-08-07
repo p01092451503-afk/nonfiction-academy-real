@@ -17,6 +17,8 @@ import { useUser } from "@/contexts/UserContext";
 const HEARTBEAT_INTERVAL_MS = 15_000; // 15초
 const MAX_SESSION_MIN = 30;
 const MAX_SESSION_MS = MAX_SESSION_MIN * 60_000;
+// 같은 강의를 이 시간 안에 다시 열면 새 세션을 만들지 않고 기존 세션에 이어서 누적
+const RESUME_WINDOW_MS = 15 * 60_000;
 
 export const useCourseLearningSession = (
   courseId: string | undefined,
@@ -134,6 +136,41 @@ export const useCourseLearningSession = (
         return;
       }
 
+      // 같은 강의의 최근 세션이 있으면 새로 만들지 않고 이어서 누적한다
+      // (차시 이동/화면 전환 때마다 세션이 잘게 쪼개지는 문제 방지)
+      const { data: recent } = await supabase
+        .from("course_learning_sessions")
+        .select("id, started_at, last_heartbeat_at")
+        .eq("user_id", user.id)
+        .eq("course_id", courseId)
+        .gte(
+          "last_heartbeat_at",
+          new Date(Date.now() - RESUME_WINDOW_MS).toISOString(),
+        )
+        .order("last_heartbeat_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (recent) {
+        const prevMs =
+          new Date(recent.last_heartbeat_at).getTime() -
+          new Date(recent.started_at).getTime();
+        if (prevMs < MAX_SESSION_MS) {
+          sessionIdRef.current = recent.id;
+          startedAtIsoRef.current = recent.started_at;
+          accumulatedMsRef.current = Math.max(0, prevMs);
+          visibleSinceRef.current = Date.now();
+          if (document.visibilityState !== "visible") {
+            pause();
+            return;
+          }
+          startHeartbeat();
+          return;
+        }
+      }
+
       const startedAt = new Date().toISOString();
       const { data, error } = await supabase
         .from("course_learning_sessions")
@@ -151,6 +188,7 @@ export const useCourseLearningSession = (
       startedAtIsoRef.current = startedAt;
       accumulatedMsRef.current = 0;
       visibleSinceRef.current = Date.now();
+
       if (document.visibilityState !== "visible") {
         pause();
         return;
