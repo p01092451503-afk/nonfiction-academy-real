@@ -17,6 +17,8 @@ import { useUser } from "@/contexts/UserContext";
 const HEARTBEAT_INTERVAL_MS = 15_000; // 15초
 const MAX_SESSION_MIN = 30;
 const MAX_SESSION_MS = MAX_SESSION_MIN * 60_000;
+// 같은 강의를 이 시간 안에 다시 열면 새 세션을 만들지 않고 기존 세션에 이어서 누적
+const RESUME_WINDOW_MS = 15 * 60_000;
 
 export const useCourseLearningSession = (
   courseId: string | undefined,
