@@ -1457,6 +1457,25 @@ export default function AssessmentPage() {
             {assessmentLocalized.description && <p className="text-sm text-muted-foreground">{assessmentLocalized.description}</p>}
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 rounded-xl border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span className="text-xs font-medium text-foreground">
+                  {t("assessment.ui.languageSelect", "퀴즈 언어 선택")}
+                </span>
+              </div>
+              <Select value={selectedLangValue} onValueChange={(v) => setLangOverride(v)}>
+                <SelectTrigger className="h-9 w-full sm:w-48" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSESSMENT_LANG_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl bg-secondary/50 p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">{t("assessment.passingScore")}</p>
