@@ -801,6 +801,16 @@ export default function AssessmentPage() {
     return () => window.clearTimeout(timer);
   }, [currentLang, questionI18nError, refetchQuestionI18n]);
 
+  // 광동어(yue) 번역이 아직 없는 퀴즈는 한국어 대신 중국어(간체)로 자동 대체한다.
+  useEffect(() => {
+    if (currentLang !== "yue" || langOverride) return;
+    if (!questionI18nFetched || questionIdsForI18n.length === 0) return;
+    if ((questionI18nRows || []).length > 0) return;
+    setLangOverride("zh-CN");
+  }, [currentLang, langOverride, questionI18nFetched, questionI18nRows, questionIdsForI18n.length]);
+
+
+
 
   const questionI18nMap = useMemo(() => {
     const m = new Map<string, any>();
