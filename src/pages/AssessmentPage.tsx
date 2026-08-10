@@ -808,6 +808,16 @@ export default function AssessmentPage() {
   const localizeQuestion = (q: any) => {
     if (!q) return q;
     const tr = questionI18nMap.get(q.id);
+    const hasCoreIssue = questionHasCoreDisplayTranslationIssue(q, tr, currentLang);
+    if (currentLang && hasCoreIssue) {
+      return {
+        ...q,
+        question_text: TRANSLATE_LABELS[currentLang].repairingNotice,
+        options: isChoiceQuestion(q.question_type) ? [] : q.options,
+        hint: null,
+        explanation: null,
+      };
+    }
     if (!tr) return q;
     const isMcq = isChoiceQuestion(q.question_type);
     let options = q.options;
@@ -1267,10 +1277,7 @@ export default function AssessmentPage() {
                       questionId={currentQ.id}
                       questionText={currentQ.question_text}
                       targetLang={currentLang}
-                      hasKorean={
-                        !repairingQuestionIds.has(currentQ.id) &&
-                        hasHangulValue(getTakingQuestionTextParts(currentQ))
-                      }
+                       hasKorean={currentNeedsRepair && !currentRepairing}
                       onDone={invalidateQuestionI18n}
                     />
                     <TranslationRepairNotice
