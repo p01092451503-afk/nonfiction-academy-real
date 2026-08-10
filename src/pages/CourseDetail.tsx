@@ -1101,26 +1101,12 @@ const CourseDetail = () => {
                   <span className="text-[10px] text-muted-foreground">
                     {t("course.completionCount", "수강 완료 횟수")}: <span className="font-medium text-foreground">{(enrollment as any).completion_count ?? 1}</span>
                   </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs"
-                    onClick={async () => {
-                      const { data, error } = await supabase.rpc("record_course_review_completion", { p_course_id: courseId! } as any);
-                      if (error) {
-                        toast({ title: t("common.error", "오류"), description: error.message, variant: "destructive" });
-                        return;
-                      }
-                      toast({ title: t("course.reviewCompleted", "복습 완료"), description: t("course.reviewCompletedDesc", "수강 완료 횟수가 {{n}}회로 누적되었습니다.", { n: data }) });
-                      queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
-                      queryClient.invalidateQueries({ queryKey: ["my-enrollments"] });
-                      queryClient.invalidateQueries({ queryKey: ["dash-enrollment-stats"] });
-                    }}
-                  >
-                    {t("course.markReviewComplete", "복습 완료")}
-                  </Button>
+                  <span className="text-[10px] text-muted-foreground">
+                    {t("course.reviewAutoCountHint", "복습 후 차시(또는 퀴즈)를 다시 완료하면 자동으로 누적됩니다.")}
+                  </span>
                 </div>
               )}
+
             </div>
           ) : enrollmentLoading ? (
             <Button className="w-full sm:w-auto" disabled aria-label={t("common.loading", "불러오는 중")}>
