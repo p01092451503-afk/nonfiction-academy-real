@@ -40,6 +40,16 @@ const parseOptionIndexAnswer = (value?: string | null): number | null => {
 
 type AssessmentLang = "en" | "ja" | "zh-CN" | "yue";
 
+// 응시 전 언어 선택 옵션 (ko = 원본 한국어)
+const ASSESSMENT_LANG_OPTIONS: { value: string; label: string }[] = [
+  { value: "ko", label: "한국어" },
+  { value: "en", label: "English" },
+  { value: "ja", label: "日本語" },
+  { value: "zh-CN", label: "中文(简体)" },
+  { value: "yue", label: "廣東話" },
+];
+
+
 const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: AssessmentLang | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
