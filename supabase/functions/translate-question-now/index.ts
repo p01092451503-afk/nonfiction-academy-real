@@ -2,12 +2,14 @@
 // and upsert into assessment_question_i18n so it's cached for all users.
 // Input: { question_id: string, target_lang: "en" | "ja" | "zh-CN" }
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2.49.8";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { z } from "npm:zod@3.24.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const RequestSchema = z.object({
+  question_id: z.string().uuid(),
+  target_lang: z.enum(["en", "ja", "zh-CN", "yue"]),
+});
 
 const LANG_LABEL: Record<string, string> = {
   en: "English",
@@ -76,19 +78,49 @@ ${JSON.stringify(keyed)}`;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { question_id, target_lang } = await req.json();
-    if (!question_id || !target_lang || !LANG_LABEL[target_lang]) {
-      return new Response(JSON.stringify({ error: "question_id and target_lang(en|ja|zh-CN|yue) required" }), {
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const authorization = req.headers.get("Authorization");
+    if (!authorization?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const parsedRequest = RequestSchema.safeParse(await req.json());
+    if (!parsedRequest.success) {
+      return new Response(JSON.stringify({ error: parsedRequest.error.flatten().fieldErrors }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const { question_id, target_lang } = parsedRequest.data;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+    const backendUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!backendUrl || !serviceKey || !anonKey) throw new Error("Backend configuration missing");
+
+    const authClient = createClient(backendUrl, anonKey, {
+      global: { headers: { Authorization: authorization } },
+      auth: { persistSession: false },
+    });
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid session" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const sb = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      backendUrl,
+      serviceKey,
       { auth: { persistSession: false } },
     );
 
@@ -96,6 +128,24 @@ serve(async (req) => {
       .select("id,question_text,options,correct_answer,hint,explanation,question_type")
       .eq("id", question_id).single();
     if (oe || !orig) throw new Error(oe?.message || "question not found");
+
+    const { data: assessmentQuestion } = await sb
+      .from("assessment_questions")
+      .select("assessment_id, assessments!inner(course_id)")
+      .eq("id", question_id)
+      .single();
+    const courseId = (assessmentQuestion?.assessments as { course_id?: string } | null)?.course_id;
+    const { data: enrollment } = courseId
+      ? await sb.from("enrollments").select("id").eq("course_id", courseId).eq("user_id", user.id).maybeSingle()
+      : { data: null };
+    const { data: privileged } = await sb.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    const { data: isTeacher } = await sb.rpc("has_role", { _user_id: user.id, _role: "teacher" });
+    const { data: isSuperAdmin } = await sb.rpc("has_role", { _user_id: user.id, _role: "super_admin" });
+    if (!enrollment && !privileged && !isTeacher && !isSuperAdmin) {
+      return new Response(JSON.stringify({ error: "You cannot translate this question" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const opts: string[] = Array.isArray(orig.options) ? orig.options : [];
     const inputs: string[] = [orig.question_text || ""];

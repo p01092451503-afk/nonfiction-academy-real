@@ -37,7 +37,9 @@ const parseOptionIndexAnswer = (value?: string | null): number | null => {
   return Number.isInteger(index) && index >= 0 ? index : null;
 };
 
-const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null): boolean => {
+type AssessmentLang = "en" | "ja" | "zh-CN" | "yue";
+
+const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: AssessmentLang | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
   const isChoice = isChoiceQuestion(question.question_type);
@@ -49,14 +51,14 @@ const questionNeedsTranslationRepair = (question: any, translation: any, targetL
   return false;
 };
 
-const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null): boolean =>
+const shouldAutoRepairQuestionTranslation = (question: any, translation: any, targetLang: AssessmentLang | null): boolean =>
   questionNeedsTranslationRepair(question, translation, targetLang);
 
 // UI blocking must be stricter than background repair. A translated MCQ can have
 // stale Korean in hidden fields such as correct_answer/explanation while the
 // visible question/options are already clean. Blocking the whole quiz for those
 // hidden fields caused iOS users to see an endless "翻訳中..." card.
-const questionHasCoreDisplayTranslationIssue = (question: any, translation: any, targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null): boolean => {
+const questionHasCoreDisplayTranslationIssue = (question: any, translation: any, targetLang: AssessmentLang | null): boolean => {
   if (!targetLang || !question?.id) return false;
   if (!translation) return true;
   if (hasHangulValue([translation.question_text, translation.options])) return true;
@@ -66,7 +68,7 @@ const questionHasCoreDisplayTranslationIssue = (question: any, translation: any,
   return false;
 };
 
-const repairKeyFor = (questionId: string, targetLang: "en" | "ja" | "zh-CN" | "yue") => `${questionId}:${targetLang}`;
+const repairKeyFor = (questionId: string, targetLang: AssessmentLang) => `${questionId}:${targetLang}`;
 
 const getTakingQuestionTextParts = (question: any) => [
   question?.question_text,
@@ -98,7 +100,7 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, message: 
   }
 };
 
-const invokeQuestionTranslation = async (questionId: string, targetLang: "en" | "ja" | "zh-CN" | "yue") => {
+const invokeQuestionTranslation = async (questionId: string, targetLang: AssessmentLang) => {
   const { data, error } = await withTimeout(
     supabase.functions.invoke("translate-question-now", {
       body: { question_id: questionId, target_lang: targetLang },
@@ -115,13 +117,15 @@ const LANG_NATIVE: Record<string, string> = {
   en: "English",
   ja: "日本語",
   "zh-CN": "中文",
+  yue: "廣東話",
 };
 
-const countryToAssessmentLang = (country?: string | null): "en" | "ja" | "zh-CN" | "yue" | "yue" | null => {
+const countryToAssessmentLang = (country?: string | null): AssessmentLang | null => {
   const normalized = (country || "").toUpperCase();
   if (normalized === "JP") return "ja";
   if (normalized === "US") return "en";
-  if (["CN", "HK", "TW"].includes(normalized)) return "zh-CN";
+  if (normalized === "HK") return "yue";
+  if (["CN", "TW"].includes(normalized)) return "zh-CN";
   return null;
 };
 
@@ -154,6 +158,15 @@ const TRANSLATE_LABELS: Record<string, { idle: string; loading: string; doneTitl
     repairingNotice: "正在准备翻译后的题目...",
     fallbackNotice: "自动翻译未完成。你可以继续，或点击翻译按钮更新此题。",
   },
+  yue: {
+    idle: "翻譯成廣東話",
+    loading: "翻譯中...",
+    doneTitle: "翻譯完成",
+    failTitle: "翻譯失敗",
+    failDesc: "請稍後再試。",
+    repairingNotice: "正在準備翻譯後的題目...",
+    fallbackNotice: "自動翻譯未完成，請按翻譯按鈕更新此題。",
+  },
 };
 
 // Button shown next to a question when the displayed text still contains Korean
@@ -165,14 +178,13 @@ function TranslateQuestionButton({
 }: {
   questionId: string;
   questionText: string;
-  targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null;
+  targetLang: AssessmentLang | null;
   onDone: () => void | Promise<void>;
   hasKorean?: boolean;
 }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  const touchHandledRef = useRef(false);
 
   if (!targetLang) return null;
   if (!(hasKorean ?? HANGUL_RE.test(questionText || ""))) return null;
@@ -201,26 +213,17 @@ function TranslateQuestionButton({
 
   const labels = TRANSLATE_LABELS[targetLang];
   return (
-    <button
+    <Button
       type="button"
-      onClick={() => {
-        if (touchHandledRef.current) {
-          touchHandledRef.current = false;
-          return;
-        }
-        void handleClick();
-      }}
-      onTouchEnd={(event) => {
-        event.preventDefault();
-        touchHandledRef.current = true;
-        void handleClick();
-      }}
+      variant="outline"
+      size="sm"
+      onClick={() => void handleClick()}
       disabled={loading}
-      className="mt-2 inline-flex touch-manipulation items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-border bg-secondary/40 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+      className="mt-2 h-7 touch-manipulation rounded-full bg-secondary/40 px-2.5 text-xs text-muted-foreground"
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
       {loading ? labels.loading : labels.idle}
-    </button>
+    </Button>
   );
 }
 
@@ -229,7 +232,7 @@ function TranslationRepairNotice({
   repairing,
   failed,
 }: {
-  targetLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null;
+  targetLang: AssessmentLang | null;
   repairing?: boolean;
   failed?: boolean;
 }) {
@@ -255,7 +258,7 @@ function QuestionReview({
 }: {
   question: any; index: number; total: number; userAnswer: string | null; isCorrect: boolean | null;
   isEn: boolean; onNext: () => void; onPrev: () => void; t: any;
-  currentLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null; onTranslated: () => void | Promise<void>;
+   currentLang: AssessmentLang | null; onTranslated: () => void | Promise<void>;
   questionI18n?: any;
   sourceQuestion?: any;
   repairing?: boolean;
@@ -567,10 +570,11 @@ export default function AssessmentPage() {
   const queryClient = useQueryClient();
 
   // Map current UI language to assessment_i18n.language_code (null = Korean = base)
-  const uiLang: "en" | "ja" | "zh-CN" | "yue" | "yue" | null = (() => {
+  const uiLang: AssessmentLang | null = (() => {
     const lng = (i18n.language || "").toLowerCase();
     if (lng.startsWith("en")) return "en";
     if (lng.startsWith("ja")) return "ja";
+    if (lng === "yue" || lng.startsWith("yue-") || lng === "zh-hk") return "yue";
     if (lng.startsWith("zh")) return "zh-CN";
     return null;
   })();
@@ -735,7 +739,7 @@ export default function AssessmentPage() {
     [questionIdsForI18n]
   );
 
-  const { data: questionI18nRows = [], isFetched: questionI18nFetched } = useQuery({
+  const { data: questionI18nRows = [], isFetched: questionI18nFetched, isError: questionI18nError, refetch: refetchQuestionI18n } = useQuery({
     queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
     queryFn: async () => {
       if (!currentLang || questionIdsForI18n.length === 0) return [];
@@ -748,10 +752,17 @@ export default function AssessmentPage() {
       return (data || []) as any[];
     },
     enabled: !!currentLang && questionIdsForI18n.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     gcTime: 15 * 60 * 1000,
-    placeholderData: (prev) => prev,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(750 * 2 ** attempt, 4000),
   });
+
+  useEffect(() => {
+    if (!currentLang || !questionI18nError) return;
+    const timer = window.setTimeout(() => void refetchQuestionI18n(), 3000);
+    return () => window.clearTimeout(timer);
+  }, [currentLang, questionI18nError, refetchQuestionI18n]);
 
 
   const questionI18nMap = useMemo(() => {
@@ -797,6 +808,16 @@ export default function AssessmentPage() {
   const localizeQuestion = (q: any) => {
     if (!q) return q;
     const tr = questionI18nMap.get(q.id);
+    const hasCoreIssue = questionHasCoreDisplayTranslationIssue(q, tr, currentLang);
+    if (currentLang && hasCoreIssue) {
+      return {
+        ...q,
+        question_text: TRANSLATE_LABELS[currentLang].repairingNotice,
+        options: isChoiceQuestion(q.question_type) ? [] : q.options,
+        hint: null,
+        explanation: null,
+      };
+    }
     if (!tr) return q;
     const isMcq = isChoiceQuestion(q.question_type);
     let options = q.options;
@@ -819,6 +840,13 @@ export default function AssessmentPage() {
       hint: tr.hint && !hasHangulValue(tr.hint) ? tr.hint : q.hint,
     };
   };
+
+  const hasUnresolvedVisibleTranslations = useMemo(() => {
+    if (!currentLang || !questionI18nFetched) return false;
+    return rawQuestions.some((q: any) =>
+      questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang)
+    );
+  }, [currentLang, questionI18nFetched, rawQuestions, questionI18nMap]);
 
   // Localized assessment + questions used for rendering
   const assessmentLocalized = useMemo(() => {
@@ -1037,7 +1065,11 @@ export default function AssessmentPage() {
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   const layoutRole = isStudentRoute ? "student" : primaryRole === "admin" ? "admin" : "teacher";
 
-  if (assessmentLoading || (isStudentRoute && !!profile?.department_id && branchCountryLoading)) {
+  if (
+    assessmentLoading ||
+    (isStudentRoute && !!profile?.department_id && branchCountryLoading) ||
+    (!!currentLang && questionIdsForI18n.length > 0 && !questionI18nFetched)
+  ) {
     return (
       <DashboardLayout role={layoutRole}>
         <PageSkeleton blocks={4} />
@@ -1052,6 +1084,24 @@ export default function AssessmentPage() {
           <p className="text-muted-foreground">{t("assessment.notFound")}</p>
           <Button variant="outline" onClick={() => navigate(-1)}>{t("common.back")}</Button>
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (currentLang && (questionI18nError || hasUnresolvedVisibleTranslations) && !currentAttemptId) {
+    const labels = TRANSLATE_LABELS[currentLang];
+    return (
+      <DashboardLayout role={layoutRole}>
+        <Card>
+          <CardContent className="space-y-4 py-10 text-center">
+            <Languages className="mx-auto h-6 w-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{labels.repairingNotice}</p>
+            <Button variant="outline" onClick={() => void refetchQuestionI18n()}>
+              <RotateCcw className="h-4 w-4" />
+              {labels.idle}
+            </Button>
+          </CardContent>
+        </Card>
       </DashboardLayout>
     );
   }
@@ -1227,10 +1277,7 @@ export default function AssessmentPage() {
                       questionId={currentQ.id}
                       questionText={currentQ.question_text}
                       targetLang={currentLang}
-                      hasKorean={
-                        !repairingQuestionIds.has(currentQ.id) &&
-                        hasHangulValue(getTakingQuestionTextParts(currentQ))
-                      }
+                       hasKorean={currentNeedsRepair && !currentRepairing}
                       onDone={invalidateQuestionI18n}
                     />
                     <TranslationRepairNotice
