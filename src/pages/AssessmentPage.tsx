@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import PageSkeleton from "@/components/PageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,16 @@ const parseOptionIndexAnswer = (value?: string | null): number | null => {
 };
 
 type AssessmentLang = "en" | "ja" | "zh-CN" | "yue";
+
+// 응시 전 언어 선택 옵션 (ko = 원본 한국어)
+const ASSESSMENT_LANG_OPTIONS: { value: string; label: string }[] = [
+  { value: "ko", label: "한국어" },
+  { value: "en", label: "English" },
+  { value: "ja", label: "日本語" },
+  { value: "zh-CN", label: "中文(简体)" },
+  { value: "yue", label: "廣東話" },
+];
+
 
 const questionNeedsTranslationRepair = (question: any, translation: any, targetLang: AssessmentLang | null): boolean => {
   if (!targetLang || !question?.id) return false;
@@ -624,7 +635,33 @@ export default function AssessmentPage() {
   // branches just because their browser has a stale localStorage value. Branch
   // language wins on the assessment page because the quiz content must match
   // the learner's branch language consistently across PC/mobile/PWA caches.
-  const currentLang = branchAssessmentLang || uiLang;
+  const autoLang: AssessmentLang | null = branchAssessmentLang || uiLang;
+
+  // 응시 전에 학습자가 직접 퀴즈 언어를 고를 수 있게 한다 (강의별로 기억).
+  const langStorageKey = `assessment-lang:${assessmentId || "default"}`;
+  const [langOverride, setLangOverride] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`assessment-lang:${assessmentId || "default"}`);
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (langOverride) localStorage.setItem(langStorageKey, langOverride);
+      else localStorage.removeItem(langStorageKey);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [langOverride, langStorageKey]);
+
+  const currentLang: AssessmentLang | null = langOverride
+    ? langOverride === "ko"
+      ? null
+      : (langOverride as AssessmentLang)
+    : autoLang;
+  const selectedLangValue = currentLang ?? "ko";
+
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({
@@ -763,6 +800,16 @@ export default function AssessmentPage() {
     const timer = window.setTimeout(() => void refetchQuestionI18n(), 3000);
     return () => window.clearTimeout(timer);
   }, [currentLang, questionI18nError, refetchQuestionI18n]);
+
+  // 광동어(yue) 번역이 아직 없는 퀴즈는 한국어 대신 중국어(간체)로 자동 대체한다.
+  useEffect(() => {
+    if (currentLang !== "yue" || langOverride) return;
+    if (!questionI18nFetched || questionIdsForI18n.length === 0) return;
+    if ((questionI18nRows || []).length > 0) return;
+    setLangOverride("zh-CN");
+  }, [currentLang, langOverride, questionI18nFetched, questionI18nRows, questionIdsForI18n.length]);
+
+
 
 
   const questionI18nMap = useMemo(() => {
@@ -1410,6 +1457,25 @@ export default function AssessmentPage() {
             {assessmentLocalized.description && <p className="text-sm text-muted-foreground">{assessmentLocalized.description}</p>}
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 rounded-xl border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span className="text-xs font-medium text-foreground">
+                  {t("assessment.ui.languageSelect", "퀴즈 언어 선택")}
+                </span>
+              </div>
+              <Select value={selectedLangValue} onValueChange={(v) => setLangOverride(v)}>
+                <SelectTrigger className="h-9 w-full sm:w-48" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSESSMENT_LANG_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl bg-secondary/50 p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">{t("assessment.passingScore")}</p>
