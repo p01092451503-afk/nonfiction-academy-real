@@ -635,7 +635,33 @@ export default function AssessmentPage() {
   // branches just because their browser has a stale localStorage value. Branch
   // language wins on the assessment page because the quiz content must match
   // the learner's branch language consistently across PC/mobile/PWA caches.
-  const currentLang = branchAssessmentLang || uiLang;
+  const autoLang: AssessmentLang | null = branchAssessmentLang || uiLang;
+
+  // 응시 전에 학습자가 직접 퀴즈 언어를 고를 수 있게 한다 (강의별로 기억).
+  const langStorageKey = `assessment-lang:${assessmentId || "default"}`;
+  const [langOverride, setLangOverride] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`assessment-lang:${assessmentId || "default"}`);
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (langOverride) localStorage.setItem(langStorageKey, langOverride);
+      else localStorage.removeItem(langStorageKey);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [langOverride, langStorageKey]);
+
+  const currentLang: AssessmentLang | null = langOverride
+    ? langOverride === "ko"
+      ? null
+      : (langOverride as AssessmentLang)
+    : autoLang;
+  const selectedLangValue = currentLang ?? "ko";
+
 
   // Fetch assessment
   const { data: assessment, isLoading: assessmentLoading } = useQuery({
