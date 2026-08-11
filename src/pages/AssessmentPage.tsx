@@ -833,7 +833,7 @@ export default function AssessmentPage() {
     if (currentLang !== "yue" || langOverride) return;
     if (!questionI18nFetched || questionIdsForI18n.length === 0) return;
     if ((questionI18nRows || []).length > 0) return;
-    setLangOverride("zh-CN");
+    setAutoFallbackLang("zh-CN");
   }, [currentLang, langOverride, questionI18nFetched, questionI18nRows, questionIdsForI18n.length]);
 
 
