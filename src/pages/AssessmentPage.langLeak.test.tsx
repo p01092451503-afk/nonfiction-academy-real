@@ -21,6 +21,12 @@ const HK_USER = {
   email: "hk.user@nonfiction.com",
   departmentId: "hk-dept",
 };
+// Korean staff member on the same shared store device who manually picks Cantonese.
+const KR_USER = {
+  id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+  email: "kr.staff@nonfiction.com",
+  departmentId: "kr-dept",
+};
 const JP_USER = {
   id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
   email: "ayako.horiguchi@nonfiction.com",
@@ -55,6 +61,7 @@ const h = vi.hoisted(() => {
   const departments: Record<string, any> = {
     "hk-dept": { id: "hk-dept", country: "HK", parent_department_id: null },
     "jp-dept": { id: "jp-dept", country: "JP", parent_department_id: null },
+    "kr-dept": { id: "kr-dept", country: "KR", parent_department_id: null },
   };
 
   const assessmentI18n = [
@@ -215,13 +222,13 @@ describe("AssessmentPage — quiz language does not leak across accounts", () =>
   it("keeps each account's explicit choice under its own storage key", async () => {
     const user = userEvent.setup();
 
-    // 1) HK account explicitly picks Cantonese.
-    signIn(HK_USER);
+    // 1) Korean account explicitly picks Cantonese on a shared device.
+    signIn(KR_USER);
     const hk = renderPage();
-    expect(await screen.findByText("顧客服務評估")).toBeInTheDocument();
+    expect(await screen.findByText("고객 응대 평가")).toBeInTheDocument();
     await user.click(await screen.findByRole("combobox", { name: "퀴즈 언어 선택" }));
     await user.click(await screen.findByRole("option", { name: "廣東話" }));
-    await waitFor(() => expect(localStorage.getItem(langKey(HK_USER.id))).toBe("yue"));
+    await waitFor(() => expect(localStorage.getItem(langKey(KR_USER.id))).toBe("yue"));
     hk.unmount();
 
     // 2) JP account signs in on the same browser and must get Japanese.
@@ -231,14 +238,14 @@ describe("AssessmentPage — quiz language does not leak across accounts", () =>
     expect(screen.queryByText("顧客服務評估")).not.toBeInTheDocument();
     // No implicit write under the JP account, and the HK choice is untouched.
     expect(localStorage.getItem(langKey(JP_USER.id))).toBeNull();
-    expect(localStorage.getItem(langKey(HK_USER.id))).toBe("yue");
+    expect(localStorage.getItem(langKey(KR_USER.id))).toBe("yue");
     jp.unmount();
 
-    // 3) HK account returns and still gets its own Cantonese choice.
-    signIn(HK_USER);
+    // 3) The Korean account returns and still gets its own Cantonese choice.
+    signIn(KR_USER);
     renderPage();
     expect(await screen.findByText("顧客服務評估")).toBeInTheDocument();
-    expect(localStorage.getItem(langKey(HK_USER.id))).toBe("yue");
+    expect(localStorage.getItem(langKey(KR_USER.id))).toBe("yue");
   });
 
   it("removes the legacy account-agnostic key instead of applying it", async () => {
