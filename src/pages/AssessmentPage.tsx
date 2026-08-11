@@ -637,23 +637,45 @@ export default function AssessmentPage() {
   // the learner's branch language consistently across PC/mobile/PWA caches.
   const autoLang: AssessmentLang | null = branchAssessmentLang || uiLang;
 
-  // 응시 전에 학습자가 직접 퀴즈 언어를 고를 수 있게 한다 (강의별로 기억).
-  const langStorageKey = `assessment-lang:${assessmentId || "default"}`;
+  // 응시 전에 학습자가 직접 퀴즈 언어를 고를 수 있게 한다.
+  // 사용자 ID까지 포함해야 공용 PC에서 이전 사용자의 선택(예: 광동어)이
+  // 다음 로그인 사용자의 일본어 설정보다 우선되는 계정 간 누수를 막을 수 있다.
+  const langStorageKey = `assessment-lang:${user?.id || "anonymous"}:${assessmentId || "default"}`;
   const [langOverride, setLangOverride] = useState<string | null>(() => {
     try {
-      return localStorage.getItem(`assessment-lang:${assessmentId || "default"}`);
+      return user?.id
+        ? localStorage.getItem(`assessment-lang:${user.id}:${assessmentId || "default"}`)
+        : null;
     } catch {
       return null;
     }
   });
+  const [loadedLangStorageKey, setLoadedLangStorageKey] = useState<string | null>(null);
   useEffect(() => {
+    if (!user?.id) {
+      setLangOverride(null);
+      setLoadedLangStorageKey(null);
+      return;
+    }
+    try {
+      // 2026-08 이전 버전의 계정 비구분 저장값은 더 이상 사용하지 않는다.
+      localStorage.removeItem(`assessment-lang:${assessmentId || "default"}`);
+      setLangOverride(localStorage.getItem(langStorageKey));
+    } catch {
+      setLangOverride(null);
+    } finally {
+      setLoadedLangStorageKey(langStorageKey);
+    }
+  }, [user?.id, assessmentId, langStorageKey]);
+  useEffect(() => {
+    if (loadedLangStorageKey !== langStorageKey) return;
     try {
       if (langOverride) localStorage.setItem(langStorageKey, langOverride);
       else localStorage.removeItem(langStorageKey);
     } catch {
       /* storage unavailable */
     }
-  }, [langOverride, langStorageKey]);
+  }, [langOverride, langStorageKey, loadedLangStorageKey]);
 
   const currentLang: AssessmentLang | null = langOverride
     ? langOverride === "ko"
@@ -1135,24 +1157,6 @@ export default function AssessmentPage() {
     );
   }
 
-  if (currentLang && (questionI18nError || hasUnresolvedVisibleTranslations) && !currentAttemptId) {
-    const labels = TRANSLATE_LABELS[currentLang];
-    return (
-      <DashboardLayout role={layoutRole}>
-        <Card>
-          <CardContent className="space-y-4 py-10 text-center">
-            <Languages className="mx-auto h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">{labels.repairingNotice}</p>
-            <Button variant="outline" onClick={() => void refetchQuestionI18n()}>
-              <RotateCcw className="h-4 w-4" />
-              {labels.idle}
-            </Button>
-          </CardContent>
-        </Card>
-      </DashboardLayout>
-    );
-  }
-
   // ─── RESULT SUMMARY (shown immediately after submission) ───
   if (showResults && !reviewMode && latestCompleted) {
     return (
@@ -1476,6 +1480,23 @@ export default function AssessmentPage() {
               </Select>
             </div>
 
+            {currentLang && (questionI18nError || hasUnresolvedVisibleTranslations) && (
+              <div className="flex flex-col gap-3 border-b-2 border-border/80 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                  {questionI18nError ? (
+                    <Languages className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                  )}
+                  <span>{questionI18nError ? TRANSLATE_LABELS[currentLang].fallbackNotice : TRANSLATE_LABELS[currentLang].repairingNotice}</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => void refetchQuestionI18n()}>
+                  <RotateCcw className="h-4 w-4" />
+                  {TRANSLATE_LABELS[currentLang].idle}
+                </Button>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl bg-secondary/50 p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">{t("assessment.passingScore")}</p>
@@ -1535,7 +1556,11 @@ export default function AssessmentPage() {
             )}
 
             {canAttempt && (
-              <Button className="w-full" onClick={() => startAttemptMutation.mutate()} disabled={startAttemptMutation.isPending}>
+              <Button
+                className="w-full"
+                onClick={() => startAttemptMutation.mutate()}
+                disabled={startAttemptMutation.isPending || !!(currentLang && (questionI18nError || hasUnresolvedVisibleTranslations))}
+              >
                 {startAttemptMutation.isPending ? t("common.processing") : completedAttempts.length === 0 ? t("assessment.startAssessment") : t("assessment.retakeAssessment")}
               </Button>
             )}
