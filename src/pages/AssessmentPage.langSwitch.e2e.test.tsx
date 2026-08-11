@@ -233,7 +233,7 @@ describe("E2E: shared browser account switching keeps zh-CN / yue choices isolat
     signIn(KR_USER);
     let view = renderPage();
     await expectTitle(TITLES.ko, []);
-    await pickLanguage(user, "简体中文");
+    await pickLanguage(user, "中文(简体)");
     await waitFor(() => expect(localStorage.getItem(langKey(KR_USER.id))).toBe("zh-CN"));
     await expectTitle(TITLES["zh-CN"], [TITLES.ko]);
     view.unmount();
@@ -261,30 +261,32 @@ describe("E2E: shared browser account switching keeps zh-CN / yue choices isolat
     expect(localStorage.getItem(langKey(JP_USER.id))).toBeNull();
   });
 
-  it("HK user's Cantonese choice does not reach a mainland (zh-CN) account", async () => {
+  it("a Cantonese choice does not reach a mainland (zh-CN) account", async () => {
     const user = userEvent.setup();
 
-    signIn(HK_USER);
+    signIn(KR_USER);
     let view = renderPage();
     await pickLanguage(user, "廣東話");
-    await waitFor(() => expect(localStorage.getItem(langKey(HK_USER.id))).toBe("yue"));
+    await waitFor(() => expect(localStorage.getItem(langKey(KR_USER.id))).toBe("yue"));
+    await expectTitle(TITLES.yue, [TITLES.ko]);
     view.unmount();
 
     signIn(CN_USER);
     view = renderPage();
     await expectTitle(TITLES["zh-CN"], [TITLES.yue]);
     expect(localStorage.getItem(langKey(CN_USER.id))).toBeNull();
-    expect(localStorage.getItem(langKey(HK_USER.id))).toBe("yue");
+    expect(localStorage.getItem(langKey(KR_USER.id))).toBe("yue");
   });
 
   it("a guest (signed-out) selection is not inherited by the next signed-in account", async () => {
     const user = userEvent.setup();
 
-    // Guest on the shared device picks Cantonese.
+    // Guest on the shared device picks Cantonese: never persisted anywhere.
     signOut();
     let view = renderPage();
     await pickLanguage(user, "廣東話");
-    await waitFor(() => expect(localStorage.getItem(anonKey)).toBe("yue"));
+    await expectTitle(TITLES.yue, [TITLES.ko]);
+    expect(localStorage.getItem(anonKey)).toBeNull();
     view.unmount();
 
     // Japanese employee signs in on the same browser.
@@ -294,10 +296,11 @@ describe("E2E: shared browser account switching keeps zh-CN / yue choices isolat
     expect(localStorage.getItem(langKey(JP_USER.id))).toBeNull();
     view.unmount();
 
-    // Signing out again must not resurrect the guest choice for the account.
+    // Signing out again starts from a clean default, not the earlier guest pick.
     signOut();
     renderPage();
-    await expectTitle(TITLES.yue, [TITLES.ja]);
+    await expectTitle(TITLES.ko, [TITLES.yue, TITLES.ja]);
+    expect(localStorage.getItem(anonKey)).toBeNull();
     expect(localStorage.getItem(langKey(JP_USER.id))).toBeNull();
   });
 });
