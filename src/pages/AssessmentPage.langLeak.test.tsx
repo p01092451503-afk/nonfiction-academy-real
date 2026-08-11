@@ -205,6 +205,11 @@ describe("AssessmentPage — quiz language does not leak across accounts", () =>
   beforeEach(() => {
     localStorage.clear();
     h.tables.assessment_attempts.length = 0;
+    // jsdom lacks the pointer APIs Radix Select relies on.
+    (Element.prototype as any).hasPointerCapture = () => false;
+    (Element.prototype as any).setPointerCapture = () => {};
+    (Element.prototype as any).releasePointerCapture = () => {};
+    (Element.prototype as any).scrollIntoView = () => {};
   });
 
   it("keeps each account's explicit choice under its own storage key", async () => {
