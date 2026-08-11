@@ -240,6 +240,20 @@ function TranslateQuestionButton({
       setDone(true);
     } catch (e: any) {
       const labels = TRANSLATE_LABELS[targetLang];
+      const detail = describeTranslationError(e);
+      const stage = classifyTranslationFailure(e);
+      console.error("[assessment-i18n] manual-translate:failed", {
+        questionId,
+        targetLang,
+        stage,
+        error: detail,
+      });
+      void reportError({
+        message: `[assessment-i18n] manual translation failed (${stage}): ${detail.message} | q=${questionId} lang=${targetLang}`,
+        stack: detail.stack,
+        source: "assessment-translation",
+        severity: "warning",
+      });
       toast({
         title: labels.failTitle,
         description: e?.message || labels.failDesc,
