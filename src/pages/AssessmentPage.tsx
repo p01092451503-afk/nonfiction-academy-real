@@ -677,11 +677,16 @@ export default function AssessmentPage() {
     }
   }, [langOverride, langStorageKey, loadedLangStorageKey]);
 
+  // 자동 대체(광동어 → 중국어 간체)는 사용자의 명시적 선택이 아니므로
+  // localStorage에 저장하지 않고 세션 내 상태로만 유지한다.
+  const [autoFallbackLang, setAutoFallbackLang] = useState<AssessmentLang | null>(null);
+  useEffect(() => { setAutoFallbackLang(null); }, [assessmentId, user?.id]);
+
   const currentLang: AssessmentLang | null = langOverride
     ? langOverride === "ko"
       ? null
       : (langOverride as AssessmentLang)
-    : autoLang;
+    : (autoFallbackLang || autoLang);
   const selectedLangValue = currentLang ?? "ko";
 
 
