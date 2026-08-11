@@ -931,7 +931,7 @@ export default function AssessmentPage() {
         return next;
       });
     }
-  }, [currentLang, invalidateQuestionI18n]);
+  }, [currentLang, invalidateQuestionI18n, assessmentId, autoLang, langOverride, branchCountry, user?.id]);
 
   // Apply translation to a question (preserving original correct_answer position for MCQ)
   const localizeQuestion = (q: any) => {
