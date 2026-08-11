@@ -890,13 +890,40 @@ export default function AssessmentPage() {
       return next;
     });
     setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
+    const startedAt = Date.now();
+    const diagnosticContext = {
+      assessmentId,
+      questionId: question.id,
+      questionType: question.question_type,
+      optionCount: Array.isArray(question.options) ? question.options.length : 0,
+      targetLang: currentLang,
+      autoLang,
+      langOverride,
+      branchCountry: branchCountry ?? null,
+      userId: user?.id ?? null,
+    };
+    logAssessmentTranslationEvent("repair:start", diagnosticContext);
     try {
       await invokeQuestionTranslation(question.id, currentLang);
       await invalidateQuestionI18n();
+      logAssessmentTranslationEvent("repair:success", { ...diagnosticContext, durationMs: Date.now() - startedAt });
     } catch (error) {
       repairRequestedRef.current.delete(key);
       setRepairFailedKeys((prev) => new Set(prev).add(key));
-      console.error("[assessment] question translation repair failed", error);
+      const detail = describeTranslationError(error);
+      const stage = classifyTranslationFailure(error);
+      console.error("[assessment-i18n] repair:failed", {
+        ...diagnosticContext,
+        stage,
+        durationMs: Date.now() - startedAt,
+        error: detail,
+      });
+      void reportError({
+        message: `[assessment-i18n] question translation repair failed (${stage}): ${detail.message} | q=${question.id} lang=${currentLang} branch=${branchCountry ?? "-"}`,
+        stack: detail.stack,
+        source: "assessment-translation",
+        severity: "warning",
+      });
     } finally {
       setRepairingQuestionIds((prev) => {
         const next = new Set(prev);
