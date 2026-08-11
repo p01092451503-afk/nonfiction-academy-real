@@ -677,11 +677,16 @@ export default function AssessmentPage() {
     }
   }, [langOverride, langStorageKey, loadedLangStorageKey]);
 
+  // 자동 대체(광동어 → 중국어 간체)는 사용자의 명시적 선택이 아니므로
+  // localStorage에 저장하지 않고 세션 내 상태로만 유지한다.
+  const [autoFallbackLang, setAutoFallbackLang] = useState<AssessmentLang | null>(null);
+  useEffect(() => { setAutoFallbackLang(null); }, [assessmentId, user?.id]);
+
   const currentLang: AssessmentLang | null = langOverride
     ? langOverride === "ko"
       ? null
       : (langOverride as AssessmentLang)
-    : autoLang;
+    : (autoFallbackLang || autoLang);
   const selectedLangValue = currentLang ?? "ko";
 
 
@@ -828,7 +833,7 @@ export default function AssessmentPage() {
     if (currentLang !== "yue" || langOverride) return;
     if (!questionI18nFetched || questionIdsForI18n.length === 0) return;
     if ((questionI18nRows || []).length > 0) return;
-    setLangOverride("zh-CN");
+    setAutoFallbackLang("zh-CN");
   }, [currentLang, langOverride, questionI18nFetched, questionI18nRows, questionIdsForI18n.length]);
 
 
@@ -878,7 +883,9 @@ export default function AssessmentPage() {
     if (!q) return q;
     const tr = questionI18nMap.get(q.id);
     const hasCoreIssue = questionHasCoreDisplayTranslationIssue(q, tr, currentLang);
-    if (currentLang && hasCoreIssue) {
+    // 번역 복구가 최종 실패한 문항은 무한 대기 대신 원문을 그대로 노출한다.
+    const repairFailed = !!(currentLang && repairFailedKeys.has(repairKeyFor(q.id, currentLang)));
+    if (currentLang && hasCoreIssue && !repairFailed) {
       return {
         ...q,
         question_text: TRANSLATE_LABELS[currentLang].repairingNotice,
@@ -887,6 +894,7 @@ export default function AssessmentPage() {
         explanation: null,
       };
     }
+    if (currentLang && hasCoreIssue && repairFailed) return q;
     if (!tr) return q;
     const isMcq = isChoiceQuestion(q.question_type);
     let options = q.options;
@@ -917,6 +925,16 @@ export default function AssessmentPage() {
     );
   }, [currentLang, questionI18nFetched, rawQuestions, questionI18nMap]);
 
+  // 아직 복구 시도 중인(=실패 확정되지 않은) 문항만 응시 시작을 막는다.
+  const hasPendingTranslations = useMemo(() => {
+    if (!currentLang || !questionI18nFetched) return false;
+    return rawQuestions.some(
+      (q: any) =>
+        questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang) &&
+        !repairFailedKeys.has(repairKeyFor(q.id, currentLang))
+    );
+  }, [currentLang, questionI18nFetched, rawQuestions, questionI18nMap, repairFailedKeys]);
+
   // Localized assessment + questions used for rendering
   const assessmentLocalized = useMemo(() => {
     if (!assessment) return assessment;
@@ -930,11 +948,11 @@ export default function AssessmentPage() {
 
   const localizedRawQuestions = useMemo(
     () => rawQuestions.map(localizeQuestion),
-    [rawQuestions, questionI18nMap]
+    [rawQuestions, questionI18nMap, repairFailedKeys]
   );
   const localizedReviewQuestions = useMemo(
     () => reviewQuestions.map(localizeQuestion),
-    [reviewQuestions, questionI18nMap]
+    [reviewQuestions, questionI18nMap, repairFailedKeys]
   );
 
   const questions = useMemo(() => {
@@ -1559,7 +1577,7 @@ export default function AssessmentPage() {
               <Button
                 className="w-full"
                 onClick={() => startAttemptMutation.mutate()}
-                disabled={startAttemptMutation.isPending || !!(currentLang && (questionI18nError || hasUnresolvedVisibleTranslations))}
+                disabled={startAttemptMutation.isPending || !!(currentLang && hasPendingTranslations)}
               >
                 {startAttemptMutation.isPending ? t("common.processing") : completedAttempts.length === 0 ? t("assessment.startAssessment") : t("assessment.retakeAssessment")}
               </Button>
