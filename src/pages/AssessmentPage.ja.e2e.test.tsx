@@ -19,81 +19,79 @@ const QUESTION_ID = "33333333-3333-3333-3333-333333333333";
 const JP_DEPARTMENT_ID = "44444444-4444-4444-4444-444444444444";
 const JP_USER_ID = "55555555-5555-5555-5555-555555555555";
 
-const KO_QUESTION = {
-  id: QUESTION_ID,
-  assessment_id: ASSESSMENT_ID,
-  question_text: "고객 응대의 첫 단계는 무엇입니까?",
-  question_type: "multiple_choice_4",
-  options: ["경청하기", "제안하기", "종결하기", "기록하기"],
-  correct_answer: "경청하기",
-  hint: null,
-  explanation: null,
-  order_index: 0,
-  points: 10,
-};
-
-const JA_QUESTION_I18N = {
-  question_id: QUESTION_ID,
-  language_code: "ja",
-  question_text: "接客の最初のステップは何ですか？",
-  options: ["傾聴する", "提案する", "クロージングする", "記録する"],
-  correct_answer: "傾聴する",
-  hint: null,
-  explanation: null,
-};
-
-const functionsInvoke = vi.fn();
-
-// ── Backend mock ────────────────────────────────────────────────────────────
-const tableData: Record<string, unknown> = {
-  departments: { country: "JP", parent_department_id: null },
-  assessments: {
-    id: ASSESSMENT_ID,
-    course_id: COURSE_ID,
-    title: "고객 응대 평가",
-    description: null,
-    passing_score: 60,
-    max_attempts: 3,
-    time_limit_minutes: null,
-    randomize_questions: false,
-  },
-  assessment_attempts: [],
-  assessment_i18n: { assessment_id: ASSESSMENT_ID, language_code: "ja", title: "接客評価", description: null },
-  assessment_question_i18n: [JA_QUESTION_I18N],
-  assessment_answers: [],
-};
-
-function makeBuilder(table: string) {
-  let inserted = false;
-  const builder: any = {
-    select: () => builder,
-    insert: (payload: any) => {
-      inserted = true;
-      if (table === "assessment_attempts") {
-        (tableData.assessment_attempts as any[]).push({ id: "attempt-1", ...payload });
-      }
-      return builder;
-    },
-    update: () => builder,
-    eq: () => builder,
-    in: () => builder,
-    order: () => builder,
-    limit: () => builder,
-    single: async () =>
-      inserted ? { data: { id: "attempt-1" }, error: null } : { data: tableData[table] ?? null, error: null },
-    maybeSingle: async () => ({ data: tableData[table] ?? null, error: null }),
-    then: (resolve: (value: { data: unknown; error: null }) => unknown) =>
-      Promise.resolve({ data: tableData[table] ?? [], error: null }).then(resolve),
+const h = vi.hoisted(() => {
+  const functionsInvoke = vi.fn();
+  const KO_QUESTION = {
+    id: "33333333-3333-3333-3333-333333333333",
+    assessment_id: "22222222-2222-2222-2222-222222222222",
+    question_text: "고객 응대의 첫 단계는 무엇입니까?",
+    question_type: "multiple_choice_4",
+    options: ["경청하기", "제안하기", "종결하기", "기록하기"],
+    correct_answer: "경청하기",
+    hint: null,
+    explanation: null,
+    order_index: 0,
+    points: 10,
   };
-  return builder;
-}
+  const JA_QUESTION_I18N = {
+    question_id: KO_QUESTION.id,
+    language_code: "ja",
+    question_text: "接客の最初のステップは何ですか？",
+    options: ["傾聴する", "提案する", "クロージングする", "記録する"],
+    correct_answer: "傾聴する",
+    hint: null,
+    explanation: null,
+  };
+  const tableData: Record<string, any> = {
+    departments: { country: "JP", parent_department_id: null },
+    assessments: {
+      id: KO_QUESTION.assessment_id,
+      course_id: "11111111-1111-1111-1111-111111111111",
+      title: "고객 응대 평가",
+      description: null,
+      passing_score: 60,
+      max_attempts: 3,
+      time_limit_minutes: null,
+      randomize_questions: false,
+    },
+    assessment_attempts: [] as any[],
+    assessment_i18n: { assessment_id: KO_QUESTION.assessment_id, language_code: "ja", title: "接客評価", description: null },
+    assessment_question_i18n: [JA_QUESTION_I18N],
+    assessment_answers: [],
+  };
+  const makeBuilder = (table: string) => {
+    let inserted = false;
+    const builder: any = {
+      select: () => builder,
+      insert: (payload: any) => {
+        inserted = true;
+        if (table === "assessment_attempts") tableData.assessment_attempts.push({ id: "attempt-1", ...payload });
+        return builder;
+      },
+      update: () => builder,
+      eq: () => builder,
+      in: () => builder,
+      order: () => builder,
+      limit: () => builder,
+      single: async () =>
+        inserted ? { data: { id: "attempt-1" }, error: null } : { data: tableData[table] ?? null, error: null },
+      maybeSingle: async () => ({ data: tableData[table] ?? null, error: null }),
+      then: (resolve: (value: { data: unknown; error: null }) => unknown) =>
+        Promise.resolve({ data: tableData[table] ?? [], error: null }).then(resolve),
+    };
+    return builder;
+  };
+  return { functionsInvoke, KO_QUESTION, JA_QUESTION_I18N, tableData, makeBuilder };
+});
+
+const { functionsInvoke, KO_QUESTION, JA_QUESTION_I18N, tableData } = h;
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: (table: string) => makeBuilder(table),
+    from: (table: string) => h.makeBuilder(table),
     rpc: async (name: string) => {
-      if (name === "get_assessment_questions_for_student") return { data: [KO_QUESTION], error: null };
-      if (name === "get_assessment_questions_with_answers") return { data: [KO_QUESTION], error: null };
+      if (name === "get_assessment_questions_for_student") return { data: [h.KO_QUESTION], error: null };
+      if (name === "get_assessment_questions_with_answers") return { data: [h.KO_QUESTION], error: null };
       return { data: null, error: null };
     },
     functions: { invoke: functionsInvoke },
@@ -151,7 +149,7 @@ describe("AssessmentPage — Japanese branch account", () => {
     localStorage.clear();
     functionsInvoke.mockReset();
     functionsInvoke.mockResolvedValue({ data: { ok: true }, error: null });
-    (tableData.assessment_attempts as any[]).length = 0;
+    tableData.assessment_attempts.length = 0;
   });
 
   it("shows the Japanese assessment title on the entry screen", async () => {
