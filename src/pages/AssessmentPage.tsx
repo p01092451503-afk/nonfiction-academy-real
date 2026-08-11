@@ -111,6 +111,34 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, message: 
   }
 };
 
+// 번역 복구 실패 원인(타임아웃 / 엣지 함수 오류 / 권한 / 네트워크)을 구분해
+// 콘솔과 오류 리포트에 동일한 형태로 남기기 위한 진단 헬퍼.
+type TranslationFailureStage = "timeout" | "invoke-error" | "function-error" | "unknown";
+
+const classifyTranslationFailure = (error: unknown): TranslationFailureStage => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (/timed out/i.test(message)) return "timeout";
+  if (/FunctionsHttpError|FunctionsFetchError|FunctionsRelayError|non-2xx|Failed to fetch/i.test(message)) return "invoke-error";
+  if (message) return "function-error";
+  return "unknown";
+};
+
+const describeTranslationError = (error: unknown) => {
+  const err = error as any;
+  return {
+    name: err?.name ?? null,
+    message: err instanceof Error ? err.message : String(err ?? "unknown"),
+    status: err?.status ?? err?.context?.status ?? null,
+    stack: err?.stack ?? undefined,
+  };
+};
+
+const logAssessmentTranslationEvent = (event: string, context: Record<string, unknown>) => {
+  // 일본/홍콩 지점처럼 재현이 어려운 환경에서도 원인 추적이 가능하도록
+  // 항상 동일한 접두어와 구조로 남긴다.
+  console.info(`[assessment-i18n] ${event}`, { ...context, at: new Date().toISOString() });
+};
+
 const invokeQuestionTranslation = async (questionId: string, targetLang: AssessmentLang) => {
   const { data, error } = await withTimeout(
     supabase.functions.invoke("translate-question-now", {
