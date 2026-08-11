@@ -883,7 +883,9 @@ export default function AssessmentPage() {
     if (!q) return q;
     const tr = questionI18nMap.get(q.id);
     const hasCoreIssue = questionHasCoreDisplayTranslationIssue(q, tr, currentLang);
-    if (currentLang && hasCoreIssue) {
+    // 번역 복구가 최종 실패한 문항은 무한 대기 대신 원문을 그대로 노출한다.
+    const repairFailed = !!(currentLang && repairFailedKeys.has(repairKeyFor(q.id, currentLang)));
+    if (currentLang && hasCoreIssue && !repairFailed) {
       return {
         ...q,
         question_text: TRANSLATE_LABELS[currentLang].repairingNotice,
@@ -892,6 +894,7 @@ export default function AssessmentPage() {
         explanation: null,
       };
     }
+    if (currentLang && hasCoreIssue && repairFailed) return q;
     if (!tr) return q;
     const isMcq = isChoiceQuestion(q.question_type);
     let options = q.options;
