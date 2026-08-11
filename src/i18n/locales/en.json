@@ -1349,7 +1349,8 @@
       "attemptLabel": "Attempt {{n}}",
       "passShort": "(Pass)",
       "failShort": "(Fail)",
-      "reviewBtn": "Review"
+      "reviewBtn": "Review",
+      "languageSelect": "Quiz language"
     }
   },
   "organizationes": {

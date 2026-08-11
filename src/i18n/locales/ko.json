@@ -1346,7 +1346,8 @@
       "attemptLabel": "{{n}}회차",
       "passShort": "(합격)",
       "failShort": "(불합격)",
-      "reviewBtn": "오답확인"
+      "reviewBtn": "오답확인",
+      "languageSelect": "퀴즈 언어 선택"
     }
   },
   "branches": {

@@ -1346,7 +1346,8 @@
       "attemptLabel": "第{{n}}次",
       "passShort": "(通过)",
       "failShort": "(未通过)",
-      "reviewBtn": "查看错题"
+      "reviewBtn": "查看错题",
+      "languageSelect": "选择测验语言"
     }
   },
   "branches": {
