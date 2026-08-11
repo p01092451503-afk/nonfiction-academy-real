@@ -1346,7 +1346,8 @@
       "attemptLabel": "第{{n}}次",
       "passShort": "(合格)",
       "failShort": "(唔合格)",
-      "reviewBtn": "檢查錯題"
+      "reviewBtn": "檢查錯題",
+      "languageSelect": "揀選測驗語言"
     }
   },
   "branches": {

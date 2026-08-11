@@ -1346,7 +1346,8 @@
       "attemptLabel": "{{n}}回目",
       "passShort": "(合格)",
       "failShort": "(不合格)",
-      "reviewBtn": "復習"
+      "reviewBtn": "復習",
+      "languageSelect": "クイズの言語を選択"
     }
   },
   "branches": {
