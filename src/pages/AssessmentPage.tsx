@@ -1577,7 +1577,7 @@ export default function AssessmentPage() {
               <Button
                 className="w-full"
                 onClick={() => startAttemptMutation.mutate()}
-                disabled={startAttemptMutation.isPending || !!(currentLang && (questionI18nError || hasUnresolvedVisibleTranslations))}
+                disabled={startAttemptMutation.isPending || !!(currentLang && hasPendingTranslations)}
               >
                 {startAttemptMutation.isPending ? t("common.processing") : completedAttempts.length === 0 ? t("assessment.startAssessment") : t("assessment.retakeAssessment")}
               </Button>
