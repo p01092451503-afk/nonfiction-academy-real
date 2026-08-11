@@ -925,6 +925,16 @@ export default function AssessmentPage() {
     );
   }, [currentLang, questionI18nFetched, rawQuestions, questionI18nMap]);
 
+  // 아직 복구 시도 중인(=실패 확정되지 않은) 문항만 응시 시작을 막는다.
+  const hasPendingTranslations = useMemo(() => {
+    if (!currentLang || !questionI18nFetched) return false;
+    return rawQuestions.some(
+      (q: any) =>
+        questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang) &&
+        !repairFailedKeys.has(repairKeyFor(q.id, currentLang))
+    );
+  }, [currentLang, questionI18nFetched, rawQuestions, questionI18nMap, repairFailedKeys]);
+
   // Localized assessment + questions used for rendering
   const assessmentLocalized = useMemo(() => {
     if (!assessment) return assessment;
@@ -938,11 +948,11 @@ export default function AssessmentPage() {
 
   const localizedRawQuestions = useMemo(
     () => rawQuestions.map(localizeQuestion),
-    [rawQuestions, questionI18nMap]
+    [rawQuestions, questionI18nMap, repairFailedKeys]
   );
   const localizedReviewQuestions = useMemo(
     () => reviewQuestions.map(localizeQuestion),
-    [reviewQuestions, questionI18nMap]
+    [reviewQuestions, questionI18nMap, repairFailedKeys]
   );
 
   const questions = useMemo(() => {
