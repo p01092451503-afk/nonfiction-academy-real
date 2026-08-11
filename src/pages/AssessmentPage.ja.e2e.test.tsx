@@ -94,15 +94,15 @@ vi.mock("@/integrations/supabase/client", () => ({
       if (name === "get_assessment_questions_with_answers") return { data: [h.KO_QUESTION], error: null };
       return { data: null, error: null };
     },
-    functions: { invoke: functionsInvoke },
+    functions: { invoke: h.functionsInvoke },
   },
 }));
 
 vi.mock("@/contexts/UserContext", () => ({
   useUser: () => ({
-    user: { id: JP_USER_ID, email: "ayako.horiguchi@nonfiction.com" },
+    user: { id: "55555555-5555-5555-5555-555555555555", email: "ayako.horiguchi@nonfiction.com" },
     session: {},
-    profile: { user_id: JP_USER_ID, department_id: JP_DEPARTMENT_ID, full_name: "堀口 綾子" },
+    profile: { user_id: "55555555-5555-5555-5555-555555555555", department_id: "44444444-4444-4444-4444-444444444444", full_name: "堀口 綾子" },
     roles: ["student"],
     isLoading: false,
     signOut: vi.fn(),
