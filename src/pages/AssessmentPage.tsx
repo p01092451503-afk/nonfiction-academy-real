@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
+import { reportError } from "@/lib/errorReporter";
 import { useTranslation } from "react-i18next";
 
 type QuestionType = "multiple_choice_4" | "multiple_choice_5" | "short_answer" | "essay" | "ox";
@@ -109,6 +110,34 @@ const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, message: 
   } finally {
     if (timer) clearTimeout(timer);
   }
+};
+
+// 번역 복구 실패 원인(타임아웃 / 엣지 함수 오류 / 권한 / 네트워크)을 구분해
+// 콘솔과 오류 리포트에 동일한 형태로 남기기 위한 진단 헬퍼.
+type TranslationFailureStage = "timeout" | "invoke-error" | "function-error" | "unknown";
+
+const classifyTranslationFailure = (error: unknown): TranslationFailureStage => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (/timed out/i.test(message)) return "timeout";
+  if (/FunctionsHttpError|FunctionsFetchError|FunctionsRelayError|non-2xx|Failed to fetch/i.test(message)) return "invoke-error";
+  if (message) return "function-error";
+  return "unknown";
+};
+
+const describeTranslationError = (error: unknown) => {
+  const err = error as any;
+  return {
+    name: err?.name ?? null,
+    message: err instanceof Error ? err.message : String(err ?? "unknown"),
+    status: err?.status ?? err?.context?.status ?? null,
+    stack: err?.stack ?? undefined,
+  };
+};
+
+const logAssessmentTranslationEvent = (event: string, context: Record<string, unknown>) => {
+  // 일본/홍콩 지점처럼 재현이 어려운 환경에서도 원인 추적이 가능하도록
+  // 항상 동일한 접두어와 구조로 남긴다.
+  console.info(`[assessment-i18n] ${event}`, { ...context, at: new Date().toISOString() });
 };
 
 const invokeQuestionTranslation = async (questionId: string, targetLang: AssessmentLang) => {
@@ -212,6 +241,20 @@ function TranslateQuestionButton({
       setDone(true);
     } catch (e: any) {
       const labels = TRANSLATE_LABELS[targetLang];
+      const detail = describeTranslationError(e);
+      const stage = classifyTranslationFailure(e);
+      console.error("[assessment-i18n] manual-translate:failed", {
+        questionId,
+        targetLang,
+        stage,
+        error: detail,
+      });
+      void reportError({
+        message: `[assessment-i18n] manual translation failed (${stage}): ${detail.message} | q=${questionId} lang=${targetLang}`,
+        stack: detail.stack,
+        source: "assessment-translation",
+        severity: "warning",
+      });
       toast({
         title: labels.failTitle,
         description: e?.message || labels.failDesc,
@@ -824,9 +867,23 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     if (!currentLang || !questionI18nError) return;
+    const detail = describeTranslationError(questionI18nError);
+    console.error("[assessment-i18n] fetch:failed", {
+      assessmentId,
+      targetLang: currentLang,
+      questionCount: questionIdsForI18n.length,
+      userId: user?.id ?? null,
+      error: detail,
+    });
+    void reportError({
+      message: `[assessment-i18n] translation fetch failed: ${detail.message} | assessment=${assessmentId} lang=${currentLang}`,
+      stack: detail.stack,
+      source: "assessment-translation",
+      severity: "warning",
+    });
     const timer = window.setTimeout(() => void refetchQuestionI18n(), 3000);
     return () => window.clearTimeout(timer);
-  }, [currentLang, questionI18nError, refetchQuestionI18n]);
+  }, [currentLang, questionI18nError, refetchQuestionI18n, assessmentId, questionIdsForI18n.length, user?.id]);
 
   // 광동어(yue) 번역이 아직 없는 퀴즈는 한국어 대신 중국어(간체)로 자동 대체한다.
   useEffect(() => {
@@ -862,13 +919,40 @@ export default function AssessmentPage() {
       return next;
     });
     setRepairingQuestionIds((prev) => new Set(prev).add(question.id));
+    const startedAt = Date.now();
+    const diagnosticContext = {
+      assessmentId,
+      questionId: question.id,
+      questionType: question.question_type,
+      optionCount: Array.isArray(question.options) ? question.options.length : 0,
+      targetLang: currentLang,
+      autoLang,
+      langOverride,
+      branchCountry: branchCountry ?? null,
+      userId: user?.id ?? null,
+    };
+    logAssessmentTranslationEvent("repair:start", diagnosticContext);
     try {
       await invokeQuestionTranslation(question.id, currentLang);
       await invalidateQuestionI18n();
+      logAssessmentTranslationEvent("repair:success", { ...diagnosticContext, durationMs: Date.now() - startedAt });
     } catch (error) {
       repairRequestedRef.current.delete(key);
       setRepairFailedKeys((prev) => new Set(prev).add(key));
-      console.error("[assessment] question translation repair failed", error);
+      const detail = describeTranslationError(error);
+      const stage = classifyTranslationFailure(error);
+      console.error("[assessment-i18n] repair:failed", {
+        ...diagnosticContext,
+        stage,
+        durationMs: Date.now() - startedAt,
+        error: detail,
+      });
+      void reportError({
+        message: `[assessment-i18n] question translation repair failed (${stage}): ${detail.message} | q=${question.id} lang=${currentLang} branch=${branchCountry ?? "-"}`,
+        stack: detail.stack,
+        source: "assessment-translation",
+        severity: "warning",
+      });
     } finally {
       setRepairingQuestionIds((prev) => {
         const next = new Set(prev);
@@ -876,7 +960,7 @@ export default function AssessmentPage() {
         return next;
       });
     }
-  }, [currentLang, invalidateQuestionI18n]);
+  }, [currentLang, invalidateQuestionI18n, assessmentId, autoLang, langOverride, branchCountry, user?.id]);
 
   // Apply translation to a question (preserving original correct_answer position for MCQ)
   const localizeQuestion = (q: any) => {
