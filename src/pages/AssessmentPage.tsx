@@ -650,9 +650,11 @@ export default function AssessmentPage() {
       return null;
     }
   });
+  const [loadedLangStorageKey, setLoadedLangStorageKey] = useState<string | null>(null);
   useEffect(() => {
     if (!user?.id) {
       setLangOverride(null);
+      setLoadedLangStorageKey(null);
       return;
     }
     try {
@@ -661,16 +663,19 @@ export default function AssessmentPage() {
       setLangOverride(localStorage.getItem(langStorageKey));
     } catch {
       setLangOverride(null);
+    } finally {
+      setLoadedLangStorageKey(langStorageKey);
     }
   }, [user?.id, assessmentId, langStorageKey]);
   useEffect(() => {
+    if (loadedLangStorageKey !== langStorageKey) return;
     try {
       if (langOverride) localStorage.setItem(langStorageKey, langOverride);
       else localStorage.removeItem(langStorageKey);
     } catch {
       /* storage unavailable */
     }
-  }, [langOverride, langStorageKey]);
+  }, [langOverride, langStorageKey, loadedLangStorageKey]);
 
   const currentLang: AssessmentLang | null = langOverride
     ? langOverride === "ko"
@@ -1551,7 +1556,11 @@ export default function AssessmentPage() {
             )}
 
             {canAttempt && (
-              <Button className="w-full" onClick={() => startAttemptMutation.mutate()} disabled={startAttemptMutation.isPending}>
+              <Button
+                className="w-full"
+                onClick={() => startAttemptMutation.mutate()}
+                disabled={startAttemptMutation.isPending || !!(currentLang && (questionI18nError || hasUnresolvedVisibleTranslations))}
+              >
                 {startAttemptMutation.isPending ? t("common.processing") : completedAttempts.length === 0 ? t("assessment.startAssessment") : t("assessment.retakeAssessment")}
               </Button>
             )}
