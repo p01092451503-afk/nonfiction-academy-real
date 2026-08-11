@@ -852,9 +852,23 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     if (!currentLang || !questionI18nError) return;
+    const detail = describeTranslationError(questionI18nError);
+    console.error("[assessment-i18n] fetch:failed", {
+      assessmentId,
+      targetLang: currentLang,
+      questionCount: questionIdsForI18n.length,
+      userId: user?.id ?? null,
+      error: detail,
+    });
+    void reportError({
+      message: `[assessment-i18n] translation fetch failed: ${detail.message} | assessment=${assessmentId} lang=${currentLang}`,
+      stack: detail.stack,
+      source: "assessment-translation",
+      severity: "warning",
+    });
     const timer = window.setTimeout(() => void refetchQuestionI18n(), 3000);
     return () => window.clearTimeout(timer);
-  }, [currentLang, questionI18nError, refetchQuestionI18n]);
+  }, [currentLang, questionI18nError, refetchQuestionI18n, assessmentId, questionIdsForI18n.length, user?.id]);
 
   // 광동어(yue) 번역이 아직 없는 퀴즈는 한국어 대신 중국어(간체)로 자동 대체한다.
   useEffect(() => {
