@@ -181,7 +181,8 @@
       "selectCountry": "국가 선택",
       "branch": "매장",
       "selectBranch": "매장 선택",
-      "clear": "초기화"
+      "clear": "초기화",
+      "period": "기간"
     },
     "metric": {
       "completedCourses": "평균 수강 완료 강의 수",
@@ -218,7 +219,15 @@
       "learningDays": "학습일",
       "comments": "댓글",
       "pointsEarned": "획득 포인트"
-    }
+    },
+    "learningDays": "누적 학습일",
+    "learningDaysPeriodSub": "선택 기간 학습일",
+    "learningDaysSub": "학습한 총 일수",
+    "completionRate": "이수율",
+    "completionRateSub": "전체 과정 개인 이수율",
+    "periodPoints": "기간 획득 포인트",
+    "periodPointsSub": "선택 기간 합계",
+    "stats": "학습 통계"
   },
   "teacher": {
     "teacherDashboard": "강사 대시보드",

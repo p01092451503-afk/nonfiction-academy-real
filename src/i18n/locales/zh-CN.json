@@ -181,7 +181,8 @@
       "selectCountry": "选择国家",
       "branch": "门店",
       "selectBranch": "选择门店",
-      "clear": "重置"
+      "clear": "重置",
+      "period": "期间"
     },
     "metric": {
       "completedCourses": "平均完成课程数",
@@ -218,7 +219,15 @@
       "learningDays": "学习天数",
       "comments": "评论",
       "pointsEarned": "获得积分"
-    }
+    },
+    "learningDays": "累计学习天数",
+    "learningDaysPeriodSub": "所选期间学习天数",
+    "learningDaysSub": "学习的总天数",
+    "completionRate": "完成率",
+    "completionRateSub": "全部课程个人完成率",
+    "periodPoints": "期间获得积分",
+    "periodPointsSub": "所选期间合计",
+    "stats": "学习统计"
   },
   "teacher": {
     "teacherDashboard": "讲师仪表板",

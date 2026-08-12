@@ -181,7 +181,8 @@
       "selectCountry": "揀國家",
       "branch": "分店",
       "selectBranch": "揀分店",
-      "clear": "重置"
+      "clear": "重置",
+      "period": "期間"
     },
     "metric": {
       "completedCourses": "平均完成課程數",
@@ -218,7 +219,15 @@
       "learningDays": "學習日數",
       "comments": "留言",
       "pointsEarned": "獲得積分"
-    }
+    },
+    "learningDays": "累積學習日數",
+    "learningDaysPeriodSub": "揀咗嘅期間學習日數",
+    "learningDaysSub": "學習嘅總日數",
+    "completionRate": "完成率",
+    "completionRateSub": "全部課程個人完成率",
+    "periodPoints": "期間獲得積分",
+    "periodPointsSub": "揀咗嘅期間合計",
+    "stats": "學習統計"
   },
   "teacher": {
     "teacherDashboard": "導師主頁",
