@@ -647,6 +647,9 @@ export default function AssessmentPage() {
   const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
   const [justSubmittedAttempt, setJustSubmittedAttempt] = useState<any | null>(null);
   const [failureBannerDismissed, setFailureBannerDismissed] = useState(false);
+  const [manualRetryCount, setManualRetryCount] = useState(0);
+  const [manualRetrying, setManualRetrying] = useState(false);
+
 
   const repairRequestedRef = useRef<Set<string>>(new Set());
 
