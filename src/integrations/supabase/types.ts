@@ -2964,6 +2964,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_view_assessment_i18n: {
+        Args: { _assessment_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_assessment_question_i18n: {
         Args: { _question_id: string; _user_id: string }
         Returns: boolean
