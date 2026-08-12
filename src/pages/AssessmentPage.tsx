@@ -986,7 +986,23 @@ export default function AssessmentPage() {
     };
     logAssessmentTranslationEvent("repair:start", diagnosticContext);
     try {
-      await invokeQuestionTranslation(question.id, currentLang);
+      const result = await invokeQuestionTranslation(question.id, currentLang);
+      const translatedRow = (result as any)?.translation;
+      if (!translatedRow || questionHasCoreDisplayTranslationIssue(question, translatedRow, currentLang)) {
+        throw new Error("Translation response did not contain a complete display translation");
+      }
+
+      // 함수 응답에 저장된 번역 행이 이미 포함되어 있으므로 재조회가 끝날 때까지
+      // 기다리지 않고 React Query/로컬 캐시에 즉시 반영한다.
+      queryClient.setQueryData<any[]>(
+        ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
+        (previous = []) => {
+          const next = previous.filter((row: any) => row?.question_id !== question.id);
+          next.push(translatedRow);
+          if (localI18nCacheKey) writeI18nCache(localI18nCacheKey, next);
+          return next;
+        },
+      );
       await invalidateQuestionI18n();
       logAssessmentTranslationEvent("repair:success", { ...diagnosticContext, durationMs: Date.now() - startedAt });
     } catch (error) {
@@ -1013,7 +1029,7 @@ export default function AssessmentPage() {
         return next;
       });
     }
-  }, [currentLang, invalidateQuestionI18n, assessmentId, autoLang, langOverride, branchCountry, user?.id]);
+  }, [currentLang, invalidateQuestionI18n, assessmentId, autoLang, langOverride, branchCountry, user?.id, queryClient, questionIdsKey, localI18nCacheKey]);
 
   // Apply translation to a question (preserving original correct_answer position for MCQ)
   const localizeQuestion = (q: any) => {
@@ -1172,19 +1188,25 @@ export default function AssessmentPage() {
     });
   }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation, repairFailedKeys, currentQuestionIndex]);
 
-  // 안전장치: 번역 복구가 성공했다고 응답했지만 결과가 여전히 불완전하면
-  // 무한 "번역 중" 상태로 남아 응시를 시작할 수 없다. 일정 시간이 지나면
-  // 해당 문항을 복구 실패로 표시해 원문으로라도 응시할 수 있게 한다.
+  // 안전장치: 실제 복구 요청이 시작된 문항만 감시한다. 이전 구현은 아직
+  // 순서를 기다리는 문항과 raw/review 중복 문항까지 20초 후 모두 실패 처리했다.
+  // 개별 함수 호출에는 15초 타임아웃이 있으므로 여기서는 요청 중인 문항만
+  // 보조적으로 해제하며, 대기 중인 문항은 다음 순서에 정상 번역되도록 둔다.
   useEffect(() => {
     if (!currentLang || !hasPendingTranslations) return;
     const timer = setTimeout(() => {
-      const stuck: string[] = [];
-      const allQuestions = [...rawQuestions, ...reviewQuestions];
-      allQuestions.forEach((q: any) => {
-        if (questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang)) {
-          stuck.push(repairKeyFor(q.id, currentLang));
-        }
+      const uniqueQuestions = new Map<string, any>();
+      [...rawQuestions, ...reviewQuestions].forEach((q: any) => {
+        if (q?.id && !uniqueQuestions.has(q.id)) uniqueQuestions.set(q.id, q);
       });
+      const stuck = Array.from(uniqueQuestions.values())
+        .filter((q: any) => {
+          const key = repairKeyFor(q.id, currentLang);
+          return repairRequestedRef.current.has(key) &&
+            repairingQuestionIds.has(q.id) &&
+            questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang);
+        })
+        .map((q: any) => repairKeyFor(q.id, currentLang));
       if (stuck.length === 0) return;
       console.warn("[assessment-i18n] repair:watchdog-timeout", {
         assessmentId,
@@ -1205,7 +1227,7 @@ export default function AssessmentPage() {
       });
     }, 20000);
     return () => clearTimeout(timer);
-  }, [currentLang, hasPendingTranslations, rawQuestions, reviewQuestions, questionI18nMap, assessmentId, user?.id, branchCountry]);
+  }, [currentLang, hasPendingTranslations, rawQuestions, reviewQuestions, questionI18nMap, repairingQuestionIds, assessmentId, user?.id, branchCountry]);
 
   const { data: previousAnswers = [] } = useQuery({
     queryKey: ["assessment-answers", latestCompleted?.id],
