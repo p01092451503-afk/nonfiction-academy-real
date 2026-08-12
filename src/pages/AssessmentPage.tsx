@@ -1191,22 +1191,6 @@ export default function AssessmentPage() {
     });
   }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation, repairFailedKeys, currentQuestionIndex]);
 
-  const startAssessment = useCallback(() => {
-    // 번역 서비스가 느리거나 실패해도 평가 자체를 막지 않는다. 시작 시점에 아직
-    // 준비되지 않은 문항만 원문으로 해제하고, 백그라운드 번역은 계속 진행한다.
-    if (currentLang && hasPendingTranslations) {
-      const unresolvedKeys = rawQuestions
-        .filter((q: any) => questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang))
-        .map((q: any) => repairKeyFor(q.id, currentLang));
-      setRepairFailedKeys((prev) => {
-        const next = new Set(prev);
-        unresolvedKeys.forEach((key) => next.add(key));
-        return next;
-      });
-    }
-    startAttemptMutation.mutate();
-  }, [currentLang, hasPendingTranslations, rawQuestions, questionI18nMap, startAttemptMutation]);
-
   // 안전장치: 실제 복구 요청이 시작된 문항만 감시한다. 이전 구현은 아직
   // 순서를 기다리는 문항과 raw/review 중복 문항까지 20초 후 모두 실패 처리했다.
   // 개별 함수 호출에는 15초 타임아웃이 있으므로 여기서는 요청 중인 문항만
@@ -1327,6 +1311,22 @@ export default function AssessmentPage() {
     },
     onError: (e: any) => toast({ title: t("common.error"), description: e.message, variant: "destructive" }),
   });
+
+  const startAssessment = useCallback(() => {
+    // 번역 서비스가 느리거나 실패해도 평가 자체를 막지 않는다. 시작 시점에 아직
+    // 준비되지 않은 문항만 원문으로 해제하고, 백그라운드 번역은 계속 진행한다.
+    if (currentLang && hasPendingTranslations) {
+      const unresolvedKeys = rawQuestions
+        .filter((q: any) => questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang))
+        .map((q: any) => repairKeyFor(q.id, currentLang));
+      setRepairFailedKeys((prev) => {
+        const next = new Set(prev);
+        unresolvedKeys.forEach((key) => next.add(key));
+        return next;
+      });
+    }
+    startAttemptMutation.mutate();
+  }, [currentLang, hasPendingTranslations, rawQuestions, questionI18nMap, startAttemptMutation]);
 
   // Submit - use server-side grading to avoid exposing correct answers
   const submitMutation = useMutation({
