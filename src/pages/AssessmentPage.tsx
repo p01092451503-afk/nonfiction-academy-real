@@ -153,6 +153,8 @@ const invokeQuestionTranslation = async (questionId: string, targetLang: Assessm
   return data;
 };
 
+const MAX_MANUAL_TRANSLATION_RETRIES = 3;
+
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
   ja: "日本語",
