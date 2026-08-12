@@ -4,6 +4,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
 import { z } from "npm:zod@3.24.2";
+import { generateText } from "npm:ai";
+import {
+  createLovableAiGatewayProvider,
+  getLovableAiGatewayResponseHeaders,
+  getLovableAiGatewayRunId,
+} from "../_shared/ai-gateway.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,9 +48,9 @@ const isCompleteDisplayTranslation = (translation: any, source: any): boolean =>
     !hasHangul(translation.options);
 };
 
-async function translateBatch(texts: string[], targetLang: string, apiKey: string): Promise<string[]> {
+async function translateBatch(texts: string[], targetLang: string, apiKey: string, request: Request): Promise<{ texts: string[]; headers: Headers }> {
   const items = texts.map((t, i) => ({ i, t: (t ?? "").toString() })).filter((x) => x.t.trim());
-  if (items.length === 0) return texts.map(() => "");
+  if (items.length === 0) return { texts: texts.map(() => ""), headers: new Headers() };
   const keyed = Object.fromEntries(items.map((x) => [String(x.i), x.t]));
   const prompt = `Translate each input text to ${LANG_LABEL[targetLang]}.
 Return ONLY a JSON object whose keys exactly match the input keys and whose values are translated strings.
@@ -55,22 +61,18 @@ For assessment choices, keep each option aligned with the same input key and do 
 ${TERM_TRANSLATION_HINT[targetLang] || ""}
 
 ${JSON.stringify(keyed)}`;
+  const gateway = createLovableAiGatewayProvider(apiKey, getLovableAiGatewayRunId(request));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-  let res: Response;
+  let result;
   try {
-    res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: `You are a professional LMS assessment translator into ${LANG_LABEL[targetLang]}. Be accurate and natural. Translate Korean, English, and mixed-language input. Do not output Korean unless it is an official brand/product name.` },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.2,
-      }),
+    result = await generateText({
+      model: gateway("google/gemini-3.6-flash"),
+      system: `You are a professional LMS assessment translator into ${LANG_LABEL[targetLang]}. Be accurate and natural. Translate Korean, English, and mixed-language input. Do not output Korean unless it is an official brand/product name.`,
+      prompt,
+      temperature: 0.2,
+      abortSignal: controller.signal,
+      maxRetries: 1,
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
@@ -80,16 +82,14 @@ ${JSON.stringify(keyed)}`;
   } finally {
     clearTimeout(timeout);
   }
-  if (!res.ok) throw new Error(`AI gateway ${res.status}: ${await res.text()}`);
-  const j = await res.json();
-  const content = (j.choices?.[0]?.message?.content || "").trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
+  const content = result.text.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "").trim();
   const parsed = JSON.parse(content);
   const out = texts.map((t) => t ?? "");
   items.forEach((x) => {
     const v = parsed[String(x.i)];
     if (typeof v === "string" && v.trim()) out[x.i] = v;
   });
-  return out;
+  return { texts: out, headers: getLovableAiGatewayResponseHeaders(result.response.headers) };
 }
 
 serve(async (req) => {
@@ -186,7 +186,8 @@ serve(async (req) => {
     inputs.push(orig.hint || "");
     inputs.push(orig.explanation || "");
 
-    const out = await translateBatch(inputs, target_lang, apiKey);
+    const translated = await translateBatch(inputs, target_lang, apiKey, req);
+    const out = translated.texts;
     const tQ = (out[0] || "").trim();
     const tOpts = out.slice(optStart, optEnd).map((s) => (s || "").trim());
     const tCorrect = (out[optEnd] || "").trim();
@@ -207,7 +208,7 @@ serve(async (req) => {
     if (ue) throw new Error(`upsert failed: ${ue.message}`);
 
     return new Response(JSON.stringify({ ok: true, translation: payload }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: getLovableAiGatewayResponseHeaders(translated.headers, { ...corsHeaders, "Content-Type": "application/json" }),
     });
   } catch (e) {
     console.error("translate-question-now error:", e);
