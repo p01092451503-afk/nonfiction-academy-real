@@ -155,6 +155,40 @@ const invokeQuestionTranslation = async (questionId: string, targetLang: Assessm
 
 const MAX_MANUAL_TRANSLATION_RETRIES = 3;
 
+// ─── 번역 결과 로컬 캐시 ───
+// 동일 문항의 번역 결과를 브라우저에 저장해 재접속 시 로딩 없이 즉시 표시한다.
+const I18N_CACHE_PREFIX = "assessment-i18n-cache:";
+const I18N_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+const i18nCacheKey = (assessmentId: string | undefined, lang: string, idsKey: string) =>
+  `${I18N_CACHE_PREFIX}${assessmentId || "unknown"}:${lang}:${idsKey}`;
+
+const readI18nCache = (key: string): any[] | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.rows)) return null;
+    if (Date.now() - Number(parsed.savedAt || 0) > I18N_CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed.rows as any[];
+  } catch {
+    return null;
+  }
+};
+
+const writeI18nCache = (key: string, rows: any[]) => {
+  try {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), rows }));
+  } catch {
+    // 저장 실패(용량 초과 등)는 무시 — 캐시는 선택적 최적화다.
+  }
+};
+
+
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
   ja: "日本語",
@@ -853,6 +887,12 @@ export default function AssessmentPage() {
     [questionIdsForI18n]
   );
 
+  const localI18nCacheKey = currentLang ? i18nCacheKey(assessmentId, currentLang, questionIdsKey) : null;
+  const cachedI18nRows = useMemo(
+    () => (localI18nCacheKey ? readI18nCache(localI18nCacheKey) : null),
+    [localI18nCacheKey]
+  );
+
   const { data: questionI18nRows = [], isFetched: questionI18nFetched, isError: questionI18nError, refetch: refetchQuestionI18n } = useQuery({
     queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
     queryFn: async () => {
@@ -863,13 +903,19 @@ export default function AssessmentPage() {
         .in("question_id", questionIdsForI18n)
         .eq("language_code", currentLang);
       if (error) throw error;
-      return (data || []) as any[];
+      const rows = (data || []) as any[];
+      if (localI18nCacheKey) writeI18nCache(localI18nCacheKey, rows);
+      return rows;
     },
     enabled: !!currentLang && questionIdsForI18n.length > 0,
+    // 로컬 캐시가 있으면 로딩 없이 즉시 표시하고, 백그라운드에서 최신 값을 갱신한다.
+    initialData: cachedI18nRows && cachedI18nRows.length > 0 ? cachedI18nRows : undefined,
+    initialDataUpdatedAt: cachedI18nRows && cachedI18nRows.length > 0 ? Date.now() - 1 : undefined,
     staleTime: 0,
     gcTime: 15 * 60 * 1000,
     retry: 3,
     retryDelay: (attempt) => Math.min(750 * 2 ** attempt, 4000),
+
   });
 
   useEffect(() => {
