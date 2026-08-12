@@ -772,6 +772,12 @@ export default function AssessmentPage() {
       : (langOverride as AssessmentLang)
     : (autoFallbackLang || autoLang);
   const selectedLangValue = currentLang ?? "ko";
+  // 평가 화면의 번역 상태/복구 UI는 사이트 전체 언어가 아니라 학습자가
+  // 선택한 퀴즈 언어를 따른다. 두 언어가 다를 때 한국어 버튼이 섞이는 것을 막는다.
+  const assessmentT = useMemo(
+    () => typeof i18n.getFixedT === "function" ? i18n.getFixedT(currentLang ?? "ko") : t,
+    [i18n, currentLang, t],
+  );
 
 
   // Fetch assessment
@@ -1742,11 +1748,11 @@ export default function AssessmentPage() {
               <div className="flex items-center gap-2 min-w-0">
                 <Languages className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <span className="text-xs font-medium text-foreground">
-                  {t("assessment.ui.languageSelect", "퀴즈 언어 선택")}
+                  {assessmentT("assessment.ui.languageSelect", "퀴즈 언어 선택")}
                 </span>
               </div>
               <Select value={selectedLangValue} onValueChange={(v) => setLangOverride(v)}>
-                <SelectTrigger className="h-9 w-full sm:w-48" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
+                <SelectTrigger className="h-9 w-full sm:w-48" aria-label={assessmentT("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1775,12 +1781,12 @@ export default function AssessmentPage() {
                     onClick={() => void retryTranslations()}
                   >
                     {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                    {t("assessment.ui.retryTranslation")}
+                    {assessmentT("assessment.ui.retryTranslation")}
                   </Button>
                   <span className="text-[10px] text-muted-foreground">
                     {manualRetryRemaining > 0
-                      ? t("assessment.ui.retryRemaining", { n: manualRetryRemaining })
-                      : t("assessment.ui.retryExhausted")}
+                      ? assessmentT("assessment.ui.retryRemaining", { n: manualRetryRemaining })
+                      : assessmentT("assessment.ui.retryExhausted")}
                   </span>
                 </div>
 
@@ -1793,15 +1799,15 @@ export default function AssessmentPage() {
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold">
-                       {t("assessment.ui.translationFailedTitle")}
+                       {assessmentT("assessment.ui.translationFailedTitle")}
                     </p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                       {t("assessment.ui.translationFailedDesc")}
+                       {assessmentT("assessment.ui.translationFailedDesc")}
                     </p>
                     <ul className="mt-2 space-y-1">
                       {failedTranslationItems.map((item) => (
                         <li key={item.id} className="truncate text-[11px] text-muted-foreground">
-                           {t("assessment.ui.questionNumber", { n: item.number })}
+                           {assessmentT("assessment.ui.questionNumber", { n: item.number })}
                           {item.preview ? ` · ${item.preview}` : ""}
                         </li>
                       ))}
@@ -1815,15 +1821,15 @@ export default function AssessmentPage() {
                       >
                         {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                         {manualRetryRemaining > 0
-                           ? `${t("assessment.ui.retryTranslation")} (${manualRetryRemaining})`
-                           : t("assessment.ui.retryTranslation")}
+                           ? `${assessmentT("assessment.ui.retryTranslation")} (${manualRetryRemaining})`
+                           : assessmentT("assessment.ui.retryTranslation")}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setFailureBannerDismissed(true)}>
-                         {t("assessment.ui.continueWithSource")}
+                         {assessmentT("assessment.ui.continueWithSource")}
                       </Button>
 
                       <Select value={selectedLangValue} onValueChange={(v) => { setLangOverride(v); setFailureBannerDismissed(false); }}>
-                        <SelectTrigger className="h-8 w-full sm:w-40" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
+                         <SelectTrigger className="h-8 w-full sm:w-40" aria-label={assessmentT("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
