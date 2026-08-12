@@ -153,6 +153,8 @@ const invokeQuestionTranslation = async (questionId: string, targetLang: Assessm
   return data;
 };
 
+const MAX_MANUAL_TRANSLATION_RETRIES = 3;
+
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
   ja: "日本語",
@@ -647,6 +649,9 @@ export default function AssessmentPage() {
   const [repairFailedKeys, setRepairFailedKeys] = useState<Set<string>>(() => new Set());
   const [justSubmittedAttempt, setJustSubmittedAttempt] = useState<any | null>(null);
   const [failureBannerDismissed, setFailureBannerDismissed] = useState(false);
+  const [manualRetryCount, setManualRetryCount] = useState(0);
+  const [manualRetrying, setManualRetrying] = useState(false);
+
 
   const repairRequestedRef = useRef<Set<string>>(new Set());
 
@@ -1033,6 +1038,37 @@ export default function AssessmentPage() {
         preview: String(q.question_text || "").slice(0, 40),
       }));
   }, [currentLang, rawQuestions, repairFailedKeys]);
+
+  // 수동 재시도: 남은 번역(또는 실패 문항)을 다시 복구 요청한다. 남용 방지를 위해 횟수를 제한한다.
+  const manualRetryRemaining = Math.max(0, MAX_MANUAL_TRANSLATION_RETRIES - manualRetryCount);
+  const retryTranslations = useCallback(async () => {
+    if (!currentLang || manualRetrying || manualRetryRemaining <= 0) return;
+    setManualRetrying(true);
+    setManualRetryCount((c) => c + 1);
+    try {
+      const targets = [...rawQuestions, ...reviewQuestions].filter(
+        (q: any) =>
+          repairFailedKeys.has(repairKeyFor(q.id, currentLang)) ||
+          questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang)
+      );
+      targets.forEach((q: any) => repairRequestedRef.current.delete(repairKeyFor(q.id, currentLang)));
+      setRepairFailedKeys((prev) => {
+        const next = new Set(prev);
+        targets.forEach((q: any) => next.delete(repairKeyFor(q.id, currentLang)));
+        return next;
+      });
+      setFailureBannerDismissed(false);
+      await refetchQuestionI18n();
+    } finally {
+      setManualRetrying(false);
+    }
+  }, [currentLang, manualRetrying, manualRetryRemaining, rawQuestions, reviewQuestions, repairFailedKeys, questionI18nMap, refetchQuestionI18n]);
+
+  // 언어를 바꾸면 재시도 횟수를 초기화한다.
+  useEffect(() => {
+    setManualRetryCount(0);
+    setFailureBannerDismissed(false);
+  }, [currentLang]);
 
 
 
@@ -1644,10 +1680,23 @@ export default function AssessmentPage() {
                   )}
                   <span>{questionI18nError ? TRANSLATE_LABELS[currentLang].fallbackNotice : TRANSLATE_LABELS[currentLang].repairingNotice}</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => void refetchQuestionI18n()}>
-                  <RotateCcw className="h-4 w-4" />
-                  {TRANSLATE_LABELS[currentLang].idle}
-                </Button>
+                <div className="flex flex-col items-start gap-1 sm:items-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={manualRetrying || manualRetryRemaining <= 0}
+                    onClick={() => void retryTranslations()}
+                  >
+                    {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                    {t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                  </Button>
+                  <span className="text-[10px] text-muted-foreground">
+                    {manualRetryRemaining > 0
+                      ? t("assessment.ui.retryRemaining", { n: manualRetryRemaining, defaultValue: "재시도 {{n}}회 남음" })
+                      : t("assessment.ui.retryExhausted", "재시도 횟수를 모두 사용했습니다. 원문으로 응시하거나 언어를 변경해 주세요.")}
+                  </span>
+                </div>
+
               </div>
             )}
 
@@ -1674,24 +1723,18 @@ export default function AssessmentPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          failedTranslationItems.forEach((item) => {
-                            repairRequestedRef.current.delete(repairKeyFor(item.id, currentLang));
-                          });
-                          setRepairFailedKeys((prev) => {
-                            const next = new Set(prev);
-                            failedTranslationItems.forEach((item) => next.delete(repairKeyFor(item.id, currentLang)));
-                            return next;
-                          });
-                          void refetchQuestionI18n();
-                        }}
+                        disabled={manualRetrying || manualRetryRemaining <= 0}
+                        onClick={() => void retryTranslations()}
                       >
-                        <RotateCcw className="h-4 w-4" />
-                        {t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                        {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                        {manualRetryRemaining > 0
+                          ? `${t("assessment.ui.retryTranslation", "다시 번역 시도")} (${manualRetryRemaining})`
+                          : t("assessment.ui.retryTranslation", "다시 번역 시도")}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setFailureBannerDismissed(true)}>
                         {t("assessment.ui.continueWithSource", "원문으로 진행")}
                       </Button>
+
                       <Select value={selectedLangValue} onValueChange={(v) => { setLangOverride(v); setFailureBannerDismissed(false); }}>
                         <SelectTrigger className="h-8 w-full sm:w-40" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
                           <SelectValue />
