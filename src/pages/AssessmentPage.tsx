@@ -1019,6 +1019,21 @@ export default function AssessmentPage() {
     );
   }, [currentLang, questionI18nFetched, rawQuestions, questionI18nMap, repairFailedKeys]);
 
+  // 20초 감시 타이머로 복구 실패 처리된 문항 목록(번호 + 앞부분 텍스트)
+  const failedTranslationItems = useMemo(() => {
+    if (!currentLang) return [] as { id: string; number: number; preview: string }[];
+    return rawQuestions
+      .map((q: any, i: number) => ({ q, i }))
+      .filter(({ q }) => repairFailedKeys.has(repairKeyFor(q.id, currentLang)))
+      .map(({ q, i }) => ({
+        id: q.id,
+        number: i + 1,
+        preview: String(q.question_text || "").slice(0, 40),
+      }));
+  }, [currentLang, rawQuestions, repairFailedKeys]);
+
+
+
   // Localized assessment + questions used for rendering
   const assessmentLocalized = useMemo(() => {
     if (!assessment) return assessment;
