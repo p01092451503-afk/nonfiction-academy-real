@@ -1073,6 +1073,41 @@ export default function AssessmentPage() {
     });
   }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation, repairFailedKeys, currentQuestionIndex]);
 
+  // 안전장치: 번역 복구가 성공했다고 응답했지만 결과가 여전히 불완전하면
+  // 무한 "번역 중" 상태로 남아 응시를 시작할 수 없다. 일정 시간이 지나면
+  // 해당 문항을 복구 실패로 표시해 원문으로라도 응시할 수 있게 한다.
+  useEffect(() => {
+    if (!currentLang || !hasPendingTranslations) return;
+    const timer = setTimeout(() => {
+      const stuck: string[] = [];
+      const allQuestions = [...rawQuestions, ...reviewQuestions];
+      allQuestions.forEach((q: any) => {
+        if (questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang)) {
+          stuck.push(repairKeyFor(q.id, currentLang));
+        }
+      });
+      if (stuck.length === 0) return;
+      console.warn("[assessment-i18n] repair:watchdog-timeout", {
+        assessmentId,
+        targetLang: currentLang,
+        stuckKeys: stuck,
+        userId: user?.id ?? null,
+        branchCountry: branchCountry ?? null,
+      });
+      void reportError({
+        message: `[assessment-i18n] translation stuck, releasing to source text | assessment=${assessmentId} lang=${currentLang} count=${stuck.length} branch=${branchCountry ?? "-"}`,
+        source: "assessment-translation",
+        severity: "warning",
+      });
+      setRepairFailedKeys((prev) => {
+        const next = new Set(prev);
+        stuck.forEach((k) => next.add(k));
+        return next;
+      });
+    }, 20000);
+    return () => clearTimeout(timer);
+  }, [currentLang, hasPendingTranslations, rawQuestions, reviewQuestions, questionI18nMap, assessmentId, user?.id, branchCountry]);
+
   const { data: previousAnswers = [] } = useQuery({
     queryKey: ["assessment-answers", latestCompleted?.id],
     queryFn: async () => {
