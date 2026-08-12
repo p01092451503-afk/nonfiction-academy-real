@@ -3,7 +3,7 @@
 // Input: { question_id: string, target_lang: "en" | "ja" | "zh-CN" }
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { corsHeaders } from "npm:@supabase/supabase-js@2.57.4/cors";
 import { z } from "npm:zod@3.24.2";
 
 const RequestSchema = z.object({
