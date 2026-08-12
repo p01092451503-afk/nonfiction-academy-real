@@ -3,11 +3,12 @@
 // Input: { question_id: string, target_lang: "en" | "ja" | "zh-CN" }
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
+import { z } from "npm:zod@3.24.2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-import { z } from "npm:zod@3.24.2";
 
 const RequestSchema = z.object({
   question_id: z.string().uuid(),
@@ -29,6 +30,17 @@ const TERM_TRANSLATION_HINT: Record<string, string> = {
 };
 
 const AI_TIMEOUT_MS = 12_000;
+
+const hasHangul = (value: unknown): boolean => /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(JSON.stringify(value ?? ""));
+
+const isCompleteDisplayTranslation = (translation: any, source: any): boolean => {
+  if (!translation?.question_text || hasHangul(translation.question_text)) return false;
+  const sourceOptions = Array.isArray(source?.options) ? source.options : [];
+  if (sourceOptions.length === 0) return true;
+  return Array.isArray(translation.options) &&
+    translation.options.length === sourceOptions.length &&
+    !hasHangul(translation.options);
+};
 
 async function translateBatch(texts: string[], targetLang: string, apiKey: string): Promise<string[]> {
   const items = texts.map((t, i) => ({ i, t: (t ?? "").toString() })).filter((x) => x.t.trim());
@@ -147,6 +159,21 @@ serve(async (req) => {
     if (!enrollment && !privileged && !isTeacher && !isSuperAdmin) {
       return new Response(JSON.stringify({ error: "You cannot translate this question" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 이미 저장된 정상 번역은 AI를 다시 호출하지 않고 즉시 반환한다.
+    // 클라이언트의 직접 조회가 일시적으로 실패해도 이 경로로 수백 ms 안에 복구된다.
+    const { data: existingTranslation, error: existingError } = await sb
+      .from("assessment_question_i18n")
+      .select("question_id,language_code,question_text,options,correct_answer,hint,explanation")
+      .eq("question_id", question_id)
+      .eq("language_code", target_lang)
+      .maybeSingle();
+    if (existingError) throw new Error(`existing translation lookup failed: ${existingError.message}`);
+    if (isCompleteDisplayTranslation(existingTranslation, orig)) {
+      return new Response(JSON.stringify({ ok: true, translation: existingTranslation, cached: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

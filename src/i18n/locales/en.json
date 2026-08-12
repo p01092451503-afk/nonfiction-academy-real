@@ -1359,7 +1359,14 @@
       "passShort": "(Pass)",
       "failShort": "(Fail)",
       "reviewBtn": "Review",
-      "languageSelect": "Quiz language"
+      "languageSelect": "Quiz language",
+      "retryTranslation": "Retry translation",
+      "retryRemaining": "{{n}} retries remaining",
+      "retryExhausted": "All retries have been used. Continue with the source text or choose another language.",
+      "translationFailedTitle": "Some questions could not be translated",
+      "translationFailedDesc": "The questions below will appear in the original Korean. You can retry or choose another language.",
+      "questionNumber": "Question {{n}}",
+      "continueWithSource": "Continue with source"
     }
   },
   "organizationes": {

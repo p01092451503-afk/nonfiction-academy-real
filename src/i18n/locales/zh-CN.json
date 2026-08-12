@@ -1356,7 +1356,14 @@
       "passShort": "(通过)",
       "failShort": "(未通过)",
       "reviewBtn": "查看错题",
-      "languageSelect": "选择测验语言"
+      "languageSelect": "选择测验语言",
+      "retryTranslation": "重新翻译",
+      "retryRemaining": "还可重试{{n}}次",
+      "retryExhausted": "重试次数已用完。请使用原文继续作答或选择其他语言。",
+      "translationFailedTitle": "部分题目未能完成翻译",
+      "translationFailedDesc": "以下题目将以韩文原文显示。您可以重试或选择其他语言。",
+      "questionNumber": "第{{n}}题",
+      "continueWithSource": "使用原文继续"
     }
   },
   "branches": {

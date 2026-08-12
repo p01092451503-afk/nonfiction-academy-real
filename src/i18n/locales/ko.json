@@ -1356,7 +1356,14 @@
       "passShort": "(합격)",
       "failShort": "(불합격)",
       "reviewBtn": "오답확인",
-      "languageSelect": "퀴즈 언어 선택"
+      "languageSelect": "퀴즈 언어 선택",
+      "retryTranslation": "다시 번역 시도",
+      "retryRemaining": "재시도 {{n}}회 남음",
+      "retryExhausted": "재시도 횟수를 모두 사용했습니다. 원문으로 응시하거나 언어를 변경해 주세요.",
+      "translationFailedTitle": "일부 문항의 번역이 완료되지 않았습니다",
+      "translationFailedDesc": "아래 문항은 원문(한국어)으로 표시됩니다. 다시 시도하거나 다른 언어를 선택할 수 있습니다.",
+      "questionNumber": "{{n}}번 문항",
+      "continueWithSource": "원문으로 진행"
     }
   },
   "branches": {
