@@ -181,7 +181,8 @@
       "selectCountry": "国を選択",
       "branch": "店舗",
       "selectBranch": "店舗を選択",
-      "clear": "リセット"
+      "clear": "リセット",
+      "period": "期間"
     },
     "metric": {
       "completedCourses": "平均修了コース数",
@@ -218,7 +219,15 @@
       "learningDays": "学習日数",
       "comments": "コメント",
       "pointsEarned": "獲得ポイント"
-    }
+    },
+    "learningDays": "累計学習日数",
+    "learningDaysPeriodSub": "選択期間の学習日数",
+    "learningDaysSub": "学習した合計日数",
+    "completionRate": "修了率",
+    "completionRateSub": "全コースの個人修了率",
+    "periodPoints": "期間獲得ポイント",
+    "periodPointsSub": "選択期間の合計",
+    "stats": "学習統計"
   },
   "teacher": {
     "teacherDashboard": "講師ダッシュボード",

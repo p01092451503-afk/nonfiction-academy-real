@@ -184,7 +184,8 @@
       "selectCountry": "Select Country",
       "branch": "Branch",
       "selectBranch": "Select Branch",
-      "clear": "Reset"
+      "clear": "Reset",
+      "period": "Period"
     },
     "metric": {
       "completedCourses": "Avg. Completed Courses",
@@ -221,7 +222,15 @@
       "learningDays": "Learning Days",
       "comments": "Comments",
       "pointsEarned": "Points Earned"
-    }
+    },
+    "learningDays": "Total Learning Days",
+    "learningDaysPeriodSub": "Learning days in selected period",
+    "learningDaysSub": "Total days studied",
+    "completionRate": "Completion Rate",
+    "completionRateSub": "Personal completion rate across all courses",
+    "periodPoints": "Points in Period",
+    "periodPointsSub": "Total for selected period",
+    "stats": "Learning Stats"
   },
   "teacher": {
     "teacherDashboard": "Teacher Dashboard",
