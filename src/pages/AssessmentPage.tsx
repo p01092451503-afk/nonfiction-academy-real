@@ -1680,10 +1680,23 @@ export default function AssessmentPage() {
                   )}
                   <span>{questionI18nError ? TRANSLATE_LABELS[currentLang].fallbackNotice : TRANSLATE_LABELS[currentLang].repairingNotice}</span>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => void refetchQuestionI18n()}>
-                  <RotateCcw className="h-4 w-4" />
-                  {TRANSLATE_LABELS[currentLang].idle}
-                </Button>
+                <div className="flex flex-col items-start gap-1 sm:items-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={manualRetrying || manualRetryRemaining <= 0}
+                    onClick={() => void retryTranslations()}
+                  >
+                    {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                    {t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                  </Button>
+                  <span className="text-[10px] text-muted-foreground">
+                    {manualRetryRemaining > 0
+                      ? t("assessment.ui.retryRemaining", { n: manualRetryRemaining, defaultValue: "재시도 {{n}}회 남음" })
+                      : t("assessment.ui.retryExhausted", "재시도 횟수를 모두 사용했습니다. 원문으로 응시하거나 언어를 변경해 주세요.")}
+                  </span>
+                </div>
+
               </div>
             )}
 
