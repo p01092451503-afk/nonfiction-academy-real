@@ -155,6 +155,40 @@ const invokeQuestionTranslation = async (questionId: string, targetLang: Assessm
 
 const MAX_MANUAL_TRANSLATION_RETRIES = 3;
 
+// ─── 번역 결과 로컬 캐시 ───
+// 동일 문항의 번역 결과를 브라우저에 저장해 재접속 시 로딩 없이 즉시 표시한다.
+const I18N_CACHE_PREFIX = "assessment-i18n-cache:";
+const I18N_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+const i18nCacheKey = (assessmentId: string | undefined, lang: string, idsKey: string) =>
+  `${I18N_CACHE_PREFIX}${assessmentId || "unknown"}:${lang}:${idsKey}`;
+
+const readI18nCache = (key: string): any[] | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.rows)) return null;
+    if (Date.now() - Number(parsed.savedAt || 0) > I18N_CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return parsed.rows as any[];
+  } catch {
+    return null;
+  }
+};
+
+const writeI18nCache = (key: string, rows: any[]) => {
+  try {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), rows }));
+  } catch {
+    // 저장 실패(용량 초과 등)는 무시 — 캐시는 선택적 최적화다.
+  }
+};
+
+
 const LANG_NATIVE: Record<string, string> = {
   en: "English",
   ja: "日本語",
