@@ -1723,24 +1723,18 @@ export default function AssessmentPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          failedTranslationItems.forEach((item) => {
-                            repairRequestedRef.current.delete(repairKeyFor(item.id, currentLang));
-                          });
-                          setRepairFailedKeys((prev) => {
-                            const next = new Set(prev);
-                            failedTranslationItems.forEach((item) => next.delete(repairKeyFor(item.id, currentLang)));
-                            return next;
-                          });
-                          void refetchQuestionI18n();
-                        }}
+                        disabled={manualRetrying || manualRetryRemaining <= 0}
+                        onClick={() => void retryTranslations()}
                       >
-                        <RotateCcw className="h-4 w-4" />
-                        {t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                        {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                        {manualRetryRemaining > 0
+                          ? `${t("assessment.ui.retryTranslation", "다시 번역 시도")} (${manualRetryRemaining})`
+                          : t("assessment.ui.retryTranslation", "다시 번역 시도")}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setFailureBannerDismissed(true)}>
                         {t("assessment.ui.continueWithSource", "원문으로 진행")}
                       </Button>
+
                       <Select value={selectedLangValue} onValueChange={(v) => { setLangOverride(v); setFailureBannerDismissed(false); }}>
                         <SelectTrigger className="h-8 w-full sm:w-40" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
                           <SelectValue />
