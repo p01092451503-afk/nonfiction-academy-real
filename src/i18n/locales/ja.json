@@ -1356,7 +1356,14 @@
       "passShort": "(合格)",
       "failShort": "(不合格)",
       "reviewBtn": "復習",
-      "languageSelect": "クイズの言語を選択"
+      "languageSelect": "クイズの言語を選択",
+      "retryTranslation": "翻訳を再試行",
+      "retryRemaining": "残り{{n}}回再試行できます",
+      "retryExhausted": "再試行回数をすべて使用しました。原文のまま受験するか、別の言語を選択してください。",
+      "translationFailedTitle": "一部の問題を翻訳できませんでした",
+      "translationFailedDesc": "以下の問題は原文（韓国語）で表示されます。再試行するか、別の言語を選択できます。",
+      "questionNumber": "問題{{n}}",
+      "continueWithSource": "原文のまま進む"
     }
   },
   "branches": {

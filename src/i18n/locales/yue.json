@@ -1356,7 +1356,14 @@
       "passShort": "(合格)",
       "failShort": "(唔合格)",
       "reviewBtn": "檢查錯題",
-      "languageSelect": "揀選測驗語言"
+      "languageSelect": "揀選測驗語言",
+      "retryTranslation": "再試翻譯",
+      "retryRemaining": "仲可以再試{{n}}次",
+      "retryExhausted": "重試次數已經用完。請用原文繼續作答，或者揀另一種語言。",
+      "translationFailedTitle": "部分題目未能完成翻譯",
+      "translationFailedDesc": "以下題目會顯示韓文原文。你可以再試或者揀另一種語言。",
+      "questionNumber": "第{{n}}題",
+      "continueWithSource": "用原文繼續"
     }
   },
   "branches": {

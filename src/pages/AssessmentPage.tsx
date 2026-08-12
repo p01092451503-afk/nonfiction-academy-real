@@ -1101,16 +1101,19 @@ export default function AssessmentPage() {
       }));
   }, [currentLang, rawQuestions, repairFailedKeys]);
 
-  // 수동 재시도: 남은 번역(또는 실패 문항)을 다시 복구 요청한다. 남용 방지를 위해 횟수를 제한한다.
+  // 수동 재시도: 남은 번역(또는 실패 문항)을 즉시 다시 요청한다.
   const manualRetryRemaining = Math.max(0, MAX_MANUAL_TRANSLATION_RETRIES - manualRetryCount);
   const retryTranslations = useCallback(async () => {
     if (!currentLang || manualRetrying || manualRetryRemaining <= 0) return;
     setManualRetrying(true);
     setManualRetryCount((c) => c + 1);
     try {
-      const targets = [...rawQuestions, ...reviewQuestions].filter(
-        (q: any) =>
-          repairFailedKeys.has(repairKeyFor(q.id, currentLang)) ||
+      const uniqueQuestions = new Map<string, any>();
+      [...rawQuestions, ...reviewQuestions].forEach((q: any) => {
+        if (q?.id && !uniqueQuestions.has(q.id)) uniqueQuestions.set(q.id, q);
+      });
+      const targets = Array.from(uniqueQuestions.values()).filter(
+        (q: any) => repairFailedKeys.has(repairKeyFor(q.id, currentLang)) ||
           questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang)
       );
       targets.forEach((q: any) => repairRequestedRef.current.delete(repairKeyFor(q.id, currentLang)));
@@ -1121,10 +1124,11 @@ export default function AssessmentPage() {
       });
       setFailureBannerDismissed(false);
       await refetchQuestionI18n();
+      await Promise.allSettled(targets.map((q: any) => repairQuestionTranslation(q)));
     } finally {
       setManualRetrying(false);
     }
-  }, [currentLang, manualRetrying, manualRetryRemaining, rawQuestions, reviewQuestions, repairFailedKeys, questionI18nMap, refetchQuestionI18n]);
+  }, [currentLang, manualRetrying, manualRetryRemaining, rawQuestions, reviewQuestions, repairFailedKeys, questionI18nMap, refetchQuestionI18n, repairQuestionTranslation]);
 
   // 언어를 바꾸면 재시도 횟수를 초기화한다.
   useEffect(() => {
@@ -1180,13 +1184,28 @@ export default function AssessmentPage() {
       shouldAutoRepairQuestionTranslation(q, questionI18nMap.get(q.id), currentLang) &&
       !repairFailedKeys.has(repairKeyFor(q.id, currentLang))
     );
-    const visibleQuestion = sourceQuestions[currentQuestionIndex];
-    const priorityQuestion = needsRepair.find((q: any) => q.id === visibleQuestion?.id);
-    const repairTargets = priorityQuestion ? [priorityQuestion] : needsRepair.slice(0, 1);
-    repairTargets.forEach((q: any) => {
+    // 문항을 하나씩 처리하면 문항 수 × 타임아웃만큼 시작 화면이 잠길 수 있다.
+    // 모든 누락 문항을 동시에 요청하고 각 요청은 자체 타임아웃/실패 처리를 갖는다.
+    needsRepair.forEach((q: any) => {
       void repairQuestionTranslation(q);
     });
   }, [currentLang, questionI18nFetched, rawQuestions, reviewQuestions, questionI18nMap, repairQuestionTranslation, repairFailedKeys, currentQuestionIndex]);
+
+  const startAssessment = useCallback(() => {
+    // 번역 서비스가 느리거나 실패해도 평가 자체를 막지 않는다. 시작 시점에 아직
+    // 준비되지 않은 문항만 원문으로 해제하고, 백그라운드 번역은 계속 진행한다.
+    if (currentLang && hasPendingTranslations) {
+      const unresolvedKeys = rawQuestions
+        .filter((q: any) => questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang))
+        .map((q: any) => repairKeyFor(q.id, currentLang));
+      setRepairFailedKeys((prev) => {
+        const next = new Set(prev);
+        unresolvedKeys.forEach((key) => next.add(key));
+        return next;
+      });
+    }
+    startAttemptMutation.mutate();
+  }, [currentLang, hasPendingTranslations, rawQuestions, questionI18nMap, startAttemptMutation]);
 
   // 안전장치: 실제 복구 요청이 시작된 문항만 감시한다. 이전 구현은 아직
   // 순서를 기다리는 문항과 raw/review 중복 문항까지 20초 후 모두 실패 처리했다.
@@ -1756,12 +1775,12 @@ export default function AssessmentPage() {
                     onClick={() => void retryTranslations()}
                   >
                     {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                    {t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                    {t("assessment.ui.retryTranslation")}
                   </Button>
                   <span className="text-[10px] text-muted-foreground">
                     {manualRetryRemaining > 0
-                      ? t("assessment.ui.retryRemaining", { n: manualRetryRemaining, defaultValue: "재시도 {{n}}회 남음" })
-                      : t("assessment.ui.retryExhausted", "재시도 횟수를 모두 사용했습니다. 원문으로 응시하거나 언어를 변경해 주세요.")}
+                      ? t("assessment.ui.retryRemaining", { n: manualRetryRemaining })
+                      : t("assessment.ui.retryExhausted")}
                   </span>
                 </div>
 
@@ -1774,15 +1793,15 @@ export default function AssessmentPage() {
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold">
-                      {t("assessment.ui.translationFailedTitle", "일부 문항의 번역이 완료되지 않았습니다")}
+                       {t("assessment.ui.translationFailedTitle")}
                     </p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      {t("assessment.ui.translationFailedDesc", "아래 문항은 원문(한국어)으로 표시됩니다. 다시 시도하거나 다른 언어를 선택할 수 있습니다.")}
+                       {t("assessment.ui.translationFailedDesc")}
                     </p>
                     <ul className="mt-2 space-y-1">
                       {failedTranslationItems.map((item) => (
                         <li key={item.id} className="truncate text-[11px] text-muted-foreground">
-                          {t("assessment.ui.questionNumber", { n: item.number, defaultValue: "{{n}}번 문항" })}
+                           {t("assessment.ui.questionNumber", { n: item.number })}
                           {item.preview ? ` · ${item.preview}` : ""}
                         </li>
                       ))}
@@ -1796,11 +1815,11 @@ export default function AssessmentPage() {
                       >
                         {manualRetrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                         {manualRetryRemaining > 0
-                          ? `${t("assessment.ui.retryTranslation", "다시 번역 시도")} (${manualRetryRemaining})`
-                          : t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                           ? `${t("assessment.ui.retryTranslation")} (${manualRetryRemaining})`
+                           : t("assessment.ui.retryTranslation")}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setFailureBannerDismissed(true)}>
-                        {t("assessment.ui.continueWithSource", "원문으로 진행")}
+                         {t("assessment.ui.continueWithSource")}
                       </Button>
 
                       <Select value={selectedLangValue} onValueChange={(v) => { setLangOverride(v); setFailureBannerDismissed(false); }}>
@@ -1882,8 +1901,8 @@ export default function AssessmentPage() {
             {canAttempt && (
               <Button
                 className="w-full"
-                onClick={() => startAttemptMutation.mutate()}
-                disabled={startAttemptMutation.isPending || !!(currentLang && hasPendingTranslations)}
+                onClick={startAssessment}
+                disabled={startAttemptMutation.isPending}
               >
                 {startAttemptMutation.isPending ? t("common.processing") : completedAttempts.length === 0 ? t("assessment.startAssessment") : t("assessment.retakeAssessment")}
               </Button>
