@@ -887,6 +887,12 @@ export default function AssessmentPage() {
     [questionIdsForI18n]
   );
 
+  const localI18nCacheKey = currentLang ? i18nCacheKey(assessmentId, currentLang, questionIdsKey) : null;
+  const cachedI18nRows = useMemo(
+    () => (localI18nCacheKey ? readI18nCache(localI18nCacheKey) : null),
+    [localI18nCacheKey]
+  );
+
   const { data: questionI18nRows = [], isFetched: questionI18nFetched, isError: questionI18nError, refetch: refetchQuestionI18n } = useQuery({
     queryKey: ["assessment-question-i18n-view", assessmentId, currentLang, questionIdsKey],
     queryFn: async () => {
@@ -897,13 +903,19 @@ export default function AssessmentPage() {
         .in("question_id", questionIdsForI18n)
         .eq("language_code", currentLang);
       if (error) throw error;
-      return (data || []) as any[];
+      const rows = (data || []) as any[];
+      if (localI18nCacheKey) writeI18nCache(localI18nCacheKey, rows);
+      return rows;
     },
     enabled: !!currentLang && questionIdsForI18n.length > 0,
+    // 로컬 캐시가 있으면 로딩 없이 즉시 표시하고, 백그라운드에서 최신 값을 갱신한다.
+    initialData: cachedI18nRows && cachedI18nRows.length > 0 ? cachedI18nRows : undefined,
+    initialDataUpdatedAt: cachedI18nRows && cachedI18nRows.length > 0 ? Date.now() - 1 : undefined,
     staleTime: 0,
     gcTime: 15 * 60 * 1000,
     retry: 3,
     retryDelay: (attempt) => Math.min(750 * 2 ** attempt, 4000),
+
   });
 
   useEffect(() => {
