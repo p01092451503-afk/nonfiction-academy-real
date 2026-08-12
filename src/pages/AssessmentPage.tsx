@@ -775,8 +775,8 @@ export default function AssessmentPage() {
   // 평가 화면의 번역 상태/복구 UI는 사이트 전체 언어가 아니라 학습자가
   // 선택한 퀴즈 언어를 따른다. 두 언어가 다를 때 한국어 버튼이 섞이는 것을 막는다.
   const assessmentT = useMemo(
-    () => i18n.getFixedT(currentLang ?? "ko"),
-    [i18n, currentLang],
+    () => typeof i18n.getFixedT === "function" ? i18n.getFixedT(currentLang ?? "ko") : t,
+    [i18n, currentLang, t],
   );
 
 
