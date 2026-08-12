@@ -1651,6 +1651,65 @@ export default function AssessmentPage() {
               </div>
             )}
 
+            {currentLang && failedTranslationItems.length > 0 && !failureBannerDismissed && (
+              <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold">
+                      {t("assessment.ui.translationFailedTitle", "일부 문항의 번역이 완료되지 않았습니다")}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {t("assessment.ui.translationFailedDesc", "아래 문항은 원문(한국어)으로 표시됩니다. 다시 시도하거나 다른 언어를 선택할 수 있습니다.")}
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {failedTranslationItems.map((item) => (
+                        <li key={item.id} className="truncate text-[11px] text-muted-foreground">
+                          {t("assessment.ui.questionNumber", { n: item.number, defaultValue: "{{n}}번 문항" })}
+                          {item.preview ? ` · ${item.preview}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          failedTranslationItems.forEach((item) => {
+                            repairRequestedRef.current.delete(repairKeyFor(item.id, currentLang));
+                          });
+                          setRepairFailedKeys((prev) => {
+                            const next = new Set(prev);
+                            failedTranslationItems.forEach((item) => next.delete(repairKeyFor(item.id, currentLang)));
+                            return next;
+                          });
+                          void refetchQuestionI18n();
+                        }}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        {t("assessment.ui.retryTranslation", "다시 번역 시도")}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setFailureBannerDismissed(true)}>
+                        {t("assessment.ui.continueWithSource", "원문으로 진행")}
+                      </Button>
+                      <Select value={selectedLangValue} onValueChange={(v) => { setLangOverride(v); setFailureBannerDismissed(false); }}>
+                        <SelectTrigger className="h-8 w-full sm:w-40" aria-label={t("assessment.ui.languageSelect", "퀴즈 언어 선택")}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ASSESSMENT_LANG_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl bg-secondary/50 p-3 text-center">
                 <p className="text-[10px] text-muted-foreground">{t("assessment.passingScore")}</p>
