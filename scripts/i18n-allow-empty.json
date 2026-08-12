@@ -1,0 +1,7 @@
+{
+  "_comment": "의도적으로 빈 문자열이어야 하는 번역값. 형식: \"<locale>:<key>\"",
+  "allowEmpty": [
+    "en:dashboard.filter.yearSuffix",
+    "en:dashboard.filter.monthSuffix"
+  ]
+}
