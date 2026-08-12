@@ -3,8 +3,12 @@
 // Input: { question_id: string, target_lang: "en" | "ja" | "zh-CN" }
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.8";
-import { corsHeaders } from "npm:@supabase/supabase-js@2.57.4/cors";
 import { z } from "npm:zod@3.24.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const RequestSchema = z.object({
   question_id: z.string().uuid(),
