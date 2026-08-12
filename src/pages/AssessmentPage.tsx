@@ -1037,6 +1037,37 @@ export default function AssessmentPage() {
       }));
   }, [currentLang, rawQuestions, repairFailedKeys]);
 
+  // 수동 재시도: 남은 번역(또는 실패 문항)을 다시 복구 요청한다. 남용 방지를 위해 횟수를 제한한다.
+  const manualRetryRemaining = Math.max(0, MAX_MANUAL_TRANSLATION_RETRIES - manualRetryCount);
+  const retryTranslations = useCallback(async () => {
+    if (!currentLang || manualRetrying || manualRetryRemaining <= 0) return;
+    setManualRetrying(true);
+    setManualRetryCount((c) => c + 1);
+    try {
+      const targets = [...rawQuestions, ...reviewQuestions].filter(
+        (q: any) =>
+          repairFailedKeys.has(repairKeyFor(q.id, currentLang)) ||
+          questionHasCoreDisplayTranslationIssue(q, questionI18nMap.get(q.id), currentLang)
+      );
+      targets.forEach((q: any) => repairRequestedRef.current.delete(repairKeyFor(q.id, currentLang)));
+      setRepairFailedKeys((prev) => {
+        const next = new Set(prev);
+        targets.forEach((q: any) => next.delete(repairKeyFor(q.id, currentLang)));
+        return next;
+      });
+      setFailureBannerDismissed(false);
+      await refetchQuestionI18n();
+    } finally {
+      setManualRetrying(false);
+    }
+  }, [currentLang, manualRetrying, manualRetryRemaining, rawQuestions, reviewQuestions, repairFailedKeys, questionI18nMap, refetchQuestionI18n]);
+
+  // 언어를 바꾸면 재시도 횟수를 초기화한다.
+  useEffect(() => {
+    setManualRetryCount(0);
+    setFailureBannerDismissed(false);
+  }, [currentLang]);
+
 
 
   // Localized assessment + questions used for rendering
