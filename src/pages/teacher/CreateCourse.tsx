@@ -1358,10 +1358,9 @@ const CreateCourse = () => {
       if (c.source !== "images" && c.source !== "package") return;
       const items = c.package_items || [];
       const rowLabel = `[${idx + 1}차시${c.title ? ` · ${c.title}` : ""}]`;
-      if (items.length === 0) {
-        invalidIssues.push(`${rowLabel} 업로드된 이미지/미디어가 없습니다.`);
-        return;
-      }
+      // 빈 차시(자료 미등록)는 허용 — 학생 화면에서 "준비 중"으로 처리된다.
+      if (items.length === 0) return;
+
       const missingIndexes = items
         .map((it, i) => (!(it.media_url || "").trim() ? i + 1 : null))
         .filter((v): v is number => v !== null);
