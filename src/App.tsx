@@ -18,6 +18,38 @@ import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import PlatformUpdateBanner from "./components/PlatformUpdateBanner";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
+/**
+ * Recover from "Importing a module script failed" — happens when a new deploy
+ * replaces the hashed chunk files while a user still runs the old index.html
+ * (or a stale service-worker cache serves outdated asset URLs).
+ * Strategy: retry once → then purge SW/caches and hard-reload one time.
+ */
+const CHUNK_RECOVERY_KEY = "chunk_recovery_at";
+
+const recoverFromStaleChunks = async () => {
+  try {
+    const last = Number(sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 0);
+    // Only recover once per 60s to avoid reload loops
+    if (Date.now() - last < 60_000) return false;
+    sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch {
+    /* ignore */
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("_v", String(Date.now()));
+  window.location.replace(url.toString());
+  return true;
+};
+
 const lazyWithRetry = <T extends { default: React.ComponentType<any> }>(factory: () => Promise<T>) =>
   lazy(async () => {
     try {
@@ -27,10 +59,14 @@ const lazyWithRetry = <T extends { default: React.ComponentType<any> }>(factory:
       try {
         return await factory();
       } catch (retryError) {
+        await recoverFromStaleChunks();
+        // Keep the promise pending while the page reloads
+        await new Promise(() => {});
         throw retryError;
       }
     }
   });
+
 
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const StudentDashboard = lazyWithRetry(() => import("./pages/StudentDashboard"));
