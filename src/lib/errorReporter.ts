@@ -39,10 +39,16 @@ const IGNORE_PATTERNS = [
   /Load failed/i,
   /NetworkError when attempting to fetch resource/i,
   /AbortError/i,
+  // 신규 배포 직후 구버전 청크 요청 실패 — 앱이 자동 새로고침으로 복구하므로 알림 불필요
+  /Importing a module script failed/i,
+  /error loading dynamically imported module/i,
+  /Failed to fetch dynamically imported module/i,
+  /Unable to preload CSS/i,
   // 외부 플레이어/SDK 가 던지는 난독화된 값(예: "Ba", "e") — 진단 가치가 없고 알림만 유발
   /^[A-Za-z$_][A-Za-z0-9$_]{0,3}$/,
   /^\[object [A-Za-z]+\]$/,
 ];
+
 
 // 던져진 값이 Error 가 아닐 때 사람이 읽을 수 있는 메시지로 직렬화
 const describeReason = (reason: unknown): string => {

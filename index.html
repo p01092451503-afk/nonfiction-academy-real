@@ -50,14 +50,27 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      window.addEventListener('error', function(e) {
-        if (e.message && e.message.indexOf('module script') !== -1) {
-          if (!sessionStorage.getItem('chunk_reload')) {
-            sessionStorage.setItem('chunk_reload', '1');
-            window.location.reload();
-          }
-        }
+      // 신규 배포 후 캐시된 구버전 청크로 인해 모듈 로딩이 실패하면
+      // 서비스워커/캐시를 비우고 한 번만 강제 새로고침한다.
+      window.addEventListener('error', function (e) {
+        var msg = (e && e.message) || '';
+        if (msg.indexOf('module script') === -1 && msg.indexOf('dynamically imported module') === -1) return;
+        var last = Number(sessionStorage.getItem('chunk_recovery_at') || 0);
+        if (Date.now() - last < 60000) return;
+        sessionStorage.setItem('chunk_recovery_at', String(Date.now()));
+        var done = function () {
+          var url = new URL(window.location.href);
+          url.searchParams.set('_v', String(Date.now()));
+          window.location.replace(url.toString());
+        };
+        var tasks = [];
+        try {
+          if (window.caches) tasks.push(caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); }));
+          if (navigator.serviceWorker) tasks.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+        } catch (err) {}
+        Promise.all(tasks).then(done, done);
       });
     </script>
+
   </body>
 </html>
