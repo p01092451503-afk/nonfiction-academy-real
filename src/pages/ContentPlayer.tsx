@@ -473,7 +473,9 @@ const ContentPlayer = () => {
     mutationFn: async () => {
       if (minLearningMin > 0) {
         const totalMin = await getCourseLearningMinutes();
-        const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin));
+        // 반올림/기록 지연으로 인한 오차 20초는 충족으로 인정
+        const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin - 1 / 3));
+
         if (shortMin > 0) {
           setMinTimeDialog({ open: true, shortMin });
           return false;
@@ -620,7 +622,7 @@ const ContentPlayer = () => {
     (async () => {
       // 세션 목록 조회 → 세션당 최대 30분으로 캡핑하여 총 학습시간 계산
       const totalMin = await getCourseLearningMinutes();
-      const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin));
+      const shortMin = Math.max(0, Math.ceil(minLearningMin - totalMin - 1 / 3));
       if (shortMin > 0) {
         setMinTimeDialog({ open: true, shortMin });
       }
