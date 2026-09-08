@@ -282,6 +282,10 @@ const ContentPlayer = () => {
   // 최소 학습시간 부족 안내 팝업
   const [minTimeDialog, setMinTimeDialog] = useState<{ open: boolean; shortMin: number }>({ open: false, shortMin: 0 });
   const minTimePromptedRef = useRef<string | null>(null);
+  // 이번 방문에서 실제로 학습 화면에 머문 시간(ms). 하트비트 저장이 실패해도
+  // 사용자가 체감한 학습시간이 사라지지 않도록 보조 지표로 사용한다.
+  const visitStartedAtRef = useRef<number>(Date.now());
+
 
   const currentContent = contents.find((c) => c.id === contentId);
   const minLearningMin = Number((course as any)?.min_learning_minutes ?? 0) || 0;
