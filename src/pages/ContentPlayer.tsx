@@ -421,21 +421,53 @@ const ContentPlayer = () => {
     }
   }, [mangoAutoCompleted]);
 
+  /**
+   * 강의 학습시간(분) 계산.
+   * 하트비트 세션 기록만 사용하면 (탭 전환/모바일 화면잠금/네트워크 오류 등으로)
+   * 기록이 일부 유실됐을 때 실제로 오래 학습한 사용자에게도 "시간 부족" 팝업이
+   * 뜨는 문제가 있어, 아래 3가지 지표 중 가장 큰 값을 학습시간으로 인정한다.
+   *  1) 저장된 학습 세션 합계 (세션당 최대 30분)
+   *  2) 콘텐츠별 실제 시청 누적 초 (content_progress.last_position_seconds)
+   *  3) 이번 방문에서 학습 화면에 머문 시간
+   */
   const getCourseLearningMinutes = useCallback(async () => {
     if (!user?.id || !courseId) return 0;
-    const { data, error } = await supabase
-      .from("course_learning_sessions")
-      .select("started_at,last_heartbeat_at")
-      .eq("user_id", user.id)
-      .eq("course_id", courseId);
-    if (error || !data) return 0;
-    return data.reduce((sum, s: any) => {
+
+    const visitMin = Math.max(0, (Date.now() - visitStartedAtRef.current) / 60000);
+
+    const [sessionsRes, progressRes] = await Promise.all([
+      supabase
+        .from("course_learning_sessions")
+        .select("started_at,last_heartbeat_at")
+        .eq("user_id", user.id)
+        .eq("course_id", courseId),
+      contents.length
+        ? supabase
+            .from("content_progress")
+            .select("last_position_seconds,progress_percentage,completed")
+            .eq("user_id", user.id)
+            .in(
+              "content_id",
+              contents.map((c: any) => c.id),
+            )
+        : Promise.resolve({ data: [] as any[], error: null } as any),
+    ]);
+
+    const sessionMin = (sessionsRes.data || []).reduce((sum: number, s: any) => {
       const start = new Date(s.started_at).getTime();
       const end = new Date(s.last_heartbeat_at || s.started_at).getTime();
       const min = Math.max(0, (end - start) / 60000);
       return sum + Math.min(min, 30);
     }, 0);
-  }, [user?.id, courseId]);
+
+    const watchedMin = (progressRes.data || []).reduce((sum: number, p: any) => {
+      const secs = Number(p?.last_position_seconds) || 0;
+      return sum + Math.max(0, secs) / 60;
+    }, 0);
+
+    return Math.max(sessionMin, watchedMin, visitMin);
+  }, [user?.id, courseId, contents]);
+
 
   const markCompleteMutation = useMutation({
     mutationFn: async () => {
