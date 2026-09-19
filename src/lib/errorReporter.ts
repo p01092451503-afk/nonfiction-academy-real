@@ -170,7 +170,14 @@ export const installGlobalErrorReporter = () => {
   if (installed || typeof window === "undefined") return;
   installed = true;
 
+  // 브라우저가 요청/재생을 취소했을 때 던지는 이름(Safari 는 메시지에 AbortError 가 없음)
+  const isAbortLike = (err: any) => {
+    const name = err?.name || err?.constructor?.name || "";
+    return /^(AbortError|NotAllowedError)$/i.test(String(name));
+  };
+
   window.addEventListener("error", (e) => {
+    if (isAbortLike(e.error)) return;
     const msg = e.message || (e.error && e.error.message) || "Unknown window error";
     const stack = (e.error && e.error.stack) || `${msg}\n  at ${e.filename}:${e.lineno}:${e.colno}`;
     recoverKnownAssessmentStackError(msg);
@@ -179,6 +186,7 @@ export const installGlobalErrorReporter = () => {
 
   window.addEventListener("unhandledrejection", (e) => {
     const reason: any = e.reason;
+    if (isAbortLike(reason)) return;
     const msg = describeReason(reason);
     const stack = reason?.stack || "";
     recoverKnownAssessmentStackError(msg);
