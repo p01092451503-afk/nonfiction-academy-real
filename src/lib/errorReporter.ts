@@ -39,6 +39,14 @@ const IGNORE_PATTERNS = [
   /Load failed/i,
   /NetworkError when attempting to fetch resource/i,
   /AbortError/i,
+  // 사용자가 영상/페이지를 벗어나거나 재생을 중단할 때 브라우저가 던지는 취소 신호 — 실제 장애 아님
+  /The operation was aborted/i,
+  /The user aborted a request/i,
+  /operation was aborted/i,
+  /signal is aborted without reason/i,
+  /The play\(\) request was interrupted/i,
+  /AbortError: The play/i,
+  /cancell?ed/i,
   // 신규 배포 직후 구버전 청크 요청 실패 — 앱이 자동 새로고침으로 복구하므로 알림 불필요
   /Importing a module script failed/i,
   /error loading dynamically imported module/i,
