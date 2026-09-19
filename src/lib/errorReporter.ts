@@ -46,7 +46,7 @@ const IGNORE_PATTERNS = [
   /signal is aborted without reason/i,
   /The play\(\) request was interrupted/i,
   /AbortError: The play/i,
-  /cancell?ed/i,
+  /The request is not allowed by the user agent/i,
   // 신규 배포 직후 구버전 청크 요청 실패 — 앱이 자동 새로고침으로 복구하므로 알림 불필요
   /Importing a module script failed/i,
   /error loading dynamically imported module/i,
