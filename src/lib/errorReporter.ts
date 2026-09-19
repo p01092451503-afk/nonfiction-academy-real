@@ -39,6 +39,14 @@ const IGNORE_PATTERNS = [
   /Load failed/i,
   /NetworkError when attempting to fetch resource/i,
   /AbortError/i,
+  // 사용자가 영상/페이지를 벗어나거나 재생을 중단할 때 브라우저가 던지는 취소 신호 — 실제 장애 아님
+  /The operation was aborted/i,
+  /The user aborted a request/i,
+  /operation was aborted/i,
+  /signal is aborted without reason/i,
+  /The play\(\) request was interrupted/i,
+  /AbortError: The play/i,
+  /The request is not allowed by the user agent/i,
   // 신규 배포 직후 구버전 청크 요청 실패 — 앱이 자동 새로고침으로 복구하므로 알림 불필요
   /Importing a module script failed/i,
   /error loading dynamically imported module/i,
@@ -162,7 +170,14 @@ export const installGlobalErrorReporter = () => {
   if (installed || typeof window === "undefined") return;
   installed = true;
 
+  // 브라우저가 요청/재생을 취소했을 때 던지는 이름(Safari 는 메시지에 AbortError 가 없음)
+  const isAbortLike = (err: any) => {
+    const name = err?.name || err?.constructor?.name || "";
+    return /^(AbortError|NotAllowedError)$/i.test(String(name));
+  };
+
   window.addEventListener("error", (e) => {
+    if (isAbortLike(e.error)) return;
     const msg = e.message || (e.error && e.error.message) || "Unknown window error";
     const stack = (e.error && e.error.stack) || `${msg}\n  at ${e.filename}:${e.lineno}:${e.colno}`;
     recoverKnownAssessmentStackError(msg);
@@ -171,6 +186,7 @@ export const installGlobalErrorReporter = () => {
 
   window.addEventListener("unhandledrejection", (e) => {
     const reason: any = e.reason;
+    if (isAbortLike(reason)) return;
     const msg = describeReason(reason);
     const stack = reason?.stack || "";
     recoverKnownAssessmentStackError(msg);
