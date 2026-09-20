@@ -554,6 +554,36 @@ const AdminSettings = () => {
         </Tabs>
       </div>
 
+      {/* 백업 복원 확인 */}
+      <AlertDialog open={!!restoreTarget} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.backupRestoreTitle", "백업 복원")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {restoreTarget && (
+                <>
+                  {isEn
+                    ? `Restore "${backupTableLabel(restoreTarget.table)}" from ${restoreTarget.date} (${restoreTarget.rows.toLocaleString()} rows). Records saved in the backup will be rolled back to that day's state. Records created after the backup are kept.`
+                    : `${restoreTarget.date} 백업의 "${backupTableLabel(restoreTarget.table)}" ${restoreTarget.rows.toLocaleString()}건을 복원합니다. 백업에 포함된 기록은 그날 상태로 되돌아가며, 백업 이후 새로 생긴 기록은 그대로 유지됩니다.`}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", "취소")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (restoreTarget) restoreBackupMutation.mutate({ date: restoreTarget.date, table: restoreTarget.table });
+              }}
+              disabled={restoreBackupMutation.isPending}
+            >
+              {restoreBackupMutation.isPending ? t("admin.backupRestoring", "복원 중...") : t("admin.backupRestore", "복원")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Add/Edit Department Dialog */}
       <Dialog open={deptDialogOpen} onOpenChange={setDeptDialogOpen}>
         <DialogContent className="sm:max-w-md">
