@@ -1304,6 +1304,33 @@ export type Database = {
           },
         ]
       }
+      daily_data_backups: {
+        Row: {
+          backup_date: string
+          created_at: string
+          id: string
+          row_data: Json
+          row_id: string | null
+          source_table: string
+        }
+        Insert: {
+          backup_date?: string
+          created_at?: string
+          id?: string
+          row_data: Json
+          row_id?: string | null
+          source_table: string
+        }
+        Update: {
+          backup_date?: string
+          created_at?: string
+          id?: string
+          row_data?: Json
+          row_id?: string | null
+          source_table?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           code: string | null
@@ -3089,6 +3116,7 @@ export type Database = {
         Args: { p_course_id: string }
         Returns: number
       }
+      run_daily_data_backup: { Args: never; Returns: undefined }
       submit_and_grade_assessment: {
         Args: { p_answers: Json; p_attempt_id: string }
         Returns: Json
