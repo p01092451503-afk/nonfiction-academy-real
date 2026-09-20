@@ -15,6 +15,13 @@
       "when": 1789904673061,
       "tag": "0001_fix_backup_function_profiles_key",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789904980641,
+      "tag": "0002_backup_admin_ui",
+      "breakpoints": true
     }
   ]
 }
