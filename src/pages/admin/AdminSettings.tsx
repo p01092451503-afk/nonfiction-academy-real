@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye, DatabaseBackup, RefreshCw } from "lucide-react";
+import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye, DatabaseBackup, RefreshCw, Undo2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
