@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye, DatabaseBackup, RefreshCw } from "lucide-react";
+import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye, DatabaseBackup, RefreshCw, Undo2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,6 +191,28 @@ const AdminSettings = () => {
     onSuccess: () => {
       toast.success(t("admin.backupRunSuccess", "백업이 생성되었습니다."));
       refetchBackup();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const [restoreTarget, setRestoreTarget] = useState<{ date: string; table: string; rows: number } | null>(null);
+
+  const restoreBackupMutation = useMutation({
+    mutationFn: async (target: { date: string; table: string }) => {
+      const { data, error } = await (supabase as any).rpc("restore_data_backup", {
+        p_backup_date: target.date,
+        p_source_table: target.table,
+      });
+      if (error) throw error;
+      return data as { restored_rows: number };
+    },
+    onSuccess: (data) => {
+      toast.success(
+        t("admin.backupRestoreSuccess", "복원이 완료되었습니다.") +
+          ` (${Number(data?.restored_rows || 0).toLocaleString()}${isEn ? " rows" : "건"})`,
+      );
+      setRestoreTarget(null);
+      queryClient.invalidateQueries();
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -506,10 +528,22 @@ const AdminSettings = () => {
                   {tables.map((row) => (
                     <div key={row.source_table} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
                       <p className="text-sm text-foreground">{backupTableLabel(row.source_table)}</p>
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {row.row_count.toLocaleString()}
-                        {isEn ? " rows" : "건"}
-                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {row.row_count.toLocaleString()}
+                          {isEn ? " rows" : "건"}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl gap-1.5"
+                          onClick={() => setRestoreTarget({ date, table: row.source_table, rows: row.row_count })}
+                          disabled={restoreBackupMutation.isPending}
+                        >
+                          <Undo2 className="h-3.5 w-3.5" />
+                          {t("admin.backupRestore", "복원")}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -519,6 +553,36 @@ const AdminSettings = () => {
 
         </Tabs>
       </div>
+
+      {/* 백업 복원 확인 */}
+      <AlertDialog open={!!restoreTarget} onOpenChange={(open) => !open && setRestoreTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.backupRestoreTitle", "백업 복원")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {restoreTarget && (
+                <>
+                  {isEn
+                    ? `Restore "${backupTableLabel(restoreTarget.table)}" from ${restoreTarget.date} (${restoreTarget.rows.toLocaleString()} rows). Records saved in the backup will be rolled back to that day's state. Records created after the backup are kept.`
+                    : `${restoreTarget.date} 백업의 "${backupTableLabel(restoreTarget.table)}" ${restoreTarget.rows.toLocaleString()}건을 복원합니다. 백업에 포함된 기록은 그날 상태로 되돌아가며, 백업 이후 새로 생긴 기록은 그대로 유지됩니다.`}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", "취소")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (restoreTarget) restoreBackupMutation.mutate({ date: restoreTarget.date, table: restoreTarget.table });
+              }}
+              disabled={restoreBackupMutation.isPending}
+            >
+              {restoreBackupMutation.isPending ? t("admin.backupRestoring", "복원 중...") : t("admin.backupRestore", "복원")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add/Edit Department Dialog */}
       <Dialog open={deptDialogOpen} onOpenChange={setDeptDialogOpen}>
