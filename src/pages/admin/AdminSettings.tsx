@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Settings, Bell, Shield, Building2, Plus, Pencil, Trash2, Users, Eye, DatabaseBackup, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +90,13 @@ const ROLE_TABS: { value: MenuRole; label: string }[] = [
   { value: "admin", label: "관리자" },
 ];
 
+const BACKUP_TABLE_LABELS: Record<string, { ko: string; en: string }> = {
+  profiles: { ko: "회원 정보", en: "Members" },
+  enrollments: { ko: "수강 기록", en: "Enrollments" },
+  content_progress: { ko: "차시 진도", en: "Content progress" },
+};
+
+
 const AdminSettings = () => {
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
@@ -165,6 +172,54 @@ const AdminSettings = () => {
   profiles.forEach((p: any) => {
     if (p.department_id) memberCounts.set(p.department_id, (memberCounts.get(p.department_id) || 0) + 1);
   });
+
+  // 데이터 백업 현황
+  const { data: backupSummary = [], isLoading: backupLoading, refetch: refetchBackup } = useQuery({
+    queryKey: ["backup-summary"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_backup_summary");
+      if (error) throw error;
+      return (data || []) as { backup_date: string; source_table: string; row_count: number }[];
+    },
+  });
+
+  const runBackupMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await (supabase as any).rpc("trigger_daily_data_backup");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(t("admin.backupRunSuccess", "백업이 생성되었습니다."));
+      refetchBackup();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const backupByDate = useMemo(() => {
+    const map = new Map<string, { source_table: string; row_count: number }[]>();
+    backupSummary.forEach((r) => {
+      const list = map.get(r.backup_date) || [];
+      list.push({ source_table: r.source_table, row_count: Number(r.row_count) });
+      map.set(r.backup_date, list);
+    });
+    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [backupSummary]);
+
+  const todaySeoul = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+  const yesterdaySeoul = new Date(Date.now() - 86400000).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+  const backupDateLabel = (date: string) => {
+    const d = new Date(`${date}T00:00:00+09:00`);
+    const base = d.toLocaleDateString(isEn ? "en-US" : "ko-KR", { month: "long", day: "numeric", weekday: "short" });
+    if (date === todaySeoul) return isEn ? `${base} (Today)` : `${base} (오늘)`;
+    if (date === yesterdaySeoul) return isEn ? `${base} (Yesterday)` : `${base} (어제)`;
+    return base;
+  };
+  const backupTableLabel = (table: string) => {
+    const label = BACKUP_TABLE_LABELS[table];
+    if (!label) return table;
+    return isEn ? label.en : label.ko;
+  };
+
 
   const createDeptMutation = useMutation({
     mutationFn: async () => {
@@ -259,6 +314,7 @@ const AdminSettings = () => {
             <TabsTrigger value="general">{t("admin.generalSettings")}</TabsTrigger>
             <TabsTrigger value="menus">{t("admin.menuVisibility", "메뉴 표시 설정")}</TabsTrigger>
             <TabsTrigger value="departments">{t("admin.deptManagement")}</TabsTrigger>
+            <TabsTrigger value="backup">{t("admin.backupTab", "데이터 백업")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="menus" className="space-y-6">
@@ -407,6 +463,58 @@ const AdminSettings = () => {
                 topLevel.map((d: any) => renderDeptRow(d))
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="backup" className="space-y-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">{t("admin.backupTitle", "데이터 백업")}</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t(
+                    "admin.backupDesc",
+                    "회원 정보와 수강·진도 기록을 매일 자정(한국시간)에 자동 백업하며, 7일이 지난 백업은 자동으로 삭제됩니다.",
+                  )}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="rounded-xl gap-2 shrink-0"
+                onClick={() => runBackupMutation.mutate()}
+                disabled={runBackupMutation.isPending}
+              >
+                <RefreshCw className={`h-4 w-4 ${runBackupMutation.isPending ? "animate-spin" : ""}`} />
+                {runBackupMutation.isPending ? t("admin.backupRunning", "백업 중...") : t("admin.backupRunNow", "지금 백업")}
+              </Button>
+            </div>
+
+            {backupLoading ? (
+              <div className="stat-card">
+                <p className="text-sm text-muted-foreground text-center py-8">{t("common.loading", "불러오는 중...")}</p>
+              </div>
+            ) : backupByDate.length === 0 ? (
+              <div className="stat-card">
+                <p className="text-sm text-muted-foreground text-center py-8">{t("admin.backupEmpty", "아직 백업 기록이 없습니다.")}</p>
+              </div>
+            ) : (
+              backupByDate.map(([date, tables]) => (
+                <div key={date} className="stat-card !p-0 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-accent/30">
+                    <DatabaseBackup className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">{backupDateLabel(date)}</span>
+                    <span className="text-[11px] text-muted-foreground ml-auto">{t("admin.backupAt", "자정 (한국시간) 자동 실행")}</span>
+                  </div>
+                  {tables.map((row) => (
+                    <div key={row.source_table} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
+                      <p className="text-sm text-foreground">{backupTableLabel(row.source_table)}</p>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        {row.row_count.toLocaleString()}
+                        {isEn ? " rows" : "건"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
           </TabsContent>
 
         </Tabs>

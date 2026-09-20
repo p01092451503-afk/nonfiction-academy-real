@@ -3076,6 +3076,14 @@ export type Database = {
           question_type: Database["public"]["Enums"]["question_type"]
         }[]
       }
+      get_backup_summary: {
+        Args: never
+        Returns: {
+          backup_date: string
+          row_count: number
+          source_table: string
+        }[]
+      }
       get_leader_scope_dept_ids: {
         Args: { _leader_id: string }
         Returns: string[]
@@ -3125,6 +3133,7 @@ export type Database = {
         Args: { _course_id: string; _user_id: string }
         Returns: undefined
       }
+      trigger_daily_data_backup: { Args: never; Returns: undefined }
       update_streak: { Args: { p_user_id: string }; Returns: undefined }
       user_can_view_targeted_post: {
         Args: {
