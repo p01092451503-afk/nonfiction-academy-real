@@ -195,6 +195,28 @@ const AdminSettings = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const [restoreTarget, setRestoreTarget] = useState<{ date: string; table: string; rows: number } | null>(null);
+
+  const restoreBackupMutation = useMutation({
+    mutationFn: async (target: { date: string; table: string }) => {
+      const { data, error } = await (supabase as any).rpc("restore_data_backup", {
+        p_backup_date: target.date,
+        p_source_table: target.table,
+      });
+      if (error) throw error;
+      return data as { restored_rows: number };
+    },
+    onSuccess: (data) => {
+      toast.success(
+        t("admin.backupRestoreSuccess", "복원이 완료되었습니다.") +
+          ` (${Number(data?.restored_rows || 0).toLocaleString()}${isEn ? " rows" : "건"})`,
+      );
+      setRestoreTarget(null);
+      queryClient.invalidateQueries();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const backupByDate = useMemo(() => {
     const map = new Map<string, { source_table: string; row_count: number }[]>();
     backupSummary.forEach((r) => {
