@@ -3124,6 +3124,10 @@ export type Database = {
         Args: { p_course_id: string }
         Returns: number
       }
+      restore_data_backup: {
+        Args: { p_backup_date: string; p_source_table: string }
+        Returns: Json
+      }
       run_daily_data_backup: { Args: never; Returns: undefined }
       submit_and_grade_assessment: {
         Args: { p_answers: Json; p_attempt_id: string }
