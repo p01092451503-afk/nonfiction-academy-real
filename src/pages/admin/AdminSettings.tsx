@@ -528,10 +528,22 @@ const AdminSettings = () => {
                   {tables.map((row) => (
                     <div key={row.source_table} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
                       <p className="text-sm text-foreground">{backupTableLabel(row.source_table)}</p>
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {row.row_count.toLocaleString()}
-                        {isEn ? " rows" : "건"}
-                      </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {row.row_count.toLocaleString()}
+                          {isEn ? " rows" : "건"}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl gap-1.5"
+                          onClick={() => setRestoreTarget({ date, table: row.source_table, rows: row.row_count })}
+                          disabled={restoreBackupMutation.isPending}
+                        >
+                          <Undo2 className="h-3.5 w-3.5" />
+                          {t("admin.backupRestore", "복원")}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
