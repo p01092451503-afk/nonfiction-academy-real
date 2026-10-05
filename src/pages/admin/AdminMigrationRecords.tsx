@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -535,7 +534,7 @@ export default function AdminMigrationRecords() {
   const loading = empLoading || cmpLoading;
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -974,6 +973,6 @@ export default function AdminMigrationRecords() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
@@ -149,7 +148,7 @@ const AdminEnrollments = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -317,7 +316,7 @@ const AdminEnrollments = () => {
         )}
       </div>
       <BulkEnrollDialog open={bulkOpen} onOpenChange={setBulkOpen} />
-    </DashboardLayout>
+    </>
   );
 };
 

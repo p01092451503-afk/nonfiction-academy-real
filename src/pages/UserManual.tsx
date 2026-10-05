@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { BookMarked, Search, GraduationCap, Users, ShieldCheck, ChevronRight, Download, Languages, FileText } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -1186,7 +1185,7 @@ const UserManual = () => {
     layoutRole === "admin" ? "admin" : layoutRole === "teacher" ? "teacher" : "student";
 
   return (
-    <DashboardLayout role={layoutRole}>
+    <>
 
       <div className="space-y-6">
         <div>
@@ -1230,7 +1229,7 @@ const UserManual = () => {
           ))}
         </Tabs>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

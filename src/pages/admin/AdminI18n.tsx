@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Languages, Wand2, RefreshCw } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -546,7 +545,7 @@ const AdminI18n = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
@@ -688,7 +687,7 @@ const AdminI18n = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

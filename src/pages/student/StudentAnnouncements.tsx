@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,7 +42,7 @@ const StudentAnnouncements = () => {
   });
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -112,7 +111,7 @@ const StudentAnnouncements = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

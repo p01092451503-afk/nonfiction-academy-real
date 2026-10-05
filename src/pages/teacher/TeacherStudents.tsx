@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
@@ -236,7 +235,7 @@ const TeacherStudents = () => {
 
   return (
     <>
-    <DashboardLayout role="teacher">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -401,7 +400,7 @@ const TeacherStudents = () => {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </>
 
       {/* Send Message Dialog */}
       <Dialog open={msgOpen} onOpenChange={setMsgOpen}>

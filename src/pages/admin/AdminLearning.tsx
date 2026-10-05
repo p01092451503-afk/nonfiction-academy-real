@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -466,7 +465,7 @@ const AdminLearning = () => {
   const clearAllFilters = () => { setCourseIds([]); setBranchIds([]); setCountries([]); setSearchTerm(""); };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       {isLoading ? (
         <PageSkeleton blocks={4} />
       ) : (
@@ -813,7 +812,7 @@ const AdminLearning = () => {
         </Tabs>
       </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

@@ -6,7 +6,6 @@ import {
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,28 +191,28 @@ const TeacherDashboard = () => {
   // ── 빈 상태 ────────────────────────────────────────────
   if (scopeLoading) {
     return (
-      <DashboardLayout role="teacher">
+      <>
         <div className="rounded-xl border border-border bg-card p-10 text-center">
           <p className="text-sm text-muted-foreground">{t("common.loading", "불러오는 중...")}</p>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
   if (!hasDepartment) {
     return (
-      <DashboardLayout role="teacher">
+      <>
         <div className="rounded-xl border border-border bg-card p-10 text-center">
           <AlertCircle className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">
             {t("teacher.noDepartment", "소속 지점이 설정되지 않았습니다. 관리자에게 문의하세요.")}
           </p>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   return (
-    <DashboardLayout role="teacher">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -413,7 +412,7 @@ const TeacherDashboard = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

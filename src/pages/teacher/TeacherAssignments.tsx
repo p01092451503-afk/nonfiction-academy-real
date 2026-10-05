@@ -27,7 +27,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { formatDistanceToNow } from "date-fns";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
@@ -329,7 +328,7 @@ const TeacherAssignments = () => {
   };
 
   return (
-    <DashboardLayout role="teacher">
+    <>
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
@@ -758,7 +757,7 @@ const TeacherAssignments = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

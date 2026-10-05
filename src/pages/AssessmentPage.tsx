@@ -11,7 +11,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import PageSkeleton from "@/components/PageSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -1423,27 +1422,27 @@ export default function AssessmentPage() {
     (!!currentLang && questionIdsForI18n.length > 0 && !questionI18nFetched)
   ) {
     return (
-      <DashboardLayout role={layoutRole}>
+      <>
         <PageSkeleton blocks={4} />
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!assessment) {
     return (
-      <DashboardLayout role="student">
+      <>
         <div className="text-center py-16 space-y-4">
           <p className="text-muted-foreground">{t("assessment.notFound")}</p>
           <Button variant="outline" onClick={() => navigate(-1)}>{t("common.back")}</Button>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   // ─── RESULT SUMMARY (shown immediately after submission) ───
   if (showResults && !reviewMode && latestCompleted) {
     return (
-      <DashboardLayout role={layoutRole}>
+      <>
         <div className="space-y-4">
           <Card className="border-border overflow-hidden">
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border">
@@ -1475,7 +1474,7 @@ export default function AssessmentPage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -1488,7 +1487,7 @@ export default function AssessmentPage() {
     const progressPercent = rQuestions.length > 0 ? Math.round(((currentQuestionIndex + 1) / rQuestions.length) * 100) : 0;
 
     return (
-      <DashboardLayout role={layoutRole}>
+      <>
         <div className="space-y-4">
           <Card className="border-border overflow-hidden">
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border">
@@ -1545,7 +1544,7 @@ export default function AssessmentPage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -1566,7 +1565,7 @@ export default function AssessmentPage() {
     const currentRepairing = !!(currentQ && repairingQuestionIds.has(currentQ.id) && !currentRepairFailed);
 
     return (
-      <DashboardLayout role="student">
+      <>
         <div className="space-y-4">
           <Card className="border-border overflow-hidden">
             {/* Header */}
@@ -1718,13 +1717,13 @@ export default function AssessmentPage() {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   // ─── OVERVIEW / ENTRY POINT ───
   return (
-    <DashboardLayout role={layoutRole}>
+    <>
       <div className="space-y-6">
         <button
           type="button"
@@ -1919,6 +1918,6 @@ export default function AssessmentPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

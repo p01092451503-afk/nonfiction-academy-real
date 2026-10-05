@@ -1,12 +1,11 @@
 import { Info } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import SystemInfoSection from "@/components/admin/SystemInfoSection";
 import { useTranslation } from "react-i18next";
 
 const AdminSystemInfo = () => {
   const { t } = useTranslation();
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
@@ -19,7 +18,7 @@ const AdminSystemInfo = () => {
         </div>
         <SystemInfoSection />
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

@@ -23,7 +23,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, parse } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -1396,7 +1395,7 @@ const CreateCourse = () => {
   };
 
   return (
-    <DashboardLayout role={layoutRole}>
+    <>
       <form onSubmit={handleSubmit} className="space-y-8">
         <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" /> {t("createCourse.backButton")}
@@ -1692,7 +1691,7 @@ const CreateCourse = () => {
           )}
         </div>
       </form>
-    </DashboardLayout>
+    </>
   );
 };
 

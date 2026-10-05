@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Megaphone, Send, Trash2, Power, PowerOff } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,7 +87,7 @@ const AdminPlatformUpdates = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2">
@@ -217,7 +216,7 @@ const AdminPlatformUpdates = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

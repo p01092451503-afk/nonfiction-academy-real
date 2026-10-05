@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import {
   Smartphone, CheckCircle2, XCircle, AlertTriangle, Loader2, Play, ExternalLink, RefreshCw,
 } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -311,7 +310,7 @@ const AdminVideoMobileCheck = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
@@ -443,7 +442,7 @@ const AdminVideoMobileCheck = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

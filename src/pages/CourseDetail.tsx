@@ -34,7 +34,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import PageSkeleton from "@/components/PageSkeleton";
 import CategorySelect from "@/components/CategorySelect";
 import CourseThumbnail from "@/components/CourseThumbnail";
@@ -654,27 +653,27 @@ const CourseDetail = () => {
 
   if (courseLoading || isLangSwitching || courseI18nFetching || contentsFetching || contentI18nFetching) {
     return (
-      <DashboardLayout role={role}>
+      <>
         <PageSkeleton blocks={4} />
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!course) {
     return (
-      <DashboardLayout role={role}>
+      <>
         <div className="text-center py-16 space-y-4">
           <p className="text-muted-foreground">{t("course.courseNotFound")}</p>
           <Button variant="outline" onClick={() => navigate(`${routePrefix}/courses`)}>{t("common.back")}</Button>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   // ===== TEACHER / ADMIN VIEW =====
   if (isTeacherOrAdmin) {
     return (
-      <DashboardLayout role={role}>
+      <>
         <div className="space-y-5">
           <header className="space-y-3">
             <button
@@ -1044,13 +1043,13 @@ const CourseDetail = () => {
             )}
           </DialogContent>
         </Dialog>
-      </DashboardLayout>
+      </>
     );
   }
 
   // ===== STUDENT VIEW =====
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-6">
         <header className="space-y-3">
           <button
@@ -1302,7 +1301,7 @@ const CourseDetail = () => {
           <StudentSurvey courseId={courseId} />
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

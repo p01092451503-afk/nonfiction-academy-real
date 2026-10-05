@@ -5,7 +5,6 @@ import {
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -224,7 +223,7 @@ const AdminPlatformHealth = () => {
   );
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -498,7 +497,7 @@ const AdminPlatformHealth = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 };
 

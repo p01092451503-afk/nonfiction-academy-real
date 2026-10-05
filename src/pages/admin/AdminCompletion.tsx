@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -233,7 +232,7 @@ const AdminCompletion = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6 sm:space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -444,7 +443,7 @@ const AdminCompletion = () => {
         onOpenChange={setBulkDialog}
         courseIds={courses.map((c: any) => c.id)}
       />
-    </DashboardLayout>
+    </>
   );
 };
 

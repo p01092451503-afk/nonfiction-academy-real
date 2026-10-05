@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
@@ -269,7 +268,7 @@ const StudentCourses = () => {
   };
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2"><BookOpen className="h-6 w-6" aria-hidden="true" />{t("course.myCourseRoom")}</h1>
@@ -339,7 +338,7 @@ const StudentCourses = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

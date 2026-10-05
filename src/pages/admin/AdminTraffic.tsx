@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { RankBar } from "@/components/ui/rank-bar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { ChartTooltipContent, chartTooltipDefaults, chartLineCursor } from "@/components/ui/chart-tooltip";
@@ -157,7 +156,7 @@ const AdminTraffic = () => {
   ];
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -336,7 +335,7 @@ const AdminTraffic = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

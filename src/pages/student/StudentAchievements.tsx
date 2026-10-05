@@ -3,7 +3,6 @@ import { Award, Flame, Star, Target, TrendingUp, Zap, Crown, Medal, BookOpen } f
 import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useTranslation } from "react-i18next";
@@ -241,7 +240,7 @@ const StudentAchievements = () => {
   };
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2"><Award className="h-6 w-6" aria-hidden="true" />{t("achievements.title")}</h1>
@@ -533,7 +532,7 @@ const StudentAchievements = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

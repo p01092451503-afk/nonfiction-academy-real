@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -170,7 +169,7 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
   };
 
   return (
-    <DashboardLayout role={role}>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -322,7 +321,7 @@ const AdminBoard = ({ role = "admin" }: { role?: "admin" | "teacher" }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

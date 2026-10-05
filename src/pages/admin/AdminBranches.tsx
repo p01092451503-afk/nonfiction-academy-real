@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Building2, Plus, Upload, Download, Pencil, Trash2, Users, Search } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -285,7 +284,7 @@ const AdminBranches = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-foreground flex items-center gap-2">
@@ -589,7 +588,7 @@ const AdminBranches = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 
