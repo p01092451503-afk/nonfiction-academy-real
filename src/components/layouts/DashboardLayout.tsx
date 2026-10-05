@@ -291,6 +291,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
   };
 
   return (
+    <ContentClassContext.Provider value={setOutletContentClass}>
     <div className="flex min-h-screen bg-background">
       {sidebarOpen && (
         <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40 lg:hidden" aria-hidden="true" onClick={() => setSidebarOpen(false)} />
@@ -430,9 +431,10 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className={contentClassName || "flex-1 min-w-0 p-6 lg:p-8"} role="main">{children}</main>
+        <main className={outletContentClass || contentClassName || "flex-1 min-w-0 p-6 lg:p-8"} role="main">{children}</main>
       </div>
     </div>
+    </ContentClassContext.Provider>
   );
 };
 
