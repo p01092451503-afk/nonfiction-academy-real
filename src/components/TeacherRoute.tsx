@@ -15,7 +15,7 @@ const TeacherRoute = ({ children }: TeacherRouteProps) => {
   const { user, isLoading } = useUser();
   const { isTeacher, isAdmin } = useUserRole();
 
-  if (isLoading) return <RouteSkeleton />;
+  if (isLoading && !(user && (isTeacher || isAdmin))) return <RouteSkeleton />;
   if (!user) return <Navigate to="/" replace />;
   if (!isTeacher && !isAdmin) return <Navigate to="/dashboard" replace />;
 
