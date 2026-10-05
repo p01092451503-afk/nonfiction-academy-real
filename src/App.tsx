@@ -134,85 +134,89 @@ const queryClient = new QueryClient({
 });
 
 const AppRoutes = () => {
-  const location = useLocation();
-
   return (
-    <AppErrorBoundary key={location.pathname}>
+    <AppErrorBoundary>
       <Suspense fallback={<RouteSkeleton />}>
         <Routes>
           <Route path="/" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
 
-          {/* Student */}
-          <Route path="/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-          <Route path="/dashboard/courses" element={<ProtectedRoute><StudentCourses /></ProtectedRoute>} />
-          <Route path="/dashboard/assignments" element={<ProtectedRoute><StudentAssignments /></ProtectedRoute>} />
-          <Route path="/dashboard/achievements" element={<ProtectedRoute><StudentAchievements /></ProtectedRoute>} />
-          <Route path="/catalog" element={<ProtectedRoute><CourseCatalog /></ProtectedRoute>} />
-          <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
-          <Route path="/student/announcements" element={<ProtectedRoute><StudentAnnouncements /></ProtectedRoute>} />
-          <Route path="/student/board" element={<ProtectedRoute><StudentBoard /></ProtectedRoute>} />
-          <Route path="/student/tracks" element={<ProtectedRoute><StudentTracks /></ProtectedRoute>} />
+          {/* Student — persistent layout, only the content swaps on navigation */}
+          <Route element={<ProtectedRoute><RoleLayoutRoute role="student" /></ProtectedRoute>}>
+            <Route path="/student" element={<StudentDashboard />} />
+            <Route path="/dashboard/courses" element={<StudentCourses />} />
+            <Route path="/dashboard/assignments" element={<StudentAssignments />} />
+            <Route path="/dashboard/achievements" element={<StudentAchievements />} />
+            <Route path="/catalog" element={<CourseCatalog />} />
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/student/announcements" element={<StudentAnnouncements />} />
+            <Route path="/student/board" element={<StudentBoard />} />
+            <Route path="/student/tracks" element={<StudentTracks />} />
+            <Route path="/student/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/student/courses/:courseId/content/:contentId" element={<ContentPlayer />} />
+            <Route path="/student/courses/:courseId/assessment/:assessmentId" element={<AssessmentPage />} />
+          </Route>
 
           {/* Teacher (requires teacher/admin role) */}
-          <Route path="/teacher" element={<TeacherRoute><TeacherDashboard /></TeacherRoute>} />
           {/* 강의 관리 권한은 관리자 전용. 러닝 리더는 /teacher 대시보드로 리다이렉트 */}
           <Route path="/teacher/courses" element={<Navigate to="/teacher" replace />} />
           <Route path="/teacher/courses/new" element={<Navigate to="/teacher" replace />} />
           <Route path="/teacher/courses/:courseId/edit" element={<Navigate to="/teacher" replace />} />
-          <Route path="/teacher/assignments" element={<TeacherRoute><TeacherAssignments /></TeacherRoute>} />
-          <Route path="/teacher/students" element={<TeacherRoute><TeacherStudents /></TeacherRoute>} />
-          <Route path="/teacher/students/:studentId" element={<TeacherRoute><TeacherStudentDetail /></TeacherRoute>} />
-          <Route path="/teacher/notifications" element={<TeacherRoute><TeacherNotifications /></TeacherRoute>} />
-          <Route path="/teacher/announcements" element={<TeacherRoute><TeacherAnnouncements /></TeacherRoute>} />
-          <Route path="/teacher/board" element={<TeacherRoute><AdminBoard role="teacher" /></TeacherRoute>} />
-          <Route path="/teacher/attendance" element={<TeacherRoute><AdminAttendance role="teacher" /></TeacherRoute>} />
+          <Route element={<TeacherRoute><RoleLayoutRoute role="teacher" /></TeacherRoute>}>
+            <Route path="/teacher" element={<TeacherDashboard />} />
+            <Route path="/teacher/assignments" element={<TeacherAssignments />} />
+            <Route path="/teacher/students" element={<TeacherStudents />} />
+            <Route path="/teacher/students/:studentId" element={<TeacherStudentDetail />} />
+            <Route path="/teacher/notifications" element={<TeacherNotifications />} />
+            <Route path="/teacher/announcements" element={<TeacherAnnouncements />} />
+            <Route path="/teacher/board" element={<AdminBoard role="teacher" />} />
+            <Route path="/teacher/attendance" element={<AdminAttendance role="teacher" />} />
+            <Route path="/teacher/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/teacher/courses/:courseId/content/:contentId" element={<ContentPlayer />} />
+            <Route path="/teacher/courses/:courseId/assessment/:assessmentId" element={<AssessmentPage />} />
+          </Route>
 
           {/* Admin */}
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-          <Route path="/admin/courses" element={<AdminRoute><AdminCourses /></AdminRoute>} />
-          <Route path="/admin/courses/new" element={<AdminRoute><CreateCourse /></AdminRoute>} />
-          <Route path="/admin/courses/:courseId/edit" element={<AdminRoute><CreateCourse /></AdminRoute>} />
-          <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-          <Route path="/admin/enrollments" element={<AdminRoute><AdminEnrollments /></AdminRoute>} />
-          <Route path="/admin/learning" element={<AdminRoute><AdminLearning /></AdminRoute>} />
-          <Route path="/admin/attendance" element={<AdminRoute><AdminAttendance role="admin" /></AdminRoute>} />
-          <Route path="/admin/completion" element={<AdminRoute><AdminCompletion /></AdminRoute>} />
-          <Route path="/admin/traffic" element={<AdminRoute><AdminTraffic /></AdminRoute>} />
-          <Route path="/admin/platform-updates" element={<AdminRoute><AdminPlatformUpdates /></AdminRoute>} />
-          <Route path="/admin/pwa-settings" element={<AdminRoute><AdminPWASettings /></AdminRoute>} />
-          <Route path="/admin/branches" element={<AdminRoute><AdminBranches /></AdminRoute>} />
-          <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
-          <Route path="/admin/announcements" element={<AdminRoute><AdminAnnouncements /></AdminRoute>} />
-          <Route path="/admin/board" element={<AdminRoute><AdminBoard role="admin" /></AdminRoute>} />
-          <Route path="/admin/surveys" element={<AdminRoute><AdminSurveys /></AdminRoute>} />
-          <Route path="/admin/videos" element={<AdminRoute><AdminVideos /></AdminRoute>} />
-          <Route path="/admin/video-health" element={<AdminRoute><AdminVideoHealthCheck /></AdminRoute>} />
-          <Route path="/admin/video-mobile-check" element={<AdminRoute><AdminVideoMobileCheck /></AdminRoute>} />
-          <Route path="/admin/i18n" element={<AdminRoute><AdminI18n /></AdminRoute>} />
-          <Route path="/admin/system-info" element={<AdminRoute><AdminSystemInfo /></AdminRoute>} />
-          <Route path="/admin/platform-health" element={<AdminRoute><AdminPlatformHealth /></AdminRoute>} />
-          <Route path="/manual" element={<ProtectedRoute><UserManual /></ProtectedRoute>} />
-          <Route path="/admin/tracks" element={<AdminRoute><AdminTracks /></AdminRoute>} />
-          <Route path="/admin/global-dashboard" element={<AdminRoute><AdminGlobalDashboard /></AdminRoute>} />
-          <Route path="/admin/legacy-records" element={<AdminRoute><AdminLegacyRecords /></AdminRoute>} />
-          <Route path="/admin/migration-records" element={<AdminRoute><AdminMigrationRecords /></AdminRoute>} />
+          <Route element={<AdminRoute><RoleLayoutRoute role="admin" /></AdminRoute>}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/courses" element={<AdminCourses />} />
+            <Route path="/admin/courses/new" element={<CreateCourse />} />
+            <Route path="/admin/courses/:courseId/edit" element={<CreateCourse />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/enrollments" element={<AdminEnrollments />} />
+            <Route path="/admin/learning" element={<AdminLearning />} />
+            <Route path="/admin/attendance" element={<AdminAttendance role="admin" />} />
+            <Route path="/admin/completion" element={<AdminCompletion />} />
+            <Route path="/admin/traffic" element={<AdminTraffic />} />
+            <Route path="/admin/platform-updates" element={<AdminPlatformUpdates />} />
+            <Route path="/admin/pwa-settings" element={<AdminPWASettings />} />
+            <Route path="/admin/branches" element={<AdminBranches />} />
+            <Route path="/admin/notifications" element={<AdminNotifications />} />
+            <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+            <Route path="/admin/board" element={<AdminBoard role="admin" />} />
+            <Route path="/admin/surveys" element={<AdminSurveys />} />
+            <Route path="/admin/videos" element={<AdminVideos />} />
+            <Route path="/admin/video-health" element={<AdminVideoHealthCheck />} />
+            <Route path="/admin/video-mobile-check" element={<AdminVideoMobileCheck />} />
+            <Route path="/admin/i18n" element={<AdminI18n />} />
+            <Route path="/admin/system-info" element={<AdminSystemInfo />} />
+            <Route path="/admin/platform-health" element={<AdminPlatformHealth />} />
+            <Route path="/admin/tracks" element={<AdminTracks />} />
+            <Route path="/admin/global-dashboard" element={<AdminGlobalDashboard />} />
+            <Route path="/admin/legacy-records" element={<AdminLegacyRecords />} />
+            <Route path="/admin/migration-records" element={<AdminMigrationRecords />} />
+            <Route path="/admin/courses/:courseId" element={<CourseDetail />} />
+            <Route path="/admin/courses/:courseId/content/:contentId" element={<ContentPlayer />} />
+            <Route path="/admin/courses/:courseId/assessment/:assessmentId" element={<AssessmentPage />} />
+          </Route>
 
-          {/* Dept Admin */}
-          <Route path="/dept-admin" element={<ProtectedRoute><DeptAdminDashboard /></ProtectedRoute>} />
-
-          {/* Course Detail & Content Player (role-based) */}
-          <Route path="/admin/courses/:courseId" element={<AdminRoute><CourseDetail /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId" element={<TeacherRoute><CourseDetail /></TeacherRoute>} />
-          <Route path="/student/courses/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
-          <Route path="/admin/courses/:courseId/content/:contentId" element={<AdminRoute><ContentPlayer /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId/content/:contentId" element={<TeacherRoute><ContentPlayer /></TeacherRoute>} />
-          <Route path="/student/courses/:courseId/content/:contentId" element={<ProtectedRoute><ContentPlayer /></ProtectedRoute>} />
-          <Route path="/admin/courses/:courseId/assessment/:assessmentId" element={<AdminRoute><AssessmentPage /></AdminRoute>} />
-          <Route path="/teacher/courses/:courseId/assessment/:assessmentId" element={<TeacherRoute><AssessmentPage /></TeacherRoute>} />
-          <Route path="/student/courses/:courseId/assessment/:assessmentId" element={<ProtectedRoute><AssessmentPage /></ProtectedRoute>} />
+          {/* Shared pages — layout role follows the signed-in user's role */}
+          <Route element={<ProtectedRoute><RoleLayoutRoute /></ProtectedRoute>}>
+            <Route path="/manual" element={<UserManual />} />
+            <Route path="/dept-admin" element={<DeptAdminDashboard />} />
+          </Route>
 
           {/* Legacy generic routes → redirect to role-based paths */}
           <Route path="/courses/:courseId" element={<ProtectedRoute><CourseRedirect /></ProtectedRoute>} />
