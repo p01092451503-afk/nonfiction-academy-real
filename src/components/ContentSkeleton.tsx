@@ -1,11 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
 /**
  * Content-area-only skeleton shown inside the persistent dashboard layout
  * while a lazy page chunk loads (no full-screen wrapper).
  */
 const ContentSkeleton = () => (
-  <div className="w-full min-w-0" aria-busy="true">
+  <div className="relative w-full min-w-0" role="status" aria-live="polite" aria-busy="true">
+    <div className="sticky top-4 z-10 mb-5 flex justify-center">
+      <div className="flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 shadow-sm">
+        <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
+        <p className="text-sm font-medium text-foreground">데이터를 불러오는 중입니다...</p>
+      </div>
+    </div>
     <div className="mb-6 space-y-2">
       <Skeleton className="h-7 w-48 sm:h-8 sm:w-64" />
       <Skeleton className="h-4 w-72 sm:w-96" />
