@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Layers, BookOpen, ChevronRight, Lock, CheckCircle2, Circle } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { Badge } from "@/components/ui/badge";
@@ -165,7 +164,7 @@ const StudentTracks = () => {
   });
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -352,7 +351,7 @@ const StudentTracks = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

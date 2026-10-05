@@ -11,7 +11,6 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import CourseThumbnail from "@/components/CourseThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -128,7 +127,7 @@ const TeacherCourses = () => {
   };
 
   return (
-    <DashboardLayout role="teacher">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -380,7 +379,7 @@ const TeacherCourses = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

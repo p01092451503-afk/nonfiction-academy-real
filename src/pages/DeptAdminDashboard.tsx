@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Users, TrendingUp, AlertTriangle, CheckCircle, BarChart3 } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { Link } from "react-router-dom";
@@ -122,7 +121,7 @@ const DeptAdminDashboard = () => {
   });
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
@@ -234,7 +233,7 @@ const DeptAdminDashboard = () => {
           </table>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

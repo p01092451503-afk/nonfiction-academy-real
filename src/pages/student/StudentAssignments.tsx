@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
@@ -178,7 +177,7 @@ const StudentAssignments = () => {
   };
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2"><ClipboardList className="h-6 w-6" aria-hidden="true" />{t("assignments.title")}</h1>
@@ -446,7 +445,7 @@ const StudentAssignments = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

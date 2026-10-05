@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useContentClassName } from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -232,6 +232,7 @@ const CategoryCarousel = ({ category, courses, helpers }: { category: any; cours
 };
 
 const CourseCatalog = () => {
+  useContentClassName("flex-1 min-w-0 overflow-x-hidden px-5 py-6 sm:px-6 sm:py-6 lg:px-8 lg:py-8");
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -385,7 +386,7 @@ const CourseCatalog = () => {
   };
 
   return (
-    <DashboardLayout role="student" contentClassName="flex-1 min-w-0 overflow-x-hidden px-5 py-6 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+    <>
       <div className="min-w-0 space-y-6">
         <header>
           <h1 className="flex items-center gap-2 text-xl font-semibold text-foreground sm:text-2xl">
@@ -508,7 +509,7 @@ const CourseCatalog = () => {
           </section>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

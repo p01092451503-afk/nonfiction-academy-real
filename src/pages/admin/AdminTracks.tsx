@@ -6,7 +6,6 @@ import TrackMembersDialog from "@/components/admin/tracks/TrackMembersDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { translateKoTo, type TargetLang } from "@/lib/translate";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -258,7 +257,7 @@ const AdminTracks = () => {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -443,7 +442,7 @@ const AdminTracks = () => {
           onClose={() => setMembersTrack(null)}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

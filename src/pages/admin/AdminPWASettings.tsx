@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Smartphone, Save } from "lucide-react";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +59,7 @@ const AdminPWASettings = () => {
   });
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold flex items-center gap-2">
@@ -139,7 +138,7 @@ const AdminPWASettings = () => {
           </Button>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

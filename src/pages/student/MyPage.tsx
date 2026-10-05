@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import AvatarTab from "@/components/mypage/AvatarTab";
 import AppInstallCard from "@/components/AppInstallCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -260,7 +259,7 @@ const MyPage = () => {
   const xpProgress = Math.min(100, (xp / xpToNext) * 100);
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-6">
         {/* Page Title */}
         <div>
@@ -583,7 +582,7 @@ const MyPage = () => {
             </TabsContent>
           </Tabs>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

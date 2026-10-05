@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@/contexts/UserContext";
@@ -294,7 +293,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
   };
 
   return (
-    <DashboardLayout role={role}>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -459,7 +458,7 @@ const AdminAttendance = ({ role = "admin" }: AdminAttendanceProps) => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

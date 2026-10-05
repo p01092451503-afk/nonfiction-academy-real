@@ -4,7 +4,6 @@ import { ArrowLeft, User, BookOpen, Clock, CheckCircle2, TrendingUp, Calendar } 
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 import { useLeaderScope } from "@/hooks/useLeaderScope";
@@ -222,7 +221,7 @@ const TeacherStudentDetail = () => {
   }
 
   return (
-    <DashboardLayout role="teacher">
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -343,7 +342,7 @@ const TeacherStudentDetail = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

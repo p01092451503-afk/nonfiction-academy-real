@@ -6,7 +6,6 @@ import {
   TrendingUp, ShieldCheck, Trophy, AlertTriangle, MapPin, Layers,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -415,7 +414,7 @@ export default function AdminGlobalDashboard() {
   };
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6 min-w-0">
         {/* Header */}
         <div className="flex items-start justify-between flex-wrap gap-3">
@@ -836,7 +835,7 @@ export default function AdminGlobalDashboard() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 

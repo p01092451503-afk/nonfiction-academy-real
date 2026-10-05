@@ -19,7 +19,6 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/contexts/UserContext";
@@ -177,7 +176,7 @@ const AdminVideos = () => {
   const totalDuration = videos.reduce((sum, v) => sum + (v.duration_minutes || 0), 0);
 
   return (
-    <DashboardLayout role="admin">
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -367,7 +366,7 @@ const AdminVideos = () => {
           <BunnyBulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} />
         </Suspense>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

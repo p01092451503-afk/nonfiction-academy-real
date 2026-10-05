@@ -7,7 +7,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -506,7 +505,7 @@ const StudentDashboard = () => {
 
 
   return (
-    <DashboardLayout role="student">
+    <>
       <div className="space-y-8">
         {/* Header */}
         <div>
@@ -770,7 +769,7 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 
