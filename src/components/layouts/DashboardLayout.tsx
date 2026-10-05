@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, BookOpen, ClipboardList, Trophy, Users, Settings, Compass, UserCircle, ClipboardCheck,
@@ -49,7 +49,21 @@ interface DashboardLayoutProps {
   contentClassName?: string;
 }
 
-const DashboardLayout = ({ children, role = "student", contentClassName }: DashboardLayoutProps) => {
+/**
+ * Lets a page rendered inside the layout (via <Outlet />) override the
+ * <main> content className without owning the layout itself.
+ */
+const ContentClassContext = createContext<(cls?: string) => void>(() => {});
+export const useContentClassName = (cls?: string) => {
+  const set = useContext(ContentClassContext);
+  useEffect(() => {
+    set(cls);
+    return () => set(undefined);
+  }, [cls, set]);
+};
+
+const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutProps) => {
+  const [outletContentClass, setOutletContentClass] = useState<string | undefined>(undefined);
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
