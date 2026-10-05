@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, isLoading } = useUser();
 
-  if (isLoading) {
+  if (isLoading && !user) {
     return <RouteSkeleton />;
   }
 

@@ -12,7 +12,8 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   const { isAdmin, roles } = useUserRole();
   const isSuperAdmin = roles.includes("super_admin");
 
-  if (isLoading) {
+  // Keep the already-mounted layout during background auth refreshes.
+  if (isLoading && !(user && (isAdmin || isSuperAdmin))) {
     return <RouteSkeleton />;
   }
 
