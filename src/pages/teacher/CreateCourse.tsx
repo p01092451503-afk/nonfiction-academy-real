@@ -149,7 +149,6 @@ const CreateCourse = () => {
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const isEn = i18n.language?.startsWith("en");
-  const layoutRole = isAdmin ? "admin" : "teacher";
 
   const contentTypeOptions: { value: ContentType; label: string; icon: React.ElementType }[] = [
     { value: "video", label: t("createCourse.videoLabel"), icon: Video },

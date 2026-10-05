@@ -231,6 +231,7 @@ const CategoryCarousel = ({ category, courses, helpers }: { category: any; cours
 };
 
 const CourseCatalog = () => {
+  useContentClassName("flex-1 min-w-0 overflow-x-hidden px-5 py-6 sm:px-6 sm:py-6 lg:px-8 lg:py-8");
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();

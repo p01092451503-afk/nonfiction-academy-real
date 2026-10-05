@@ -1414,7 +1414,6 @@ export default function AssessmentPage() {
 
   const handleSubmit = () => submitMutation.mutate();
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-  const layoutRole = isStudentRoute ? "student" : primaryRole === "admin" ? "admin" : "teacher";
 
   if (
     assessmentLoading ||
