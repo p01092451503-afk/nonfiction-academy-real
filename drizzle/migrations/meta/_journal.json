@@ -29,6 +29,13 @@
       "when": 1789905341384,
       "tag": "0003_restore_data_backup",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791293657928,
+      "tag": "0004_full_db_backup",
+      "breakpoints": true
     }
   ]
 }
