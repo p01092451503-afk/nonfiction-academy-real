@@ -702,7 +702,9 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     );
   };
 
-  const current = items[index];
+  // 저장된 위치가 현재 슬라이드 수보다 크면(슬라이드 삭제·언어 변경 등) 범위 안으로 보정
+  const current = items[Math.min(Math.max(index, 0), items.length - 1)];
+  if (!current) return null;
   const isImage = current.item_type === "image" || isImageUrl(current.media_url);
   const translatePct = -index * 100;
   const dragPct = (dragOffset / containerWidth) * 100;
