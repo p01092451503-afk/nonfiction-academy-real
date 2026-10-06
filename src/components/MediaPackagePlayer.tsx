@@ -404,6 +404,11 @@ const MediaPackagePlayer = ({ contentId, onComplete, onPartialProgress, onWatche
     }
   }, [contentId, items.length]);
 
+  // 슬라이드 수가 줄어들면 현재 위치를 범위 안으로 맞춤
+  useEffect(() => {
+    if (items.length > 0 && index > items.length - 1) setIndex(items.length - 1);
+  }, [items.length, index]);
+
   useEffect(() => {
     setVisited((prev) => {
       if (prev.has(index)) return prev;
