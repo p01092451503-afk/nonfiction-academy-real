@@ -2958,6 +2958,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _backup_tables: { Args: never; Returns: string[] }
       _dashboard_filter_ints: {
         Args: { p_filters: Json; p_key: string }
         Returns: number[]
@@ -2969,6 +2970,10 @@ export type Database = {
       _dashboard_filter_uuids: {
         Args: { p_filters: Json; p_key: string }
         Returns: string[]
+      }
+      _restore_one_table: {
+        Args: { p_backup_date: string; p_table: string }
+        Returns: number
       }
       admin_course_stats: { Args: never; Returns: Json }
       admin_dashboard_insights: { Args: never; Returns: Json }

@@ -90,9 +90,27 @@ const ROLE_TABS: { value: MenuRole; label: string }[] = [
 ];
 
 const BACKUP_TABLE_LABELS: Record<string, { ko: string; en: string }> = {
+  __all__: { ko: "전체 데이터", en: "All data" },
   profiles: { ko: "회원 정보", en: "Members" },
   enrollments: { ko: "수강 기록", en: "Enrollments" },
   content_progress: { ko: "차시 진도", en: "Content progress" },
+  courses: { ko: "강의 정보", en: "Courses" },
+  course_contents: { ko: "차시 정보", en: "Course contents" },
+  course_comments: { ko: "강의 댓글", en: "Course comments" },
+  board_posts: { ko: "게시판 글", en: "Board posts" },
+  board_comments: { ko: "게시판 댓글", en: "Board comments" },
+  announcements: { ko: "공지사항", en: "Announcements" },
+  assessments: { ko: "평가", en: "Assessments" },
+  assessment_questions: { ko: "평가 문항", en: "Assessment questions" },
+  assessment_attempts: { ko: "평가 응시", en: "Assessment attempts" },
+  assessment_answers: { ko: "평가 답안", en: "Assessment answers" },
+  course_learning_sessions: { ko: "학습 시간", en: "Learning sessions" },
+  certificates: { ko: "수료증", en: "Certificates" },
+  traffic_logs: { ko: "접속 통계", en: "Traffic logs" },
+  user_sessions: { ko: "로그인 기록", en: "Login sessions" },
+  media_package_items: { ko: "이미지형 콘텐츠", en: "Image contents" },
+  departments: { ko: "지점·조직", en: "Departments" },
+  user_roles: { ko: "회원 권한", en: "User roles" },
 };
 
 
@@ -523,6 +541,16 @@ const AdminSettings = () => {
                     <DatabaseBackup className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-semibold text-foreground">{backupDateLabel(date)}</span>
                     <span className="text-[11px] text-muted-foreground ml-auto">{t("admin.backupAt", "자정 (한국시간) 자동 실행")}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl gap-1.5"
+                      disabled={restoreBackupMutation.isPending}
+                      onClick={() => setRestoreTarget({ date, table: "__all__", rows: tables.reduce((s, r) => s + Number(r.row_count), 0) })}
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                      {isEn ? "Restore all" : "전체 복원"}
+                    </Button>
                   </div>
                   {tables.map((row) => (
                     <div key={row.source_table} className="flex items-center justify-between px-4 py-3 border-b border-border last:border-b-0">
