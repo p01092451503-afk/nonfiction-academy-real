@@ -46,7 +46,9 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // 아이디만 입력한 경우(@ 없음) 회사 도메인을 붙여 로그인
+      const loginEmail = email.trim().includes("@") ? email.trim() : `${email.trim()}@nonfiction.com`;
+      const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
       if (error) {
         const msg = (error.message || "").toLowerCase();
         let type: "invalid" | "not_confirmed" | "no_account" | "too_many" | "generic" = "generic";
