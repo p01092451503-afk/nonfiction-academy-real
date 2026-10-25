@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { subscribeInstallState, triggerInstall, isAppInstalled, isIOSDevice } from "@/lib/pwaInstall";
 import { normalizeLang, type SupportedLang } from "@/lib/i18nLang";
 
+// 앱 설치 안내에서 항상 안내할 연결 주소(운영 도메인)
+const APP_URL = "https://academy.biz-nonfiction.com";
+
 type S = {
   title: string; subtitle: string; cardDesc: string; button: string; installed: string;
   iosTitle: string; ios: string[]; androidTitle: string; android: string[];
@@ -237,7 +240,7 @@ function Steps({ items }: { items: string[] }) {
 export default function StudentAppInstall() {
   const { i18n } = useTranslation();
   const { toast } = useToast();
-  const t = build(typeof window !== "undefined" ? window.location.host : "")[normalizeLang(i18n.language)];
+  const t = build(APP_URL)[normalizeLang(i18n.language)];
   const [os, setOs] = useState<"win" | "mac">(
     typeof navigator !== "undefined" && /Mac/i.test(navigator.platform) ? "mac" : "win",
   );
@@ -269,6 +272,14 @@ export default function StudentAppInstall() {
           <div className="min-w-0">
             <p className="font-semibold">NONFICTION Academy</p>
             <p className="text-sm text-muted-foreground">{t.cardDesc}</p>
+            <a
+              href={APP_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block mt-1 text-sm font-medium text-primary break-all hover:underline"
+            >
+              {APP_URL}
+            </a>
           </div>
         </div>
         <Button onClick={onInstall} disabled={installed} className="rounded-full h-11 px-6 shrink-0">
