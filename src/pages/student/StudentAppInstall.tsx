@@ -272,6 +272,14 @@ export default function StudentAppInstall() {
           <div className="min-w-0">
             <p className="font-semibold">NONFICTION Academy</p>
             <p className="text-sm text-muted-foreground">{t.cardDesc}</p>
+            <a
+              href={APP_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block mt-1 text-sm font-medium text-primary break-all hover:underline"
+            >
+              {APP_URL}
+            </a>
           </div>
         </div>
         <Button onClick={onInstall} disabled={installed} className="rounded-full h-11 px-6 shrink-0">
