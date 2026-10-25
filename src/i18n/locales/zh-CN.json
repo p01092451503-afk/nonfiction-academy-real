@@ -117,7 +117,8 @@
     "boardManagement": "公告板管理",
     "legacyRecords": "学习历史管理",
     "globalDashboard": "全球仪表盘",
-    "userManual": "用户手册"
+    "userManual": "用户手册",
+    "appInstall": "安装应用"
   },
   "roles": {
     "student": "Student",
@@ -1684,5 +1685,13 @@
   "platformUpdate": {
     "title": "有新的更新",
     "message": "为获得更好的体验，请刷新应用。"
+  },
+  "appInstallPage": {
+    "title": "安装应用",
+    "subtitle": "添加到手机或电脑主屏幕，像应用一样直接打开。",
+    "tipsTitle": "温馨提示",
+    "tip1": "这不是从应用商店下载，而是在主屏幕上添加快捷方式，几乎不占用存储空间。",
+    "tip2": "安装后的应用会沿用当前账号和学习记录。",
+    "tip3": "观看视频课程需要网络连接。"
   }
 }

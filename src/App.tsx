@@ -112,6 +112,7 @@ const AdminMigrationRecords = lazyWithRetry(() => import("./pages/admin/AdminMig
 const AdminPlatformHealth = lazyWithRetry(() => import("./pages/admin/AdminPlatformHealth"));
 const StudentBoard = lazyWithRetry(() => import("./pages/student/StudentBoard"));
 const StudentTracks = lazyWithRetry(() => import("./pages/student/StudentTracks"));
+const StudentAppInstall = lazyWithRetry(() => import("./pages/student/StudentAppInstall"));
 const DeptAdminDashboard = lazyWithRetry(() => import("./pages/DeptAdminDashboard"));
 const CourseDetail = lazyWithRetry(() => import("./pages/CourseDetail"));
 const AdminEnrollments = lazyWithRetry(() => import("./pages/admin/AdminEnrollments"));
@@ -154,6 +155,7 @@ const AppRoutes = () => {
             <Route path="/student/announcements" element={<StudentAnnouncements />} />
             <Route path="/student/board" element={<StudentBoard />} />
             <Route path="/student/tracks" element={<StudentTracks />} />
+            <Route path="/student/app-install" element={<StudentAppInstall />} />
             <Route path="/student/courses/:courseId" element={<CourseDetail />} />
             <Route path="/student/courses/:courseId/content/:contentId" element={<ContentPlayer />} />
             <Route path="/student/courses/:courseId/assessment/:assessmentId" element={<AssessmentPage />} />

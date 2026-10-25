@@ -120,7 +120,8 @@
     "boardManagement": "Board",
     "legacyRecords": "Learning History",
     "branchManagement": "Organization Management",
-    "userManual": "User Manual"
+    "userManual": "User Manual",
+    "appInstall": "Install App"
   },
   "roles": {
     "student": "Student",
@@ -1729,5 +1730,13 @@
   "platformUpdate": {
     "title": "A new update is available",
     "message": "Please refresh the app for the best experience."
+  },
+  "appInstallPage": {
+    "title": "Install App",
+    "subtitle": "Add it to your phone or PC home screen and launch it like an app.",
+    "tipsTitle": "Good to know",
+    "tip1": "It is not an app store download — it adds a shortcut to your home screen, so it uses almost no storage.",
+    "tip2": "Your account and learning history carry over to the installed app.",
+    "tip3": "Video lessons require an internet connection."
   }
 }

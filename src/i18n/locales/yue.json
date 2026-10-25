@@ -117,7 +117,8 @@
     "board": "佈告板",
     "boardManagement": "佈告板管理",
     "legacyRecords": "舊有學習紀錄",
-    "userManual": "用戶手冊"
+    "userManual": "用戶手冊",
+    "appInstall": "安裝應用程式"
   },
   "roles": {
     "student": "學習者",
@@ -1684,5 +1685,13 @@
   "platformUpdate": {
     "title": "有新嘅更新",
     "message": "為咗更好嘅體驗，請刷新應用程式。"
+  },
+  "appInstallPage": {
+    "title": "安裝應用程式",
+    "subtitle": "加到手機或電腦主畫面，好似應用程式咁直接開啟。",
+    "tipsTitle": "溫馨提示",
+    "tip1": "唔係由應用程式商店下載，而係喺主畫面加捷徑，差唔多唔使用儲存空間。",
+    "tip2": "安裝咗嘅應用程式會沿用而家嘅帳戶同學習記錄。",
+    "tip3": "睇影片課程需要網絡連線。"
   }
 }

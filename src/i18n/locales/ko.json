@@ -117,7 +117,8 @@
     "board": "게시판",
     "boardManagement": "게시판 관리",
     "legacyRecords": "이전 학습 이력",
-    "userManual": "사용자 매뉴얼"
+    "userManual": "사용자 매뉴얼",
+    "appInstall": "앱 설치"
   },
   "roles": {
     "student": "학습자",
@@ -1684,5 +1685,13 @@
   "platformUpdate": {
     "title": "새로운 업데이트가 있습니다",
     "message": "더 나은 사용 환경을 위해 앱을 새로고침해 주세요."
+  },
+  "appInstallPage": {
+    "title": "앱 설치",
+    "subtitle": "휴대폰·PC 홈 화면에 설치해 앱처럼 바로 실행하세요.",
+    "tipsTitle": "이것만 알아두세요",
+    "tip1": "앱 스토어에서 받는 방식이 아니라 홈 화면에 바로가기를 만드는 방식이라 저장 공간을 거의 쓰지 않습니다.",
+    "tip2": "설치한 앱에서도 지금 쓰는 계정과 학습 기록이 그대로 이어집니다.",
+    "tip3": "영상 학습은 인터넷 연결이 필요합니다."
   }
 }
