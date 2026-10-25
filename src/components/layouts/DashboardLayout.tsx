@@ -167,6 +167,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
     { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
     { key: "announcements", label: t("nav.announcements", "공지사항"), href: "/student/announcements", icon: Megaphone, showNew: hasNewAnnouncement },
     { key: "board", label: t("nav.board", "게시판"), href: "/student/board", icon: FileText, showNew: hasNewBoardPost },
+    { key: "appInstall", label: t("nav.appInstall", "앱 설치"), href: "/student/app-install", icon: Smartphone },
     { key: "myPage", label: t("nav.myPage"), href: "/mypage", icon: UserCircle, protected: true },
   ];
 

@@ -8,7 +8,7 @@ const cors = {
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
-const iconVersion = "20260522b";
+const iconVersion = "20261025";
 const iconPaths = {
   any192: `/nonfiction-pwa-icon-192-v${iconVersion}.png`,
   any512: `/nonfiction-pwa-icon-512-v${iconVersion}.png`,

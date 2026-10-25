@@ -232,7 +232,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
 const AppInstallCard = () => {
   const { toast } = useToast();
   const { i18n } = useTranslation();
-  const lang: Lang = (["ko", "en", "ja", "zh-CN"].includes(i18n.language) ? i18n.language : "ko") as Lang;
+  const lang: Lang = (i18n.language === "yue" ? "zh-CN" : ["ko", "en", "ja", "zh-CN"].includes(i18n.language) ? i18n.language : "ko") as Lang;
   const t = STRINGS[lang];
 
   const [installed, setInstalled] = useState(isAppInstalled());
