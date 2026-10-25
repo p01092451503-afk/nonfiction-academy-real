@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { subscribeInstallState, triggerInstall, isAppInstalled, isIOSDevice } from "@/lib/pwaInstall";
 import { normalizeLang, type SupportedLang } from "@/lib/i18nLang";
 
+// 앱 설치 안내에서 항상 안내할 연결 주소(운영 도메인)
+const APP_URL = "https://academy.biz-nonfiction.com";
+
 type S = {
   title: string; subtitle: string; cardDesc: string; button: string; installed: string;
   iosTitle: string; ios: string[]; androidTitle: string; android: string[];
