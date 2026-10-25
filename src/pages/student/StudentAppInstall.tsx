@@ -240,7 +240,7 @@ function Steps({ items }: { items: string[] }) {
 export default function StudentAppInstall() {
   const { i18n } = useTranslation();
   const { toast } = useToast();
-  const t = build(typeof window !== "undefined" ? window.location.host : "")[normalizeLang(i18n.language)];
+  const t = build(APP_URL)[normalizeLang(i18n.language)];
   const [os, setOs] = useState<"win" | "mac">(
     typeof navigator !== "undefined" && /Mac/i.test(navigator.platform) ? "mac" : "win",
   );
