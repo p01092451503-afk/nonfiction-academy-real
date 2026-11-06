@@ -1,20 +1,16 @@
-/** No runtime/browser setting may open this boundary during isolation QA. */
-export const MY_GROWTH_ENABLED = false;
-const APPROVED_REVIEWER_IDS: readonly string[] = [];
+/**
+ * The gate opens only for a signed-in user that the server itself confirms is on
+ * the protected reviewer registry. The registry can only be written with the
+ * service role, so browser settings and existing admin roles never open it.
+ */
+export const MY_GROWTH_ENABLED = true;
 
 export function canAccessMyGrowth(input: {
   enabled: boolean;
-  isolated: boolean;
   verifiedUserId: string | null;
-  approvedReviewerIds: readonly string[];
+  serverConfirmedReviewer: boolean;
 }): boolean {
-  return input.enabled && input.isolated && input.verifiedUserId !== null &&
-    input.approvedReviewerIds.includes(input.verifiedUserId);
-}
-
-export function isMyGrowthReviewer(verifiedUserId: string | null): boolean {
-  return canAccessMyGrowth({ enabled: MY_GROWTH_ENABLED, isolated: false,
-    verifiedUserId, approvedReviewerIds: APPROVED_REVIEWER_IDS });
+  return input.enabled && input.verifiedUserId !== null && input.serverConfirmedReviewer === true;
 }
 
 export function existingHome(roles: readonly string[]): string {
