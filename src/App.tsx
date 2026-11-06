@@ -18,6 +18,7 @@ import RoleLayoutRoute from "./components/layouts/RoleLayoutRoute";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import PlatformUpdateBanner from "./components/PlatformUpdateBanner";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import MyGrowthBoundary from "./features/mygrowth/MyGrowthBoundary";
 
 /**
  * Recover from "Importing a module script failed" — happens when a new deploy
@@ -143,6 +144,7 @@ const AppRoutes = () => {
           <Route path="/" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
+          <Route path="/my-growth/*" element={<MyGrowthBoundary />} />
 
           {/* Student — persistent layout, only the content swaps on navigation */}
           <Route element={<ProtectedRoute><RoleLayoutRoute role="student" /></ProtectedRoute>}>
