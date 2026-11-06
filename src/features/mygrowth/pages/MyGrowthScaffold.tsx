@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   GraduationCap,
   Home,
@@ -7,6 +8,8 @@ import {
   BarChart3,
   Users,
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useUser } from '@/contexts/UserContext';
 
 /**
  * My Growth 화면 골격 (격리 개발 단계).
@@ -44,13 +47,56 @@ function ExampleBadge() {
   );
 }
 
+const EVENT_TYPE_LABEL: Record<string, string> = {
+  training: '오프라인 교육',
+  coaching: '코칭',
+  plan: '실행 계획',
+  followup: '후속 확인',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  done: '완료',
+  in_progress: '진행 중',
+  scheduled: '예정',
+};
+
+interface GrowthEvent {
+  id: string;
+  event_type: string;
+  title: string;
+  detail: string | null;
+  occurred_on: string;
+  status: string;
+}
+
 function GrowthHome() {
+  const { user } = useUser();
+  const { data: events, isLoading } = useQuery({
+    queryKey: ['mygrowth-events', user?.id],
+    enabled: !!user?.id,
+    queryFn: async (): Promise<GrowthEvent[]> => {
+      const { data, error } = await supabase
+        .from('mygrowth_events')
+        .select('id, event_type, title, detail, occurred_on, status')
+        .order('occurred_on', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const now = new Date();
+  const thisMonth = (e: GrowthEvent) => {
+    const d = new Date(e.occurred_on);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  };
+  const list = events ?? [];
   const cards = [
-    { label: '이번 달 이수한 교육', value: '2건' },
-    { label: '진행 중인 실행 계획', value: '1건' },
-    { label: '받은 코칭 기록', value: '3건' },
-    { label: '후속 확인 예정', value: '1건' },
+    { label: '이번 달 이수한 교육', value: list.filter((e) => e.event_type === 'training' && e.status === 'done' && thisMonth(e)).length },
+    { label: '진행 중인 실행 계획', value: list.filter((e) => e.event_type === 'plan' && e.status === 'in_progress').length },
+    { label: '받은 코칭 기록', value: list.filter((e) => e.event_type === 'coaching' && e.status === 'done').length },
+    { label: '후속 확인 예정', value: list.filter((e) => e.event_type === 'followup' && e.status === 'scheduled').length },
   ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -61,29 +107,37 @@ function GrowthHome() {
         {cards.map((c) => (
           <div key={c.label} className="rounded-lg border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">{c.label}</p>
-            <p className="text-2xl font-semibold mt-2">{c.value}</p>
+            <p className="text-2xl font-semibold mt-2">
+              {isLoading ? '…' : `${c.value}건`}
+            </p>
           </div>
         ))}
       </div>
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">최근 활동</h2>
-          <ExampleBadge />
         </div>
-        <ul className="divide-y divide-border/80 text-sm">
-          <li className="py-3 flex justify-between gap-4">
-            <span>신제품 향수 교육 이수</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-          <li className="py-3 flex justify-between gap-4">
-            <span>매니저 코칭 세션 완료</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-          <li className="py-3 flex justify-between gap-4">
-            <span>실행 계획 1주차 후속 확인 대기</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-        </ul>
+        {isLoading ? (
+          <p className="py-6 text-sm text-muted-foreground">불러오는 중입니다.</p>
+        ) : list.length === 0 ? (
+          <p className="py-6 text-sm text-muted-foreground">
+            아직 기록된 활동이 없습니다. 교육이나 코칭이 등록되면 여기에 보입니다.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border/80 text-sm">
+            {list.slice(0, 5).map((e) => (
+              <li key={e.id} className="py-3 flex justify-between gap-4">
+                <span className="min-w-0">
+                  <span className="text-muted-foreground mr-2">[{EVENT_TYPE_LABEL[e.event_type] ?? e.event_type}]</span>
+                  {e.title}
+                </span>
+                <span className="text-muted-foreground shrink-0">
+                  {e.occurred_on} · {STATUS_LABEL[e.status] ?? e.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
