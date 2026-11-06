@@ -7,3 +7,4 @@
 - `AppErrorBoundary` must not be keyed by `location.pathname` — a keyed boundary remounts the whole tree per navigation and defeats layout persistence.
 - `RoleLayoutRoute` wraps its `<Outlet />` in its own `<Suspense fallback={<ContentSkeleton />}>`. Why: lazy page chunks otherwise suspend up to the app-wide Suspense and replace the sidebar with a full-screen skeleton.
 - Route guards (`ProtectedRoute`/`AdminRoute`/`TeacherRoute`) only show the full skeleton while no authorized user is known. Why: background auth refreshes must not unmount the persistent layout.
+- My Growth development and QA must run in a separate draft with verified isolated dependencies; fail closed if live database, storage, functions, jobs, or integrations remain reachable. Never alter production routes, roles, settings, backups, or learning data during development. Why: all existing roles must retain their current service until an explicitly approved integration release.
