@@ -14,6 +14,7 @@ import MyGrowthAssignments from './MyGrowthAssignments';
 import MyGrowthRecords from './MyGrowthRecords';
 import MyGrowthTraining from './MyGrowthTraining';
 import MyGrowthLearning from './MyGrowthLearning';
+import MyGrowthPlans from './MyGrowthPlans';
 
 /**
  * My Growth 화면 골격 (격리 개발 단계).
@@ -150,29 +151,6 @@ function GrowthHome() {
   );
 }
 
-function Plans() {
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="실행 계획·후속 확인"
-        subtitle="교육 후 현장 적용 계획을 세우고 후속 확인을 진행합니다."
-      />
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">진행 중인 계획</h2>
-          <ExampleBadge />
-        </div>
-        <ul className="divide-y divide-border/80 text-sm">
-          <li className="py-3 flex justify-between gap-4">
-            <span>시향 서비스 적용 계획 (1주차)</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  );
-}
-
 function Reports() {
   return (
     <div className="space-y-6">
@@ -246,7 +224,7 @@ export default function MyGrowthScaffold() {
             <Route path="training" element={<MyGrowthTraining />} />
             <Route path="coaching" element={<MyGrowthTraining key="field" coaching />} />
             <Route path="manager-coaching" element={<MyGrowthTraining key="manager" manager />} />
-            <Route path="plans" element={<Plans />} />
+            <Route path="plans" element={<MyGrowthPlans />} />
             <Route path="reports" element={<Reports />} />
             <Route path="assignments" element={<MyGrowthAssignments />} />
             <Route path="*" element={<Navigate to="/my-growth" replace />} />

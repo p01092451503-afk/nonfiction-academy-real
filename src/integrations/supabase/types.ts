@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       announcement_i18n: {
@@ -1918,6 +1913,44 @@ export type Database = {
         }
         Relationships: []
       }
+      mygrowth_action_plans: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          original_language: string
+          training_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          original_language: string
+          training_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          original_language?: string
+          training_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_action_plans_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_assignment_audit: {
         Row: {
           action: string
@@ -3820,6 +3853,20 @@ export type Database = {
         Args: { _branch: string; _tenant: string }
         Returns: boolean
       }
+      mygrowth_my_action_plans: {
+        Args: never
+        Returns: {
+          body: string
+          branch_name: string
+          original_language: string
+          plan_id: string
+          session_kind: string
+          title: string
+          training_date: string
+          training_id: string
+          updated_at: string
+        }[]
+      }
       mygrowth_record_feed: {
         Args: { _from?: string; _to?: string }
         Returns: {
@@ -3834,6 +3881,29 @@ export type Database = {
           record_type: string
           status: string
           title: string
+        }[]
+      }
+      mygrowth_save_action_plan: {
+        Args: {
+          _body: string
+          _original_language: string
+          _training_id: string
+        }
+        Returns: string
+      }
+      mygrowth_scoped_action_plans: {
+        Args: never
+        Returns: {
+          body: string
+          branch_name: string
+          employee_name: string
+          original_language: string
+          plan_id: string
+          session_kind: string
+          title: string
+          training_date: string
+          training_id: string
+          updated_at: string
         }[]
       }
       mygrowth_session_scope: { Args: { _id: string }; Returns: boolean }
@@ -4093,3 +4163,4 @@ export const Constants = {
     },
   },
 } as const
+
