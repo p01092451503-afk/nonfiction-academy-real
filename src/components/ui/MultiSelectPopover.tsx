@@ -18,6 +18,7 @@ interface MultiSelectPopoverProps {
   selected: string[];
   onChange: (next: string[]) => void;
   width?: string;
+  single?: boolean;
   selectAllText?: string;
   clearText?: string;
   emptyText?: string;
@@ -30,6 +31,7 @@ export const MultiSelectPopover = ({
   selected,
   onChange,
   width = "w-[260px]",
+  single = false,
   selectAllText = "전체 선택",
   clearText = "초기화",
   emptyText = "결과 없음",
@@ -46,8 +48,13 @@ export const MultiSelectPopover = ({
     );
   }, [options, query]);
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    if (single) {
+      onChange(selected.includes(id) ? [] : [id]);
+      return;
+    }
     onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  };
 
   const allOnPageIds = filtered.map((o) => o.id);
   const allSelectedOnPage =
@@ -86,13 +93,17 @@ export const MultiSelectPopover = ({
           />
         </div>
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-border text-[11px]">
-          <button
-            type="button"
-            onClick={toggleAll}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            {allSelectedOnPage ? `${selectAllText} 해제` : selectAllText}
-          </button>
+          {single ? (
+            <span />
+          ) : (
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {allSelectedOnPage ? `${selectAllText} 해제` : selectAllText}
+            </button>
+          )}
           {selected.length > 0 && (
             <button
               type="button"

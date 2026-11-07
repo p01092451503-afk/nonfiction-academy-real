@@ -126,6 +126,7 @@ export const DashboardFilterBar = ({
           selected={filters.years.map(String)}
           onChange={(v) => update("years", v)}
           width="w-[200px]"
+          single
         />
 
         <MultiSelectPopover
