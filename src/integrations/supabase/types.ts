@@ -2122,6 +2122,38 @@ export type Database = {
           },
         ]
       }
+      mygrowth_manager_coaching: {
+        Row: {
+          feedback: string
+          next_action: string | null
+          observation: string | null
+          original_language: string
+          training_id: string
+        }
+        Insert: {
+          feedback: string
+          next_action?: string | null
+          observation?: string | null
+          original_language: string
+          training_id: string
+        }
+        Update: {
+          feedback?: string
+          next_action?: string | null
+          observation?: string | null
+          original_language?: string
+          training_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_manager_coaching_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: true
+            referencedRelation: "mygrowth_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_records: {
         Row: {
           actual_minutes: number | null
@@ -3664,6 +3696,24 @@ export type Database = {
         }
         Returns: string
       }
+      mygrowth_create_manager_coaching: {
+        Args: {
+          _actual_minutes: number
+          _branch_id: string
+          _feedback: string
+          _location: string
+          _next_action: string
+          _observation: string
+          _original_language: string
+          _planned_minutes: number
+          _request_id: string
+          _target_ids: string[]
+          _title: string
+          _trainer_id: string
+          _training_date: string
+        }
+        Returns: string
+      }
       mygrowth_create_training: {
         Args: {
           _actual_minutes: number
@@ -3732,6 +3782,39 @@ export type Database = {
           title: string
         }[]
       }
+      mygrowth_manager_coaching_list: {
+        Args: never
+        Returns: {
+          actual_minutes: number
+          branch_name: string
+          created_at: string
+          id: string
+          location: string
+          original_language: string
+          planned_minutes: number
+          summary: string
+          target_count: number
+          title: string
+          trainer_name: string
+          training_date: string
+          training_type: string
+        }[]
+      }
+      mygrowth_manager_directory: {
+        Args: never
+        Returns: {
+          branch_id: string
+          branch_name: string
+          full_name: string
+          is_trainer: boolean
+          tenant_id: string
+          user_id: string
+        }[]
+      }
+      mygrowth_manager_scope: {
+        Args: { _branch: string; _tenant: string }
+        Returns: boolean
+      }
       mygrowth_record_feed: {
         Args: { _from?: string; _to?: string }
         Returns: {
@@ -3748,6 +3831,7 @@ export type Database = {
           title: string
         }[]
       }
+      mygrowth_session_scope: { Args: { _id: string }; Returns: boolean }
       mygrowth_set_assignment: {
         Args: { _active: boolean; _role: string; _user_id: string }
         Returns: string

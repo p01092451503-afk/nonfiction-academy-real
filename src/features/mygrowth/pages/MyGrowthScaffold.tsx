@@ -31,6 +31,7 @@ const NAV_ITEMS = [
   { to: '/my-growth/records', end: false, icon: ClipboardCheck, label: '성장 기록' },
   { to: '/my-growth/training', end: false, icon: GraduationCap, label: '오프라인 교육' },
   { to: '/my-growth/coaching', end: false, icon: Users, label: '필드 코칭' },
+  { to: '/my-growth/manager-coaching', end: false, icon: Users, label: '매니저 코칭' },
   { to: '/my-growth/plans', end: false, icon: Target, label: '실행 계획·후속 확인' },
   { to: '/my-growth/reports', end: false, icon: BarChart3, label: '보고' },
   { to: '/my-growth/assignments', end: false, icon: Users, label: '담당자·담당 범위' },
@@ -243,7 +244,8 @@ export default function MyGrowthScaffold() {
             <Route path="learning" element={<MyGrowthLearning />} />
             <Route path="records" element={<MyGrowthRecords />} />
             <Route path="training" element={<MyGrowthTraining />} />
-            <Route path="coaching" element={<MyGrowthTraining coaching />} />
+            <Route path="coaching" element={<MyGrowthTraining key="field" coaching />} />
+            <Route path="manager-coaching" element={<MyGrowthTraining key="manager" manager />} />
             <Route path="plans" element={<Plans />} />
             <Route path="reports" element={<Reports />} />
             <Route path="assignments" element={<MyGrowthAssignments />} />

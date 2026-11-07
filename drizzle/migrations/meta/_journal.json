@@ -120,6 +120,20 @@
       "when": 1794046189062,
       "tag": "0016_mygrowth_field_coaching",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794046669699,
+      "tag": "0017_mygrowth_manager_coaching",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794046729813,
+      "tag": "0018_mygrowth_manager_explicit_grants",
+      "breakpoints": true
     }
   ]
 }
