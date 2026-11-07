@@ -50,6 +50,62 @@
       "when": 1793976336527,
       "tag": "0006_mygrowth_events",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794031912460,
+      "tag": "0007_mygrowth_reviewer_data_gate",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794034160639,
+      "tag": "0008_mygrowth_branch_assignments",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794035848028,
+      "tag": "0009_mygrowth_growth_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794041597833,
+      "tag": "0010_mygrowth_offline_training",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794041730841,
+      "tag": "0011_mygrowth_training_explicit_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794041978005,
+      "tag": "0012_mygrowth_training_korean_error",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794044089042,
+      "tag": "0013_mygrowth_training_attendance",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794044175103,
+      "tag": "0014_mygrowth_attendance_explicit_grants",
+      "breakpoints": true
     }
   ]
 }

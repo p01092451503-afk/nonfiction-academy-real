@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       announcement_i18n: {
@@ -1918,6 +1913,147 @@ export type Database = {
         }
         Relationships: []
       }
+      mygrowth_assignment_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          assignment_id: string
+          branch_id: string
+          id: string
+          occurred_at: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          assignment_id: string
+          branch_id: string
+          id?: string
+          occurred_at?: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          assignment_id?: string
+          branch_id?: string
+          id?: string
+          occurred_at?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_assignment_audit_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_assignment_audit_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_assignment_audit_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_assignments: {
+        Row: {
+          active: boolean
+          assigned_at: string
+          assigned_by: string
+          branch_id: string
+          id: string
+          revoked_at: string | null
+          revoked_by: string | null
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by: string
+          branch_id: string
+          id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by?: string
+          branch_id?: string
+          id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_assignments_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_education_team: {
+        Row: {
+          active: boolean
+          country: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          country?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          country?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_education_team_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_events: {
         Row: {
           created_at: string
@@ -1957,6 +2093,78 @@ export type Database = {
         }
         Relationships: []
       }
+      mygrowth_records: {
+        Row: {
+          actual_minutes: number | null
+          branch_id: string | null
+          created_at: string
+          created_by: string | null
+          detail: string | null
+          id: string
+          occurred_on: string
+          planned_minutes: number | null
+          record_type: string
+          source_id: string
+          source_table: string
+          status: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_minutes?: number | null
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          detail?: string | null
+          id?: string
+          occurred_on?: string
+          planned_minutes?: number | null
+          record_type: string
+          source_id: string
+          source_table: string
+          status?: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_minutes?: number | null
+          branch_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          detail?: string | null
+          id?: string
+          occurred_on?: string
+          planned_minutes?: number | null
+          record_type?: string
+          source_id?: string
+          source_table?: string
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_records_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_records_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_reviewers: {
         Row: {
           created_at: string
@@ -1974,6 +2182,213 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      mygrowth_staff_registry: {
+        Row: {
+          active: boolean
+          branch_id: string
+          is_senior: boolean
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          branch_id: string
+          is_senior?: boolean
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          branch_id?: string
+          is_senior?: boolean
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_staff_registry_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_staff_registry_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_training_attendance_audit: {
+        Row: {
+          after_attendees: string[]
+          before_attendees: string[]
+          changed_at: string
+          changed_by: string
+          id: string
+          training_id: string
+          version: number
+        }
+        Insert: {
+          after_attendees: string[]
+          before_attendees: string[]
+          changed_at?: string
+          changed_by: string
+          id?: string
+          training_id: string
+          version: number
+        }
+        Update: {
+          after_attendees?: string[]
+          before_attendees?: string[]
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          training_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_training_attendance_audit_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_training_targets: {
+        Row: {
+          attendance_status: string
+          branch_id: string
+          created_at: string
+          status: string
+          tenant_id: string
+          training_id: string
+          user_id: string
+        }
+        Insert: {
+          attendance_status?: string
+          branch_id: string
+          created_at?: string
+          status?: string
+          tenant_id: string
+          training_id: string
+          user_id: string
+        }
+        Update: {
+          attendance_status?: string
+          branch_id?: string
+          created_at?: string
+          status?: string
+          tenant_id?: string
+          training_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_training_targets_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_training_targets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_training_targets_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_trainings: {
+        Row: {
+          actual_minutes: number | null
+          attendance_updated_at: string | null
+          attendance_updated_by: string | null
+          attendance_version: number
+          branch_id: string
+          created_at: string
+          created_by: string
+          id: string
+          location: string
+          planned_minutes: number
+          request_id: string
+          request_payload: Json
+          summary: string | null
+          tenant_id: string
+          title: string
+          trainer_id: string
+          training_date: string
+          training_type: string
+        }
+        Insert: {
+          actual_minutes?: number | null
+          attendance_updated_at?: string | null
+          attendance_updated_by?: string | null
+          attendance_version?: number
+          branch_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          location: string
+          planned_minutes: number
+          request_id: string
+          request_payload: Json
+          summary?: string | null
+          tenant_id: string
+          title: string
+          trainer_id: string
+          training_date: string
+          training_type: string
+        }
+        Update: {
+          actual_minutes?: number | null
+          attendance_updated_at?: string | null
+          attendance_updated_by?: string | null
+          attendance_version?: number
+          branch_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          location?: string
+          planned_minutes?: number
+          request_id?: string
+          request_payload?: Json
+          summary?: string | null
+          tenant_id?: string
+          title?: string
+          trainer_id?: string
+          training_date?: string
+          training_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_trainings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_trainings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -3175,6 +3590,123 @@ export type Database = {
         }
         Returns: number
       }
+      mygrowth_assignment_directory: {
+        Args: never
+        Returns: {
+          assigned_at: string
+          assignment_id: string
+          branch_id: string
+          branch_name: string
+          full_name: string
+          role: string
+          user_id: string
+        }[]
+      }
+      mygrowth_attendance_detail: {
+        Args: { _training_id: string }
+        Returns: Json
+      }
+      mygrowth_attendance_save: {
+        Args: {
+          _attended_ids: string[]
+          _expected_version: number
+          _training_id: string
+        }
+        Returns: number
+      }
+      mygrowth_can_appoint: { Args: never; Returns: boolean }
+      mygrowth_create_training: {
+        Args: {
+          _actual_minutes: number
+          _branch_id: string
+          _location: string
+          _planned_minutes: number
+          _request_id: string
+          _summary: string
+          _target_ids: string[]
+          _title: string
+          _trainer_id: string
+          _training_date: string
+          _training_type: string
+        }
+        Returns: string
+      }
+      mygrowth_elearning_reference: {
+        Args: never
+        Returns: {
+          completed_at: string
+          completion_count: number
+          course_title: string
+          enrolled_at: string
+          enrollment_id: string
+          progress: number
+          status: string
+        }[]
+      }
+      mygrowth_has_branch_role: {
+        Args: { _branch_id: string; _role: string }
+        Returns: boolean
+      }
+      mygrowth_record_feed: {
+        Args: { _from?: string; _to?: string }
+        Returns: {
+          actual_minutes: number
+          branch_name: string
+          completion_count: number
+          detail: string
+          feed_key: string
+          occurred_on: string
+          planned_minutes: number
+          progress: number
+          record_type: string
+          status: string
+          title: string
+        }[]
+      }
+      mygrowth_set_assignment: {
+        Args: { _active: boolean; _role: string; _user_id: string }
+        Returns: string
+      }
+      mygrowth_training_attendees: {
+        Args: { _training_id: string }
+        Returns: {
+          full_name: string
+          status: string
+          user_id: string
+        }[]
+      }
+      mygrowth_training_directory: {
+        Args: never
+        Returns: {
+          branch_id: string
+          branch_name: string
+          full_name: string
+          is_trainer: boolean
+          tenant_id: string
+          user_id: string
+        }[]
+      }
+      mygrowth_training_list: {
+        Args: never
+        Returns: {
+          actual_minutes: number
+          branch_name: string
+          created_at: string
+          id: string
+          location: string
+          planned_minutes: number
+          summary: string
+          target_count: number
+          title: string
+          trainer_name: string
+          training_date: string
+          training_type: string
+        }[]
+      }
+      mygrowth_training_scope: {
+        Args: { _branch: string; _tenant: string }
+        Returns: boolean
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -3387,3 +3919,4 @@ export const Constants = {
     },
   },
 } as const
+

@@ -105,6 +105,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const sessionIdRef = useRef<string | null>(null);
+  const authGenerationRef = useRef(0);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   // Record login session
   const recordLogin = async (userId: string) => {
@@ -147,21 +149,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const generation = ++authGenerationRef.current;
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          // Only a new identity blocks rendering; background refresh preserves the layout.
+          if (loadedUserIdRef.current !== session.user.id) {
+            setIsLoading(true);
+            setProfile(null);
+            setRoles([]);
+          }
           // Fire-and-forget: do NOT await inside onAuthStateChange
           if (event === "SIGNED_IN") {
             recordLogin(session.user.id);
           }
           // fetchUserData sets isLoading=false in its finally block
-          fetchUserData(session.user.id);
+          fetchUserData(session.user.id, generation);
         } else {
           if (event === "SIGNED_OUT") {
             recordLogout();
           }
           setProfile(null);
+          loadedUserIdRef.current = null;
           setRoles([]);
           setIsLoading(false);
         }
@@ -195,12 +205,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, generation: number) => {
     try {
       const [profileRes, rolesRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).single(),
         supabase.from("user_roles").select("role").eq("user_id", userId),
       ]);
+
+      if (authGenerationRef.current !== generation) return;
 
       if (profileRes.data) {
         const p = profileRes.data as UserProfile;
@@ -211,10 +223,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       if (rolesRes.data) {
         setRoles(rolesRes.data.map((r: { role: string }) => r.role as AppRole));
       }
+      if (profileRes.data && rolesRes.data) loadedUserIdRef.current = userId;
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
-      setIsLoading(false);
+      if (authGenerationRef.current === generation) setIsLoading(false);
     }
   };
 

@@ -10,12 +10,14 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
+import MyGrowthAssignments from './MyGrowthAssignments';
+import MyGrowthRecords from './MyGrowthRecords';
+import MyGrowthTraining from './MyGrowthTraining';
 
 /**
  * My Growth 화면 골격 (격리 개발 단계).
  *
- * - 이 파일의 모든 내용은 예시(합성) 데이터만 사용하며, 어떤 저장소·서버 기능·외부
- *   서비스에도 접근하지 않습니다.
+ * - 이 초안의 예시 자료와 검수용 서버 함수만 사용합니다.
  * - 기존 이러닝 메뉴에는 항목을 추가하지 않습니다. /my-growth 주소로만 들어오며,
  *   접근 허용 여부는 MyGrowthBoundary가 서버 검증 기반으로 판단합니다.
  * - 격리 검증이 통과하기 전까지 경계는 닫혀 있어 어떤 계정도 이 화면을 볼 수
@@ -24,10 +26,12 @@ import { useUser } from '@/contexts/UserContext';
 
 const NAV_ITEMS = [
   { to: '/my-growth', end: true, icon: Home, label: '성장 홈' },
+  { to: '/my-growth/records', end: false, icon: ClipboardCheck, label: '성장 기록' },
   { to: '/my-growth/training', end: false, icon: GraduationCap, label: '오프라인 교육' },
   { to: '/my-growth/coaching', end: false, icon: Users, label: '필드·매니저 코칭' },
   { to: '/my-growth/plans', end: false, icon: Target, label: '실행 계획·후속 확인' },
   { to: '/my-growth/reports', end: false, icon: BarChart3, label: '보고' },
+  { to: '/my-growth/assignments', end: false, icon: Users, label: '담당자·담당 범위' },
 ] as const;
 
 function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
@@ -143,36 +147,6 @@ function GrowthHome() {
   );
 }
 
-function Training() {
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="오프라인 교육"
-        subtitle="대면 교육 일정 등록, 참석 확인, 교육 자료를 관리합니다."
-      />
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">예정된 교육</h2>
-          <ExampleBadge />
-        </div>
-        <ul className="divide-y divide-border/80 text-sm">
-          <li className="py-3 flex justify-between gap-4">
-            <span>링크 셀링 & 센트 큐레이션 집체 교육</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-          <li className="py-3 flex justify-between gap-4">
-            <span>신입 직원 오리엔테이션</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-        </ul>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        참석 직원의 이수 기록은 기존 학습 이력과 읽기 전용으로 연결될 예정입니다.
-      </p>
-    </div>
-  );
-}
-
 function Coaching() {
   return (
     <div className="space-y-6">
@@ -244,7 +218,7 @@ function Reports() {
 export default function MyGrowthScaffold() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex min-h-screen">
+      <div className="flex min-w-0 min-h-screen">
         <aside className="w-56 shrink-0 border-r border-border/80 bg-card hidden sm:flex sm:flex-col">
           <div className="px-4 py-5 border-b-2 border-border/80">
             <p className="font-semibold">My Growth</p>
@@ -291,10 +265,12 @@ export default function MyGrowthScaffold() {
           </div>
           <Routes>
             <Route index element={<GrowthHome />} />
-            <Route path="training" element={<Training />} />
+            <Route path="records" element={<MyGrowthRecords />} />
+            <Route path="training" element={<MyGrowthTraining />} />
             <Route path="coaching" element={<Coaching />} />
             <Route path="plans" element={<Plans />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="assignments" element={<MyGrowthAssignments />} />
             <Route path="*" element={<Navigate to="/my-growth" replace />} />
           </Routes>
         </main>
