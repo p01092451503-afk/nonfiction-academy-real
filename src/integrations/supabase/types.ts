@@ -2093,6 +2093,35 @@ export type Database = {
         }
         Relationships: []
       }
+      mygrowth_field_coaching: {
+        Row: {
+          feedback: string | null
+          next_action: string | null
+          observation: string | null
+          training_id: string
+        }
+        Insert: {
+          feedback?: string | null
+          next_action?: string | null
+          observation?: string | null
+          training_id: string
+        }
+        Update: {
+          feedback?: string | null
+          next_action?: string | null
+          observation?: string | null
+          training_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_field_coaching_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: true
+            referencedRelation: "mygrowth_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_records: {
         Row: {
           actual_minutes: number | null
@@ -2326,6 +2355,7 @@ export type Database = {
           planned_minutes: number
           request_id: string
           request_payload: Json
+          session_kind: string
           summary: string | null
           tenant_id: string
           title: string
@@ -2346,6 +2376,7 @@ export type Database = {
           planned_minutes: number
           request_id: string
           request_payload: Json
+          session_kind?: string
           summary?: string | null
           tenant_id: string
           title: string
@@ -2366,6 +2397,7 @@ export type Database = {
           planned_minutes?: number
           request_id?: string
           request_payload?: Json
+          session_kind?: string
           summary?: string | null
           tenant_id?: string
           title?: string
@@ -3615,6 +3647,23 @@ export type Database = {
         Returns: number
       }
       mygrowth_can_appoint: { Args: never; Returns: boolean }
+      mygrowth_create_field_coaching: {
+        Args: {
+          _actual_minutes: number
+          _branch_id: string
+          _feedback: string
+          _location: string
+          _next_action: string
+          _observation: string
+          _planned_minutes: number
+          _request_id: string
+          _target_ids: string[]
+          _title: string
+          _trainer_id: string
+          _training_date: string
+        }
+        Returns: string
+      }
       mygrowth_create_training: {
         Args: {
           _actual_minutes: number
@@ -3641,6 +3690,26 @@ export type Database = {
           enrollment_id: string
           progress: number
           status: string
+        }[]
+      }
+      mygrowth_field_coaching_list: {
+        Args: never
+        Returns: {
+          actual_minutes: number
+          branch_name: string
+          created_at: string
+          feedback: string
+          id: string
+          location: string
+          next_action: string
+          observation: string
+          planned_minutes: number
+          summary: string
+          target_count: number
+          title: string
+          trainer_name: string
+          training_date: string
+          training_type: string
         }[]
       }
       mygrowth_has_branch_role: {

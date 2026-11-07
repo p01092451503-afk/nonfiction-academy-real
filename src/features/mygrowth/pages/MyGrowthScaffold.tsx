@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { to: '/my-growth/learning', end: false, icon: GraduationCap, label: '나의 학습 목록' },
   { to: '/my-growth/records', end: false, icon: ClipboardCheck, label: '성장 기록' },
   { to: '/my-growth/training', end: false, icon: GraduationCap, label: '오프라인 교육' },
-  { to: '/my-growth/coaching', end: false, icon: Users, label: '필드·매니저 코칭' },
+  { to: '/my-growth/coaching', end: false, icon: Users, label: '필드 코칭' },
   { to: '/my-growth/plans', end: false, icon: Target, label: '실행 계획·후속 확인' },
   { to: '/my-growth/reports', end: false, icon: BarChart3, label: '보고' },
   { to: '/my-growth/assignments', end: false, icon: Users, label: '담당자·담당 범위' },
@@ -149,33 +149,6 @@ function GrowthHome() {
   );
 }
 
-function Coaching() {
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="필드·매니저 코칭"
-        subtitle="현장 코칭과 매니저 코칭 세션을 기록하고 확인합니다."
-      />
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">코칭 기록</h2>
-          <ExampleBadge />
-        </div>
-        <ul className="divide-y divide-border/80 text-sm">
-          <li className="py-3 flex justify-between gap-4">
-            <span>고객 응대 시연 피드백</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-          <li className="py-3 flex justify-between gap-4">
-            <span>월간 1:1 매니저 코칭</span>
-            <span className="text-muted-foreground shrink-0">예시</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  );
-}
-
 function Plans() {
   return (
     <div className="space-y-6">
@@ -270,7 +243,7 @@ export default function MyGrowthScaffold() {
             <Route path="learning" element={<MyGrowthLearning />} />
             <Route path="records" element={<MyGrowthRecords />} />
             <Route path="training" element={<MyGrowthTraining />} />
-            <Route path="coaching" element={<Coaching />} />
+            <Route path="coaching" element={<MyGrowthTraining coaching />} />
             <Route path="plans" element={<Plans />} />
             <Route path="reports" element={<Reports />} />
             <Route path="assignments" element={<MyGrowthAssignments />} />

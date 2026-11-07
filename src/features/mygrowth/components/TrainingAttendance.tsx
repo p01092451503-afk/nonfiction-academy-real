@@ -40,6 +40,7 @@ export default function TrainingAttendance({ trainingId }: { trainingId: string 
     setDraft(undefined);
     setNotice('참석 내역을 저장했습니다.');
     await client.invalidateQueries({ queryKey: key });
+    await client.invalidateQueries({ queryKey: ['mygrowth-learning', user?.id] });
   }, onError: async (error: { code?: string }) => {
     if (error.code === '40001') {
       setDraft(undefined);
