@@ -13,6 +13,7 @@ import { useUser } from '@/contexts/UserContext';
 import MyGrowthAssignments from './MyGrowthAssignments';
 import MyGrowthRecords from './MyGrowthRecords';
 import MyGrowthTraining from './MyGrowthTraining';
+import MyGrowthLearning from './MyGrowthLearning';
 
 /**
  * My Growth 화면 골격 (격리 개발 단계).
@@ -26,6 +27,7 @@ import MyGrowthTraining from './MyGrowthTraining';
 
 const NAV_ITEMS = [
   { to: '/my-growth', end: true, icon: Home, label: '성장 홈' },
+  { to: '/my-growth/learning', end: false, icon: GraduationCap, label: '나의 학습 목록' },
   { to: '/my-growth/records', end: false, icon: ClipboardCheck, label: '성장 기록' },
   { to: '/my-growth/training', end: false, icon: GraduationCap, label: '오프라인 교육' },
   { to: '/my-growth/coaching', end: false, icon: Users, label: '필드·매니저 코칭' },
@@ -265,6 +267,7 @@ export default function MyGrowthScaffold() {
           </div>
           <Routes>
             <Route index element={<GrowthHome />} />
+            <Route path="learning" element={<MyGrowthLearning />} />
             <Route path="records" element={<MyGrowthRecords />} />
             <Route path="training" element={<MyGrowthTraining />} />
             <Route path="coaching" element={<Coaching />} />

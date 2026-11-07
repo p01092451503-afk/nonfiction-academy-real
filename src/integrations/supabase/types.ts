@@ -3647,6 +3647,22 @@ export type Database = {
         Args: { _branch_id: string; _role: string }
         Returns: boolean
       }
+      mygrowth_learning_list: {
+        Args: never
+        Returns: {
+          actual_minutes: number
+          branch_name: string
+          completion_count: number
+          detail: string
+          feed_key: string
+          occurred_on: string
+          planned_minutes: number
+          progress: number
+          record_type: string
+          status: string
+          title: string
+        }[]
+      }
       mygrowth_record_feed: {
         Args: { _from?: string; _to?: string }
         Returns: {
