@@ -14,7 +14,9 @@ class LearningRules(unittest.TestCase):
         r=self.sql(m.training.session(m.HQ)+"SELECT count(*) FROM public.mygrowth_learning_list(); SELECT count(*) FROM public.mygrowth_learning_list() WHERE feed_key='event:a0000000-0000-4000-8000-000000000001'; SELECT count(*) FROM public.mygrowth_learning_list() WHERE record_type IN ('plan','followup');")
         self.assertEqual(r,['9','0','2'])
     def test_pending_absent_excluded_attended_included(self):
-        r=self.sql(m.training.session(m.A)+"SELECT count(*) FROM public.mygrowth_learning_list() WHERE feed_key LIKE 'attendance:%';"+m.training.session(m.HQ)+f"SELECT {m.save()};"+m.training.session(m.A)+"SELECT count(*) FROM public.mygrowth_learning_list() WHERE feed_key LIKE 'attendance:%';"+m.training.session(m.STAFF)+"SELECT count(*) FROM public.mygrowth_learning_list() WHERE feed_key LIKE 'attendance:%';")
+        # 다른 회의용 참석 자료가 있어도 이번 교육의 참석 규칙만 검사합니다.
+        attendance = f"SELECT count(*) FROM public.mygrowth_learning_list() WHERE feed_key='attendance:{m.T}';"
+        r=self.sql(m.training.session(m.A)+attendance+m.training.session(m.HQ)+f"SELECT {m.save()};"+m.training.session(m.A)+attendance+m.training.session(m.STAFF)+attendance)
         self.assertEqual(r,['0','1','1','0'])
     def test_other_employee_cannot_see_attendance(self):
         self.assertEqual(self.sql(m.training.session(m.HQ)+f"SELECT {m.save()};"+m.training.session(m.B)+"SELECT count(*) FROM public.mygrowth_learning_list() WHERE feed_key LIKE 'attendance:%';"),['1','0'])
