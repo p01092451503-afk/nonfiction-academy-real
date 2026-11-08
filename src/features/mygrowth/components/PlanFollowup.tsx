@@ -36,6 +36,7 @@ export default function PlanFollowup({ planId, staff = false }: { planId: string
   }, onSuccess: async () => {
     setDraft(undefined); setNotice('판정을 저장했습니다.');
     await qc.invalidateQueries({ queryKey: key });
+    await qc.invalidateQueries({ queryKey: ['mygrowth-screen'] });
   }, onError: async (e: { code?: string }) => {
     if (e.code === '40001' || e.code === '42501') setDraft(undefined);
     setNotice(e.code === '40001' ? '계획 또는 판정이 변경되었습니다. 최신 내용을 확인한 뒤 다시 판정해 주십시오.' : e.code === '42501' ? '저장 권한이 없습니다. 현재 담당 범위를 다시 확인해 주십시오.' : '저장 결과를 확인하지 못했습니다. 입력을 그대로 두고 다시 저장하면 중복 없이 확인합니다.');

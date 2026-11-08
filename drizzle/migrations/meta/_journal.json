@@ -155,6 +155,13 @@
       "when": 1794106180461,
       "tag": "0021_mygrowth_followup_korean_error",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794111198266,
+      "tag": "0022_mygrowth_employee_screen_projection",
+      "breakpoints": true
     }
   ]
 }

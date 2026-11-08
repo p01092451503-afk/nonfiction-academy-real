@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       announcement_i18n: {
@@ -3838,6 +3833,7 @@ export type Database = {
           status: string
         }[]
       }
+      mygrowth_employee_feed: { Args: never; Returns: Json }
       mygrowth_field_coaching_list: {
         Args: never
         Returns: {
@@ -3980,6 +3976,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      mygrowth_screen_capabilities: { Args: never; Returns: Json }
       mygrowth_session_scope: { Args: { _id: string }; Returns: boolean }
       mygrowth_set_assignment: {
         Args: { _active: boolean; _role: string; _user_id: string }
@@ -4237,3 +4234,4 @@ export const Constants = {
     },
   },
 } as const
+

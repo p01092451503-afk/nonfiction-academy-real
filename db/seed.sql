@@ -185,3 +185,22 @@ INSERT INTO public.mygrowth_training_targets(training_id,user_id,tenant_id,branc
 ('f0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','attended') ON CONFLICT DO NOTHING;
 INSERT INTO public.mygrowth_action_plans(id,training_id,user_id,body,original_language) VALUES
 ('f0000000-0000-4000-8000-000000000003','f0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','고객의 선호 향을 먼저 확인하고 시향 순서를 매일 실천합니다.','ko') ON CONFLICT DO NOTHING;
+
+-- 중간 회의 사용자 목록·상세 연결용 예시입니다.
+INSERT INTO public.mygrowth_trainings(id,tenant_id,branch_id,title,training_type,session_kind,training_date,location,trainer_id,planned_minutes,actual_minutes,summary,created_by,request_id,request_payload,attendance_version) VALUES
+('f1000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','향 취향 상담과 시향 안내','필드 코칭','field_coaching','2026-10-15','성수 매장','b0000000-0000-4000-8000-000000000021',30,25,'고객 질문과 응대 순서를 확인합니다.','b0000000-0000-4000-8000-000000000021','f1000000-0000-4000-8000-000000000011','{}',1),
+('f1000000-0000-4000-8000-000000000002','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','팀 협업과 고객 인계','매니저 코칭','manager_coaching','2026-11-05','성수 매장','b0000000-0000-4000-8000-000000000021',30,NULL,'고객 인계 내용을 함께 확인합니다.','b0000000-0000-4000-8000-000000000021','f1000000-0000-4000-8000-000000000012','{}',1),
+('f1000000-0000-4000-8000-000000000003','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','신제품 향과 고객 응대 교육','제품 교육','education','2026-09-18','성수 교육 공간','b0000000-0000-4000-8000-000000000021',60,55,'향의 특징을 구분합니다.
+시향 순서를 정리합니다.
+고객의 선호를 확인합니다.','11111111-1111-4111-8111-111111111111','f1000000-0000-4000-8000-000000000013','{}',1) ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_training_targets(training_id,user_id,tenant_id,branch_id,attendance_status) VALUES
+('f1000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','attended'),
+('f1000000-0000-4000-8000-000000000002','b0000000-0000-4000-8000-000000000023','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','attended'),
+('f1000000-0000-4000-8000-000000000003','b0000000-0000-4000-8000-000000000023','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','attended') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_field_coaching(training_id,observation,feedback,next_action) VALUES
+('f1000000-0000-4000-8000-000000000001','고객에게 향을 설명하기 전에 선호를 묻는 질문이 필요합니다.','좋아하는 향과 사용 상황을 먼저 확인한 뒤 시향을 안내합니다.','매일 두 가지 질문을 먼저 시도합니다.') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_manager_coaching(training_id,observation,feedback,next_action,original_language) VALUES
+('f1000000-0000-4000-8000-000000000002','고객 인계 때 상담 내용을 빠뜨리지 않도록 확인합니다.','다음 담당자에게 고객의 선호와 시향한 향을 함께 전달합니다.','인계할 내용을 짧게 정리합니다.','ko') ON CONFLICT DO NOTHING;
+
+INSERT INTO public.enrollments(id,user_id,course_id,status,progress,completion_count) VALUES
+('f1000000-0000-4000-8000-000000000021','b0000000-0000-4000-8000-000000000023','c0000000-0000-4000-8000-000000000001','approved',35,0) ON CONFLICT DO NOTHING;

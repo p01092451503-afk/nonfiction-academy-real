@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PlanFollowup from '../components/PlanFollowup';
+import { useCapabilities } from '../screens/data';
 
 const KINDS: Record<string, string> = { education: '오프라인 교육', field_coaching: '필드 코칭', manager_coaching: '매니저 코칭' };
 const LANGS: Record<string, string> = { ko: '한국어', en: '영어', ja: '일본어', zh: '중국어', yue: '광동어' };
@@ -34,7 +35,7 @@ function Editor({ row }: { row: MyRow }) {
       const { error } = await supabase.rpc('mygrowth_save_action_plan', { _training_id: row.training_id, _body: body, _original_language: lang });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mygrowth-my-plans'] }),
+    onSuccess: async () => { await qc.invalidateQueries({ queryKey: ['mygrowth-my-plans'] }); await qc.invalidateQueries({ queryKey: ['mygrowth-screen'] }); },
   });
   const invalid = !body.trim() || body.length > PLAN_MAX;
   return <div className="space-y-3 pt-3">
@@ -50,19 +51,21 @@ function Editor({ row }: { row: MyRow }) {
   </div>;
 }
 
-export default function MyGrowthPlans() {
+export default function MyGrowthPlans({ staffOnly = false }: { staffOnly?: boolean }) {
+  const capabilities = useCapabilities();
+  const canReadStaff = !capabilities.isError && Boolean(capabilities.data?.trainer || capabilities.data?.manager);
   const { user } = useUser();
-  const [tab, setTab] = useState<'mine' | 'scoped'>('mine');
+  const [tab, setTab] = useState<'mine' | 'scoped'>(staffOnly ? 'scoped' : 'mine');
   const [open, setOpen] = useState<string>();
   const mine = useQuery({ queryKey: ['mygrowth-my-plans', user?.id], enabled: Boolean(user?.id), staleTime: 0, gcTime: 0, retry: false, queryFn: async (): Promise<MyRow[]> => {
     const { data, error } = await supabase.rpc('mygrowth_my_action_plans'); if (error) throw error; return (data ?? []) as MyRow[];
   }});
-  const scoped = useQuery({ queryKey: ['mygrowth-scoped-plans', user?.id], enabled: Boolean(user?.id) && tab === 'scoped', staleTime: 0, gcTime: 0, retry: false, queryFn: async (): Promise<ScopedRow[]> => {
+  const scoped = useQuery({ queryKey: ['mygrowth-scoped-plans', user?.id], enabled: Boolean(user?.id) && tab === 'scoped' && canReadStaff, staleTime: 0, gcTime: 0, retry: false, queryFn: async (): Promise<ScopedRow[]> => {
     const { data, error } = await supabase.rpc('mygrowth_scoped_action_plans'); if (error) throw error; return (data ?? []) as ScopedRow[];
   }});
   return <section className="min-w-0 space-y-6">
     <header className="border-b-2 border-border/80 pb-4"><h1 className="flex min-w-0 items-center gap-2 text-xl sm:text-2xl font-semibold"><Target className="h-6 w-6 shrink-0" />실행 계획</h1><p className="text-muted-foreground mt-1">참석한 교육·코칭마다 현장 실천 계획을 작성합니다.</p></header>
-    <Tabs value={tab} onValueChange={v => setTab(v as 'mine' | 'scoped')}><TabsList><TabsTrigger value="mine">내 계획</TabsTrigger><TabsTrigger value="scoped">담당 직원 계획</TabsTrigger></TabsList></Tabs>
+    {!staffOnly && <Tabs value={tab} onValueChange={v => setTab(v as 'mine' | 'scoped')}><TabsList><TabsTrigger value="mine">내 계획</TabsTrigger>{canReadStaff && <TabsTrigger value="scoped">담당 직원 계획</TabsTrigger>}</TabsList></Tabs>}
     {tab === 'mine' ? <State q={mine} empty={(mine.data ?? []).length === 0}>
       <ul>{(mine.data ?? []).map(r => <li key={r.training_id} className="min-w-0 py-5 border-b-2 border-border/80">
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs text-muted-foreground">{KINDS[r.session_kind] ?? '교육'} · {r.training_date}{r.branch_name ? ` · ${r.branch_name}` : ''}</p><h2 className="mt-2 font-semibold break-words">{r.title}</h2><p className="text-sm text-muted-foreground mt-1">{r.plan_id ? `작성됨 · ${fmt(r.updated_at)}` : '아직 작성하지 않음'}</p></div>
