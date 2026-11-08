@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       announcement_i18n: {
@@ -2165,6 +2160,59 @@ export type Database = {
           },
         ]
       }
+      mygrowth_followup_audit: {
+        Row: {
+          assessed_at: string
+          assessed_by: string
+          assessor_name: string
+          id: string
+          note: string
+          plan_body: string
+          plan_id: string
+          plan_language: string
+          plan_updated_at: string
+          request_id: string
+          status: string
+          version: number
+        }
+        Insert: {
+          assessed_at?: string
+          assessed_by: string
+          assessor_name: string
+          id?: string
+          note: string
+          plan_body: string
+          plan_id: string
+          plan_language: string
+          plan_updated_at: string
+          request_id: string
+          status: string
+          version: number
+        }
+        Update: {
+          assessed_at?: string
+          assessed_by?: string
+          assessor_name?: string
+          id?: string
+          note?: string
+          plan_body?: string
+          plan_id?: string
+          plan_language?: string
+          plan_updated_at?: string
+          request_id?: string
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_followup_audit_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_action_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_manager_coaching: {
         Row: {
           feedback: string
@@ -3805,6 +3853,11 @@ export type Database = {
           training_type: string
         }[]
       }
+      mygrowth_followup_detail: { Args: { _plan_id: string }; Returns: Json }
+      mygrowth_followup_staff_scope: {
+        Args: { _plan_id: string }
+        Returns: boolean
+      }
       mygrowth_has_branch_role: {
         Args: { _branch_id: string; _role: string }
         Returns: boolean
@@ -3895,6 +3948,17 @@ export type Database = {
           _training_id: string
         }
         Returns: string
+      }
+      mygrowth_save_followup: {
+        Args: {
+          _expected_plan_updated_at: string
+          _expected_version: number
+          _note: string
+          _plan_id: string
+          _request_id: string
+          _status: string
+        }
+        Returns: number
       }
       mygrowth_scoped_action_plans: {
         Args: never
@@ -4168,3 +4232,4 @@ export const Constants = {
     },
   },
 } as const
+

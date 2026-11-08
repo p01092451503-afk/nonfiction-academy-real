@@ -177,3 +177,11 @@ INSERT INTO public.mygrowth_training_targets(training_id,user_id,tenant_id,branc
 INSERT INTO public.mygrowth_assignments(user_id,tenant_id,branch_id,role,assigned_by) VALUES
 ('b0000000-0000-4000-8000-000000000021','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','store_manager','11111111-1111-4111-8111-111111111111'),
 ('b0000000-0000-4000-8000-000000000022','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000012','store_manager','11111111-1111-4111-8111-111111111111') ON CONFLICT(user_id,role) DO NOTHING;
+
+-- 10번 기능: 후속 확인용 참석 교육과 직원 실행 계획 예시입니다.
+INSERT INTO public.mygrowth_trainings(id,tenant_id,branch_id,title,training_type,training_date,location,trainer_id,planned_minutes,created_by,request_id,request_payload,attendance_version) VALUES
+('f0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','후속 확인 검수용 고객 응대 교육','서비스 교육',CURRENT_DATE,'성수 교육 공간','b0000000-0000-4000-8000-000000000021',60,'11111111-1111-4111-8111-111111111111','f0000000-0000-4000-8000-000000000002','{}',1) ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_training_targets(training_id,user_id,tenant_id,branch_id,attendance_status) VALUES
+('f0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','attended') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_action_plans(id,training_id,user_id,body,original_language) VALUES
+('f0000000-0000-4000-8000-000000000003','f0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','고객의 선호 향을 먼저 확인하고 시향 순서를 매일 실천합니다.','ko') ON CONFLICT DO NOTHING;

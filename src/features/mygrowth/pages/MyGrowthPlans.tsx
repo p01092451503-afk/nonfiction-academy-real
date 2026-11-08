@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PlanFollowup from '../components/PlanFollowup';
 
 const KINDS: Record<string, string> = { education: '오프라인 교육', field_coaching: '필드 코칭', manager_coaching: '매니저 코칭' };
 const LANGS: Record<string, string> = { ko: '한국어', en: '영어', ja: '일본어', zh: '중국어', yue: '광동어' };
@@ -66,10 +67,10 @@ export default function MyGrowthPlans() {
       <ul>{(mine.data ?? []).map(r => <li key={r.training_id} className="min-w-0 py-5 border-b-2 border-border/80">
         <div className="flex min-w-0 flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs text-muted-foreground">{KINDS[r.session_kind] ?? '교육'} · {r.training_date}{r.branch_name ? ` · ${r.branch_name}` : ''}</p><h2 className="mt-2 font-semibold break-words">{r.title}</h2><p className="text-sm text-muted-foreground mt-1">{r.plan_id ? `작성됨 · ${fmt(r.updated_at)}` : '아직 작성하지 않음'}</p></div>
           <Button variant="outline" onClick={() => setOpen(open === r.training_id ? undefined : r.training_id)}>{open === r.training_id ? '닫기' : r.plan_id ? '계획 보기·수정' : '계획 작성'}</Button></div>
-        {open === r.training_id && <Editor key={`${r.training_id}-${r.updated_at}`} row={r} />}
+        {open === r.training_id && <><Editor key={`${r.training_id}-${r.updated_at}`} row={r} />{r.plan_id && <PlanFollowup planId={r.plan_id} />}</>}
       </li>)}</ul>
     </State> : <State q={scoped} empty={(scoped.data ?? []).length === 0}>
-      <ul>{(scoped.data ?? []).map(r => <li key={r.plan_id} className="min-w-0 py-5 border-b-2 border-border/80"><p className="text-xs text-muted-foreground">{KINDS[r.session_kind] ?? '교육'} · {r.training_date}{r.branch_name ? ` · ${r.branch_name}` : ''} · {LANGS[r.original_language]}</p><h2 className="mt-2 font-semibold break-words">{r.employee_name} · {r.title}</h2><p className="mt-2 whitespace-pre-wrap break-words text-sm">{r.body}</p><p className="text-xs text-muted-foreground mt-2">최종 저장 {fmt(r.updated_at)} · 읽기 전용</p></li>)}</ul>
+      <ul>{(scoped.data ?? []).map(r => <li key={r.plan_id} className="min-w-0 py-5 border-b-2 border-border/80"><p className="text-xs text-muted-foreground">{KINDS[r.session_kind] ?? '교육'} · {r.training_date}{r.branch_name ? ` · ${r.branch_name}` : ''} · {LANGS[r.original_language]}</p><h2 className="mt-2 font-semibold break-words">{r.employee_name} · {r.title}</h2><p className="mt-2 whitespace-pre-wrap break-words text-sm">{r.body}</p><p className="text-xs text-muted-foreground mt-2">최종 저장 {fmt(r.updated_at)} · 계획 읽기 전용</p><PlanFollowup planId={r.plan_id} staff /></li>)}</ul>
     </State>}
   </section>;
 }
