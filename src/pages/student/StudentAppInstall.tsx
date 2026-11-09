@@ -268,7 +268,7 @@ export default function StudentAppInstall() {
 
       <div className={`${card} flex flex-col sm:flex-row sm:items-center gap-4`}>
         <div className="flex items-center gap-4 min-w-0 flex-1">
-          <img src="/nonfiction-pwa-icon-192-v20261025.png" alt="NONFICTION" className="h-14 w-14 rounded-xl border border-border shrink-0" />
+          <img src="/nonfiction-pwa-icon-192-v20261109.png" alt="NONFICTION" className="h-14 w-14 rounded-xl border border-border shrink-0" />
           <div className="min-w-0">
             <p className="font-semibold">NONFICTION Academy</p>
             <p className="text-sm text-muted-foreground">{t.cardDesc}</p>

@@ -24,29 +24,14 @@ export default defineConfig(({ mode }) => ({
         enabled: false,
       },
       includeAssets: [
-        "nonfiction-apple-touch-icon-v20261025.png",
-        "nonfiction-pwa-icon-192-v20261025.png",
-        "nonfiction-pwa-icon-512-v20261025.png",
-        "nonfiction-pwa-maskable-512-v20261025.png",
+        "nonfiction-apple-touch-icon-v20261109.png",
+        "nonfiction-pwa-icon-192-v20261109.png",
+        "nonfiction-pwa-icon-512-v20261109.png",
+        "nonfiction-pwa-maskable-512-v20261109.png",
       ],
-      manifest: {
-        name: "NONFICTION Education",
-        short_name: "NONFICTION",
-        description: "논픽션 사내 교육 시스템",
-        start_url: "/",
-        id: "/?pwa-icon=20261025",
-        scope: "/",
-        display: "standalone",
-        orientation: "portrait-primary",
-        background_color: "#ffffff",
-        theme_color: "#1a1a2e",
-        lang: "ko-KR",
-        icons: [
-          { src: "/nonfiction-pwa-icon-192-v20261025.png", sizes: "192x192", type: "image/png", purpose: "any" },
-          { src: "/nonfiction-pwa-icon-512-v20261025.png", sizes: "512x512", type: "image/png", purpose: "any" },
-          { src: "/nonfiction-pwa-maskable-512-v20261025.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-        ],
-      },
+      // Keep install metadata and icon paths on the app's own origin.
+      // public/manifest.webmanifest is the single source of truth.
+      manifest: false,
       workbox: {
         // Cache app shell; deny OAuth + auth callbacks + supabase API
         navigateFallback: "/index.html",
