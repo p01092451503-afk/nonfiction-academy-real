@@ -12,6 +12,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 const AdminPWASettings = () => {
   const qc = useQueryClient();
+  const [failedIcons, setFailedIcons] = useState<string[]>([]);
+  const installManifest = useQuery({
+    queryKey: ["pwa-install-manifest"],
+    queryFn: async () => {
+      const response = await fetch("/manifest.webmanifest", { cache: "no-cache" });
+      if (!response.ok) throw new Error("설치 아이콘 정보를 불러오지 못했습니다.");
+      const manifest: { icons?: { src: string; sizes: string; purpose?: string }[] } = await response.json();
+      return (manifest.icons ?? []).filter((icon) =>
+        icon.purpose === "maskable" || icon.sizes === "512x512"
+      );
+    },
+  });
   const [form, setForm] = useState({
     id: "" as string,
     app_name: "",
@@ -70,6 +82,38 @@ const AdminPWASettings = () => {
             앱 이름·테마 색상·설치 안내 노출 주기를 관리합니다. 변경 사항은 신규 설치부터 적용됩니다 (기존 설치 사용자는 재설치 필요).
           </p>
         </div>
+
+        <section aria-labelledby="install-icon-heading" className="border-b-2 border-border/80 pb-6">
+          <h2 id="install-icon-heading" className="text-base font-semibold mb-4">현재 설치 아이콘</h2>
+          {installManifest.isPending ? (
+            <p role="status" className="text-sm text-muted-foreground">아이콘을 불러오는 중입니다.</p>
+          ) : installManifest.isError || !installManifest.data?.length ? (
+            <p role="alert" className="text-sm text-destructive">설치 아이콘을 불러오지 못했습니다.</p>
+          ) : (
+            <div className="flex flex-wrap gap-6 min-w-0">
+              {installManifest.data.map((icon) => (
+                <figure key={icon.src} className="min-w-0 space-y-2">
+                  {failedIcons.includes(icon.src) ? (
+                    <div role="alert" className="w-32 h-32 flex items-center justify-center border border-border rounded-md text-sm text-destructive text-center p-3">이미지를 불러오지 못했습니다.</div>
+                  ) : (
+                    <img
+                      src={icon.src}
+                      alt={icon.purpose === "maskable" ? "논픽션 설치 아이콘 · 기기 모양 대응용" : "논픽션 설치 아이콘 · 기본형"}
+                      width={128}
+                      height={128}
+                      className="w-32 h-32 object-contain border border-border rounded-md"
+                      onError={() => setFailedIcons((previous) => previous.includes(icon.src) ? previous : [...previous, icon.src])}
+                    />
+                  )}
+                  <figcaption className="text-sm font-medium">
+                    {icon.purpose === "maskable" ? "기기 모양 대응용" : "기본형"}
+                    <span className="block text-xs text-muted-foreground font-normal">{icon.sizes.replace("x", " × ")}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+        </section>
 
         <Card>
           <CardHeader><CardTitle className="text-base">앱 이름 및 표시</CardTitle></CardHeader>
