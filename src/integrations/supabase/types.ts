@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       announcement_i18n: {
@@ -2250,6 +2245,79 @@ export type Database = {
           },
         ]
       }
+      mygrowth_material_tickets: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          material_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          material_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          material_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_material_tickets_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_materials: {
+        Row: {
+          bytes: number
+          created_at: string
+          filename: string
+          id: string
+          object_path: string
+          ready: boolean
+          training_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          bytes: number
+          created_at?: string
+          filename: string
+          id?: string
+          object_path: string
+          ready?: boolean
+          training_id: string
+          uploaded_by: string
+        }
+        Update: {
+          bytes?: number
+          created_at?: string
+          filename?: string
+          id?: string
+          object_path?: string
+          ready?: boolean
+          training_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_materials_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_records: {
         Row: {
           actual_minutes: number | null
@@ -3826,6 +3894,10 @@ export type Database = {
         }
         Returns: string
       }
+      mygrowth_current_owner_target: {
+        Args: { _training: string }
+        Returns: boolean
+      }
       mygrowth_elearning_reference: {
         Args: never
         Returns: {
@@ -3917,6 +3989,14 @@ export type Database = {
         Args: { _branch: string; _tenant: string }
         Returns: boolean
       }
+      mygrowth_material_issue: { Args: { _material: string }; Returns: string }
+      mygrowth_material_list: { Args: { _training: string }; Returns: Json }
+      mygrowth_material_redeem: { Args: { _ticket: string }; Returns: Json }
+      mygrowth_material_reserve: {
+        Args: { _bytes: number; _filename: string; _training: string }
+        Returns: Json
+      }
+      mygrowth_material_scope: { Args: { _training: string }; Returns: boolean }
       mygrowth_my_action_plans: {
         Args: never
         Returns: {
@@ -3930,6 +4010,10 @@ export type Database = {
           training_id: string
           updated_at: string
         }[]
+      }
+      mygrowth_own_course_minutes: {
+        Args: { _course: string }
+        Returns: number
       }
       mygrowth_record_feed: {
         Args: { _from?: string; _to?: string }
@@ -4256,3 +4340,4 @@ export const Constants = {
     },
   },
 } as const
+

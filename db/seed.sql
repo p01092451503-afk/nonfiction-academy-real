@@ -204,3 +204,20 @@ INSERT INTO public.mygrowth_manager_coaching(training_id,observation,feedback,ne
 
 INSERT INTO public.enrollments(id,user_id,course_id,status,progress,completion_count) VALUES
 ('f1000000-0000-4000-8000-000000000021','b0000000-0000-4000-8000-000000000023','c0000000-0000-4000-8000-000000000001','approved',35,0) ON CONFLICT DO NOTHING;
+
+-- 값별 대조용 합성 온라인 수료와 실제 시간입니다. 운영 기록을 복사하지 않습니다.
+INSERT INTO public.enrollments(id,user_id,course_id,status,progress,completion_count,completed_at) VALUES
+('f2000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','c0000000-0000-4000-8000-000000000002','approved',100,1,'2026-11-10T03:00:00Z') ON CONFLICT DO NOTHING;
+INSERT INTO public.course_learning_sessions(id,user_id,course_id,tenant_id,started_at,last_heartbeat_at,is_estimated) VALUES
+('f2000000-0000-4000-8000-000000000011','b0000000-0000-4000-8000-000000000023','c0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000001','2026-11-12T02:00:00Z','2026-11-12T02:10:00Z',false),
+('f2000000-0000-4000-8000-000000000012','b0000000-0000-4000-8000-000000000023','c0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000001','2026-11-13T02:00:00Z','2026-11-13T02:45:00Z',false),
+('f2000000-0000-4000-8000-000000000013','b0000000-0000-4000-8000-000000000023','c0000000-0000-4000-8000-000000000002','b0000000-0000-4000-8000-000000000001','2026-11-10T02:00:00Z','2026-11-10T02:12:00Z',false) ON CONFLICT DO NOTHING;
+
+-- 같은 지점의 다른 매니저 원문 차단을 확인하는 합성 계정입니다.
+INSERT INTO auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at,confirmation_token,recovery_token,email_change,email_change_token_new,raw_app_meta_data,raw_user_meta_data)
+SELECT 'b0000000-0000-4000-8000-000000000024'::uuid,'00000000-0000-0000-0000-000000000000'::uuid,'authenticated','authenticated','growth-other-manager@draft.invalid',encrypted_password,now(),now(),now(),'','','','','{"provider":"email","providers":["email"]}'::jsonb,'{"full_name":"검수 다른 매니저"}'::jsonb FROM auth.users WHERE id='11111111-1111-4111-8111-111111111111' ON CONFLICT DO NOTHING;
+INSERT INTO auth.identities(id,user_id,provider,provider_id,identity_data,created_at,updated_at) VALUES(gen_random_uuid(),'b0000000-0000-4000-8000-000000000024','email','b0000000-0000-4000-8000-000000000024','{"sub":"b0000000-0000-4000-8000-000000000024","email":"growth-other-manager@draft.invalid","email_verified":true}',now(),now()) ON CONFLICT DO NOTHING;
+INSERT INTO public.profiles(user_id,full_name,tenant_id,department_id) VALUES('b0000000-0000-4000-8000-000000000024','검수 다른 매니저','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_staff_registry(user_id,tenant_id,branch_id,is_senior) VALUES('b0000000-0000-4000-8000-000000000024','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011',true) ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_reviewers(user_id,note) VALUES('b0000000-0000-4000-8000-000000000024','다른 매니저 원문 차단 검수') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_assignments(user_id,tenant_id,branch_id,role,assigned_by) VALUES('b0000000-0000-4000-8000-000000000024','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','store_manager','11111111-1111-4111-8111-111111111111') ON CONFLICT DO NOTHING;
