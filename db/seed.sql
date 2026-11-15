@@ -221,3 +221,13 @@ INSERT INTO public.profiles(user_id,full_name,tenant_id,department_id) VALUES('b
 INSERT INTO public.mygrowth_staff_registry(user_id,tenant_id,branch_id,is_senior) VALUES('b0000000-0000-4000-8000-000000000024','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011',true) ON CONFLICT DO NOTHING;
 INSERT INTO public.mygrowth_reviewers(user_id,note) VALUES('b0000000-0000-4000-8000-000000000024','다른 매니저 원문 차단 검수') ON CONFLICT DO NOTHING;
 INSERT INTO public.mygrowth_assignments(user_id,tenant_id,branch_id,role,assigned_by) VALUES('b0000000-0000-4000-8000-000000000024','b0000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000011','store_manager','11111111-1111-4111-8111-111111111111') ON CONFLICT DO NOTHING;
+
+-- 11월 18일 회의 시연: 현장 코칭 실행 계획과 후속 확인(판정) 이력 예시입니다.
+INSERT INTO public.mygrowth_action_plans(id,training_id,user_id,body,original_language) VALUES
+('f3000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001','b0000000-0000-4000-8000-000000000023','상담 시작 때 좋아하는 향과 사용 상황 두 가지를 먼저 묻고 시향을 안내합니다.','ko') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_followup_audit(id,plan_id,version,status,note,assessed_by,assessor_name,assessed_at,request_id,plan_body,plan_language,plan_updated_at)
+SELECT 'f3000000-0000-4000-8000-000000000011','f3000000-0000-4000-8000-000000000001',1,'in_progress','질문은 시작했지만 사용 상황 질문이 자주 빠집니다. 다음 주에 다시 확인합니다.','b0000000-0000-4000-8000-000000000021','검수 성수 선임매니저','2026-11-08T05:00:00Z','f3000000-0000-4000-8000-000000000021',p.body,p.original_language,p.updated_at
+FROM public.mygrowth_action_plans p WHERE p.id='f3000000-0000-4000-8000-000000000001' ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_followup_audit(id,plan_id,version,status,note,assessed_by,assessor_name,assessed_at,request_id,plan_body,plan_language,plan_updated_at)
+SELECT 'f3000000-0000-4000-8000-000000000012','f3000000-0000-4000-8000-000000000001',2,'completed','두 가지 질문을 매번 먼저 하고 있습니다. 실행 계획을 이행했습니다.','b0000000-0000-4000-8000-000000000021','검수 성수 선임매니저','2026-11-13T05:00:00Z','f3000000-0000-4000-8000-000000000022',p.body,p.original_language,p.updated_at
+FROM public.mygrowth_action_plans p WHERE p.id='f3000000-0000-4000-8000-000000000001' ON CONFLICT DO NOTHING;
