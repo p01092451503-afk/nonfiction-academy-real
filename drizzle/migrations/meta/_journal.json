@@ -162,6 +162,20 @@
       "when": 1794111198266,
       "tag": "0022_mygrowth_employee_screen_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794711570464,
+      "tag": "0023_mygrowth_scoped_staff_journey",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794712019505,
+      "tag": "0024_selected_security_access_hardening",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,18 @@
+ALTER FUNCTION public.move_to_dlq(text,text,bigint,jsonb) SET search_path = '';
+ALTER FUNCTION public.read_email_batch(text,integer,integer) SET search_path = '';
+ALTER FUNCTION public.enqueue_email(text,jsonb) SET search_path = '';
+ALTER FUNCTION public.delete_email(text,bigint) SET search_path = '';
+ALTER POLICY "Authenticated can insert translations" ON public.comment_translations WITH CHECK (EXISTS (SELECT 1 FROM public.course_comments c WHERE c.id = comment_translations.comment_id));
+ALTER POLICY "Authenticated can view translations" ON public.comment_translations USING (EXISTS (SELECT 1 FROM public.course_comments c WHERE c.id = comment_translations.comment_id));
+ALTER POLICY "Authenticated can view migration courses" ON public.migration_courses USING (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'super_admin') OR public.has_role(auth.uid(), 'teacher'));
+ALTER POLICY "tracks_i18n: authenticated view" ON public.learning_tracks_i18n USING (EXISTS (SELECT 1 FROM public.learning_tracks t WHERE t.id = learning_tracks_i18n.track_id));
+ALTER POLICY "Authenticated can view announcement i18n" ON public.announcement_i18n USING (EXISTS (SELECT 1 FROM public.announcements a WHERE a.id = announcement_i18n.announcement_id));
+ALTER POLICY "All authenticated users can read system settings" ON public.system_settings USING (key IN ('menu_visibility', 'teacher_role_enabled') OR public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'super_admin'));
+ALTER POLICY "Authenticated can view templates" ON public.certificate_templates USING (EXISTS (SELECT 1 FROM public.courses c WHERE c.id = certificate_templates.course_id));
+ALTER POLICY "Authenticated can view criteria" ON public.completion_criteria USING (EXISTS (SELECT 1 FROM public.courses c WHERE c.id = completion_criteria.course_id));
+ALTER POLICY "Authenticated can view board post i18n" ON public.board_post_i18n USING (EXISTS (SELECT 1 FROM public.board_posts b WHERE b.id = board_post_i18n.post_id));
+ALTER POLICY "stages_i18n: authenticated view" ON public.track_stages_i18n USING (EXISTS (SELECT 1 FROM public.track_stages s WHERE s.id = track_stages_i18n.stage_id));
+ALTER POLICY "Authenticated users can view departments" ON public.departments USING (is_active OR public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'super_admin'));
+ALTER POLICY "Authenticated can view course targets" ON public.course_target_departments USING (EXISTS (SELECT 1 FROM public.courses c WHERE c.id = course_target_departments.course_id));
+ALTER POLICY "Authenticated users can view course i18n" ON public.course_i18n USING (EXISTS (SELECT 1 FROM public.courses c WHERE c.id = course_i18n.course_id));
+ALTER POLICY "Authenticated users can upload thumbnails" ON storage.objects WITH CHECK (bucket_id = 'course-thumbnails' AND owner_id = (SELECT auth.uid()::text));

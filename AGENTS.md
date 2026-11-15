@@ -2,6 +2,8 @@
 
 ## Architecture rules
 
+- Selected LMS child-record read policies inherit parent visibility via invoker RLS subqueries; public client settings use explicit key allowlists and thumbnail inserts bind owner_id to auth.uid(). Why: child records and uploads must not bypass their original access scope.
+
 - PWA install metadata uses the same-origin `public/manifest.webmanifest` as its sole source; Vite must not emit a competing manifest. Preserve the installed app identity and start URL when changing icons. Why: cross-origin dynamic manifests resolve relative icons against the wrong host, and changing identity duplicates installed apps.
 - PWA settings icon previews read the same-origin install manifest rather than hardcoding icon paths. Why: the displayed design must track the actual install metadata.
 
@@ -24,3 +26,5 @@
 - Employee action plans live in a table with no client grants; only RPCs write/read them: the owner saves one plan per attended session target, and staff read others' plans only through `mygrowth_session_scope`. Why: plans must not widen field/manager coaching access or touch learning and attendance records.
 - Followup assessments are append-only RPC-only audit rows with plan/assessor snapshots; writes require reviewer membership, current branch assignment, session scope and attended target, with locked plan/version and idempotent request checks. Why: corrections must preserve history without widening coaching scope or changing learning records.
 - My Growth employee navigation and staff workspaces stay inside the reviewer-gated module and derive capabilities only from server-confirmed appointments; employee home, timeline and details reuse canonical owned projections and existing plan/followup RPCs. Why: client layouts must not grant LMS administrators new authority or duplicate sensitive records.
+- Staff journey reads use additive RPCs intersecting current appointed senior status, employee/actor registry and profile branch, target membership and existing session scope; manager notes stay author-only and no other employee LMS feed is included. Why: integrated screens must not create wider team or sensitive-record authority.
+- Academy integration previews use a module-local layout and shared display controls, never execute the live admin page or change its layout/routes; staff detail is read-only and uses a fresh scoped RPC. Why: preview navigation must not trigger role/settings writes or retain revoked record access.
