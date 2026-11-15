@@ -18,6 +18,14 @@ class MaterialRules(unittest.TestCase):
    self.sql(self.setup()+f"UPDATE public.mygrowth_training_targets SET attendance_status='{status}' WHERE training_id='{T}';"+m.session(m.STAFF)+self.denied(f"public.mygrowth_material_redeem('{K}')"))
  def test_transfer_denies_unexpired_ticket(self):self.sql(self.setup()+f"UPDATE public.profiles SET department_id='b0000000-0000-4000-8000-000000000012' WHERE user_id='{m.STAFF}';"+m.session(m.STAFF)+self.denied(f"public.mygrowth_material_redeem('{K}')"))
  def test_reviewer_revocation_denies_unexpired_ticket(self):self.sql(self.setup()+f"DELETE FROM public.mygrowth_reviewers WHERE user_id='{m.STAFF}';"+m.session(m.STAFF)+self.denied(f"public.mygrowth_material_redeem('{K}')"))
+ def test_ticket_cannot_be_reused_by_another_authorized_owner(self):
+  self.sql(self.setup()+m.session(m.A)+self.denied(f"public.mygrowth_material_redeem('{K}')"))
+ def test_owner_can_reuse_ticket_with_current_scope(self):
+  self.assertEqual(self.sql(self.setup()+m.session(m.STAFF)+f"SELECT public.mygrowth_material_redeem('{K}')->>'filename'; SELECT public.mygrowth_material_redeem('{K}')->>'filename';"),['교육.pdf','교육.pdf'])
+ def test_trainer_ticket_is_denied_after_appointment_revocation(self):
+  self.sql(self.setup()+f"UPDATE public.mygrowth_material_tickets SET user_id='{m.A}' WHERE id='{K}'; UPDATE public.mygrowth_assignments SET active=false WHERE user_id='{m.A}' AND role='trainer';"+m.session(m.A)+self.denied(f"public.mygrowth_material_redeem('{K}')"))
+ def test_other_manager_cannot_list_education_materials(self):
+  self.sql(self.setup()+m.session('b0000000-0000-4000-8000-000000000024')+self.denied(f"public.mygrowth_material_list('{T}')"))
  def test_trainer_revocation_and_transfer_denied(self):
   for change in [f"UPDATE public.mygrowth_assignments SET active=false WHERE user_id='{m.A}';",f"UPDATE public.profiles SET department_id='b0000000-0000-4000-8000-000000000012' WHERE user_id='{m.A}';"]:
    self.sql(self.setup()+change+m.session(m.A)+self.denied(f"public.mygrowth_material_list('{T}')"))
