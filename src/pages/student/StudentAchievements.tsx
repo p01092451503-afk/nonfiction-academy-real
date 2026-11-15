@@ -80,7 +80,7 @@ const StudentAchievements = () => {
   const { data: leaderboard = [] } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_gamification").select("user_id, total_points, level").order("total_points", { ascending: false }).limit(10);
+      const { data, error } = await supabase.rpc("get_leaderboard", { _limit: 10 });
       if (error) throw error;
       return data;
     },

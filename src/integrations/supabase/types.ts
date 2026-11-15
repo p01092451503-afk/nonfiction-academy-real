@@ -3798,6 +3798,14 @@ export type Database = {
         Args: { _leader_id: string }
         Returns: string[]
       }
+      get_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          level: number
+          total_points: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

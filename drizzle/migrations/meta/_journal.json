@@ -197,6 +197,13 @@
       "when": 1794717395384,
       "tag": "0027_mygrowth_plan_current_branch_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794720705177,
+      "tag": "0028_restrict_gamification_badges_and_materials_policy",
+      "breakpoints": true
     }
   ]
 }
