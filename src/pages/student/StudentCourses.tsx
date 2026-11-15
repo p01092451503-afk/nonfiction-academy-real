@@ -17,7 +17,13 @@ import { localizeCourse } from "@/lib/i18nCourse";
 import { computeCourseProgress } from "@/lib/courseCompletion";
 import CourseThumbnail from "@/components/CourseThumbnail";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMyGrowthAccess } from "@/features/mygrowth/useMyGrowthAccess";
+import OfflineLearning from "@/features/mygrowth/screens/OfflineLearning";
+
 const StudentCourses = () => {
+  const growth = useMyGrowthAccess();
+  const [learningTab, setLearningTab] = useState("all");
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -274,6 +280,8 @@ const StudentCourses = () => {
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2"><BookOpen className="h-6 w-6" aria-hidden="true" />{t("course.myCourseRoom")}</h1>
         </div>
 
+        {growth.allowed && <Tabs value={learningTab} onValueChange={setLearningTab}><TabsList className="grid w-full grid-cols-3 sm:w-96"><TabsTrigger value="all">전체</TabsTrigger><TabsTrigger value="online">온라인 강의</TabsTrigger><TabsTrigger value="offline">오프라인 교육</TabsTrigger></TabsList></Tabs>}
+        <div hidden={growth.allowed && learningTab === 'offline'} className="space-y-6 min-w-0">
         <div className="bg-secondary/30 rounded-xl p-4 space-y-1.5">
           <div className="flex items-start gap-2">
             <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden="true" />
@@ -337,6 +345,8 @@ const StudentCourses = () => {
             </section>
           </div>
         )}
+        </div>
+        {growth.allowed && learningTab !== "online" && <OfflineLearning />}
       </div>
     </>
   );

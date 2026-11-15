@@ -144,10 +144,10 @@ const AppRoutes = () => {
           <Route path="/" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<ProtectedRoute><RoleBasedRedirect /></ProtectedRoute>} />
-          <Route path="/my-growth/*" element={<MyGrowthBoundary />} />
 
           {/* Student — persistent layout, only the content swaps on navigation */}
           <Route element={<ProtectedRoute><RoleLayoutRoute role="student" /></ProtectedRoute>}>
+            <Route path="/my-growth/*" element={<MyGrowthBoundary />} />
             <Route path="/student" element={<StudentDashboard />} />
             <Route path="/dashboard/courses" element={<StudentCourses />} />
             <Route path="/dashboard/assignments" element={<StudentAssignments />} />

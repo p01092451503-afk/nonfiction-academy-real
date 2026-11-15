@@ -18,6 +18,8 @@ import RoleSwitcher from "@/components/RoleSwitcher";
 import NotificationBell from "@/components/NotificationBell";
 import GuidedTourButton from "@/components/GuidedTourButton";
 import nonfictionLogo from "@/assets/nonfiction-logo.png";
+import { useMyGrowthAccess } from '@/features/mygrowth/useMyGrowthAccess';
+import { useCapabilities } from '@/features/mygrowth/screens/data';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
@@ -80,6 +82,17 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
   const { teacherRoleEnabled, isMenuVisible } = useSystemSettings();
 
   const activeRole = role || primaryRole;
+  const growth = useMyGrowthAccess();
+  const capabilities = useCapabilities(growth.allowed);
+  const caps = growth.allowed && !capabilities.isError && !capabilities.isFetching ? capabilities.data : undefined;
+  const growthItems: NavItem[] = growth.allowed ? [
+    { key: 'coachingPlans', label: '코칭·실행 계획', href: '/my-growth/coaching?type=both', icon: ClipboardList, protected: true },
+    ...(caps?.trainer || caps?.manager ? [{ key: 'growthStaff', label: '담당 직원', href: '/my-growth/workspace/staff', icon: Users, protected: true }, { key: 'growthTeam', label: '팀 성장 현황', href: '/my-growth/workspace/team', icon: Building2, protected: true }, { key: 'growthFollowup', label: '직원 계획·후속 확인', href: '/my-growth/workspace/plans', icon: ClipboardCheck, protected: true }] : []),
+    ...(caps?.can_educate ? [{ key: 'growthTraining', label: '오프라인 교육', href: '/my-growth/workspace/training', icon: GraduationCap, protected: true }, { key: 'growthField', label: '현장 코칭 등록', href: '/my-growth/workspace/coaching', icon: Users, protected: true }] : []),
+    ...(caps?.manager ? [{ key: 'growthManager', label: '매니저 코칭 등록', href: '/my-growth/workspace/manager-coaching', icon: ClipboardCheck, protected: true }] : []),
+    ...(caps?.can_appoint ? [{ key: 'growthBranches', label: '지점 관리·팀 현황', href: '/my-growth/workspace/team', icon: Building2, protected: true }, { key: 'growthAppointments', label: '담당자 지정', href: '/my-growth/workspace/assignments', icon: Users, protected: true }] : []),
+    { key: 'growthReport', label: '교육·코칭 시간 보고서', href: '/my-growth/reports', icon: BarChart3, protected: true },
+  ] : [];
 
   // 현재 활성 역할 컨텍스트를 sessionStorage에 저장 (역할 비종속 페이지에서 활용)
   useEffect(() => {
@@ -162,6 +175,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
     { key: "dashboard", label: t("nav.dashboard"), href: "/student", icon: LayoutDashboard, tourId: "nav-dashboard", protected: true },
     { key: "catalog", label: t("nav.courseCatalog"), href: "/catalog", icon: Compass, tourId: "nav-catalog" },
     { key: "myCourses", label: t("nav.myCourses"), href: "/dashboard/courses", icon: BookOpen, tourId: "nav-courses" },
+    ...growthItems,
     ...(hasAssignedTracks ? [{ key: "myTracks", label: t("nav.myTracks", "내 학습 트랙"), href: "/student/tracks", icon: Layers } as NavItem] : []),
     { key: "assignments", label: t("nav.assignments"), href: "/dashboard/assignments", icon: ClipboardList, tourId: "nav-assignments" },
     { key: "achievements", label: t("nav.achievements"), href: "/dashboard/achievements", icon: Trophy, tourId: "nav-achievements" },
@@ -246,7 +260,13 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
     items.filter((it) => it.protected || isMenuVisible(activeRole as "student" | "teacher" | "admin", it.key));
 
   const flatNav = filterItems(activeRole === "teacher" ? teacherNav : studentNav);
-  const navGroups: NavGroup[] | null = activeRole === "admin"
+  const educationGroups: NavGroup[] = [
+    { label: '인사이트', items: [{ key: 'growthReport', label: '통계 현황·교육·코칭', href: '/my-growth/reports', icon: BarChart3, protected: true }] },
+    { label: '회원·조직', items: [{ key: 'growthTeam', label: '직원 관리·성장 현황', href: '/my-growth/workspace/team', icon: Users, protected: true }, { key: 'growthAppointments', label: '지점 관리·담당자 지정', href: '/my-growth/workspace/assignments', icon: Building2, protected: true }] },
+    { label: '학습 운영', items: [{ key: 'growthTraining', label: '오프라인 교육', href: '/my-growth/workspace/training', icon: GraduationCap, protected: true }, { key: 'growthField', label: '현장 코칭 운영', href: '/my-growth/workspace/coaching', icon: ClipboardCheck, protected: true }] },
+    { label: '나의 학습', items: filterItems(studentNav.filter(item => !growthItems.includes(item))) },
+  ];
+  const navGroups: NavGroup[] | null = caps?.can_appoint ? educationGroups : activeRole === "admin"
     ? adminGroups
         .map((g) => ({ ...g, items: filterItems(g.items) }))
         .filter((g) => g.items.length > 0)
@@ -255,7 +275,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (label: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  const roleLabel = activeRole === "teacher"
+  const roleLabel = caps?.can_appoint ? '본사 한국 교육팀' : activeRole === "teacher"
     ? t(getTeacherRoleLabelKey(profile?.position))
     : t(`roles.${activeRole}`);
 
@@ -269,7 +289,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
     : "NF";
 
   const renderNavLink = (item: NavItem) => {
-    const isActive = location.pathname === item.href;
+    const isActive = location.pathname === item.href.split('?')[0];
     return (
       <Link key={item.href} to={item.href} onClick={() => setSidebarOpen(false)}
         className={`nav-item ${isActive ? "nav-item-active" : ""} ${sidebarCollapsed ? "justify-center px-2" : ""}`}

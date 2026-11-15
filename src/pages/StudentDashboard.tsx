@@ -16,7 +16,11 @@ import { computeCourseProgress } from "@/lib/courseCompletion";
 import { MultiSelectPopover } from "@/components/ui/MultiSelectPopover";
 import { Filter, RotateCcw } from "lucide-react";
 
+import GrowthHome from "@/features/mygrowth/screens/Home";
+import { useMyGrowthAccess } from "@/features/mygrowth/useMyGrowthAccess";
+
 const StudentDashboard = () => {
+  const growth = useMyGrowthAccess();
   const { user, profile } = useUser();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -368,7 +372,7 @@ const StudentDashboard = () => {
         const e = enrolledMap.get(id) as any;
         return e && (Number(e.progress) !== 100);
       });
-      if (toSync.length > 0) {
+      if (toSync.length > 0 && !growth.allowed) {
         await Promise.all(toSync.map(cid => {
           const e = enrolledMap.get(cid) as any;
           return supabase.from("enrollments")
@@ -693,6 +697,8 @@ const StudentDashboard = () => {
             </div>
           )}
         </div>
+
+        {growth.allowed && <GrowthHome embedded />}
 
         {/* 학습 통계 + 추천 강의 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

@@ -19,9 +19,9 @@ export function useGrowthFeed() {
   const {data,error}=await supabase.rpc('mygrowth_employee_feed'); if(error)throw error; return z.array(rowSchema).parse(data);
  }});
 }
-export function useCapabilities() {
+export function useCapabilities(enabled = true) {
  const {user}=useUser();
- return useQuery({queryKey:['mygrowth-capabilities',user?.id],enabled:Boolean(user?.id),staleTime:0,gcTime:0,retry:false,refetchInterval:15000,queryFn:async()=>{
+ return useQuery({queryKey:['mygrowth-capabilities',user?.id],enabled:enabled&&Boolean(user?.id),staleTime:0,gcTime:0,retry:false,refetchInterval:15000,queryFn:async()=>{
  const {data,error}=await supabase.rpc('mygrowth_screen_capabilities');if(error)throw error;return z.object({can_appoint:z.boolean(),trainer:z.boolean(),manager:z.boolean(),can_educate:z.boolean()}).parse(data);
  }});
 }
