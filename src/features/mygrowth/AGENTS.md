@@ -1,0 +1,3 @@
+# My Growth module rules
+- Time reports aggregate existing records read-only via one scoped RPC (education team all, appointed senior own current branch, employee self); manager-coaching minutes count only for the employee and the authoring store manager. Why: reports must not widen coaching access or alter learning records.
+- Team growth summaries come from one read-only scoped RPC (education team any branch, appointed senior current branch only); manager-coaching counts only for the authoring manager and staff detail links only where existing staff scope allows. Why: team overviews must not widen coaching or record access.
