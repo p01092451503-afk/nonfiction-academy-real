@@ -225,6 +225,20 @@
       "when": 1794823213152,
       "tag": "0031_mygrowth_hq_manager_coaching_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794823214152,
+      "tag": "0032_mygrowth_kpi_integration",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794823215152,
+      "tag": "0033_mygrowth_kpi_ingest_branch_fix",
+      "breakpoints": true
     }
   ]
 }

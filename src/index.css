@@ -238,3 +238,11 @@
     animation: none;
   }
 }
+
+@media print {
+  body:has(.kpi-guide) * { visibility: hidden; }
+  body:has(.kpi-guide) .kpi-guide, body:has(.kpi-guide) .kpi-guide * { visibility: visible; }
+  body:has(.kpi-guide) .kpi-guide { position: absolute; inset: 0 0 auto 0; max-width: none; padding: 0; }
+  .kpi-guide pre { white-space: pre-wrap; }
+  @page { size: A4; margin: 14mm; }
+}

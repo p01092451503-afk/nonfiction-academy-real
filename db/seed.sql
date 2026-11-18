@@ -231,3 +231,14 @@ FROM public.mygrowth_action_plans p WHERE p.id='f3000000-0000-4000-8000-00000000
 INSERT INTO public.mygrowth_followup_audit(id,plan_id,version,status,note,assessed_by,assessor_name,assessed_at,request_id,plan_body,plan_language,plan_updated_at)
 SELECT 'f3000000-0000-4000-8000-000000000012','f3000000-0000-4000-8000-000000000001',2,'completed','두 가지 질문을 매번 먼저 하고 있습니다. 실행 계획을 이행했습니다.','b0000000-0000-4000-8000-000000000021','검수 성수 선임매니저','2026-11-13T05:00:00Z','f3000000-0000-4000-8000-000000000022',p.body,p.original_language,p.updated_at
 FROM public.mygrowth_action_plans p WHERE p.id='f3000000-0000-4000-8000-000000000001' ON CONFLICT DO NOTHING;
+
+-- 외부 KPI 연동 시험 자료 (초안 전용 시험 업체·시험 키·지표)
+UPDATE public.profiles SET employee_id='NF-1001' WHERE user_id=(SELECT id FROM auth.users WHERE email='growth-regular@draft.invalid');
+UPDATE public.profiles SET employee_id='NF-2001' WHERE user_id=(SELECT id FROM auth.users WHERE email='growth-senior-b@draft.invalid');
+INSERT INTO public.mygrowth_kpi_vendors(id,tenant_id,name) VALUES ('b0000000-0000-4000-8000-0000000000a1','b0000000-0000-4000-8000-000000000001','시험 POS 업체') ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_kpi_api_keys(vendor_id,label,key_prefix,key_hash,is_test) VALUES ('b0000000-0000-4000-8000-0000000000a1','미팅 시연용 시험 키','nfk_test_c331','69c3d3a58202afc17b8d1bbe230c3b6c305d3ba5e3fdb8d26ec5057d5113949a',true) ON CONFLICT DO NOTHING;
+INSERT INTO public.mygrowth_kpi_metrics(tenant_id,code,name,unit,description) VALUES
+ ('b0000000-0000-4000-8000-000000000001','SALES_AMOUNT','월 매출','KRW','직원 개인 월 판매 금액'),
+ ('b0000000-0000-4000-8000-000000000001','SALES_COUNT','판매 건수','건','월 판매 영수증 건수'),
+ ('b0000000-0000-4000-8000-000000000001','UPT','객단 품목 수','개','영수증당 평균 판매 품목 수')
+ON CONFLICT DO NOTHING;

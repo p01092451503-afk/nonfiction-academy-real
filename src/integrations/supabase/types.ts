@@ -2260,6 +2260,248 @@ export type Database = {
         }
         Relationships: []
       }
+      mygrowth_kpi_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_test: boolean
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          revoked_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_test?: boolean
+          key_hash: string
+          key_prefix: string
+          label?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_test?: boolean
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_kpi_api_keys_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_kpi_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_kpi_ingest_logs: {
+        Row: {
+          errors: Json
+          failed: number
+          id: string
+          key_id: string | null
+          received_at: string
+          status: string
+          succeeded: number
+          total: number
+          vendor_id: string | null
+        }
+        Insert: {
+          errors?: Json
+          failed?: number
+          id?: string
+          key_id?: string | null
+          received_at?: string
+          status: string
+          succeeded?: number
+          total?: number
+          vendor_id?: string | null
+        }
+        Update: {
+          errors?: Json
+          failed?: number
+          id?: string
+          key_id?: string | null
+          received_at?: string
+          status?: string
+          succeeded?: number
+          total?: number
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_kpi_ingest_logs_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_kpi_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_kpi_ingest_logs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_kpi_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_kpi_metrics: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string
+          name: string
+          tenant_id: string
+          unit: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string
+          name: string
+          tenant_id: string
+          unit: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string
+          name?: string
+          tenant_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_kpi_metrics_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_kpi_values: {
+        Row: {
+          branch_id: string
+          id: string
+          metric_code: string
+          period: string
+          received_at: string
+          tenant_id: string
+          unit: string
+          user_id: string
+          value: number
+          vendor_id: string
+        }
+        Insert: {
+          branch_id: string
+          id?: string
+          metric_code: string
+          period: string
+          received_at?: string
+          tenant_id: string
+          unit: string
+          user_id: string
+          value: number
+          vendor_id: string
+        }
+        Update: {
+          branch_id?: string
+          id?: string
+          metric_code?: string
+          period?: string
+          received_at?: string
+          tenant_id?: string
+          unit?: string
+          user_id?: string
+          value?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_kpi_values_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_kpi_values_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mygrowth_kpi_values_tenant_id_metric_code_fkey"
+            columns: ["tenant_id", "metric_code"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_kpi_metrics"
+            referencedColumns: ["tenant_id", "code"]
+          },
+          {
+            foreignKeyName: "mygrowth_kpi_values_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "mygrowth_kpi_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mygrowth_kpi_vendors: {
+        Row: {
+          active: boolean
+          allowed_ips: string[]
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          active?: boolean
+          allowed_ips?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          active?: boolean
+          allowed_ips?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mygrowth_kpi_vendors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mygrowth_manager_coaching: {
         Row: {
           feedback: string
@@ -3997,6 +4239,51 @@ export type Database = {
       }
       mygrowth_hq_open: { Args: never; Returns: boolean }
       mygrowth_hq_visibility_state: { Args: never; Returns: Json }
+      mygrowth_kpi_admin_overview: { Args: never; Returns: Json }
+      mygrowth_kpi_edu_tenant: { Args: never; Returns: string }
+      mygrowth_kpi_ingest: {
+        Args: { _client_ip: string; _key_hash: string; _records: Json }
+        Returns: Json
+      }
+      mygrowth_kpi_issue_key: {
+        Args: { _is_test: boolean; _label: string; _vendor: string }
+        Returns: Json
+      }
+      mygrowth_kpi_revoke_key: { Args: { _key: string }; Returns: undefined }
+      mygrowth_kpi_save_metric: {
+        Args: {
+          _active: boolean
+          _code: string
+          _description: string
+          _name: string
+          _unit: string
+        }
+        Returns: undefined
+      }
+      mygrowth_kpi_save_vendor: {
+        Args: {
+          _active: boolean
+          _allowed_ips: string[]
+          _id: string
+          _name: string
+        }
+        Returns: string
+      }
+      mygrowth_kpi_values_list: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          branch_name: string
+          full_name: string
+          metric_code: string
+          metric_name: string
+          period: string
+          received_at: string
+          unit: string
+          user_id: string
+          value: number
+          vendor: string
+        }[]
+      }
       mygrowth_learning_list: {
         Args: never
         Returns: {

@@ -17,3 +17,5 @@ project_id = "jabagvlhgxrwbnxyrmvv"
     verify_jwt = false
   [functions.translate-question-now]
     verify_jwt = true
+  [functions.mygrowth-kpi-ingest]
+    verify_jwt = false
