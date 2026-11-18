@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
       announcement_i18n: {
@@ -2218,6 +2213,48 @@ export type Database = {
           },
         ]
       }
+      mygrowth_hq_visibility: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      mygrowth_hq_visibility_audit: {
+        Row: {
+          actor_id: string
+          enabled: boolean
+          id: string
+          occurred_at: string
+        }
+        Insert: {
+          actor_id: string
+          enabled: boolean
+          id?: string
+          occurred_at?: string
+        }
+        Update: {
+          actor_id?: string
+          enabled?: boolean
+          id?: string
+          occurred_at?: string
+        }
+        Relationships: []
+      }
       mygrowth_manager_coaching: {
         Row: {
           feedback: string
@@ -3953,6 +3990,8 @@ export type Database = {
         Args: { _branch_id: string; _role: string }
         Returns: boolean
       }
+      mygrowth_hq_open: { Args: never; Returns: boolean }
+      mygrowth_hq_visibility_state: { Args: never; Returns: Json }
       mygrowth_learning_list: {
         Args: never
         Returns: {
@@ -4083,6 +4122,10 @@ export type Database = {
       mygrowth_set_assignment: {
         Args: { _active: boolean; _role: string; _user_id: string }
         Returns: string
+      }
+      mygrowth_set_hq_visibility: {
+        Args: { _enabled: boolean }
+        Returns: boolean
       }
       mygrowth_staff_detail: {
         Args: { _employee: string; _training: string }
@@ -4394,3 +4437,4 @@ export const Constants = {
     },
   },
 } as const
+

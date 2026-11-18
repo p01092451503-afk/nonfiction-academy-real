@@ -218,6 +218,13 @@
       "when": 1794721704652,
       "tag": "0030_mygrowth_team_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794823213152,
+      "tag": "0031_mygrowth_hq_manager_coaching_visibility",
+      "breakpoints": true
     }
   ]
 }

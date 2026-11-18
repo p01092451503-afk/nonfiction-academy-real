@@ -22,6 +22,9 @@ export function useGrowthFeed() {
 export function useCapabilities(enabled = true) {
  const {user}=useUser();
  return useQuery({queryKey:['mygrowth-capabilities',user?.id],enabled:enabled&&Boolean(user?.id),staleTime:0,gcTime:0,retry:false,refetchInterval:15000,queryFn:async()=>{
- const {data,error}=await supabase.rpc('mygrowth_screen_capabilities');if(error)throw error;return z.object({can_appoint:z.boolean(),trainer:z.boolean(),manager:z.boolean(),can_educate:z.boolean()}).parse(data);
+ const {data,error}=await supabase.rpc('mygrowth_screen_capabilities');if(error)throw error;return z.object({can_appoint:z.boolean(),trainer:z.boolean(),manager:z.boolean(),can_educate:z.boolean(),hq_staff:z.boolean().default(false)}).parse(data);
  }});
 }
+
+/** Staff detail menus: appointed store staff, or HQ education team only while the server reports the HQ opening is on. */
+export function canOpenStaff(c?: {trainer?: boolean; manager?: boolean; hq_staff?: boolean}) { return Boolean(c?.trainer || c?.manager || c?.hq_staff); }

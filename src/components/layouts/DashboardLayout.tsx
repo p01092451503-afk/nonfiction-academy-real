@@ -1,3 +1,4 @@
+import { k } from '@/features/mygrowth/uiText';
 import { useState, useEffect, createContext, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -86,12 +87,12 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
   const capabilities = useCapabilities(growth.allowed);
   const caps = growth.allowed && !capabilities.isError && !capabilities.isFetching ? capabilities.data : undefined;
   const growthItems: NavItem[] = growth.allowed ? [
-    { key: 'coachingPlans', label: '코칭·실행 계획', href: '/my-growth/coaching?type=both', icon: ClipboardList, protected: true },
-    ...(caps?.trainer || caps?.manager ? [{ key: 'growthStaff', label: '담당 직원', href: '/my-growth/workspace/staff', icon: Users, protected: true }, { key: 'growthTeam', label: '팀 성장 현황', href: '/my-growth/workspace/team', icon: Building2, protected: true }, { key: 'growthFollowup', label: '직원 계획·후속 확인', href: '/my-growth/workspace/plans', icon: ClipboardCheck, protected: true }] : []),
-    ...(caps?.can_educate ? [{ key: 'growthTraining', label: '오프라인 교육', href: '/my-growth/workspace/training', icon: GraduationCap, protected: true }, { key: 'growthField', label: '현장 코칭 등록', href: '/my-growth/workspace/coaching', icon: Users, protected: true }] : []),
-    ...(caps?.manager ? [{ key: 'growthManager', label: '매니저 코칭 등록', href: '/my-growth/workspace/manager-coaching', icon: ClipboardCheck, protected: true }] : []),
-    ...(caps?.can_appoint ? [{ key: 'growthBranches', label: '지점 관리·팀 현황', href: '/my-growth/workspace/team', icon: Building2, protected: true }, { key: 'growthAppointments', label: '담당자 지정', href: '/my-growth/workspace/assignments', icon: Users, protected: true }] : []),
-    { key: 'growthReport', label: '교육·코칭 시간 보고서', href: '/my-growth/reports', icon: BarChart3, protected: true },
+    { key: 'coachingPlans', label: k('코칭·실행 계획'), href: '/my-growth/coaching?type=both', icon: ClipboardList, protected: true },
+    ...(caps?.trainer || caps?.manager ? [{ key: 'growthStaff', label: k('담당 직원'), href: '/my-growth/workspace/staff', icon: Users, protected: true }, { key: 'growthTeam', label: k('팀 성장 현황'), href: '/my-growth/workspace/team', icon: Building2, protected: true }, { key: 'growthFollowup', label: k('직원 계획·후속 확인'), href: '/my-growth/workspace/plans', icon: ClipboardCheck, protected: true }] : []),
+    ...(caps?.can_educate ? [{ key: 'growthTraining', label: k('오프라인 교육'), href: '/my-growth/workspace/training', icon: GraduationCap, protected: true }, { key: 'growthField', label: k('현장 코칭 등록'), href: '/my-growth/workspace/coaching', icon: Users, protected: true }] : []),
+    ...(caps?.manager ? [{ key: 'growthManager', label: k('매니저 코칭 등록'), href: '/my-growth/workspace/manager-coaching', icon: ClipboardCheck, protected: true }] : []),
+    ...(caps?.can_appoint ? [{ key: 'growthBranches', label: k('지점 관리·팀 현황'), href: '/my-growth/workspace/team', icon: Building2, protected: true }, { key: 'growthAppointments', label: k('담당자 지정'), href: '/my-growth/workspace/assignments', icon: Users, protected: true }] : []),
+    { key: 'growthReport', label: k('교육·코칭 시간 보고서'), href: '/my-growth/reports', icon: BarChart3, protected: true },
   ] : [];
 
   // 현재 활성 역할 컨텍스트를 sessionStorage에 저장 (역할 비종속 페이지에서 활용)
