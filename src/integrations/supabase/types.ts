@@ -4106,6 +4106,24 @@ export type Database = {
         Args: { _leader_id: string; _target_user_id: string }
         Returns: boolean
       }
+      kpi_admin_values: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          branch_name: string
+          email: string
+          full_name: string
+          metric_code: string
+          metric_name: string
+          period: string
+          received_at: string
+          unit: string
+          user_id: string
+          value: number
+          vendor: string
+        }[]
+      }
+      kpi_is_ops_admin: { Args: never; Returns: boolean }
+      kpi_ops_tenant: { Args: never; Returns: string }
       move_to_dlq: {
         Args: {
           dlq_name: string

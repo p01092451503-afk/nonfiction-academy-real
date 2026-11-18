@@ -95,6 +95,9 @@ const AdminCompletion = lazyWithRetry(() => import("./pages/admin/AdminCompletio
 const AdminTraffic = lazyWithRetry(() => import("./pages/admin/AdminTraffic"));
 const AdminPlatformUpdates = lazyWithRetry(() => import("./pages/admin/AdminPlatformUpdates"));
 const AdminPWASettings = lazyWithRetry(() => import("./pages/admin/AdminPWASettings"));
+const AdminKpi = lazyWithRetry(() => import("./pages/admin/AdminKpi"));
+const AdminKpiGuide = lazyWithRetry(() => import("./pages/admin/AdminKpiGuide"));
+const AdminKpiValues = lazyWithRetry(() => import("./pages/admin/AdminKpiValues"));
 const AdminBranches = lazyWithRetry(() => import("./pages/admin/AdminBranches"));
 const AdminNotifications = lazyWithRetry(() => import("./pages/admin/AdminNotifications"));
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/admin/AdminAnnouncements"));
@@ -197,6 +200,9 @@ const AppRoutes = () => {
             <Route path="/admin/traffic" element={<AdminTraffic />} />
             <Route path="/admin/platform-updates" element={<AdminPlatformUpdates />} />
             <Route path="/admin/pwa-settings" element={<AdminPWASettings />} />
+            <Route path="/admin/kpi" element={<AdminKpi />} />
+            <Route path="/admin/kpi/guide" element={<AdminKpiGuide />} />
+            <Route path="/admin/kpi/values" element={<AdminKpiValues />} />
             <Route path="/admin/branches" element={<AdminBranches />} />
             <Route path="/admin/notifications" element={<AdminNotifications />} />
             <Route path="/admin/announcements" element={<AdminAnnouncements />} />

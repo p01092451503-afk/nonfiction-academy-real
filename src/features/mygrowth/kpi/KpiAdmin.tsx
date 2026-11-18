@@ -16,7 +16,7 @@ const fmt = (s: string | null) => s ? new Date(s).toLocaleString('ko-KR', { time
 const statusLabel: Record<string, string> = { success: '전체 성공', partial: '일부 실패', failed: '전체 실패', rejected: '접속 거부' };
 const msg = (e: unknown) => (e as { message?: string })?.message || '처리하지 못했습니다.';
 
-export default function KpiAdmin() {
+export default function KpiAdmin({ guidePath = '/my-growth/workspace/kpi/guide', valuesPath = '/my-growth/kpi', audience = '본사 교육팀 전용입니다.' }: { guidePath?: string; valuesPath?: string; audience?: string } = {}) {
   const { user } = useUser(); const qc = useQueryClient();
   const q = useQuery({ queryKey: ['mygrowth-kpi-admin', user?.id], enabled: Boolean(user?.id), staleTime: 0, gcTime: 0, retry: false,
     queryFn: async () => { const { data, error } = await supabase.rpc('mygrowth_kpi_admin_overview'); if (error) throw error; return data as unknown as Overview; } });
@@ -29,8 +29,8 @@ export default function KpiAdmin() {
   const saveMetric = useMutation({ mutationFn: async () => { const { error } = await supabase.rpc('mygrowth_kpi_save_metric', { _code: metric.code, _name: metric.name, _unit: metric.unit, _description: metric.description, _active: true }); if (error) throw error; }, onSuccess: () => { setMetric({ code: '', name: '', unit: '', description: '' }); refresh(); toast.success('지표를 저장했습니다.'); }, onError: () => toast.error('지표 코드는 영문 대문자로 시작하는 대문자·숫자·밑줄(2~40자)이어야 합니다.') });
   const d = q.data;
   return <div className="min-w-0 space-y-8">
-    <header className="border-b-2 border-border/80 pb-4"><h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold"><Plug className="h-6 w-6"/>외부 성과(KPI) 연동 관리</h1><p className="text-muted-foreground mt-1">외부 업체가 보내는 직원 성과 자료의 업체·키·지표·수신 기록을 관리합니다. 본사 교육팀 전용입니다.</p>
-      <div className="mt-3 flex flex-wrap gap-2"><Button asChild variant="outline" size="sm"><Link to="/my-growth/workspace/kpi/guide"><BookOpen className="mr-1 h-4 w-4"/>API 연동 가이드</Link></Button><Button asChild variant="outline" size="sm"><Link to="/my-growth/kpi">받은 성과 보기</Link></Button></div></header>
+    <header className="border-b-2 border-border/80 pb-4"><h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold"><Plug className="h-6 w-6"/>외부 성과(KPI) 연동 관리</h1><p className="text-muted-foreground mt-1">외부 업체가 보내는 직원 성과 자료의 업체·키·지표·수신 기록을 관리합니다. {audience}</p>
+      <div className="mt-3 flex flex-wrap gap-2"><Button asChild variant="outline" size="sm"><Link to={guidePath}><BookOpen className="mr-1 h-4 w-4"/>API 연동 가이드</Link></Button><Button asChild variant="outline" size="sm"><Link to={valuesPath}>받은 성과 보기</Link></Button></div></header>
     <QueryState query={q}>{d && <>
       {issued && <div role="alert" className="min-w-0 rounded-lg border-2 border-primary bg-card p-4 space-y-2"><p className="font-semibold">{issued.vendor} 키가 발급됐습니다. 이 화면을 닫으면 다시 볼 수 없습니다.</p><code className="block break-all rounded bg-muted p-2 text-xs">{issued.key}</code><div className="flex gap-2"><Button size="sm" onClick={() => { void navigator.clipboard?.writeText(issued.key); toast.success('복사했습니다.'); }}><Copy className="mr-1 h-4 w-4"/>복사</Button><Button size="sm" variant="outline" onClick={() => setIssued(null)}>확인했습니다</Button></div></div>}
       <section className="space-y-3"><h2 className="text-lg font-semibold">연동 업체와 API 키</h2>

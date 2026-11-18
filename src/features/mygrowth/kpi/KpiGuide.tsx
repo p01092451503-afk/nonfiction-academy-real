@@ -46,6 +46,6 @@ export default function KpiGuide() {
 
     <H2 n={9}>미팅에서 함께 정할 항목</H2>
     <Table head={['항목', '확인할 질문', '논픽션 제안']} rows={MEETING_ITEMS.map(m => [m.topic, m.question, m.proposal])}/>
-    <p className="text-xs text-muted-foreground mt-4">문의: 논픽션 본사 교육팀. 이 문서의 주소는 검수용 환경 기준이며, 운영 공개 시 운영 주소로 바꿔 다시 전달합니다.</p>
+    <p className="text-xs text-muted-foreground mt-4">문의: 논픽션 본사 교육팀. 위 주소는 현재 운영 중인 논픽션 아카데미의 실제 수신 주소입니다.</p>
   </article>;
 }
