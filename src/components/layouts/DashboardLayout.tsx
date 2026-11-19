@@ -441,7 +441,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/mypage")} className="cursor-pointer gap-2">
                 <UserCircle className="h-4 w-4" aria-hidden="true" />
-                {t("nav.mypage", "마이페이지")}
+                {t("nav.myPage", "마이페이지")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -449,7 +449,7 @@ const DashboardLayout = ({ children, role, contentClassName }: DashboardLayoutPr
                 className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />
-                {t("common.logout", "로그아웃")}
+                {t("auth.logout", "로그아웃")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
